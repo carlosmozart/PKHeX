@@ -37,6 +37,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         ApplyCommand = new RelayCommand(() => _apply(_pk.Clone()));
         MaxIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; });
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
+        MakeShinyCommand = new RelayCommand(() => { _pk.SetShiny(); RaiseAll(); });
+        BallList = CoreAdapter.GetBalls();
+        MetLocationList = CoreAdapter.GetMetLocations(_pk);
         Refresh();
     }
 
@@ -52,6 +55,11 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public RelayCommand ApplyCommand { get; }
     public RelayCommand MaxIVsCommand { get; }
     public RelayCommand ClearEVsCommand { get; }
+    public RelayCommand MakeShinyCommand { get; }
+
+    /// <summary>Aba selecionada (mantida pelo MainViewModel ao trocar de slot).</summary>
+    public int SelectedTab { get => _selectedTab; set => Set(ref _selectedTab, value); }
+    private int _selectedTab;
     public IReadOnlyList<string> StatLabels { get; } = ["PS", "Atq", "Def", "AtE", "DeE", "Vel"];
     public IReadOnlyList<double> RadarValues { get; private set; } = [0, 0, 0, 0, 0, 0];
     public IReadOnlyList<TypeChip> Types { get; private set; } = [];
@@ -72,6 +80,47 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public int Move2 { get => _pk.Move2; set { if (value >= 0) { _pk.Move2 = (ushort)value; Refresh(); } } }
     public int Move3 { get => _pk.Move3; set { if (value >= 0) { _pk.Move3 = (ushort)value; Refresh(); } } }
     public int Move4 { get => _pk.Move4; set { if (value >= 0) { _pk.Move4 = (ushort)value; Refresh(); } } }
+
+    // Encontro
+    public IReadOnlyList<ComboItem> BallList { get; }
+    public IReadOnlyList<ComboItem> MetLocationList { get; }
+    public ComboItem? Ball { get => Find(BallList, _pk.Ball); set { if (value is not null) { _pk.Ball = (byte)value.Value; Refresh(); } } }
+    public ComboItem? MetLocation { get => Find(MetLocationList, _pk.MetLocation); set { if (value is not null) { _pk.MetLocation = (ushort)value.Value; Refresh(); } } }
+    public int MetLevel { get => _pk.MetLevel; set { _pk.MetLevel = (byte)Math.Clamp(value, 0, 100); Refresh(); } }
+    public bool HasMetDate => _pk.MetDate is not null;
+    public DateTime? MetDate
+    {
+        get => _pk.MetDate?.ToDateTime(TimeOnly.MinValue);
+        set { if (value is { } v) { _pk.MetDate = DateOnly.FromDateTime(v); Refresh(); } }
+    }
+    public string OriginGame => CoreAdapter.GetVersionName(_pk.Version);
+
+    // Treinador
+    public string TrainerName { get => _pk.OriginalTrainerName; set { _pk.OriginalTrainerName = value; Refresh(); } }
+    public int TID { get => _pk.TID16; set { _pk.TID16 = (ushort)Math.Clamp(value, 0, ushort.MaxValue); Refresh(); } }
+    public int SID { get => _pk.SID16; set { _pk.SID16 = (ushort)Math.Clamp(value, 0, ushort.MaxValue); Refresh(); } }
+    public bool TrainerIsFemale { get => _pk.OriginalTrainerGender == 1; set { _pk.OriginalTrainerGender = (byte)(value ? 1 : 0); Refresh(); } }
+
+    // Extras
+    public int Friendship { get => _pk.CurrentFriendship; set { _pk.CurrentFriendship = (byte)Math.Clamp(value, 0, 255); Refresh(); } }
+    public string PID => $"{_pk.PID:X8}";
+    public string EncryptionConstant => $"{_pk.EncryptionConstant:X8}";
+
+    private static ComboItem? Find(IReadOnlyList<ComboItem> list, int value)
+    {
+        foreach (var item in list)
+            if (item.Value == value)
+                return item;
+        return null;
+    }
+
+    private void RaiseAll()
+    {
+        Refresh();
+        Raise(string.Empty);
+        foreach (var st in Stats)
+            st.RaiseAll();
+    }
 
     public string AbilityName => (uint)_pk.Ability < CoreAdapter.AbilityNames.Count ? CoreAdapter.AbilityNames[_pk.Ability] : "?";
     public bool IsShiny => _pk.IsShiny;
@@ -97,10 +146,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         var error = CoreAdapter.ApplyShowdown(_pk, text);
         if (error is null)
             _isNew = false;
-        Refresh();
-        Raise(string.Empty); // atualiza todos os campos
-        foreach (var st in Stats)
-            st.RaiseAll();
+        RaiseAll(); // atualiza todos os campos
         _status(error ?? "Set Showdown importado. Clique em Aplicar para gravar.");
     }
 
@@ -122,7 +168,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             Raise(p);
         (IsLegal, LegalityReport) = CoreAdapter.CheckLegality(_pk);
         LegalityText = IsLegal ? "Legal" : "Ilegal";
-        foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny)])
+        foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
             Raise(p);
     }
 }

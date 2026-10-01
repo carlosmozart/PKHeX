@@ -138,6 +138,19 @@
     <Setter Property="BorderThickness" Value="0,1,0,0" />
     <Setter Property="Padding" Value="16,8" />
   </Style>
+  <Style Selector="TabControl.editorTabs">
+    <Setter Property="Padding" Value="0" />
+  </Style>
+  <Style Selector="TabControl.editorTabs TabItem">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="MinHeight" Value="34" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+  </Style>
+  <Style Selector="TabControl.editorTabs TabItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+  </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />

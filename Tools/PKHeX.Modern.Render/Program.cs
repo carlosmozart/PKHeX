@@ -14,6 +14,8 @@ void Run(string prefix, int w, int h, bool light = false)
     vm.Boxes.SelectSlotCommand.Execute(vm.Boxes.Slots[1]); Shot("boxes.png");
     vm.Boxes.Slots[8].IsDropTarget = true; Shot("drag.png"); vm.Boxes.Slots[8].IsDropTarget = false;
     vm.CurrentPage = vm.Party; vm.Party.SelectSlotCommand.Execute(vm.Party.Slots[0]); Shot("party.png");
+    if (prefix == "")
+        for (int t = 1; t < 6; t++) { vm.Editor!.SelectedTab = t; Shot($"tab{t}.png"); }
     win.Close();
 }
 Run("", 1600, 950);

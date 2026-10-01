@@ -229,6 +229,7 @@ public sealed class MainViewModel : ViewModelBase
 
         // Slot vazio: abre o editor com um Pokemon em branco para permitir criar/colar Showdown.
         var source = slot.IsEmpty ? CoreAdapter.CreateBlank(_sav) : slot.Pkm;
+        var tab = Editor?.SelectedTab ?? 0;
         Editor = new PokemonEditorViewModel(source, slot.Location, pk =>
         {
             if (CoreAdapter.IsEmpty(pk))
@@ -241,6 +242,6 @@ public sealed class MainViewModel : ViewModelBase
                 Party.Load(_sav);
             Raise(nameof(CanExportEntity));
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
-        }, s => Status = s, isNew: slot.IsEmpty);
+        }, s => Status = s, isNew: slot.IsEmpty) { SelectedTab = tab };
     }
 }

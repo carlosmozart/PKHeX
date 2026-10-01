@@ -17,6 +17,12 @@ public static class CoreAdapter
     public static IReadOnlyList<string> NatureNames => GameInfo.Strings.natures;
     public static IReadOnlyList<string> AbilityNames => GameInfo.Strings.abilitylist;
 
+    /// <summary>Bolas disponiveis no save carregado (Text/Value).</summary>
+    public static IReadOnlyList<ComboItem> GetBalls() => GameInfo.FilteredSources.Balls;
+
+    /// <summary>Locais de encontro validos para a versao/contexto do Pokemon.</summary>
+    public static IReadOnlyList<ComboItem> GetMetLocations(PKM pk) => GameInfo.GetLocationList(pk.Version, pk.Context);
+
     /// <summary>Codigo de idioma do PKHeX (en, ja, fr, it, de, es, ko, zh-Hans, zh-Hant...).</summary>
     public static void SetLanguage(string code) => GameInfo.CurrentLanguage = code;
 
@@ -41,6 +47,7 @@ public static class CoreAdapter
     }
 
     public static string GetGameName(SaveFile sav) => GameInfo.GetVersionName(sav.Version);
+    public static string GetVersionName(GameVersion version) => GameInfo.GetVersionName(version);
 
     public static string GetBoxName(SaveFile sav, int box)
         => sav is IBoxDetailNameRead n ? n.GetBoxName(box) : $"Box {box + 1}";

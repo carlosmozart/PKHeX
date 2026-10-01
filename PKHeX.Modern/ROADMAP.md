@@ -2,7 +2,7 @@
 
 ## Inspirado no TidalHeX (https://github.com/HydrosPlays/TidalHeX)
 Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinForms + WebView2, então o código dele não serve aqui.
-- [ ] **Editor em abas**: Visão geral, Encontro, Atributos, Golpes, Treinador e Extras. Hoje o editor é uma coluna longa (precisa de 1900 px de altura).
+- [x] **Editor em abas**: Visão geral, Atributos, Golpes, Encontro (bola, local, nível, data), Treinador (OT, TID, SID, gênero) e Extras (felicidade, PID/EC, tornar shiny). A aba ativa se mantém ao trocar de slot.
 - [ ] **Desfazer/refazer** nos slots (Ctrl+Z/Ctrl+Y) e novos modificadores no arraste: Shift = clonar, Alt = sobrescrever.
 - [ ] **Atalhos de teclado**: Q/E trocam de página (L/R), Esc volta, Ctrl+1–6 vão a cada página, Ctrl+O abre, Ctrl+E exporta. Mostrar os atalhos na barra inferior.
 - [ ] **Cartão de legalidade com correções de um clique**: IVs máximos, golpes sugeridos e local de encontro sugerido (helpers do `CommonEdits` no Core).
