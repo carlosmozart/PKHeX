@@ -28,9 +28,12 @@
     <Setter Property="CornerRadius" Value="8" />
     <Setter Property="Padding" Value="14,7" />
   </Style>
-  <Style Selector="Button.accent">
+  <Style Selector="Button.accent /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Accent}" />
     <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.accent">
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
   <Style Selector="Button.accent:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Accent}" />
@@ -43,27 +46,71 @@
     <Setter Property="HorizontalContentAlignment" Value="Left" />
   </Style>
 
-  <!-- Slot de caixa -->
+  <!-- Slot de caixa (cartao responsivo) -->
   <Style Selector="Button.slot">
-    <Setter Property="Width" Value="76" />
-    <Setter Property="Height" Value="64" />
-    <Setter Property="Margin" Value="3" />
-    <Setter Property="Padding" Value="0" />
-    <Setter Property="CornerRadius" Value="{DynamicResource SlotRadius}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="150" />
+    <Setter Property="Margin" Value="5" />
+    <Setter Property="Padding" Value="8,6,8,8" />
+    <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
-    <Setter Property="HorizontalContentAlignment" Value="Center" />
-    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Transitions">
+      <Transitions>
+        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.slot:pointerover">
+    <Setter Property="RenderTransform" Value="scale(1.04)" />
   </Style>
   <Style Selector="Button.slot:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource SlotHover}" />
   </Style>
-  <Style Selector="Button.slot.selected">
+  <Style Selector="Button.slot.empty">
+    <Setter Property="Opacity" Value="0.45" />
+  </Style>
+  <Style Selector="Button.slot.selected /template/ ContentPresenter, Button.slot.selected:pointerover /template/ ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
-    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+  </Style>
+  <Style Selector="TextBlock.slotPos">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+  </Style>
+  <Style Selector="TextBlock.slotName">
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+  <Style Selector="TextBlock.slotLevel">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+  </Style>
+  <Style Selector="TextBlock.shiny">
+    <Setter Property="Foreground" Value="#F5B83D" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style Selector="Border.spriteWell">
+    <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
+    <Setter Property="Padding" Value="6" />
   </Style>
 
   <Style Selector="TextBox, ComboBox, NumericUpDown">
     <Setter Property="CornerRadius" Value="8" />
+  </Style>
+
+  <!-- Listas compactas (mochila) -->
+  <Style Selector="ListBox.rows ListBoxItem">
+    <Setter Property="Padding" Value="6,3" />
   </Style>
 
   <!-- Navegacao lateral -->

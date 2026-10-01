@@ -8,7 +8,7 @@
     <!-- Cabecalho -->
     <Border Classes="card">
       <Grid ColumnDefinitions="Auto,*">
-        <Image Source="{Binding Sprite}" Width="96" Height="80" RenderOptions.BitmapInterpolationMode="None" />
+        <Image Source="{Binding Sprite}" Width="96" Height="80" Stretch="Uniform" Margin="0,0,4,0" RenderOptions.BitmapInterpolationMode="None" />
         <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="4">
           <TextBlock Text="{Binding Nickname}" Classes="title" />
           <StackPanel Orientation="Horizontal" Spacing="6">

@@ -55,7 +55,9 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
     }
 
     public string BoxName => _sav is null ? "" : CoreAdapter.GetBoxName(_sav, CurrentBox);
-    public string BoxLabel => _sav is null ? "" : $"Caixa {CurrentBox + 1} de {_sav.BoxCount}";
+    public int Columns => _sav is null || _sav.BoxSlotCount % 6 == 0 ? 6 : 5;
+    public int FilledCount => Slots.Count(s => !s.IsEmpty);
+    public string BoxLabel => _sav is null ? "" : $"Caixa {CurrentBox + 1} de {_sav.BoxCount} · {FilledCount}/{Slots.Count} Pokémon";
 
     public override void Load(SaveFile sav)
     {
@@ -78,6 +80,7 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
         }
         Raise(nameof(BoxName));
         Raise(nameof(BoxLabel));
+        Raise(nameof(Columns));
         PreviousBoxCommand.NotifyCanExecuteChanged();
         NextBoxCommand.NotifyCanExecuteChanged();
     }

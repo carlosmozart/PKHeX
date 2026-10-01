@@ -11,14 +11,24 @@
     <v:PokemonEditorView />
   </DataTemplate>
 
-  <!-- Slot (caixa ou equipe) -->
+  <!-- Slot da caixa: cartao com sprite grande, nome, nivel e posicao -->
   <DataTemplate DataType="vm:SlotViewModel">
-    <Button Classes="slot" Classes.selected="{Binding IsSelected}"
+    <Button Classes="slot" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
             ToolTip.Tip="{Binding Tooltip}"
             Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
             CommandParameter="{Binding}">
-      <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="Uniform"
-             RenderOptions.BitmapInterpolationMode="None" />
+      <Grid RowDefinitions="Auto,*,Auto">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="{Binding Position}" Classes="slotPos" />
+          <TextBlock Grid.Column="1" Text="★" Classes="shiny" IsVisible="{Binding IsShiny}" />
+        </Grid>
+        <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="84" Margin="6,4"
+               RenderOptions.BitmapInterpolationMode="None" />
+        <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
+          <TextBlock Text="{Binding Title}" Classes="slotName" />
+          <TextBlock Text="{Binding Subtitle}" Classes="slotLevel" />
+        </StackPanel>
+      </Grid>
     </Button>
   </DataTemplate>
 
@@ -33,11 +43,11 @@
         </StackPanel>
         <Button Grid.Column="2" Content="›" FontSize="18" Command="{Binding NextBoxCommand}" />
       </Grid>
-      <Border Classes="card" VerticalAlignment="Top" HorizontalAlignment="Center">
+      <Border Classes="card" Padding="12" MaxWidth="1100">
         <ItemsControl ItemsSource="{Binding Slots}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
-              <WrapPanel MaxWidth="500" />
+              <UniformGrid Columns="{Binding $parent[ItemsControl].((vm:BoxesPageViewModel)DataContext).Columns}" />
             </ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>
         </ItemsControl>
@@ -49,10 +59,10 @@
   <DataTemplate DataType="vm:PartyPageViewModel">
     <DockPanel>
       <TextBlock DockPanel.Dock="Top" Text="Equipe" Classes="title" Margin="0,0,0,16" />
-      <ItemsControl ItemsSource="{Binding Slots}" VerticalAlignment="Top">
+      <ItemsControl ItemsSource="{Binding Slots}" VerticalAlignment="Top" MaxWidth="1100" HorizontalAlignment="Stretch">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <UniformGrid Columns="2" />
+            <UniformGrid Columns="3" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
@@ -60,13 +70,18 @@
             <Button Classes="partyCard" Classes.selected="{Binding IsSelected}"
                     Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                     CommandParameter="{Binding}">
-              <StackPanel Orientation="Horizontal" Spacing="12">
-                <Image Source="{Binding Sprite}" Width="68" Height="56" RenderOptions.BitmapInterpolationMode="None" />
-                <StackPanel VerticalAlignment="Center">
-                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="16" />
-                  <TextBlock Text="{Binding Subtitle}" Classes="muted" />
+              <Grid ColumnDefinitions="Auto,*,Auto">
+                <Border Classes="spriteWell">
+                  <Image Source="{Binding Sprite}" Width="104" Height="92" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="2">
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="20" />
+                  <TextBlock Text="{Binding Nickname}" Classes="muted" IsVisible="{Binding HasNickname}" />
+                  <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="15" />
+                  <TextBlock Text="★ Shiny" Classes="shiny" IsVisible="{Binding IsShiny}" />
                 </StackPanel>
-              </StackPanel>
+                <TextBlock Grid.Column="2" Text="{Binding Position}" Classes="slotPos" FontSize="16" VerticalAlignment="Top" />
+              </Grid>
             </Button>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
@@ -126,7 +141,7 @@
         </ListBox.ItemTemplate>
       </ListBox>
       <Border Classes="card" Padding="8">
-        <ListBox ItemsSource="{Binding SelectedPouch.Items}" Background="Transparent">
+        <ListBox Classes="rows" ItemsSource="{Binding SelectedPouch.Items}" Background="Transparent">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:BagItemViewModel">
               <Grid ColumnDefinitions="*,140" ColumnSpacing="8">

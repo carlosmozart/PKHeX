@@ -14,7 +14,12 @@ public sealed class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow = new MainWindow { DataContext = new MainViewModel() };
+        {
+            var vm = new MainViewModel();
+            if (desktop.Args is [{ } path, ..] && System.IO.File.Exists(path))
+                vm.Open(path);
+            desktop.MainWindow = new MainWindow { DataContext = vm };
+        }
         base.OnFrameworkInitializationCompleted();
     }
 

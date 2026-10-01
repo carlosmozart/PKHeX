@@ -23,9 +23,14 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
 
     public bool IsEmpty => Pkm is null || CoreAdapter.IsEmpty(Pkm);
-    public string Title => IsEmpty ? "Vazio" : CoreAdapter.SpeciesNames[Pkm!.Species];
-    public string Subtitle => IsEmpty ? "" : $"Nv. {Pkm!.CurrentLevel}";
+    public string Title => IsEmpty ? "" : IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[Pkm!.Species];
+    public string Subtitle => IsEmpty || IsEgg ? "" : $"Nv. {Pkm!.CurrentLevel}";
     public string Tooltip => IsEmpty ? "Vazio" : $"{Title} · {Subtitle}";
+    public string Position => $"{Slot + 1:00}";
+    public bool IsShiny => !IsEmpty && Pkm!.IsShiny;
+    public bool IsEgg => !IsEmpty && Pkm!.IsEgg;
+    public string Nickname => IsEmpty ? "" : Pkm!.IsNicknamed ? Pkm.Nickname : "";
+    public bool HasNickname => Nickname.Length > 0;
     public string Location => IsParty ? $"equipe, posição {Slot + 1}" : $"caixa {Box + 1}, slot {Slot + 1}";
 
     public void Load(SaveFile sav)
@@ -33,7 +38,7 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
         var pk = IsParty ? CoreAdapter.GetPartySlot(sav, Slot) : CoreAdapter.GetBoxSlot(sav, Box, Slot);
         Pkm = pk;
         Sprite = IsParty ? SpriteService.GetSprite(pk) : SpriteService.GetSprite(pk, sav, Box, Slot);
-        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip)])
+        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname)])
             Raise(p);
     }
 
