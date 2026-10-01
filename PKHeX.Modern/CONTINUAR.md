@@ -40,11 +40,12 @@ dotnet run --project PKHeX.Modern
 - **Selo de legalidade em Pokémon novo:** o modelo em branco (`CreateBlank`) vem com a última espécie do jogo (ex.: Genesect na Gen 5), então `IsEmpty` não serve para detectá-lo. O editor recebe `isNew: slot.IsEmpty` e esconde o selo e o relatório (`ShowLegality`) até o usuário escolher uma espécie ou colar um set Showdown válido.
 - **Validar com captura:** `dotnet build PKHeX.Modern -o %TEMP%/pkm_build` e depois `dotnet run --project Tools/PKHeX.Modern.Render -- <save> <pastaSaida>`. Gera `boxes`, `drag`, `party` (1600×950 e `small_` 1100×720) e `editor_full`.
 - **Editor em abas:** `TabControl.editorTabs` em `PokemonEditorView.axaml`; cabeçalho, botões Showdown e "Aplicar" ficam fora das abas. Bola e local usam `ComboItem` do Core com `SelectedItem` (o valor não é o índice da lista). `CalendarDatePicker.SelectedDate` é `DateTime?` (com `DateTimeOffset?` dá `InvalidCastException`). O render tool gera `tab1..tab5.png`.
+- **Desfazer/refazer:** `Services/SlotHistory.cs` guarda cópias dos slots antes de cada alteração (até 50). A equipe é guardada inteira, porque o Core reordena os slots dela; a restauração usa `EntityImportSettings.None` para não mexer em dados de troca/Pokédex. Toda nova operação que altere slots deve chamar `_history.Record(...)` antes e `Discard()` se falhar. Desfazer não volta a mochila nem o treinador.
 
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
 - Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".
-- **Próximo passo combinado:** editor em abas (feito), depois desfazer/refazer, depois atalhos de teclado.
+- **Próximo passo combinado:** editor em abas (feito), desfazer/refazer (feito), depois atalhos de teclado.
 - Preferências de trabalho: respostas e UI em PT-BR; validar mudanças visuais com o render headless antes de commitar; commit e push só quando pedido.
 
 ## Testado com

@@ -8,6 +8,12 @@
         Background="{DynamicResource AppBackground}"
         DragDrop.AllowDrop="True">
 
+  <Window.KeyBindings>
+    <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}" />
+    <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}" />
+    <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}" />
+  </Window.KeyBindings>
+
   <Grid ColumnDefinitions="232,*,Auto" RowDefinitions="*,Auto">
 
     <!-- Barra lateral -->
@@ -83,6 +89,8 @@
         <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" VerticalAlignment="Center"
                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Status}" />
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasSave}">
+          <Button Classes="small" Content="↶" FontSize="16" Padding="10,0" Command="{Binding UndoCommand}" ToolTip.Tip="{Binding UndoTip}" />
+          <Button Classes="small" Content="↷" FontSize="16" Padding="10,0" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" />
           <Button Classes="small" Content="✓  Verificar legalidade" Command="{Binding CheckLegalityCommand}"
                   ToolTip.Tip="Verifica a caixa atual e a equipe" />
           <Button Classes="small" Content="＋  Criar PKM" Command="{Binding CreateCommand}"

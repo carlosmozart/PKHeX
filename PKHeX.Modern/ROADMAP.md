@@ -3,7 +3,8 @@
 ## Inspirado no TidalHeX (https://github.com/HydrosPlays/TidalHeX)
 Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinForms + WebView2, então o código dele não serve aqui.
 - [x] **Editor em abas**: Visão geral, Atributos, Golpes, Encontro (bola, local, nível, data), Treinador (OT, TID, SID, gênero) e Extras (felicidade, PID/EC, tornar shiny). A aba ativa se mantém ao trocar de slot.
-- [ ] **Desfazer/refazer** nos slots (Ctrl+Z/Ctrl+Y) e novos modificadores no arraste: Shift = clonar, Alt = sobrescrever.
+- [x] **Desfazer/refazer** nos slots (Ctrl+Z, Ctrl+Y ou Ctrl+Shift+Z, e botões ↶/↷ na barra inferior): mover, copiar, importar e aplicar no editor.
+- [ ] Novos modificadores no arraste: Shift = clonar, Alt = sobrescrever.
 - [ ] **Atalhos de teclado**: Q/E trocam de página (L/R), Esc volta, Ctrl+1–6 vão a cada página, Ctrl+O abre, Ctrl+E exporta. Mostrar os atalhos na barra inferior.
 - [ ] **Cartão de legalidade com correções de um clique**: IVs máximos, golpes sugeridos e local de encontro sugerido (helpers do `CommonEdits` no Core).
 - [ ] **Save Manager**: pasta `saves/` ao lado do exe, saves agrupados por console, com treinador, tempo de jogo, equipe e capa. Abre com duplo clique.
@@ -25,7 +26,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [ ] **Cor de destaque configurável** (a referência visual usa ciano/teal; hoje é vermelho, definido em `Theme/Palette.axaml`).
 - [ ] **Editor mais completo**: OT, ID, bola, local e data de encontro, fitas, memórias, Hyper Training, Tera Type, PID/EC e "Tornar shiny".
 - [ ] **Pokédex**, **Batch Editor**, **banco de dados / pesquisa**, **Mystery Gift**, **editores específicos de cada jogo** (eventos, flags, records).
-- [ ] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
+- [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [ ] **Backup automático** do save antes de exportar por cima do original.
 - [ ] **Instalador / publicação**: `dotnet publish -c Release -r win-x64 --self-contained` e um GitHub Action que gere o .exe.
 - [ ] **Multiplataforma** (Linux/macOS): trocar o `System.Drawing` dos sprites por um carregador próprio (SkiaSharp), já que o Avalonia roda em todos.

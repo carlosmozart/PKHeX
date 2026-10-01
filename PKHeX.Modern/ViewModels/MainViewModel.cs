@@ -9,6 +9,7 @@ namespace PKHeX.Modern.ViewModels;
 public sealed class MainViewModel : ViewModelBase
 {
     private SaveFile? _sav;
+    private SlotHistory? _history;
     private SlotViewModel? _selectedSlot;
 
     public AppSettings Settings { get; }
@@ -30,9 +31,15 @@ public sealed class MainViewModel : ViewModelBase
         _currentPage = Boxes;
         CheckLegalityCommand = new RelayCommand(CheckLegality, () => HasSave);
         CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
+        UndoCommand = new RelayCommand(Undo, () => _history?.CanUndo == true);
+        RedoCommand = new RelayCommand(Redo, () => _history?.CanRedo == true);
     }
 
     public RelayCommand CheckLegalityCommand { get; }
+    public RelayCommand UndoCommand { get; }
+    public RelayCommand RedoCommand { get; }
+    public string UndoTip => _history?.UndoDescription is { } d ? $"Desfazer: {d} (Ctrl+Z)" : "Nada para desfazer (Ctrl+Z)";
+    public string RedoTip => _history?.RedoDescription is { } d ? $"Refazer: {d} (Ctrl+Y)" : "Nada para refazer (Ctrl+Y)";
     public RelayCommand CreateCommand { get; }
 
     /// <summary>Slot selecionado com Pokemon (para Exportar PKM).</summary>
@@ -80,6 +87,8 @@ public sealed class MainViewModel : ViewModelBase
             return;
         }
         _sav = sav;
+        _history = new SlotHistory(sav);
+        OnHistoryChanged();
         Editor = null;
         foreach (var page in AllPages)
             page.Load(sav);
@@ -118,16 +127,19 @@ public sealed class MainViewModel : ViewModelBase
         if (_sav is null)
             return;
         var srcName = src.Title;
+        _history!.Record(copy ? $"copiar {srcName}" : $"mover {srcName}",
+            SlotHistory.KeyOf(src.Box, src.Slot), SlotHistory.KeyOf(dst.Box, dst.Slot));
         var error = CoreAdapter.MoveSlot(_sav,
             CoreAdapter.GetSlotInfo(_sav, src.Box, src.Slot),
             CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot), copy);
-        if (error == "")
-            return; // nada a fazer
         if (error is not null)
         {
-            Status = error;
+            _history.Discard();
+            if (error != "") // "" = nada a fazer
+                Status = error;
             return;
         }
+        OnHistoryChanged();
         RefreshSlots();
         Status = copy
             ? $"{srcName} copiado para {dst.Location}. Lembre-se de exportar o save."
@@ -145,12 +157,15 @@ public sealed class MainViewModel : ViewModelBase
             Status = "Arquivo de Pokémon incompatível com este save.";
             return;
         }
+        _history!.Record($"importar {CoreAdapter.SpeciesNames[pk.Species]}", SlotHistory.KeyOf(dst.Box, dst.Slot));
         var error = CoreAdapter.ImportToSlot(_sav, CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot), pk);
         if (error is not null)
         {
+            _history.Discard();
             Status = error;
             return;
         }
+        OnHistoryChanged();
         RefreshSlots();
         Status = $"{CoreAdapter.SpeciesNames[pk.Species]} importado em {dst.Location}.";
     }
@@ -206,6 +221,32 @@ public sealed class MainViewModel : ViewModelBase
         Status = $"Novo Pokémon em {slot.Location}. Escolha a espécie (ou cole um set Showdown) e clique em Aplicar.";
     }
 
+    private void Undo()
+    {
+        if (_history?.Undo() is not { } what)
+            return;
+        OnHistoryChanged();
+        RefreshSlots();
+        Status = $"Desfeito: {what}.";
+    }
+
+    private void Redo()
+    {
+        if (_history?.Redo() is not { } what)
+            return;
+        OnHistoryChanged();
+        RefreshSlots();
+        Status = $"Refeito: {what}.";
+    }
+
+    private void OnHistoryChanged()
+    {
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+        Raise(nameof(UndoTip));
+        Raise(nameof(RedoTip));
+    }
+
     private void RefreshSlots()
     {
         if (_sav is null)
@@ -237,6 +278,8 @@ public sealed class MainViewModel : ViewModelBase
                 Status = "Escolha uma espécie antes de aplicar.";
                 return;
             }
+            _history!.Record($"editar {CoreAdapter.SpeciesNames[pk.Species]}", SlotHistory.KeyOf(slot.Box, slot.Slot));
+            OnHistoryChanged();
             slot.Write(_sav, pk);
             if (slot.IsParty)
                 Party.Load(_sav);
