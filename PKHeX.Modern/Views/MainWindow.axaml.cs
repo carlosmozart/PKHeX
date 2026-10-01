@@ -19,6 +19,40 @@ public sealed partial class MainWindow : Window
 
     private MainViewModel VM => (MainViewModel)DataContext!;
 
+    /// <summary>
+    /// Atalhos globais. Teclas sem modificador (Q/E/Esc) sao ignoradas enquanto o foco esta num campo
+    /// de texto ou lista, para nao atrapalhar a digitacao. Ctrl+Z/Y ficam em Window.KeyBindings.
+    /// </summary>
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (e.Handled || DataContext is not MainViewModel vm)
+            return;
+
+        var mods = e.KeyModifiers;
+        if (mods == KeyModifiers.Control)
+        {
+            switch (e.Key)
+            {
+                case Key.O: OnOpen(this, e); e.Handled = true; return;
+                case Key.S or Key.E when vm.HasSave: OnExport(this, e); e.Handled = true; return;
+                case >= Key.D1 and <= Key.D9: vm.GoToPage(e.Key - Key.D1); e.Handled = true; return;
+                case >= Key.NumPad1 and <= Key.NumPad9: vm.GoToPage(e.Key - Key.NumPad1); e.Handled = true; return;
+            }
+            return;
+        }
+        if (mods != KeyModifiers.None || IsTyping())
+            return;
+        switch (e.Key)
+        {
+            case Key.Q: vm.CyclePage(-1); e.Handled = true; break;
+            case Key.E: vm.CyclePage(+1); e.Handled = true; break;
+            case Key.Escape: vm.Back(); e.Handled = true; break;
+        }
+    }
+
+    private bool IsTyping() => FocusManager?.GetFocusedElement() is TextBox or ComboBox or NumericUpDown or CalendarDatePicker or AutoCompleteBox;
+
     private async void OnOpen(object? sender, RoutedEventArgs e)
     {
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions

@@ -50,7 +50,51 @@ public sealed class MainViewModel : ViewModelBase
     public BoxesPageViewModel Boxes { get; }
     public PartyPageViewModel Party { get; }
     private IReadOnlyList<PageViewModel> AllPages { get; }
-    public IEnumerable<PageViewModel> Pages => AllPages.Where(p => p.IsAvailable);
+    public IReadOnlyList<PageViewModel> Pages
+    {
+        get
+        {
+            var pages = AllPages.Where(p => p.IsAvailable).ToList();
+            for (int i = 0; i < pages.Count; i++)
+                pages[i].Shortcut = i < 9 ? $"Ctrl+{i + 1}" : "";
+            return pages;
+        }
+    }
+
+    // Atalhos de teclado (ligados em MainWindow.OnKeyDown)
+    /// <summary>Vai para a pagina de indice <paramref name="index"/> (Ctrl+1..9).</summary>
+    public void GoToPage(int index)
+    {
+        var pages = Pages;
+        if (HasSave && (uint)index < (uint)pages.Count)
+            CurrentPage = pages[index];
+    }
+
+    /// <summary>Pagina anterior/seguinte, circular (Q/E, como os botoes L/R).</summary>
+    public void CyclePage(int delta)
+    {
+        var pages = Pages;
+        if (!HasSave || pages.Count == 0)
+            return;
+        int i = Math.Max(0, pages.ToList().IndexOf(CurrentPage));
+        CurrentPage = pages[(i + delta + pages.Count) % pages.Count];
+    }
+
+    /// <summary>Esc: fecha o editor; sem editor, volta para Caixas.</summary>
+    public void Back()
+    {
+        if (Editor is not null)
+        {
+            Editor = null;
+            if (_selectedSlot is not null)
+                _selectedSlot.IsSelected = false;
+            _selectedSlot = null;
+            Raise(nameof(CanExportEntity));
+            return;
+        }
+        if (HasSave)
+            CurrentPage = Boxes;
+    }
 
     private PageViewModel _currentPage;
     public PageViewModel CurrentPage { get => _currentPage; set { if (value is not null) Set(ref _currentPage, value); } }

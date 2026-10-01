@@ -15,6 +15,8 @@ public abstract class PageViewModel : ViewModelBase
 {
     public abstract string Title { get; }
     public abstract string Icon { get; }
+    /// <summary>Atalho exibido na barra lateral (Ctrl+1, Ctrl+2...). Definido pelo MainViewModel.</summary>
+    public string Shortcut { get; set; } = "";
     /// <summary>Indica se a pagina se aplica ao save atual (ex.: jogos sem mochila).</summary>
     public virtual bool IsAvailable => true;
     public abstract void Load(SaveFile sav);

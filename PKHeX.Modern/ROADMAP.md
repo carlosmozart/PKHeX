@@ -5,7 +5,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Editor em abas**: Visão geral, Atributos, Golpes, Encontro (bola, local, nível, data), Treinador (OT, TID, SID, gênero) e Extras (felicidade, PID/EC, tornar shiny). A aba ativa se mantém ao trocar de slot.
 - [x] **Desfazer/refazer** nos slots (Ctrl+Z, Ctrl+Y ou Ctrl+Shift+Z, e botões ↶/↷ na barra inferior): mover, copiar, importar e aplicar no editor.
 - [ ] Novos modificadores no arraste: Shift = clonar, Alt = sobrescrever.
-- [ ] **Atalhos de teclado**: Q/E trocam de página (L/R), Esc volta, Ctrl+1–6 vão a cada página, Ctrl+O abre, Ctrl+E exporta. Mostrar os atalhos na barra inferior.
+- [x] **Atalhos de teclado**: Q/E trocam de página (circular), Esc fecha o editor ou volta para Caixas, Ctrl+1–9 vão a cada página, Ctrl+O abre, Ctrl+S/Ctrl+E salvam. Os atalhos aparecem na barra lateral e nos tooltips.
 - [ ] **Cartão de legalidade com correções de um clique**: IVs máximos, golpes sugeridos e local de encontro sugerido (helpers do `CommonEdits` no Core).
 - [ ] **Save Manager**: pasta `saves/` ao lado do exe, saves agrupados por console, com treinador, tempo de jogo, equipe e capa. Abre com duplo clique.
 - [ ] **Mensagens dentro do app**: confirmações embutidas (sobrescrever slot, alterações não salvas ao trocar de save) em vez de diálogos.

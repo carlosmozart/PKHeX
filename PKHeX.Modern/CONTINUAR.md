@@ -41,11 +41,12 @@ dotnet run --project PKHeX.Modern
 - **Validar com captura:** `dotnet build PKHeX.Modern -o %TEMP%/pkm_build` e depois `dotnet run --project Tools/PKHeX.Modern.Render -- <save> <pastaSaida>`. Gera `boxes`, `drag`, `party` (1600×950 e `small_` 1100×720) e `editor_full`.
 - **Editor em abas:** `TabControl.editorTabs` em `PokemonEditorView.axaml`; cabeçalho, botões Showdown e "Aplicar" ficam fora das abas. Bola e local usam `ComboItem` do Core com `SelectedItem` (o valor não é o índice da lista). `CalendarDatePicker.SelectedDate` é `DateTime?` (com `DateTimeOffset?` dá `InvalidCastException`). O render tool gera `tab1..tab5.png`.
 - **Desfazer/refazer:** `Services/SlotHistory.cs` guarda cópias dos slots antes de cada alteração (até 50). A equipe é guardada inteira, porque o Core reordena os slots dela; a restauração usa `EntityImportSettings.None` para não mexer em dados de troca/Pokédex. Toda nova operação que altere slots deve chamar `_history.Record(...)` antes e `Discard()` se falhar. Desfazer não volta a mochila nem o treinador.
+- **Atalhos de teclado:** `MainWindow.OnKeyDown` trata Ctrl+O/S/E/1–9 e Q/E/Esc; Ctrl+Z/Y ficam em `Window.KeyBindings`. Teclas sem modificador são ignoradas com foco em TextBox/ComboBox/NumericUpDown/CalendarDatePicker (`IsTyping`), senão Q/E trocariam de página ao digitar. Testes de teclado no headless: `win.KeyPressQwerty(PhysicalKey.X, RawInputModifiers.Control)`.
 
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
 - Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".
-- **Próximo passo combinado:** editor em abas (feito), desfazer/refazer (feito), depois atalhos de teclado.
+- **Próximo passo combinado:** editor em abas (feito), desfazer/refazer (feito), atalhos de teclado (feito). Próximo da lista: cartão de legalidade com correções de um clique.
 - Preferências de trabalho: respostas e UI em PT-BR; validar mudanças visuais com o render headless antes de commitar; commit e push só quando pedido.
 
 ## Testado com

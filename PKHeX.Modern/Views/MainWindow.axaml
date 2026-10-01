@@ -26,9 +26,9 @@
             <TextBlock Text="Modern" Classes="muted" VerticalAlignment="Bottom" Margin="0,0,0,4" />
           </StackPanel>
           <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                  Content="Abrir save..." Click="OnOpen" />
+                  Content="Abrir save..." Click="OnOpen" ToolTip.Tip="Ctrl+O" />
           <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                  Content="Exportar save..." Click="OnExport" IsEnabled="{Binding HasSave}" />
+                  Content="Exportar save..." Click="OnExport" IsEnabled="{Binding HasSave}" ToolTip.Tip="Ctrl+S ou Ctrl+E" />
           <Button Classes="ghost small" Command="{Binding OpenLastCommand}" IsVisible="{Binding HasLastSave}"
                   ToolTip.Tip="{Binding Settings.LastSavePath}">
             <TextBlock Text="{Binding LastSaveName, StringFormat='↺  Último: {0}'}" TextTrimming="CharacterEllipsis" />
@@ -46,14 +46,18 @@
           <Button Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
         </StackPanel>
 
+        <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding HasSave}" Classes="muted" FontSize="11" Margin="4,0,0,12"
+                   TextWrapping="Wrap" Text="Q / E trocar página · Esc voltar&#10;Ctrl+Z desfazer · Ctrl+Y refazer&#10;Ctrl+O abrir · Ctrl+S salvar" />
+
         <ListBox Classes="nav" IsVisible="{Binding HasSave}" ItemsSource="{Binding Pages}"
                  SelectedItem="{Binding CurrentPage}" Background="Transparent">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:PageViewModel">
-              <StackPanel Orientation="Horizontal" Spacing="10">
+              <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                 <TextBlock Text="{Binding Icon}" Width="20" TextAlignment="Center" />
-                <TextBlock Text="{Binding Title}" />
-              </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding Title}" />
+                <TextBlock Grid.Column="2" Text="{Binding Shortcut}" Classes="muted" FontSize="10" VerticalAlignment="Center" />
+              </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
@@ -99,7 +103,7 @@
                   ToolTip.Tip="Importa um arquivo .pk* para o slot selecionado (ou o primeiro vazio)" />
           <Button Classes="small" Content="⭱  Exportar PKM" Click="OnExportEntity" IsEnabled="{Binding CanExportEntity}"
                   ToolTip.Tip="Salva o Pokémon selecionado como arquivo .pk* (ou arraste o slot para fora da janela)" />
-          <Button Classes="accent small" Content="💾  Salvar" Click="OnExport" ToolTip.Tip="Exportar o save" />
+          <Button Classes="accent small" Content="💾  Salvar" Click="OnExport" ToolTip.Tip="Exportar o save (Ctrl+S)" />
         </StackPanel>
       </Grid>
     </Border>
