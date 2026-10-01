@@ -15,19 +15,25 @@ public sealed class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var vm = new MainViewModel();
+            var settings = Services.AppSettings.Load();
+            RequestedThemeVariant = settings.DarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
+            var vm = new MainViewModel(settings);
             if (desktop.Args is [{ } path, ..] && System.IO.File.Exists(path))
                 vm.Open(path);
+            else if (settings.OpenLastSaveOnStartup && vm.HasLastSave)
+                vm.Open(settings.LastSavePath!);
             desktop.MainWindow = new MainWindow { DataContext = vm };
         }
         base.OnFrameworkInitializationCompleted();
     }
 
-    /// <summary>Alterna entre claro e escuro em tempo real.</summary>
-    public static void ToggleTheme()
+    /// <summary>Alterna entre claro e escuro em tempo real. Retorna true se ficou escuro.</summary>
+    public static bool ToggleTheme()
     {
         if (Current is not { } app)
-            return;
-        app.RequestedThemeVariant = app.ActualThemeVariant == ThemeVariant.Dark ? ThemeVariant.Light : ThemeVariant.Dark;
+            return true;
+        var dark = app.ActualThemeVariant != ThemeVariant.Dark;
+        app.RequestedThemeVariant = dark ? ThemeVariant.Dark : ThemeVariant.Light;
+        return dark;
     }
 }

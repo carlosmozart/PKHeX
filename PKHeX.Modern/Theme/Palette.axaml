@@ -11,6 +11,10 @@
       <SolidColorBrush x:Key="CardBorder" Color="#2E333D" />
       <SolidColorBrush x:Key="TextMuted" Color="#8C93A3" />
       <SolidColorBrush x:Key="Accent" Color="#E5484D" />
+      <Color x:Key="SystemAccentColor">#E5484D</Color>
+      <Color x:Key="SystemAccentColorDark1">#D13C41</Color>
+      <Color x:Key="SystemAccentColorLight1">#F06A6E</Color>
+      <Color x:Key="SystemAccentColorLight2">#F48A8D</Color>
       <SolidColorBrush x:Key="AccentSoft" Color="#3A1F24" />
       <SolidColorBrush x:Key="Good" Color="#46A758" />
       <SolidColorBrush x:Key="Bad" Color="#E5484D" />
@@ -24,6 +28,10 @@
       <SolidColorBrush x:Key="CardBorder" Color="#E2E5EB" />
       <SolidColorBrush x:Key="TextMuted" Color="#6B7280" />
       <SolidColorBrush x:Key="Accent" Color="#D93D42" />
+      <Color x:Key="SystemAccentColor">#D93D42</Color>
+      <Color x:Key="SystemAccentColorDark1">#C23136</Color>
+      <Color x:Key="SystemAccentColorDark2">#A8282D</Color>
+      <Color x:Key="SystemAccentColorLight1">#E5484D</Color>
       <SolidColorBrush x:Key="AccentSoft" Color="#FCE8E9" />
       <SolidColorBrush x:Key="Good" Color="#2F8A42" />
       <SolidColorBrush x:Key="Bad" Color="#D93D42" />

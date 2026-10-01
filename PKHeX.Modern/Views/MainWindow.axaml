@@ -23,6 +23,10 @@
                   Content="Abrir save..." Click="OnOpen" />
           <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                   Content="Exportar save..." Click="OnExport" IsEnabled="{Binding HasSave}" />
+          <Button Classes="ghost small" Command="{Binding OpenLastCommand}" IsVisible="{Binding HasLastSave}"
+                  ToolTip.Tip="{Binding Settings.LastSavePath}">
+            <TextBlock Text="{Binding LastSaveName, StringFormat='↺  Último: {0}'}" TextTrimming="CharacterEllipsis" />
+          </Button>
           <Border Classes="card" Padding="12" Margin="0,10,0,6" IsVisible="{Binding HasSave}">
             <StackPanel Spacing="2">
               <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextWrapping="Wrap" />
@@ -31,7 +35,10 @@
           </Border>
         </StackPanel>
 
-        <Button DockPanel.Dock="Bottom" Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
+        <StackPanel DockPanel.Dock="Bottom" Spacing="2">
+          <CheckBox Content="Abrir último save ao iniciar" FontSize="12" IsChecked="{Binding OpenLastSaveOnStartup}" />
+          <Button Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
+        </StackPanel>
 
         <ListBox Classes="nav" IsVisible="{Binding HasSave}" ItemsSource="{Binding Pages}"
                  SelectedItem="{Binding CurrentPage}" Background="Transparent">
@@ -59,7 +66,7 @@
     </Panel>
 
     <!-- Editor -->
-    <Border Grid.Column="2" Width="390" Background="{DynamicResource SidebarBackground}"
+    <Border Grid.Column="2" Width="410" Background="{DynamicResource SidebarBackground}"
             BorderBrush="{DynamicResource CardBorder}" BorderThickness="1,0,0,0" IsVisible="{Binding HasSave}">
       <Panel>
         <TextBlock Text="Selecione um slot" Classes="muted" IsVisible="{Binding !HasEditor}"

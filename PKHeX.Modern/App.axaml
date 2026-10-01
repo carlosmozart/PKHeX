@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:PKHeX.Modern.ViewModels"
              xmlns:v="using:PKHeX.Modern.Views"
+             xmlns:c="using:PKHeX.Modern.Controls"
              x:Class="PKHeX.Modern.App"
              RequestedThemeVariant="Dark">
   <!-- Cada pagina/ViewModel ganha sua View aqui (um DataTemplate por feature). -->
@@ -43,15 +44,17 @@
         </StackPanel>
         <Button Grid.Column="2" Content="›" FontSize="18" Command="{Binding NextBoxCommand}" />
       </Grid>
-      <Border Classes="card" Padding="12" MaxWidth="1100">
-        <ItemsControl ItemsSource="{Binding Slots}">
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-              <UniformGrid Columns="{Binding $parent[ItemsControl].((vm:BoxesPageViewModel)DataContext).Columns}" />
-            </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-        </ItemsControl>
-      </Border>
+      <ScrollViewer x:Name="BoxScroll" HorizontalScrollBarVisibility="Disabled">
+        <Border Classes="card" Padding="12" MaxWidth="1100" VerticalAlignment="Top">
+          <ItemsControl ItemsSource="{Binding Slots}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="{Binding #BoxScroll.Bounds.Width, Converter={x:Static c:WidthToColumnsConverter.Instance}, ConverterParameter='112,6'}" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+          </ItemsControl>
+        </Border>
+      </ScrollViewer>
     </DockPanel>
   </DataTemplate>
 
@@ -59,10 +62,11 @@
   <DataTemplate DataType="vm:PartyPageViewModel">
     <DockPanel>
       <TextBlock DockPanel.Dock="Top" Text="Equipe" Classes="title" Margin="0,0,0,16" />
+      <ScrollViewer x:Name="PartyScroll" HorizontalScrollBarVisibility="Disabled">
       <ItemsControl ItemsSource="{Binding Slots}" VerticalAlignment="Top" MaxWidth="1100" HorizontalAlignment="Stretch">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
-            <UniformGrid Columns="3" />
+            <UniformGrid Columns="{Binding #PartyScroll.Bounds.Width, Converter={x:Static c:WidthToColumnsConverter.Instance}, ConverterParameter='300,3'}" />
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
@@ -86,6 +90,7 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+      </ScrollViewer>
     </DockPanel>
   </DataTemplate>
 

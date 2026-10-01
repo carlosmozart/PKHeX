@@ -24,17 +24,18 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         Location = location;
         Stats =
         [
-            new("PS",      () => _pk.IV_HP,  v => _pk.IV_HP = v,  () => _pk.EV_HP,  v => _pk.EV_HP = v),
-            new("Ataque",  () => _pk.IV_ATK, v => _pk.IV_ATK = v, () => _pk.EV_ATK, v => _pk.EV_ATK = v),
-            new("Defesa",  () => _pk.IV_DEF, v => _pk.IV_DEF = v, () => _pk.EV_DEF, v => _pk.EV_DEF = v),
-            new("At. Esp.",() => _pk.IV_SPA, v => _pk.IV_SPA = v, () => _pk.EV_SPA, v => _pk.EV_SPA = v),
-            new("Def. Esp.",() => _pk.IV_SPD, v => _pk.IV_SPD = v, () => _pk.EV_SPD, v => _pk.EV_SPD = v),
-            new("Veloc.",  () => _pk.IV_SPE, v => _pk.IV_SPE = v, () => _pk.EV_SPE, v => _pk.EV_SPE = v),
+            new("PS",   "#5FD068", () => _pk.IV_HP,  v => _pk.IV_HP = v,  () => _pk.EV_HP,  v => _pk.EV_HP = v,  _pk.MaxIV, _pk.MaxEV),
+            new("Atq",  "#F5A524", () => _pk.IV_ATK, v => _pk.IV_ATK = v, () => _pk.EV_ATK, v => _pk.EV_ATK = v, _pk.MaxIV, _pk.MaxEV),
+            new("Def",  "#F2D44E", () => _pk.IV_DEF, v => _pk.IV_DEF = v, () => _pk.EV_DEF, v => _pk.EV_DEF = v, _pk.MaxIV, _pk.MaxEV),
+            new("AtE",  "#4FA3F7", () => _pk.IV_SPA, v => _pk.IV_SPA = v, () => _pk.EV_SPA, v => _pk.EV_SPA = v, _pk.MaxIV, _pk.MaxEV),
+            new("DeE",  "#8C7CF0", () => _pk.IV_SPD, v => _pk.IV_SPD = v, () => _pk.EV_SPD, v => _pk.EV_SPD = v, _pk.MaxIV, _pk.MaxEV),
+            new("Vel",  "#F06292", () => _pk.IV_SPE, v => _pk.IV_SPE = v, () => _pk.EV_SPE, v => _pk.EV_SPE = v, _pk.MaxIV, _pk.MaxEV),
         ];
         foreach (var s in Stats)
             s.Changed += Refresh;
         ApplyCommand = new RelayCommand(() => _apply(_pk.Clone()));
         MaxIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; });
+        ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
         Refresh();
     }
 
@@ -49,11 +50,22 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public RelayCommand ApplyCommand { get; }
     public RelayCommand MaxIVsCommand { get; }
+    public RelayCommand ClearEVsCommand { get; }
+    public IReadOnlyList<string> StatLabels { get; } = ["PS", "Atq", "Def", "AtE", "DeE", "Vel"];
+    public IReadOnlyList<double> RadarValues { get; private set; } = [0, 0, 0, 0, 0, 0];
+    public IReadOnlyList<TypeChip> Types { get; private set; } = [];
+    public string GenderSymbol => CoreAdapter.GetGenderSymbol(_pk);
+    public string SpeciesName => (uint)_pk.Species < (uint)SpeciesList.Count ? SpeciesList[_pk.Species] : "";
+    public int StatTotal { get; private set; }
+    public int EVTotal { get; private set; }
+    public int IVTotal { get; private set; }
+    public string EVSummary => $"EVs {EVTotal}/510";
+    public string IVSummary => $"IVs {IVTotal}/{_pk.MaxIV * 6}";
 
     public string Nickname { get => _pk.Nickname; set { _pk.Nickname = value; Refresh(); } }
     public int Species { get => _pk.Species; set { if (value >= 0) { _pk.Species = (ushort)value; Refresh(); } } }
     public int Level { get => _pk.CurrentLevel; set { _pk.CurrentLevel = (byte)Math.Clamp(value, 1, 100); Refresh(); } }
-    public int Nature { get => (int)_pk.Nature; set { if (value >= 0) { _pk.Nature = (Nature)value; Refresh(); } } }
+    public int Nature { get => (int)_pk.StatAlignment; set { if (value >= 0 && value != (int)_pk.StatAlignment) { _pk.SetNature((Nature)value); Refresh(); } } }
     public int HeldItem { get => _pk.HeldItem; set { if (value >= 0) { _pk.HeldItem = value; Refresh(); } } }
     public int Move1 { get => _pk.Move1; set { if (value >= 0) { _pk.Move1 = (ushort)value; Refresh(); } } }
     public int Move2 { get => _pk.Move2; set { if (value >= 0) { _pk.Move2 = (ushort)value; Refresh(); } } }
@@ -87,6 +99,19 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     private void Refresh()
     {
         Sprite = SpriteService.GetSprite(_pk);
+        var final = CoreAdapter.GetFinalStats(_pk);
+        var bases = CoreAdapter.GetBaseStats(_pk);
+        var mods = CoreAdapter.GetNatureModifiers(_pk);
+        for (int i = 0; i < Stats.Count; i++)
+            Stats[i].Update(final[i], bases[i], mods[i]);
+        // Escala do radar: maior atributo = borda; minimo 100 para nao exagerar em niveis baixos
+        double max = Math.Max(100, Math.Max(final[0], Math.Max(final[1], Math.Max(final[2], Math.Max(final[3], Math.Max(final[4], final[5]))))));
+        RadarValues = [.. Array.ConvertAll(final, v => v / max)];
+        StatTotal = 0; EVTotal = 0; IVTotal = 0;
+        foreach (var st in Stats) { StatTotal += st.Total; EVTotal += st.EV; IVTotal += st.IV; }
+        Types = [.. System.Linq.Enumerable.Select(CoreAdapter.GetTypes(_pk), t => new TypeChip(t.Name, t.Argb))];
+        foreach (var p in (string[])[nameof(RadarValues), nameof(StatTotal), nameof(EVTotal), nameof(IVTotal), nameof(EVSummary), nameof(IVSummary), nameof(Types), nameof(GenderSymbol), nameof(SpeciesName)])
+            Raise(p);
         (IsLegal, LegalityReport) = CoreAdapter.CheckLegality(_pk);
         LegalityText = IsLegal ? "Legal" : "Ilegal";
         foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny)])
@@ -94,11 +119,35 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     }
 }
 
-public sealed class StatViewModel(string name, Func<int> getIV, Action<int> setIV, Func<int> getEV, Action<int> setEV) : ViewModelBase
+public sealed record TypeChip(string Name, uint Argb)
+{
+    public Avalonia.Media.IBrush Brush { get; } = new Avalonia.Media.SolidColorBrush(Argb);
+}
+
+public sealed class StatViewModel(string name, string color, Func<int> getIV, Action<int> setIV, Func<int> getEV, Action<int> setEV, int maxIV, int maxEV) : ViewModelBase
 {
     public event Action? Changed;
     public void RaiseAll() => Raise(string.Empty);
     public string Name { get; } = name;
-    public int IV { get => getIV(); set { setIV(value); Raise(); Changed?.Invoke(); } }
-    public int EV { get => getEV(); set { setEV(value); Raise(); Changed?.Invoke(); } }
+    public Avalonia.Media.IBrush Color { get; } = Avalonia.Media.Brush.Parse(color);
+    public int MaxIV { get; } = maxIV;
+    public int MaxEV { get; } = Math.Min(maxEV, 252);
+    public int IV { get => getIV(); set { setIV(Math.Clamp(value, 0, MaxIV)); Raise(); Changed?.Invoke(); } }
+    public int EV { get => getEV(); set { setEV(Math.Clamp(value, 0, MaxEV)); Raise(); Changed?.Invoke(); } }
+
+    public int Total { get; private set; }
+    public int Base { get; private set; }
+    /// <summary>+1 natureza aumenta, -1 diminui.</summary>
+    public int NatureMod { get; private set; }
+    public bool IsBoosted => NatureMod > 0;
+    public bool IsHindered => NatureMod < 0;
+    public string NatureArrow => NatureMod switch { > 0 => "▲", < 0 => "▼", _ => "" };
+    public double BaseRatio => Math.Min(1, Base / 180.0);
+
+    public void Update(int total, int baseStat, int mod)
+    {
+        Total = total; Base = baseStat; NatureMod = mod;
+        foreach (var p in (string[])[nameof(Total), nameof(Base), nameof(NatureMod), nameof(IsBoosted), nameof(IsHindered), nameof(NatureArrow), nameof(BaseRatio)])
+            Raise(p);
+    }
 }

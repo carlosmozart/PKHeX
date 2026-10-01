@@ -1,87 +1,146 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:PKHeX.Modern.ViewModels"
+             xmlns:c="using:PKHeX.Modern.Controls"
              x:Class="PKHeX.Modern.Views.PokemonEditorView"
              x:DataType="vm:PokemonEditorViewModel">
-  <StackPanel Spacing="4">
+  <StackPanel Spacing="12">
 
     <!-- Cabecalho -->
-    <Border Classes="card">
+    <Border Classes="card hero">
       <Grid ColumnDefinitions="Auto,*">
-        <Image Source="{Binding Sprite}" Width="96" Height="80" Stretch="Uniform" Margin="0,0,4,0" RenderOptions.BitmapInterpolationMode="None" />
-        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="4">
-          <TextBlock Text="{Binding Nickname}" Classes="title" />
+        <Border Classes="spriteWell" Width="112" Height="100">
+          <Image Source="{Binding Sprite}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+        </Border>
+        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="6">
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <Border CornerRadius="6" Padding="8,2" Background="{DynamicResource Good}" IsVisible="{Binding IsLegal}">
-              <TextBlock Text="{Binding LegalityText}" Foreground="White" FontSize="12" />
+            <TextBlock Text="{Binding SpeciesName}" Classes="title" />
+            <TextBlock Text="{Binding GenderSymbol}" FontSize="18" Classes="muted" VerticalAlignment="Center" />
+            <TextBlock Text="★" Classes="shiny" FontSize="18" IsVisible="{Binding IsShiny}" VerticalAlignment="Center" />
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding Types}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:TypeChip">
+                <Border Classes="chip" Background="{Binding Brush}">
+                  <TextBlock Text="{Binding Name}" />
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Border Classes="chip" Background="{DynamicResource Good}" IsVisible="{Binding IsLegal}">
+              <TextBlock Text="✓ Legal" />
             </Border>
-            <Border CornerRadius="6" Padding="8,2" Background="{DynamicResource Bad}" IsVisible="{Binding !IsLegal}">
-              <TextBlock Text="{Binding LegalityText}" Foreground="White" FontSize="12" />
+            <Border Classes="chip" Background="{DynamicResource Bad}" IsVisible="{Binding !IsLegal}">
+              <TextBlock Text="✕ Ilegal" />
             </Border>
-            <Border CornerRadius="6" Padding="8,2" Background="{DynamicResource AccentSoft}" IsVisible="{Binding IsShiny}">
-              <TextBlock Text="★ Shiny" FontSize="12" />
-            </Border>
+            <TextBlock Text="{Binding Location}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
           </StackPanel>
         </StackPanel>
       </Grid>
     </Border>
 
-    <TextBlock Text="{Binding Location}" Classes="muted" FontSize="12" Margin="2,4,0,0" />
-    <Grid ColumnDefinitions="*,*" ColumnSpacing="6" Margin="0,6,0,0">
+    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
       <Button Content="⇩ Colar Showdown" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnImportShowdown" />
       <Button Grid.Column="1" Content="⇧ Copiar Showdown" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnExportShowdown" />
     </Grid>
 
-    <TextBlock Text="GERAL" Classes="section" />
-    <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
-      <TextBlock Text="Apelido" VerticalAlignment="Center" />
-      <TextBox Grid.Column="1" Text="{Binding Nickname}" />
-      <TextBlock Grid.Row="1" Text="Espécie" VerticalAlignment="Center" />
-      <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch"
-                ItemsSource="{Binding SpeciesList}" SelectedIndex="{Binding Species}" />
-      <TextBlock Grid.Row="2" Text="Nível" VerticalAlignment="Center" />
-      <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="1" Maximum="100" FormatString="0"
-                     Value="{Binding Level}" />
-      <TextBlock Grid.Row="3" Text="Natureza" VerticalAlignment="Center" />
-      <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch"
-                ItemsSource="{Binding NatureList}" SelectedIndex="{Binding Nature}" />
-      <TextBlock Grid.Row="4" Text="Item" VerticalAlignment="Center" />
-      <ComboBox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Stretch"
-                ItemsSource="{Binding ItemList}" SelectedIndex="{Binding HeldItem}" />
-      <TextBlock Grid.Row="5" Text="Habilidade" VerticalAlignment="Center" />
-      <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding AbilityName}" Classes="muted" VerticalAlignment="Center" />
-    </Grid>
-
-    <TextBlock Text="GOLPES" Classes="section" />
-    <StackPanel Spacing="6">
-      <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move1}" />
-      <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move2}" />
-      <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move3}" />
-      <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move4}" />
-    </StackPanel>
-
-    <Grid ColumnDefinitions="*,Auto">
-      <TextBlock Text="IVs / EVs" Classes="section" />
-      <Button Grid.Column="1" Content="IVs máximos" Command="{Binding MaxIVsCommand}" FontSize="12" Padding="8,3" />
-    </Grid>
-    <ItemsControl ItemsSource="{Binding Stats}">
-      <ItemsControl.ItemTemplate>
-        <DataTemplate x:DataType="vm:StatViewModel">
-          <Grid ColumnDefinitions="80,*,*" ColumnSpacing="6" Margin="0,2">
-            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-            <NumericUpDown Grid.Column="1" Minimum="0" Maximum="31" FormatString="0" Value="{Binding IV}" />
-            <NumericUpDown Grid.Column="2" Minimum="0" Maximum="255" FormatString="0" Value="{Binding EV}" />
+    <!-- Geral -->
+    <Border Classes="card">
+      <StackPanel>
+        <TextBlock Text="GERAL" Classes="section" Margin="0,0,0,8" />
+        <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+          <TextBlock Text="Apelido" VerticalAlignment="Center" />
+          <TextBox Grid.Column="1" Text="{Binding Nickname}" />
+          <TextBlock Grid.Row="1" Text="Espécie" VerticalAlignment="Center" />
+          <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch"
+                    ItemsSource="{Binding SpeciesList}" SelectedIndex="{Binding Species}" />
+          <TextBlock Grid.Row="2" Text="Nível" VerticalAlignment="Center" />
+          <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Slider Minimum="1" Maximum="100" Value="{Binding Level}" IsSnapToTickEnabled="True" TickFrequency="1" />
+            <NumericUpDown Grid.Column="1" Width="110" Minimum="1" Maximum="100" FormatString="0" Value="{Binding Level}" />
           </Grid>
-        </DataTemplate>
-      </ItemsControl.ItemTemplate>
-    </ItemsControl>
-
-    <TextBlock Text="LEGALIDADE" Classes="section" />
-    <Border Classes="card" Padding="12">
-      <SelectableTextBlock Text="{Binding LegalityReport}" TextWrapping="Wrap" FontSize="12" />
+          <TextBlock Grid.Row="3" Text="Natureza" VerticalAlignment="Center" />
+          <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch"
+                    ItemsSource="{Binding NatureList}" SelectedIndex="{Binding Nature}" />
+          <TextBlock Grid.Row="4" Text="Item" VerticalAlignment="Center" />
+          <ComboBox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Stretch"
+                    ItemsSource="{Binding ItemList}" SelectedIndex="{Binding HeldItem}" />
+          <TextBlock Grid.Row="5" Text="Habilidade" VerticalAlignment="Center" />
+          <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding AbilityName}" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </Grid>
+      </StackPanel>
     </Border>
 
-    <Button Classes="accent" Content="Aplicar alterações" HorizontalAlignment="Stretch"
-            HorizontalContentAlignment="Center" Margin="0,16,0,0" Command="{Binding ApplyCommand}" />
+    <!-- Atributos -->
+    <Border Classes="card">
+      <StackPanel Spacing="6">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="ATRIBUTOS" Classes="section" Margin="0" />
+          <TextBlock Grid.Column="1" Text="{Binding StatTotal, StringFormat='Total {0}'}" Classes="muted" FontSize="12" />
+        </Grid>
+        <c:StatRadar Height="190" Values="{Binding RadarValues}" Labels="{Binding StatLabels}"
+                     Fill="{DynamicResource Accent}" GridBrush="{DynamicResource CardBorder}" LabelBrush="{DynamicResource TextMuted}" />
+
+        <ItemsControl ItemsSource="{Binding Stats}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:StatViewModel">
+              <Grid ColumnDefinitions="52,*,44" RowDefinitions="Auto,Auto,Auto" Margin="0,4">
+                <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{Binding Color}" />
+                  <TextBlock Text="{Binding NatureArrow}" FontSize="9" VerticalAlignment="Center"
+                             Classes.up="{Binding IsBoosted}" Classes.down="{Binding IsHindered}" />
+                </StackPanel>
+                <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="6" VerticalAlignment="Center">
+                  <ProgressBar Classes="base" Minimum="0" Maximum="1" Value="{Binding BaseRatio}" Foreground="{Binding Color}" />
+                  <TextBlock Grid.Column="1" Text="{Binding Base, StringFormat='base {0}'}" Classes="muted" FontSize="11" />
+                </Grid>
+                <TextBlock Grid.Column="2" Text="{Binding Total}" FontWeight="Bold" FontSize="16" HorizontalAlignment="Right" />
+
+                <TextBlock Grid.Row="1" Text="IV" Classes="muted" FontSize="11" VerticalAlignment="Center" Margin="4,0,0,0" />
+                <Slider Grid.Row="1" Grid.Column="1" Classes="stat" Minimum="0" Maximum="{Binding MaxIV}" Value="{Binding IV}"
+                        IsSnapToTickEnabled="True" TickFrequency="1" Foreground="{Binding Color}" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding IV}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+
+                <TextBlock Grid.Row="2" Text="EV" Classes="muted" FontSize="11" VerticalAlignment="Center" Margin="4,0,0,0" />
+                <Slider Grid.Row="2" Grid.Column="1" Classes="stat" Minimum="0" Maximum="{Binding MaxEV}" Value="{Binding EV}"
+                        IsSnapToTickEnabled="True" TickFrequency="4" Foreground="{Binding Color}" />
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding EV}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" Margin="0,4,0,0">
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{Binding IVSummary}" Classes="muted" FontSize="11" />
+            <TextBlock Text="{Binding EVSummary}" Classes="muted" FontSize="11" />
+          </StackPanel>
+          <Button Grid.Column="1" Classes="small" Content="IVs máximos" Command="{Binding MaxIVsCommand}" />
+          <Button Grid.Column="2" Classes="small" Content="Zerar EVs" Command="{Binding ClearEVsCommand}" />
+        </Grid>
+      </StackPanel>
+    </Border>
+
+    <!-- Golpes -->
+    <Border Classes="card">
+      <StackPanel Spacing="6">
+        <TextBlock Text="GOLPES" Classes="section" Margin="0,0,0,2" />
+        <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move1}" />
+        <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move2}" />
+        <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move3}" />
+        <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move4}" />
+      </StackPanel>
+    </Border>
+
+    <Expander Header="Relatório de legalidade" HorizontalAlignment="Stretch">
+      <SelectableTextBlock Text="{Binding LegalityReport}" TextWrapping="Wrap" FontSize="12" />
+    </Expander>
+
+    <Button Classes="accent" Content="Aplicar alterações" HorizontalAlignment="Stretch" Height="40"
+            HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Command="{Binding ApplyCommand}" />
   </StackPanel>
 </UserControl>

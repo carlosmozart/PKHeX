@@ -11,10 +11,18 @@ public sealed class MainViewModel : ViewModelBase
     private SaveFile? _sav;
     private SlotViewModel? _selectedSlot;
 
-    public MainViewModel()
+    public AppSettings Settings { get; }
+
+    public MainViewModel(AppSettings? settings = null)
     {
+        Settings = settings ?? new AppSettings();
+        OpenLastCommand = new RelayCommand(() => { if (HasLastSave) Open(Settings.LastSavePath!); });
         CoreAdapter.SetLanguage("en");
-        ToggleThemeCommand = new RelayCommand(App.ToggleTheme);
+        ToggleThemeCommand = new RelayCommand(() =>
+        {
+            Settings.DarkTheme = App.ToggleTheme();
+            Settings.Save();
+        });
         Boxes = new BoxesPageViewModel(SelectSlot);
         Party = new PartyPageViewModel(SelectSlot);
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
@@ -31,6 +39,16 @@ public sealed class MainViewModel : ViewModelBase
     public PageViewModel CurrentPage { get => _currentPage; set { if (value is not null) Set(ref _currentPage, value); } }
 
     public RelayCommand ToggleThemeCommand { get; }
+    public RelayCommand OpenLastCommand { get; }
+
+    public bool HasLastSave => Settings.LastSavePath is { } p && System.IO.File.Exists(p);
+    public string LastSaveName => HasLastSave ? System.IO.Path.GetFileName(Settings.LastSavePath!) : "";
+
+    public bool OpenLastSaveOnStartup
+    {
+        get => Settings.OpenLastSaveOnStartup;
+        set { Settings.OpenLastSaveOnStartup = value; Settings.Save(); Raise(); }
+    }
 
     public bool HasSave => _sav is not null;
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
@@ -59,6 +77,10 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var p in (string[])[nameof(HasSave), nameof(GameName), nameof(TrainerInfo), nameof(Pages)])
             Raise(p);
         Status = $"Aberto: {System.IO.Path.GetFileName(path)}";
+        Settings.LastSavePath = System.IO.Path.GetFullPath(path);
+        Settings.Save();
+        Raise(nameof(HasLastSave));
+        Raise(nameof(LastSaveName));
     }
 
     public void Export(string path)

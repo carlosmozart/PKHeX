@@ -72,6 +72,47 @@ public static class CoreAdapter
         sav.SetPartySlotAtIndex(pk, Math.Min(slot, sav.PartyCount));
     }
 
+    // Atributos e tipos
+    /// <summary>Atributos finais na ordem da UI: PS, Atq, Def, AtE, DeE, Vel.</summary>
+    public static int[] GetFinalStats(PKM pk)
+    {
+        var s = pk.GetStats(pk.PersonalInfo); // H/A/B/S/C/D
+        return [s[0], s[1], s[2], s[4], s[5], s[3]];
+    }
+
+    /// <summary>Atributos base da especie, mesma ordem da UI.</summary>
+    public static int[] GetBaseStats(PKM pk)
+    {
+        var p = pk.PersonalInfo;
+        return [p.HP, p.ATK, p.DEF, p.SPA, p.SPD, p.SPE];
+    }
+
+    /// <summary>Modificador da natureza por atributo (UI order): +1, -1 ou 0.</summary>
+    public static int[] GetNatureModifiers(PKM pk)
+    {
+        var result = new int[6];
+        var n = (int)pk.StatAlignment;
+        if (n >= 25 || n / 5 == n % 5)
+            return result;
+        // ordem interna da natureza: Atq, Def, Vel, AtE, DeE -> indices na UI
+        ReadOnlySpan<int> map = [1, 2, 5, 3, 4];
+        result[map[n / 5]] = 1;
+        result[map[n % 5]] = -1;
+        return result;
+    }
+
+    public static IReadOnlyList<(string Name, uint Argb)> GetTypes(PKM pk)
+    {
+        var p = pk.PersonalInfo;
+        var names = GameInfo.Strings.types;
+        var list = new List<(string, uint)> { (names[p.Type1], (uint)Drawing.PokeSprite.TypeColor.GetTypeSpriteColor(p.Type1).ToArgb()) };
+        if (p.Type2 != p.Type1)
+            list.Add((names[p.Type2], (uint)Drawing.PokeSprite.TypeColor.GetTypeSpriteColor(p.Type2).ToArgb()));
+        return list;
+    }
+
+    public static string GetGenderSymbol(PKM pk) => pk.Gender switch { 0 => "♂", 1 => "♀", _ => "" };
+
     // Showdown
     public static string ToShowdown(PKM pk) => ShowdownParsing.GetShowdownText(pk);
 
