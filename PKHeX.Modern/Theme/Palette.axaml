@@ -1,0 +1,34 @@
+<!-- Toda a identidade visual fica aqui: troque as cores sem tocar nas telas. -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="AppBackground" Color="#14161B" />
+      <SolidColorBrush x:Key="SidebarBackground" Color="#1B1E25" />
+      <SolidColorBrush x:Key="CardBackground" Color="#20242C" />
+      <SolidColorBrush x:Key="SlotBackground" Color="#2A2F39" />
+      <SolidColorBrush x:Key="SlotHover" Color="#353B48" />
+      <SolidColorBrush x:Key="CardBorder" Color="#2E333D" />
+      <SolidColorBrush x:Key="TextMuted" Color="#8C93A3" />
+      <SolidColorBrush x:Key="Accent" Color="#E5484D" />
+      <SolidColorBrush x:Key="AccentSoft" Color="#3A1F24" />
+      <SolidColorBrush x:Key="Good" Color="#46A758" />
+      <SolidColorBrush x:Key="Bad" Color="#E5484D" />
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="AppBackground" Color="#F4F5F8" />
+      <SolidColorBrush x:Key="SidebarBackground" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF" />
+      <SolidColorBrush x:Key="SlotBackground" Color="#EEF0F4" />
+      <SolidColorBrush x:Key="SlotHover" Color="#E1E4EB" />
+      <SolidColorBrush x:Key="CardBorder" Color="#E2E5EB" />
+      <SolidColorBrush x:Key="TextMuted" Color="#6B7280" />
+      <SolidColorBrush x:Key="Accent" Color="#D93D42" />
+      <SolidColorBrush x:Key="AccentSoft" Color="#FCE8E9" />
+      <SolidColorBrush x:Key="Good" Color="#2F8A42" />
+      <SolidColorBrush x:Key="Bad" Color="#D93D42" />
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+  <CornerRadius x:Key="CardRadius">12</CornerRadius>
+  <CornerRadius x:Key="SlotRadius">8</CornerRadius>
+</ResourceDictionary>

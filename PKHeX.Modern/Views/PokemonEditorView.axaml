@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKHeX.Modern.ViewModels"
+             x:Class="PKHeX.Modern.Views.PokemonEditorView"
+             x:DataType="vm:PokemonEditorViewModel">
+  <StackPanel Spacing="4">
+
+    <!-- Cabecalho -->
+    <Border Classes="card">
+      <Grid ColumnDefinitions="Auto,*">
+        <Image Source="{Binding Sprite}" Width="96" Height="80" RenderOptions.BitmapInterpolationMode="None" />
+        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="4">
+          <TextBlock Text="{Binding Nickname}" Classes="title" />
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Border CornerRadius="6" Padding="8,2" Background="{DynamicResource Good}" IsVisible="{Binding IsLegal}">
+              <TextBlock Text="{Binding LegalityText}" Foreground="White" FontSize="12" />
+            </Border>
+            <Border CornerRadius="6" Padding="8,2" Background="{DynamicResource Bad}" IsVisible="{Binding !IsLegal}">
+              <TextBlock Text="{Binding LegalityText}" Foreground="White" FontSize="12" />
+            </Border>
+            <Border CornerRadius="6" Padding="8,2" Background="{DynamicResource AccentSoft}" IsVisible="{Binding IsShiny}">
+              <TextBlock Text="★ Shiny" FontSize="12" />
+            </Border>
+          </StackPanel>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <TextBlock Text="GERAL" Classes="section" />
+    <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+      <TextBlock Text="Apelido" VerticalAlignment="Center" />
+      <TextBox Grid.Column="1" Text="{Binding Nickname}" />
+      <TextBlock Grid.Row="1" Text="Espécie" VerticalAlignment="Center" />
+      <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch"
+                ItemsSource="{Binding SpeciesList}" SelectedIndex="{Binding Species}" />
+      <TextBlock Grid.Row="2" Text="Nível" VerticalAlignment="Center" />
+      <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="1" Maximum="100" FormatString="0"
+                     Value="{Binding Level}" />
+      <TextBlock Grid.Row="3" Text="Natureza" VerticalAlignment="Center" />
+      <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch"
+                ItemsSource="{Binding NatureList}" SelectedIndex="{Binding Nature}" />
+      <TextBlock Grid.Row="4" Text="Item" VerticalAlignment="Center" />
+      <ComboBox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Stretch"
+                ItemsSource="{Binding ItemList}" SelectedIndex="{Binding HeldItem}" />
+      <TextBlock Grid.Row="5" Text="Habilidade" VerticalAlignment="Center" />
+      <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding AbilityName}" Classes="muted" VerticalAlignment="Center" />
+    </Grid>
+
+    <TextBlock Text="GOLPES" Classes="section" />
+    <StackPanel Spacing="6">
+      <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move1}" />
+      <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move2}" />
+      <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move3}" />
+      <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move4}" />
+    </StackPanel>
+
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Text="IVs / EVs" Classes="section" />
+      <Button Grid.Column="1" Content="IVs máximos" Command="{Binding MaxIVsCommand}" FontSize="12" Padding="8,3" />
+    </Grid>
+    <ItemsControl ItemsSource="{Binding Stats}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:StatViewModel">
+          <Grid ColumnDefinitions="80,*,*" ColumnSpacing="6" Margin="0,2">
+            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1" Minimum="0" Maximum="31" FormatString="0" Value="{Binding IV}" />
+            <NumericUpDown Grid.Column="2" Minimum="0" Maximum="255" FormatString="0" Value="{Binding EV}" />
+          </Grid>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <TextBlock Text="LEGALIDADE" Classes="section" />
+    <Border Classes="card" Padding="12">
+      <SelectableTextBlock Text="{Binding LegalityReport}" TextWrapping="Wrap" FontSize="12" />
+    </Border>
+
+    <Button Classes="accent" Content="Aplicar alterações" HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Center" Margin="0,16,0,0" Command="{Binding ApplyCommand}" />
+  </StackPanel>
+</UserControl>

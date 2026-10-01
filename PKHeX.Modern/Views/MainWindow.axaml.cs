@@ -1,0 +1,47 @@
+using System.Linq;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
+using PKHeX.Modern.ViewModels;
+
+namespace PKHeX.Modern.Views;
+
+public sealed partial class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
+        AddHandler(DragDrop.DropEvent, OnDrop);
+    }
+
+    private MainViewModel VM => (MainViewModel)DataContext!;
+
+    private async void OnOpen(object? sender, RoutedEventArgs e)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Abrir save",
+            AllowMultiple = false,
+        });
+        if (files.FirstOrDefault()?.TryGetLocalPath() is { } path)
+            VM.Open(path);
+    }
+
+    private async void OnExport(object? sender, RoutedEventArgs e)
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Exportar save",
+            SuggestedFileName = VM.SuggestedFileName,
+        });
+        if (file?.TryGetLocalPath() is { } path)
+            VM.Export(path);
+    }
+
+    private void OnDrop(object? sender, DragEventArgs e)
+    {
+        if (e.Data.GetFiles()?.FirstOrDefault()?.TryGetLocalPath() is { } path)
+            VM.Open(path);
+    }
+}

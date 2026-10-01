@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    PKHeX.Modern: interface alternativa (Avalonia) para o PKHeX.
+    Regra de ouro: este projeto apenas CONSOME PKHeX.Core / PKHeX.Drawing.*.
+    Nada aqui deve exigir alteracoes nos projetos do upstream, para que
+    "git merge upstream/master" continue sem conflitos.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- -windows apenas porque os sprites usam System.Drawing (PKHeX.Drawing.*). -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>PKHeX.Modern</RootNamespace>
+    <AssemblyName>PKHeX.Modern</AssemblyName>
+    <ApplicationIcon>..\PKHeX.WinForms\Resources\Icon.ico</ApplicationIcon>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.6" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PKHeX.Core\PKHeX.Core.csproj" />
+    <ProjectReference Include="..\PKHeX.Drawing\PKHeX.Drawing.csproj" />
+    <ProjectReference Include="..\PKHeX.Drawing.PokeSprite\PKHeX.Drawing.PokeSprite.csproj" />
+  </ItemGroup>
+
+</Project>
