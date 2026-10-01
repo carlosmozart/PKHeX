@@ -34,11 +34,16 @@ Novas funções do Core (novos jogos, legalidade, encontros) funcionam automatic
 1. Crie `ViewModels/XxxViewModel.cs` herdando `ViewModelBase`.
 2. Crie `Views/XxxView.axaml`.
 3. Registre o par em `App.axaml` → `Application.DataTemplates`.
+   Para uma página da barra lateral, herde `PageViewModel` (em `ViewModels/Pages.cs`) e adicione-a em `AllPages` no `MainViewModel`.
 4. Se precisar de algo novo do Core, exponha via `CoreAdapter`.
 
 ## Estado atual
 
 - Abrir save (botão ou arrastar arquivo), exportar save
-- Navegação de caixas com sprites
-- Editor: apelido, espécie, nível, natureza, item, golpes, IVs/EVs, relatório de legalidade
-- Alternar tema claro/escuro
+- **Caixas**: navegação com sprites
+- **Equipe**: cartões com sprite, nome e nível
+- **Treinador**: nome, TID/SID, dinheiro, tempo de jogo
+- **Mochila**: bolsos em abas, item e quantidade (respeita os limites do jogo)
+- **Editor**: apelido, espécie, nível, natureza, item, golpes, IVs/EVs, legalidade, colar/copiar Showdown
+- Slots vazios abrem o editor em branco (crie um Pokémon colando um set Showdown)
+- Tema claro/escuro

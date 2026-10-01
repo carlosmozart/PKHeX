@@ -4,11 +4,142 @@
              xmlns:v="using:PKHeX.Modern.Views"
              x:Class="PKHeX.Modern.App"
              RequestedThemeVariant="Dark">
-  <!-- Cada ViewModel novo ganha sua View aqui (uma linha por tela/feature). -->
+  <!-- Cada pagina/ViewModel ganha sua View aqui (um DataTemplate por feature). -->
   <Application.DataTemplates>
-    <DataTemplate DataType="vm:PokemonEditorViewModel">
-      <v:PokemonEditorView />
-    </DataTemplate>
+
+  <DataTemplate DataType="vm:PokemonEditorViewModel">
+    <v:PokemonEditorView />
+  </DataTemplate>
+
+  <!-- Slot (caixa ou equipe) -->
+  <DataTemplate DataType="vm:SlotViewModel">
+    <Button Classes="slot" Classes.selected="{Binding IsSelected}"
+            ToolTip.Tip="{Binding Tooltip}"
+            Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
+            CommandParameter="{Binding}">
+      <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="Uniform"
+             RenderOptions.BitmapInterpolationMode="None" />
+    </Button>
+  </DataTemplate>
+
+  <!-- Caixas -->
+  <DataTemplate DataType="vm:BoxesPageViewModel">
+    <DockPanel>
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,16">
+        <Button Content="‹" FontSize="18" Command="{Binding PreviousBoxCommand}" />
+        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+          <TextBlock Text="{Binding BoxName}" Classes="title" HorizontalAlignment="Center" />
+          <TextBlock Text="{Binding BoxLabel}" Classes="muted" HorizontalAlignment="Center" />
+        </StackPanel>
+        <Button Grid.Column="2" Content="›" FontSize="18" Command="{Binding NextBoxCommand}" />
+      </Grid>
+      <Border Classes="card" VerticalAlignment="Top" HorizontalAlignment="Center">
+        <ItemsControl ItemsSource="{Binding Slots}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel MaxWidth="500" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+        </ItemsControl>
+      </Border>
+    </DockPanel>
+  </DataTemplate>
+
+  <!-- Equipe -->
+  <DataTemplate DataType="vm:PartyPageViewModel">
+    <DockPanel>
+      <TextBlock DockPanel.Dock="Top" Text="Equipe" Classes="title" Margin="0,0,0,16" />
+      <ItemsControl ItemsSource="{Binding Slots}" VerticalAlignment="Top">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <UniformGrid Columns="2" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:SlotViewModel">
+            <Button Classes="partyCard" Classes.selected="{Binding IsSelected}"
+                    Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
+                    CommandParameter="{Binding}">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <Image Source="{Binding Sprite}" Width="68" Height="56" RenderOptions.BitmapInterpolationMode="None" />
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="16" />
+                  <TextBlock Text="{Binding Subtitle}" Classes="muted" />
+                </StackPanel>
+              </StackPanel>
+            </Button>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </DockPanel>
+  </DataTemplate>
+
+  <!-- Treinador -->
+  <DataTemplate DataType="vm:TrainerPageViewModel">
+    <StackPanel MaxWidth="560" HorizontalAlignment="Left" Spacing="4">
+      <TextBlock Text="Treinador" Classes="title" Margin="0,0,0,8" />
+      <Border Classes="card">
+        <StackPanel Spacing="2">
+          <TextBlock Text="{Binding Game}" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding Generation}" Classes="muted" />
+          <TextBlock Text="{Binding Checksum, StringFormat='Checksums: {0}'}" Classes="muted" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+      <TextBlock Text="IDENTIDADE" Classes="section" />
+      <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+        <TextBlock Text="Nome (OT)" VerticalAlignment="Center" />
+        <TextBox Grid.Column="1" Text="{Binding OT}" />
+        <TextBlock Grid.Row="1" Text="TID" VerticalAlignment="Center" />
+        <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="4294967295" FormatString="0" Value="{Binding TID}" />
+        <TextBlock Grid.Row="2" Text="SID" VerticalAlignment="Center" />
+        <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="4294967295" FormatString="0" Value="{Binding SID}" />
+        <TextBlock Grid.Row="3" Text="Dinheiro" VerticalAlignment="Center" />
+        <NumericUpDown Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="{Binding MaxMoney}" FormatString="N0" Value="{Binding Money}" />
+      </Grid>
+      <TextBlock Text="TEMPO DE JOGO" Classes="section" />
+      <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+        <NumericUpDown Minimum="0" Maximum="65535" FormatString="0" Value="{Binding Hours}" ToolTip.Tip="Horas" />
+        <NumericUpDown Grid.Column="1" Minimum="0" Maximum="59" FormatString="0" Value="{Binding Minutes}" ToolTip.Tip="Minutos" />
+        <NumericUpDown Grid.Column="2" Minimum="0" Maximum="59" FormatString="0" Value="{Binding Seconds}" ToolTip.Tip="Segundos" />
+      </Grid>
+      <TextBlock Text="As alterações valem imediatamente; exporte o save para gravar no arquivo."
+                 Classes="muted" FontSize="12" Margin="0,12,0,0" TextWrapping="Wrap" />
+    </StackPanel>
+  </DataTemplate>
+
+  <!-- Mochila -->
+  <DataTemplate DataType="vm:BagPageViewModel">
+    <DockPanel>
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+        <TextBlock Text="Mochila" Classes="title" />
+        <Button Grid.Column="1" Classes="accent" Content="Gravar mochila" Command="{Binding SaveCommand}" />
+      </Grid>
+      <ListBox DockPanel.Dock="Top" Classes="tabs" ItemsSource="{Binding Pouches}" SelectedItem="{Binding SelectedPouch}"
+               Margin="0,0,0,12" Background="Transparent">
+        <ListBox.ItemsPanel>
+          <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:PouchViewModel">
+            <TextBlock Text="{Binding Name}" />
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+      <Border Classes="card" Padding="8">
+        <ListBox ItemsSource="{Binding SelectedPouch.Items}" Background="Transparent">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:BagItemViewModel">
+              <Grid ColumnDefinitions="*,140" ColumnSpacing="8">
+                <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Options}"
+                          SelectedItem="{Binding Selected}" IsEnabled="{Binding IsEditable}" />
+                <NumericUpDown Grid.Column="1" Minimum="0" FormatString="0" Value="{Binding Count}" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Border>
+    </DockPanel>
+  </DataTemplate>
   </Application.DataTemplates>
   <Application.Styles>
     <FluentTheme />

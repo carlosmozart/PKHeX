@@ -65,4 +65,48 @@
   <Style Selector="TextBox, ComboBox, NumericUpDown">
     <Setter Property="CornerRadius" Value="8" />
   </Style>
+
+  <!-- Navegacao lateral -->
+  <Style Selector="ListBox.nav ListBoxItem">
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="Margin" Value="0,2" />
+  </Style>
+  <Style Selector="ListBox.nav ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+  </Style>
+  <Style Selector="ListBox.nav ListBoxItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- Abas em pilula (bolsos da mochila) -->
+  <Style Selector="ListBox.tabs ListBoxItem">
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="Padding" Value="14,6" />
+    <Setter Property="Margin" Value="0,0,6,6" />
+    <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
+  </Style>
+  <Style Selector="ListBox.tabs ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Accent}" />
+  </Style>
+  <Style Selector="ListBox.tabs ListBoxItem:selected">
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <!-- Cartao da equipe -->
+  <Style Selector="Button.partyCard">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Margin" Value="0,0,12,12" />
+    <Setter Property="Padding" Value="14" />
+    <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
+    <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Button.partyCard.selected">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
 </Styles>

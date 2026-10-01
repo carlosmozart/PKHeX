@@ -55,6 +55,32 @@ public static class CoreAdapter
         sav.SetBoxSlotAtIndex(pk, box, slot);
     }
 
+    public static int GetPartyCount(SaveFile sav) => sav.HasParty ? 6 : 0;
+    public static PKM GetPartySlot(SaveFile sav, int slot) => slot < sav.PartyCount ? sav.GetPartySlotAtIndex(slot) : sav.BlankPKM;
+
+    public static void SetPartySlot(SaveFile sav, PKM pk, int slot)
+    {
+        pk.RefreshChecksum();
+        sav.SetPartySlotAtIndex(pk, Math.Min(slot, sav.PartyCount));
+    }
+
+    // Showdown
+    public static string ToShowdown(PKM pk) => ShowdownParsing.GetShowdownText(pk);
+
+    /// <summary>Aplica um set Showdown ao Pokemon. Retorna mensagem de erro ou null.</summary>
+    public static string? ApplyShowdown(PKM pk, string text)
+    {
+        if (!ShowdownParsing.TryParseAnyLanguage(text, out var set) || set.Species == 0)
+            return "Texto Showdown inválido.";
+        pk.ApplySetDetails(set);
+        return set.InvalidLines.Count == 0 ? null : $"{set.InvalidLines.Count} linha(s) ignorada(s).";
+    }
+
+    // Mochila
+    public static PlayerBag GetBag(SaveFile sav) => sav.Inventory;
+    public static void SaveBag(SaveFile sav, PlayerBag bag) => bag.CopyTo(sav);
+    public static bool IsBagItemIdEditable(SaveFile sav) => sav is not (SAV9ZA or SAV9SV);
+
     public static (bool Valid, string Report) CheckLegality(PKM pk)
     {
         try

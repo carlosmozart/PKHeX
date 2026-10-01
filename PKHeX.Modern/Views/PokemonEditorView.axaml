@@ -26,6 +26,12 @@
       </Grid>
     </Border>
 
+    <TextBlock Text="{Binding Location}" Classes="muted" FontSize="12" Margin="2,4,0,0" />
+    <Grid ColumnDefinitions="*,*" ColumnSpacing="6" Margin="0,6,0,0">
+      <Button Content="⇩ Colar Showdown" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnImportShowdown" />
+      <Button Grid.Column="1" Content="⇧ Copiar Showdown" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="OnExportShowdown" />
+    </Grid>
+
     <TextBlock Text="GERAL" Classes="section" />
     <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
       <TextBlock Text="Apelido" VerticalAlignment="Center" />

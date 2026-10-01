@@ -4,10 +4,14 @@ using PKHeX.Modern.Services;
 
 namespace PKHeX.Modern.ViewModels;
 
+/// <summary>Um slot de caixa ou da equipe. <see cref="Box"/> = -1 indica equipe.</summary>
 public sealed class SlotViewModel(int box, int slot) : ViewModelBase
 {
+    public const int Party = -1;
+
     public int Box { get; } = box;
     public int Slot { get; } = slot;
+    public bool IsParty => Box == Party;
 
     private PKM? _pkm;
     public PKM? Pkm { get => _pkm; private set => Set(ref _pkm, value); }
@@ -18,15 +22,27 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     private bool _isSelected;
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
 
-    public string Tooltip => Pkm is { } pk && !CoreAdapter.IsEmpty(pk)
-        ? $"{CoreAdapter.SpeciesNames[pk.Species]} · Nv. {pk.CurrentLevel}"
-        : "Vazio";
+    public bool IsEmpty => Pkm is null || CoreAdapter.IsEmpty(Pkm);
+    public string Title => IsEmpty ? "Vazio" : CoreAdapter.SpeciesNames[Pkm!.Species];
+    public string Subtitle => IsEmpty ? "" : $"Nv. {Pkm!.CurrentLevel}";
+    public string Tooltip => IsEmpty ? "Vazio" : $"{Title} · {Subtitle}";
+    public string Location => IsParty ? $"equipe, posição {Slot + 1}" : $"caixa {Box + 1}, slot {Slot + 1}";
 
     public void Load(SaveFile sav)
     {
-        var pk = CoreAdapter.GetBoxSlot(sav, Box, Slot);
+        var pk = IsParty ? CoreAdapter.GetPartySlot(sav, Slot) : CoreAdapter.GetBoxSlot(sav, Box, Slot);
         Pkm = pk;
-        Sprite = SpriteService.GetSprite(pk, sav, Box, Slot);
-        Raise(nameof(Tooltip));
+        Sprite = IsParty ? SpriteService.GetSprite(pk) : SpriteService.GetSprite(pk, sav, Box, Slot);
+        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip)])
+            Raise(p);
+    }
+
+    public void Write(SaveFile sav, PKM pk)
+    {
+        if (IsParty)
+            CoreAdapter.SetPartySlot(sav, pk, Slot);
+        else
+            CoreAdapter.SetBoxSlot(sav, pk, Box, Slot);
+        Load(sav);
     }
 }

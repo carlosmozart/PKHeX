@@ -14,11 +14,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 {
     private readonly PKM _pk;
     private readonly Action<PKM> _apply;
+    private readonly Action<string> _status;
 
-    public PokemonEditorViewModel(PKM source, Action<PKM> apply)
+    public PokemonEditorViewModel(PKM source, string location, Action<PKM> apply, Action<string> status)
     {
         _pk = source.Clone();
         _apply = apply;
+        _status = status;
+        Location = location;
         Stats =
         [
             new("PS",      () => _pk.IV_HP,  v => _pk.IV_HP = v,  () => _pk.EV_HP,  v => _pk.EV_HP = v),
@@ -40,6 +43,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public IReadOnlyList<string> ItemList => CoreAdapter.ItemNames;
     public IReadOnlyList<string> NatureList => CoreAdapter.NatureNames;
     public IReadOnlyList<StatViewModel> Stats { get; }
+    public string Location { get; }
     public int MaxIV => _pk.MaxIV;
     public int MaxEV => _pk.MaxEV;
 
@@ -63,6 +67,23 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public string LegalityText { get; private set; } = "";
     public string LegalityReport { get; private set; } = "";
 
+    public string ExportShowdown() => CoreAdapter.ToShowdown(_pk);
+
+    public void ImportShowdown(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            _status("Área de transferência vazia.");
+            return;
+        }
+        var error = CoreAdapter.ApplyShowdown(_pk, text);
+        Refresh();
+        Raise(string.Empty); // atualiza todos os campos
+        foreach (var st in Stats)
+            st.RaiseAll();
+        _status(error ?? "Set Showdown importado. Clique em Aplicar para gravar.");
+    }
+
     private void Refresh()
     {
         Sprite = SpriteService.GetSprite(_pk);
@@ -76,6 +97,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 public sealed class StatViewModel(string name, Func<int> getIV, Action<int> setIV, Func<int> getEV, Action<int> setEV) : ViewModelBase
 {
     public event Action? Changed;
+    public void RaiseAll() => Raise(string.Empty);
     public string Name { get; } = name;
     public int IV { get => getIV(); set { setIV(value); Raise(); Changed?.Invoke(); } }
     public int EV { get => getEV(); set { setEV(value); Raise(); Changed?.Invoke(); } }

@@ -4,83 +4,65 @@
         x:Class="PKHeX.Modern.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="PKHeX Modern"
-        Width="1280" Height="800" MinWidth="960" MinHeight="600"
+        Width="1320" Height="820" MinWidth="980" MinHeight="600"
         Background="{DynamicResource AppBackground}"
         DragDrop.AllowDrop="True">
 
-  <Grid ColumnDefinitions="240,*,380" RowDefinitions="*,Auto">
+  <Grid ColumnDefinitions="232,*,Auto" RowDefinitions="*,Auto">
 
     <!-- Barra lateral -->
     <Border Grid.RowSpan="2" Background="{DynamicResource SidebarBackground}"
             BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,0,1,0" Padding="16">
       <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Spacing="4">
-          <TextBlock Text="PKHeX" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Accent}" />
-          <TextBlock Text="Modern" Classes="muted" Margin="0,0,0,16" />
+        <StackPanel DockPanel.Dock="Top" Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,14">
+            <TextBlock Text="PKHeX" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Accent}" />
+            <TextBlock Text="Modern" Classes="muted" VerticalAlignment="Bottom" Margin="0,0,0,4" />
+          </StackPanel>
           <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                   Content="Abrir save..." Click="OnOpen" />
           <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                   Content="Exportar save..." Click="OnExport" IsEnabled="{Binding HasSave}" />
+          <Border Classes="card" Padding="12" Margin="0,10,0,6" IsVisible="{Binding HasSave}">
+            <StackPanel Spacing="2">
+              <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding TrainerInfo}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
         </StackPanel>
-        <StackPanel DockPanel.Dock="Bottom" Spacing="4">
-          <Button Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
-        </StackPanel>
-        <Border Classes="card" Margin="0,20,0,0" VerticalAlignment="Top" IsVisible="{Binding HasSave}">
-          <StackPanel Spacing="4">
-            <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextWrapping="Wrap" />
-            <TextBlock Text="{Binding TrainerInfo}" Classes="muted" TextWrapping="Wrap" />
-            <TextBlock Text="{Binding ChecksumInfo}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
-          </StackPanel>
-        </Border>
+
+        <Button DockPanel.Dock="Bottom" Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
+
+        <ListBox Classes="nav" IsVisible="{Binding HasSave}" ItemsSource="{Binding Pages}"
+                 SelectedItem="{Binding CurrentPage}" Background="Transparent">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:PageViewModel">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="{Binding Icon}" Width="20" TextAlignment="Center" />
+                <TextBlock Text="{Binding Title}" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
       </DockPanel>
     </Border>
 
-    <!-- Caixas -->
-    <Grid Grid.Column="1" Margin="24" RowDefinitions="Auto,*">
-      <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,16" IsVisible="{Binding HasSave}">
-        <Button Content="‹" FontSize="18" Command="{Binding PreviousBoxCommand}" />
-        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-          <TextBlock Text="{Binding BoxName}" Classes="title" HorizontalAlignment="Center" />
-          <TextBlock Classes="muted" HorizontalAlignment="Center"
-                     Text="{Binding BoxLabel}" />
-        </StackPanel>
-        <Button Grid.Column="2" Content="›" FontSize="18" Command="{Binding NextBoxCommand}" />
-      </Grid>
-
-      <Border Grid.Row="1" Classes="card" IsVisible="{Binding !HasSave}">
+    <!-- Conteudo -->
+    <Panel Grid.Column="1" Margin="24">
+      <Border Classes="card" IsVisible="{Binding !HasSave}">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
           <TextBlock Text="Arraste um arquivo de save aqui" Classes="title" HorizontalAlignment="Center" />
           <TextBlock Text="ou use o botão “Abrir save...”" Classes="muted" HorizontalAlignment="Center" />
         </StackPanel>
       </Border>
-
-      <Border Grid.Row="1" Classes="card" IsVisible="{Binding HasSave}" VerticalAlignment="Top">
-        <ItemsControl ItemsSource="{Binding Slots}">
-          <ItemsControl.ItemsPanel>
-            <ItemsPanelTemplate>
-              <WrapPanel MaxWidth="500" HorizontalAlignment="Center" />
-            </ItemsPanelTemplate>
-          </ItemsControl.ItemsPanel>
-          <ItemsControl.ItemTemplate>
-            <DataTemplate x:DataType="vm:SlotViewModel">
-              <Button Classes="slot" Classes.selected="{Binding IsSelected}"
-                      ToolTip.Tip="{Binding Tooltip}"
-                      Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).SelectSlotCommand}"
-                      CommandParameter="{Binding}">
-                <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="Uniform"
-                       RenderOptions.BitmapInterpolationMode="None" />
-              </Button>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </Border>
-    </Grid>
+      <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding HasSave}" />
+    </Panel>
 
     <!-- Editor -->
-    <Border Grid.Column="2" Background="{DynamicResource SidebarBackground}"
-            BorderBrush="{DynamicResource CardBorder}" BorderThickness="1,0,0,0">
+    <Border Grid.Column="2" Width="390" Background="{DynamicResource SidebarBackground}"
+            BorderBrush="{DynamicResource CardBorder}" BorderThickness="1,0,0,0" IsVisible="{Binding HasSave}">
       <Panel>
-        <TextBlock Text="Selecione um Pokémon" Classes="muted" IsVisible="{Binding !HasEditor}"
+        <TextBlock Text="Selecione um slot" Classes="muted" IsVisible="{Binding !HasEditor}"
                    HorizontalAlignment="Center" VerticalAlignment="Center" />
         <ScrollViewer IsVisible="{Binding HasEditor}">
           <ContentControl Content="{Binding Editor}" Margin="20" />
