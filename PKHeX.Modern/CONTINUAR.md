@@ -37,5 +37,15 @@ dotnet run --project PKHeX.Modern
 - **Save de teste sem jogo:** `BlankSaveFile.Get(GameVersion.B)` (Black) grava e é reconhecido ao reabrir. Saves vazios de Gen 3/4 e Gen 7/8 falham ao gravar ou não são reconhecidos.
 - **Testes de render:** um `MainViewModel()` sem `AppSettings.Load()` não grava preferências em disco, então pode ser usado à vontade.
 
+- **Selo de legalidade em Pokémon novo:** o modelo em branco (`CreateBlank`) vem com a última espécie do jogo (ex.: Genesect na Gen 5), então `IsEmpty` não serve para detectá-lo. O editor recebe `isNew: slot.IsEmpty` e esconde o selo e o relatório (`ShowLegality`) até o usuário escolher uma espécie ou colar um set Showdown válido.
+- **Validar com captura:** `dotnet build PKHeX.Modern -o %TEMP%/pkm_build` e depois `dotnet run --project Tools/PKHeX.Modern.Render -- <save> <pastaSaida>`. Gera `boxes`, `drag`, `party` (1600×950 e `small_` 1100×720) e `editor_full`.
+
+## Estado atual e próximo passo (2026-10-01)
+- Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
+- Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".
+- **Próximo passo combinado:** editor em abas, depois desfazer/refazer, depois atalhos de teclado.
+- Preferências de trabalho: respostas e UI em PT-BR; validar mudanças visuais com o render headless antes de commitar; commit e push só quando pedido.
+
 ## Testado com
 - `FireRed_e.sav` (FR/LG, Gen 3): caixas, equipe, treinador, mochila, Showdown, exportar e reabrir (checksums válidos).
+- Save pós-jogo de Pokémon Black (Gen 5): equipe com gênero e legalidade, barra de ações. A Caixa 1 está vazia, então os cartões de caixa preenchidos não aparecem nas capturas.

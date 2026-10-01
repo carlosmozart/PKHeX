@@ -1,5 +1,16 @@
 # Roadmap / Pendências
 
+## Inspirado no TidalHeX (https://github.com/HydrosPlays/TidalHeX)
+Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinForms + WebView2, então o código dele não serve aqui.
+- [ ] **Editor em abas**: Visão geral, Encontro, Atributos, Golpes, Treinador e Extras. Hoje o editor é uma coluna longa (precisa de 1900 px de altura).
+- [ ] **Desfazer/refazer** nos slots (Ctrl+Z/Ctrl+Y) e novos modificadores no arraste: Shift = clonar, Alt = sobrescrever.
+- [ ] **Atalhos de teclado**: Q/E trocam de página (L/R), Esc volta, Ctrl+1–6 vão a cada página, Ctrl+O abre, Ctrl+E exporta. Mostrar os atalhos na barra inferior.
+- [ ] **Cartão de legalidade com correções de um clique**: IVs máximos, golpes sugeridos e local de encontro sugerido (helpers do `CommonEdits` no Core).
+- [ ] **Save Manager**: pasta `saves/` ao lado do exe, saves agrupados por console, com treinador, tempo de jogo, equipe e capa. Abre com duplo clique.
+- [ ] **Mensagens dentro do app**: confirmações embutidas (sobrescrever slot, alterações não salvas ao trocar de save) em vez de diálogos.
+- [ ] **Bancos de encontros e Mystery Gift em cartões**, com painel de detalhes e o filtro "Só Pokémon deste jogo".
+- Fora de escopo: modo clássico, plugins do PKHeX (dependem do WinForms). Fundo animado só com opção de reduzir movimento.
+
 ## Próximos passos sugeridos
 - [x] **Arrastar e soltar Pokémon** entre slots, caixas e equipe (trocar, mover, copiar com Ctrl, setas trocam de caixa, soltar .pk\* importa).
 - [x] Arrastar um slot **para fora** da janela para exportar como arquivo .pk\*.
@@ -14,7 +25,7 @@
 - [ ] **Cor de destaque configurável** (a referência visual usa ciano/teal; hoje é vermelho, definido em `Theme/Palette.axaml`).
 - [ ] **Editor mais completo**: OT, ID, bola, local e data de encontro, fitas, memórias, Hyper Training, Tera Type, PID/EC e "Tornar shiny".
 - [ ] **Pokédex**, **Batch Editor**, **banco de dados / pesquisa**, **Mystery Gift**, **editores específicos de cada jogo** (eventos, flags, records).
-- [ ] **Desfazer/refazer** alterações nos slots.
+- [ ] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [ ] **Backup automático** do save antes de exportar por cima do original.
 - [ ] **Instalador / publicação**: `dotnet publish -c Release -r win-x64 --self-contained` e um GitHub Action que gere o .exe.
 - [ ] **Multiplataforma** (Linux/macOS): trocar o `System.Drawing` dos sprites por um carregador próprio (SkiaSharp), já que o Avalonia roda em todos.
