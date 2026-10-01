@@ -160,6 +160,17 @@
   <Style Selector="Border.saveCard.current">
     <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
   </Style>
+  <Style Selector="Border.dialogBackdrop">
+    <Setter Property="Background" Value="#99000000" />
+  </Style>
+  <Style Selector="Border.dialog">
+    <Setter Property="Padding" Value="22" />
+    <Setter Property="BoxShadow" Value="0 12 40 0 #66000000" />
+  </Style>
+  <Style Selector="TextBlock.unsaved">
+    <Setter Property="Foreground" Value="#F5A524" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />

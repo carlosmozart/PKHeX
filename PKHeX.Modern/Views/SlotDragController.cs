@@ -145,16 +145,16 @@ public sealed class SlotDragController
         if (_dragging is { } src)
         {
             if (target is not null)
-                _vm().MoveSlot(src, target, e.KeyModifiers.HasFlag(KeyModifiers.Control));
+                _ = _vm().MoveSlotAsync(src, target, e.KeyModifiers.HasFlag(KeyModifiers.Control));
             return;
         }
 
         if (e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath() is not { } path)
             return;
         if (target is not null && _vm().HasSave)
-            _vm().ImportFile(target, path);
+            _ = _vm().ImportFileAsync(target, path);
         else
-            _vm().Open(path);
+            _ = _vm().OpenAsync(path);
     }
 
     private void SetHover(SlotViewModel? slot, Button? arrow)

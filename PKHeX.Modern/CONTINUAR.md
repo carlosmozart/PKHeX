@@ -45,11 +45,12 @@ dotnet run --project PKHeX.Modern
 - **Correções de legalidade:** `CoreAdapter.SuggestMoves/SuggestRelearnMoves/SuggestMetData` usam as mesmas funções do Batch Editor (`SetMoveset`, `SetRelearnMoves`, `EncounterSuggestion.GetSuggestedMetInfo`). `SuggestMetData` devolve null quando a espécie não tem encontro no jogo (ex.: Pikachu em Black). Os problemas listados vêm das linhas "Invalid"/"Fishy" do `Report()`, em inglês por enquanto.
 - **Troca de espécie:** use `CoreAdapter.ChangeSpecies` (forma 0, apelido padrão se não tinha apelido, mesmo slot de habilidade, gênero válido). Só trocar `pk.Species` deixa o Pokémon ilegal (apelido e habilidade da espécie antiga).
 - **Save Manager:** `Services/SaveLibrary.cs` varre a pasta em `Task.Run` (só Core, sem sprites); os sprites da equipe são gerados na thread da interface, sob demanda (`SaveEntryViewModel.PartySprites`). A pasta fica em `AppSettings.SavesFolder` (null = `saves` ao lado do exe). Relê ao ativar a janela e ao entrar na página. Compare caminhos com `Path.GetFullPath`: o Explorer e o `EnumerateFiles` podem misturar `/` e `\`.
+- **Perguntas dentro do app:** use `await MainViewModel.ConfirmAsync(...)` (mostra `ConfirmDialogViewModel` sobre a janela). As ações da interface têm versão `...Async` que pergunta antes (`OpenAsync`, `MoveSlotAsync`, `ImportFileAsync`, `SelectSlotAsync`); as versões síncronas (`Open`, `MoveSlot`) não perguntam e servem para startup e testes. `IsDirty` marca alterações não exportadas: toda nova operação que altere o save deve definir `IsDirty = true` (páginas chamam `PageViewModel.Changed`). O editor sabe se tem edição pendente comparando os bytes (`IsModified`).
 
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
 - Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".
-- **Próximo passo combinado:** editor em abas (feito), desfazer/refazer (feito), atalhos de teclado (feito), cartão de legalidade (feito), Save Manager (feito). Próximo da lista: mensagens dentro do app (confirmações embutidas).
+- **Próximo passo combinado:** editor em abas (feito), desfazer/refazer (feito), atalhos de teclado (feito), cartão de legalidade (feito), Save Manager (feito), mensagens dentro do app (feito). Próximo da lista: bancos de encontros e Mystery Gift em cartões.
 - Preferências de trabalho: respostas e UI em PT-BR; validar mudanças visuais com o render headless antes de commitar; commit e push só quando pedido.
 
 ## Testado com

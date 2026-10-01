@@ -13,6 +13,9 @@ namespace PKHeX.Modern.ViewModels;
 public sealed class PokemonEditorViewModel : ViewModelBase
 {
     private readonly PKM _pk;
+    private byte[] _savedData;
+    /// <summary>Ha edicoes ainda nao aplicadas no slot.</summary>
+    public bool IsModified => !_pk.Data.SequenceEqual(_savedData);
     private readonly Action<PKM> _apply;
     private readonly Action<string> _status;
 
@@ -20,6 +23,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         _isNew = isNew;
         _pk = source.Clone();
+        _savedData = _pk.Data.ToArray();
         _apply = apply;
         _status = status;
         Location = location;
@@ -34,7 +38,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         ];
         foreach (var s in Stats)
             s.Changed += Refresh;
-        ApplyCommand = new RelayCommand(() => _apply(_pk.Clone()));
+        ApplyCommand = new RelayCommand(() => { _apply(_pk.Clone()); _savedData = _pk.Data.ToArray(); });
         MaxIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; });
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
         MakeShinyCommand = new RelayCommand(() => { _pk.SetShiny(); RaiseAll(); });

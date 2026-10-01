@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using PKHeX.Core;
 using PKHeX.Modern.Services;
 
@@ -17,18 +18,20 @@ public sealed class MainViewModel : ViewModelBase
     public MainViewModel(AppSettings? settings = null)
     {
         Settings = settings ?? new AppSettings();
-        OpenLastCommand = new RelayCommand(() => { if (HasLastSave) Open(Settings.LastSavePath!); });
+        OpenLastCommand = new RelayCommand(() => { if (HasLastSave) _ = OpenAsync(Settings.LastSavePath!); });
         CoreAdapter.SetLanguage("en");
         ToggleThemeCommand = new RelayCommand(() =>
         {
             Settings.DarkTheme = App.ToggleTheme();
             Settings.Save();
         });
-        Party = new PartyPageViewModel(SelectSlot);
-        Boxes = new BoxesPageViewModel(SelectSlot) { Party = Party };
+        Party = new PartyPageViewModel(s => _ = SelectSlotAsync(s));
+        Boxes = new BoxesPageViewModel(s => _ = SelectSlotAsync(s)) { Party = Party };
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
-        SaveManager = new SaveManagerViewModel(Settings, Open);
+        SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p));
         AllPages = [Boxes, Party, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), SaveManager];
+        foreach (var page in AllPages)
+            page.Changed = () => IsDirty = true;
         _currentPage = Boxes;
         CheckLegalityCommand = new RelayCommand(CheckLegality, () => HasSave);
         CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
@@ -83,10 +86,12 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     /// <summary>Esc: fecha o editor; sem editor, volta para Caixas.</summary>
-    public void Back()
+    public async void Back()
     {
         if (Editor is not null)
         {
+            if (!await ConfirmDiscardEditAsync())
+                return;
             Editor = null;
             if (_selectedSlot is not null)
                 _selectedSlot.IsSelected = false;
@@ -137,6 +142,43 @@ public sealed class MainViewModel : ViewModelBase
     public PokemonEditorViewModel? Editor { get => _editor; private set { Set(ref _editor, value); Raise(nameof(HasEditor)); } }
     public bool HasEditor => Editor is not null;
 
+    // Mensagens dentro do app
+    private ConfirmDialogViewModel? _dialog;
+    /// <summary>Pergunta aberta no momento (sobreposicao na janela), ou null.</summary>
+    public ConfirmDialogViewModel? Dialog { get => _dialog; private set { Set(ref _dialog, value); Raise(nameof(HasDialog)); } }
+    public bool HasDialog => Dialog is not null;
+
+    /// <summary>Mostra uma pergunta dentro da janela e espera a resposta (true = confirmar).</summary>
+    public async Task<bool> ConfirmAsync(string title, string message, string confirmText, string cancelText = "Cancelar", bool isDanger = false)
+    {
+        Dialog?.Complete(false); // so uma pergunta por vez
+        var dialog = new ConfirmDialogViewModel(title, message, confirmText, cancelText, isDanger);
+        Dialog = dialog;
+        try { return await dialog.Result; }
+        finally { if (Dialog == dialog) Dialog = null; }
+    }
+
+    private bool _isDirty;
+    /// <summary>Ha alteracoes no save que ainda nao foram exportadas.</summary>
+    public bool IsDirty { get => _isDirty; private set => Set(ref _isDirty, value); }
+
+    /// <summary>Confirma o descarte das alteracoes nao exportadas (true = pode seguir).</summary>
+    public async Task<bool> ConfirmDiscardChangesAsync(string action)
+    {
+        if (!IsDirty)
+            return true;
+        return await ConfirmAsync("Alterações não exportadas",
+            $"O save atual tem alterações que ainda não foram exportadas. {action} vai descartá-las.",
+            "Descartar alterações", "Voltar", isDanger: true);
+    }
+
+    /// <summary>Abre um save pela interface: pergunta antes de descartar alteracoes.</summary>
+    public async Task OpenAsync(string path)
+    {
+        if (await ConfirmDiscardChangesAsync("Abrir outro save"))
+            Open(path);
+    }
+
     public void Open(string path)
     {
         var sav = CoreAdapter.LoadSave(path);
@@ -146,6 +188,7 @@ public sealed class MainViewModel : ViewModelBase
             return;
         }
         _sav = sav;
+        IsDirty = false;
         _history = new SlotHistory(sav);
         OnHistoryChanged();
         Editor = null;
@@ -170,6 +213,7 @@ public sealed class MainViewModel : ViewModelBase
         try
         {
             CoreAdapter.ExportSave(_sav, path);
+            IsDirty = false;
             Status = $"Salvo em {path}";
         }
         catch (Exception ex)
@@ -181,6 +225,17 @@ public sealed class MainViewModel : ViewModelBase
     public string? SuggestedFileName => _sav?.Metadata.FileName;
 
     /// <summary>Arrastar e soltar: move/troca (ou copia, com Ctrl) entre slots de caixa e equipe.</summary>
+    public async Task MoveSlotAsync(SlotViewModel src, SlotViewModel dst, bool copy)
+    {
+        if (_sav is null || src == dst)
+            return;
+        if (copy && !dst.IsEmpty && !src.IsEmpty && !await ConfirmAsync("Substituir Pokémon?",
+                $"{dst.Title} ({dst.Location}) será substituído por uma cópia de {src.Title}. Dá para desfazer com Ctrl+Z.",
+                "Substituir"))
+            return;
+        MoveSlot(src, dst, copy);
+    }
+
     public void MoveSlot(SlotViewModel src, SlotViewModel dst, bool copy)
     {
         if (_sav is null)
@@ -199,14 +254,15 @@ public sealed class MainViewModel : ViewModelBase
             return;
         }
         OnHistoryChanged();
+        IsDirty = true;
         RefreshSlots();
         Status = copy
             ? $"{srcName} copiado para {dst.Location}. Lembre-se de exportar o save."
             : $"{srcName} movido para {dst.Location}. Lembre-se de exportar o save.";
     }
 
-    /// <summary>Soltar um arquivo .pk* sobre um slot.</summary>
-    public void ImportFile(SlotViewModel dst, string path)
+    /// <summary>Soltar um arquivo .pk* sobre um slot (pergunta antes de substituir um Pokemon).</summary>
+    public async Task ImportFileAsync(SlotViewModel dst, string path)
     {
         if (_sav is null)
             return;
@@ -216,6 +272,17 @@ public sealed class MainViewModel : ViewModelBase
             Status = "Arquivo de Pokémon incompatível com este save.";
             return;
         }
+        if (!dst.IsEmpty && !await ConfirmAsync("Substituir Pokémon?",
+                $"{dst.Title} ({dst.Location}) será substituído por {CoreAdapter.SpeciesNames[pk.Species]} do arquivo. Dá para desfazer com Ctrl+Z.",
+                "Substituir"))
+            return;
+        ImportEntity(dst, pk);
+    }
+
+    private void ImportEntity(SlotViewModel dst, PKM pk)
+    {
+        if (_sav is null)
+            return;
         _history!.Record($"importar {CoreAdapter.SpeciesNames[pk.Species]}", SlotHistory.KeyOf(dst.Box, dst.Slot));
         var error = CoreAdapter.ImportToSlot(_sav, CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot), pk);
         if (error is not null)
@@ -225,6 +292,7 @@ public sealed class MainViewModel : ViewModelBase
             return;
         }
         OnHistoryChanged();
+        IsDirty = true;
         RefreshSlots();
         Status = $"{CoreAdapter.SpeciesNames[pk.Species]} importado em {dst.Location}.";
     }
@@ -246,7 +314,7 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     /// <summary>Importar (botao): vai para o slot selecionado ou, sem selecao, para o primeiro slot vazio da caixa.</summary>
-    public void ImportFile(string path)
+    public async Task ImportFileAsync(string path)
     {
         var dst = _selectedSlot ?? Boxes.Slots.FirstOrDefault(s => s.IsEmpty);
         if (dst is null)
@@ -254,7 +322,7 @@ public sealed class MainViewModel : ViewModelBase
             Status = "Não há slot vazio nesta caixa. Selecione um slot para substituir.";
             return;
         }
-        ImportFile(dst, path);
+        await ImportFileAsync(dst, path);
     }
 
     /// <summary>Verifica a legalidade da caixa atual e da equipe.</summary>
@@ -268,7 +336,7 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     /// <summary>Criar PKM: abre o editor em branco no primeiro slot vazio da caixa atual.</summary>
-    private void CreateInFirstEmpty()
+    private async void CreateInFirstEmpty()
     {
         CurrentPage = Boxes;
         if (Boxes.Slots.FirstOrDefault(s => s.IsEmpty) is not { } slot)
@@ -276,6 +344,8 @@ public sealed class MainViewModel : ViewModelBase
             Status = "Esta caixa está cheia. Escolha outra caixa ou um slot vazio.";
             return;
         }
+        if (!await ConfirmDiscardEditAsync())
+            return;
         SelectSlot(slot);
         Status = $"Novo Pokémon em {slot.Location}. Escolha a espécie (ou cole um set Showdown) e clique em Aplicar.";
     }
@@ -284,6 +354,7 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_history?.Undo() is not { } what)
             return;
+        IsDirty = true;
         OnHistoryChanged();
         RefreshSlots();
         Status = $"Desfeito: {what}.";
@@ -293,6 +364,7 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_history?.Redo() is not { } what)
             return;
+        IsDirty = true;
         OnHistoryChanged();
         RefreshSlots();
         Status = $"Refeito: {what}.";
@@ -317,6 +389,24 @@ public sealed class MainViewModel : ViewModelBase
         Raise(nameof(CanExportEntity));
     }
 
+    /// <summary>Selecionar um slot pela interface: pergunta antes de descartar edicoes nao aplicadas.</summary>
+    public async Task SelectSlotAsync(SlotViewModel slot)
+    {
+        if (slot != _selectedSlot && !await ConfirmDiscardEditAsync())
+            return;
+        SelectSlot(slot);
+    }
+
+    /// <summary>true = pode descartar (sem edicoes pendentes ou o usuario confirmou).</summary>
+    private async Task<bool> ConfirmDiscardEditAsync()
+    {
+        if (Editor is not { IsModified: true } editor)
+            return true;
+        return await ConfirmAsync("Descartar edição?",
+            $"As alterações em {editor.SpeciesName} ({editor.Location}) ainda não foram aplicadas.",
+            "Descartar", "Continuar editando", isDanger: true);
+    }
+
     private void SelectSlot(SlotViewModel slot)
     {
         if (_selectedSlot is not null)
@@ -339,6 +429,7 @@ public sealed class MainViewModel : ViewModelBase
             }
             _history!.Record($"editar {CoreAdapter.SpeciesNames[pk.Species]}", SlotHistory.KeyOf(slot.Box, slot.Slot));
             OnHistoryChanged();
+            IsDirty = true;
             slot.Write(_sav, pk);
             if (slot.IsParty)
                 Party.Load(_sav);

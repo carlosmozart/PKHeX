@@ -15,6 +15,22 @@ public sealed partial class MainWindow : Window
         _drag = new SlotDragController(this, () => VM);
         // Como no TidalHeX: ao voltar para a janela, a lista de saves e relida (novos arquivos aparecem sozinhos).
         Activated += (_, _) => { if (DataContext is MainViewModel vm && (!vm.HasSave || vm.CurrentPage == vm.SaveManager)) _ = vm.SaveManager.RefreshAsync(); };
+        Closing += OnClosing;
+    }
+
+    private bool _closeConfirmed;
+
+    /// <summary>Fechar com alteracoes nao exportadas: pergunta dentro da janela antes de sair.</summary>
+    private async void OnClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (_closeConfirmed || DataContext is not MainViewModel { IsDirty: true } vm)
+            return;
+        e.Cancel = true;
+        if (await vm.ConfirmDiscardChangesAsync("Fechar o PKHeX Modern"))
+        {
+            _closeConfirmed = true;
+            Close();
+        }
     }
 
     private readonly SlotDragController _drag;
@@ -30,6 +46,17 @@ public sealed partial class MainWindow : Window
         base.OnKeyDown(e);
         if (e.Handled || DataContext is not MainViewModel vm)
             return;
+
+        // Pergunta aberta: Enter confirma, Esc cancela, o resto fica bloqueado.
+        if (vm.Dialog is { } dialog)
+        {
+            if (e.Key is Key.Enter or Key.Return)
+                dialog.Complete(true);
+            else if (e.Key == Key.Escape)
+                dialog.Complete(false);
+            e.Handled = true;
+            return;
+        }
 
         var mods = e.KeyModifiers;
         if (mods == KeyModifiers.Control)
@@ -63,7 +90,7 @@ public sealed partial class MainWindow : Window
             AllowMultiple = false,
         });
         if (files.FirstOrDefault()?.TryGetLocalPath() is { } path)
-            VM.Open(path);
+            await VM.OpenAsync(path);
     }
 
     private async void OnExport(object? sender, RoutedEventArgs e)
@@ -86,7 +113,7 @@ public sealed partial class MainWindow : Window
             FileTypeFilter = [EntityFileType, FilePickerFileTypes.All],
         });
         if (files.FirstOrDefault()?.TryGetLocalPath() is { } path)
-            VM.ImportFile(path);
+            await VM.ImportFileAsync(path);
     }
 
     private async void OnExportEntity(object? sender, RoutedEventArgs e)

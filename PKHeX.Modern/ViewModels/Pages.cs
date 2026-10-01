@@ -17,6 +17,8 @@ public abstract class PageViewModel : ViewModelBase
     public abstract string Icon { get; }
     /// <summary>Atalho exibido na barra lateral (Ctrl+1, Ctrl+2...). Definido pelo MainViewModel.</summary>
     public string Shortcut { get; set; } = "";
+    /// <summary>Chamado quando a pagina altera o save (marca alteracoes nao exportadas).</summary>
+    public Action? Changed { get; set; }
     /// <summary>Indica se a pagina se aplica ao save atual (ex.: jogos sem mochila).</summary>
     public virtual bool IsAvailable => true;
     public abstract void Load(SaveFile sav);
@@ -131,13 +133,13 @@ public sealed class TrainerPageViewModel : PageViewModel
     public string Checksum => _sav is null ? "" : _sav.ChecksumsValid ? "Válidos" : _sav.ChecksumInfo;
     public int MaxMoney => _sav?.MaxMoney ?? 0;
 
-    public string OT { get => _sav?.OT ?? ""; set { if (_sav is not null) _sav.OT = value; Raise(); } }
-    public decimal TID { get => _sav?.DisplayTID ?? 0; set { if (_sav is not null) _sav.DisplayTID = (uint)value; Raise(); } }
-    public decimal SID { get => _sav?.DisplaySID ?? 0; set { if (_sav is not null) _sav.DisplaySID = (uint)value; Raise(); } }
-    public decimal Money { get => _sav?.Money ?? 0; set { if (_sav is not null) _sav.Money = (uint)Math.Min(value, MaxMoney); Raise(); } }
-    public decimal Hours { get => _sav?.PlayedHours ?? 0; set { if (_sav is not null) _sav.PlayedHours = (int)value; Raise(); } }
-    public decimal Minutes { get => _sav?.PlayedMinutes ?? 0; set { if (_sav is not null) _sav.PlayedMinutes = (int)value; Raise(); } }
-    public decimal Seconds { get => _sav?.PlayedSeconds ?? 0; set { if (_sav is not null) _sav.PlayedSeconds = (int)value; Raise(); } }
+    public string OT { get => _sav?.OT ?? ""; set { if (_sav is not null) { _sav.OT = value; Changed?.Invoke(); } Raise(); } }
+    public decimal TID { get => _sav?.DisplayTID ?? 0; set { if (_sav is not null) { _sav.DisplayTID = (uint)value; Changed?.Invoke(); } Raise(); } }
+    public decimal SID { get => _sav?.DisplaySID ?? 0; set { if (_sav is not null) { _sav.DisplaySID = (uint)value; Changed?.Invoke(); } Raise(); } }
+    public decimal Money { get => _sav?.Money ?? 0; set { if (_sav is not null) { _sav.Money = (uint)Math.Min(value, MaxMoney); Changed?.Invoke(); } Raise(); } }
+    public decimal Hours { get => _sav?.PlayedHours ?? 0; set { if (_sav is not null) { _sav.PlayedHours = (int)value; Changed?.Invoke(); } Raise(); } }
+    public decimal Minutes { get => _sav?.PlayedMinutes ?? 0; set { if (_sav is not null) { _sav.PlayedMinutes = (int)value; Changed?.Invoke(); } Raise(); } }
+    public decimal Seconds { get => _sav?.PlayedSeconds ?? 0; set { if (_sav is not null) { _sav.PlayedSeconds = (int)value; Changed?.Invoke(); } Raise(); } }
 }
 
 public sealed class BagPageViewModel(Action<string> status) : PageViewModel
@@ -180,6 +182,7 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
         if (_sav is null || _bag is null)
             return;
         CoreAdapter.SaveBag(_sav, _bag);
+        Changed?.Invoke();
         status("Mochila gravada. Lembre-se de exportar o save.");
     }
 }
