@@ -37,12 +37,14 @@ public sealed class MainViewModel : ViewModelBase
         _currentPage = Boxes;
         CheckLegalityCommand = new RelayCommand(CheckLegality, () => HasSave);
         CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
+        DeleteCommand = new RelayCommand(() => _ = DeleteSelectedAsync(), () => CanExportEntity);
         UndoCommand = new RelayCommand(Undo, () => _history?.CanUndo == true);
         RedoCommand = new RelayCommand(Redo, () => _history?.CanRedo == true);
     }
 
     public RelayCommand CheckLegalityCommand { get; }
     public RelayCommand UndoCommand { get; }
+    public RelayCommand DeleteCommand { get; }
     public RelayCommand RedoCommand { get; }
     public string UndoTip => _history?.UndoDescription is { } d ? $"Desfazer: {d} (Ctrl+Z)" : "Nada para desfazer (Ctrl+Z)";
     public string RedoTip => _history?.RedoDescription is { } d ? $"Refazer: {d} (Ctrl+Y)" : "Nada para refazer (Ctrl+Y)";
@@ -100,7 +102,7 @@ public sealed class MainViewModel : ViewModelBase
             if (_selectedSlot is not null)
                 _selectedSlot.IsSelected = false;
             _selectedSlot = null;
-            Raise(nameof(CanExportEntity));
+            RaiseSelectionChanged();
             return;
         }
         if (HasSave)
@@ -201,8 +203,9 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var page in AllPages)
             page.Load(sav);
         CurrentPage = Boxes;
-        foreach (var p in (string[])[nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(TrainerInfo), nameof(Pages), nameof(CanExportEntity)])
+        foreach (var p in (string[])[nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(TrainerInfo), nameof(Pages)])
             Raise(p);
+        RaiseSelectionChanged();
         CheckLegalityCommand.NotifyCanExecuteChanged();
         CreateCommand.NotifyCanExecuteChanged();
         Status = $"Aberto: {System.IO.Path.GetFileName(path)}";
@@ -319,6 +322,30 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Excluir (Delete): apaga o Pokemon selecionado. Da para desfazer com Ctrl+Z.</summary>
+    public async Task DeleteSelectedAsync()
+    {
+        if (_sav is null || _selectedSlot is not { IsEmpty: false } slot)
+            return;
+        var name = slot.Title;
+        if (!await ConfirmAsync("Excluir Pokémon?", $"{name} ({slot.Location}) será apagado. Dá para desfazer com Ctrl+Z.",
+                "Excluir", isDanger: true))
+            return;
+        _history!.Record($"excluir {name}", SlotHistory.KeyOf(slot.Box, slot.Slot));
+        var error = CoreAdapter.DeleteSlot(_sav, CoreAdapter.GetSlotInfo(_sav, slot.Box, slot.Slot));
+        if (error is not null)
+        {
+            _history.Discard();
+            if (error != "")
+                Status = error;
+            return;
+        }
+        IsDirty = true;
+        OnHistoryChanged();
+        RefreshSlots();
+        Status = $"{name} excluído de {slot.Location}. Ctrl+Z desfaz.";
+    }
+
     /// <summary>Importar (botao): vai para o slot selecionado ou, sem selecao, para o primeiro slot vazio da caixa.</summary>
     public async Task ImportFileAsync(string path)
     {
@@ -354,6 +381,13 @@ public sealed class MainViewModel : ViewModelBase
             return;
         SelectSlot(slot);
         Status = $"Novo Pokémon em {slot.Location}. Escolha a espécie (ou cole um set Showdown) e clique em Aplicar.";
+    }
+
+    /// <summary>A selecao mudou: atualiza Exportar PKM e Excluir.</summary>
+    private void RaiseSelectionChanged()
+    {
+        Raise(nameof(CanExportEntity));
+        DeleteCommand.NotifyCanExecuteChanged();
     }
 
     private void Undo()
@@ -392,7 +426,7 @@ public sealed class MainViewModel : ViewModelBase
         Party.Load(_sav);
         Editor = null; // o slot editado pode ter mudado de lugar
         _selectedSlot = null;
-        Raise(nameof(CanExportEntity));
+        RaiseSelectionChanged();
     }
 
     /// <summary>Selecionar um slot pela interface: pergunta antes de descartar edicoes nao aplicadas.</summary>
@@ -449,7 +483,7 @@ public sealed class MainViewModel : ViewModelBase
             _selectedSlot.IsSelected = false;
         _selectedSlot = slot;
         slot.IsSelected = true;
-        Raise(nameof(CanExportEntity));
+        RaiseSelectionChanged();
         if (_sav is null || slot.Pkm is null)
             return;
 
@@ -469,8 +503,8 @@ public sealed class MainViewModel : ViewModelBase
             slot.Write(_sav, pk);
             if (slot.IsParty)
                 Party.Load(_sav);
-            Raise(nameof(CanExportEntity));
+            RaiseSelectionChanged();
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
-        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null) { SelectedTab = tab };
+        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav) { SelectedTab = tab };
     }
 }

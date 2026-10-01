@@ -93,7 +93,10 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <TextBlock Text="Correções sugeridas" Classes="muted" FontSize="11" Margin="0,4,0,0" />
+              <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Content="✨  Legalizar"
+            Command="{Binding LegalizeCommand}" IsVisible="{Binding ShowIllegal}"
+            ToolTip.Tip="Gera de novo a partir de um encontro real deste jogo (PID/IV corretos), mantendo natureza, nível, item, apelido e golpes quando possível" />
+    <TextBlock Text="Correções sugeridas" Classes="muted" FontSize="11" Margin="0,4,0,0" />
               <WrapPanel ItemSpacing="6" LineSpacing="6">
                 <Button Classes="small" Content="Golpes sugeridos" Command="{Binding SuggestMovesCommand}"
                         ToolTip.Tip="Troca os golpes por um conjunto legal (aprendidos por nível)" />

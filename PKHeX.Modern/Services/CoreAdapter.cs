@@ -170,6 +170,19 @@ public static class CoreAdapter
         return null;
     }
 
+    /// <summary>Apaga o Pokemon do slot (na equipe, os seguintes sobem uma posicao). Retorna erro ou null.</summary>
+    public static string? DeleteSlot(SaveFile sav, ISlotInfo slot)
+    {
+        if (!slot.CanWriteTo(sav))
+            return "Slot bloqueado pelo jogo.";
+        if (IsEmpty(Read(sav, slot)))
+            return "";
+        if (slot is SlotInfoParty p && sav.IsPartyAllEggs(p.Slot))
+            return "A equipe precisa ter pelo menos um Pokémon (que não seja ovo).";
+        slot.WriteTo(sav, sav.BlankPKM);
+        return null;
+    }
+
     /// <summary>Carrega um arquivo .pk* e converte para o formato do save. Retorna null se nao for compativel.</summary>
     public static PKM? LoadEntityFile(SaveFile sav, string path)
     {

@@ -77,6 +77,7 @@ public sealed partial class MainWindow : Window
             case Key.Q: vm.CyclePage(-1); e.Handled = true; break;
             case Key.E: vm.CyclePage(+1); e.Handled = true; break;
             case Key.Escape: vm.Back(); e.Handled = true; break;
+            case Key.Delete when vm.DeleteCommand.CanExecute(null): vm.DeleteCommand.Execute(null); e.Handled = true; break;
         }
     }
 

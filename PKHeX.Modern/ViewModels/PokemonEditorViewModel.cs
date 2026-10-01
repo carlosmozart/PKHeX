@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using PKHeX.Core;
 using PKHeX.Modern.Services;
@@ -12,7 +14,8 @@ namespace PKHeX.Modern.ViewModels;
 /// </summary>
 public sealed class PokemonEditorViewModel : ViewModelBase
 {
-    private readonly PKM _pk;
+    private PKM _pk;
+    private readonly SaveFile? _sav;
     private byte[] _savedData;
     /// <summary>Ha edicoes ainda nao aplicadas no slot.</summary>
     public bool IsModified => !_pk.Data.SequenceEqual(_savedData);
@@ -20,8 +23,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     private readonly Action<string> _status;
 
     /// <param name="pendingApply">Pokemon que veio de fora (banco de encontros/eventos): ja conta como edicao nao aplicada.</param>
-    public PokemonEditorViewModel(PKM source, string location, Action<PKM> apply, Action<string> status, bool isNew = false, bool pendingApply = false)
+    public PokemonEditorViewModel(PKM source, string location, Action<PKM> apply, Action<string> status, bool isNew = false, bool pendingApply = false, SaveFile? sav = null)
     {
+        _sav = sav;
         _isNew = isNew;
         _pk = source.Clone();
         _savedData = pendingApply ? [] : _pk.Data.ToArray();
@@ -43,6 +47,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         MaxIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; });
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
         MakeShinyCommand = new RelayCommand(() => { _pk.SetShiny(); RaiseAll(); });
+        LegalizeCommand = new RelayCommand(() => _ = LegalizeAsync(), () => !IsLegalizing);
         SuggestMovesCommand = new RelayCommand(() => Fix("Golpes sugeridos", pk => CoreAdapter.SuggestMoves(pk)));
         SuggestRelearnCommand = new RelayCommand(() => Fix("Golpes de reaprender", pk => CoreAdapter.SuggestRelearnMoves(pk)));
         SuggestMetCommand = new RelayCommand(() => Fix("Encontro sugerido", CoreAdapter.SuggestMetData, "nenhum encontro possível para esta espécie neste jogo"));
@@ -66,6 +71,48 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public RelayCommand ClearEVsCommand { get; }
     public RelayCommand MakeShinyCommand { get; }
     public RelayCommand SuggestMovesCommand { get; }
+    public RelayCommand LegalizeCommand { get; }
+
+    private bool _isLegalizing;
+    public bool IsLegalizing { get => _isLegalizing; private set { Set(ref _isLegalizing, value); LegalizeCommand.NotifyCanExecuteChanged(); } }
+
+    /// <summary>
+    /// Legalizar: gera de novo a partir de um encontro real do jogo (PID/IV corretos) mantendo natureza, nivel, item,
+    /// apelido e golpes quando possivel. Roda em segundo plano (na Gen 3/4 a busca de PID pode levar alguns segundos).
+    /// </summary>
+    private async Task LegalizeAsync()
+    {
+        if (_sav is null)
+        {
+            _status("Legalizar: indisponível.");
+            return;
+        }
+        IsLegalizing = true;
+        _status($"Legalizando {SpeciesName}...");
+        try
+        {
+            var current = _pk.Clone();
+            var sav = _sav;
+            var (result, message) = await Task.Run(() => (EncounterDatabase.Legalize(sav, current, out var m), m));
+            if (result is null)
+            {
+                _status($"Legalizar: {message}.");
+                return;
+            }
+            _pk = result;
+            _isNew = false;
+            RaiseAll();
+            _status($"Legalizado a partir de: {message}. Confira e clique em Aplicar para gravar.");
+        }
+        catch (Exception ex)
+        {
+            _status($"Legalizar: erro ({ex.Message})");
+        }
+        finally
+        {
+            IsLegalizing = false;
+        }
+    }
     public RelayCommand SuggestRelearnCommand { get; }
     public RelayCommand SuggestMetCommand { get; }
     public RelayCommand FixIVsCommand { get; }

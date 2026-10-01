@@ -73,11 +73,14 @@ public static class EncounterDatabase
 
     /// <summary>Gera o Pokemon do encontro/gift ja no formato do save. Retorna null e o erro se nao der para converter.</summary>
     public static PKM? ToEntity(SaveFile sav, IEncounterInfo enc, out string? error)
+        => ToEntity(sav, enc, EncounterCriteria.Unrestricted, out error);
+
+    public static PKM? ToEntity(SaveFile sav, IEncounterInfo enc, EncounterCriteria criteria, out string? error)
     {
         error = null;
         try
         {
-            var temp = enc.ConvertToPKM(sav, EncounterCriteria.Unrestricted);
+            var temp = enc.ConvertToPKM(sav, criteria);
             var pk = EntityConverter.ConvertToType(temp, sav.PKMType, out var result);
             if (pk is null)
             {
@@ -93,6 +96,106 @@ public static class EncounterDatabase
             error = ex.Message;
             return null;
         }
+    }
+
+    /// <summary>
+    /// Legalizar: gera de novo o Pokemon a partir de um encontro real deste jogo (com o metodo de PID/IV correto
+    /// de cada geracao) e reaplica o que o usuario escolheu: natureza, genero, shiny, nivel, item, apelido e golpes.
+    /// Devolve o primeiro resultado legal, ou null com o motivo.
+    /// </summary>
+    public static PKM? Legalize(SaveFile sav, PKM current, out string message, CancellationToken token = default)
+    {
+        var encounters = SearchEncounters(sav, current.Species, onlyThisGame: true, token)
+            .Where(e => e.Form == current.Form || e is MysteryGift)
+            .OrderBy(e => GetPreference(e, current))
+            .Take(25)
+            .ToList();
+        if (encounters.Count == 0)
+        {
+            message = "nenhum encontro possível para esta espécie neste jogo";
+            return null;
+        }
+
+        var shiny = current.IsShiny ? Shiny.Always : Shiny.Never;
+        var gender = current.PersonalInfo.IsDualGender ? (Gender)current.Gender : Gender.Random;
+        EncounterCriteria[] attempts =
+        [
+            new() { Nature = current.Nature, Gender = gender, Shiny = shiny },
+            new() { Nature = current.Nature, Shiny = shiny },
+            EncounterCriteria.Unrestricted,
+        ];
+
+        string? lastProblem = null;
+        foreach (var enc in encounters)
+        {
+            foreach (var criteria in attempts)
+            {
+                token.ThrowIfCancellationRequested();
+                if (ToEntity(sav, enc, criteria, out _) is not { } pk)
+                    continue;
+                CarryOver(current, pk, enc);
+                var la = new LegalityAnalysis(pk);
+                if (la.Valid)
+                {
+                    message = Describe(enc, current, pk);
+                    return pk;
+                }
+                lastProblem ??= CoreAdapter.GetLegalityIssues(pk, 1).FirstOrDefault();
+            }
+        }
+        message = "nenhum encontro gerou um Pokémon legal" + (lastProblem is null ? "" : $" ({lastProblem})");
+        return null;
+    }
+
+    /// <summary>Ordem de preferencia: mesma versao do save, selvagem/estatico, nivel ate o atual; eventos e trocas por ultimo.</summary>
+    private static int GetPreference(IEncounterInfo enc, PKM current)
+    {
+        int score = 0;
+        if (enc is MysteryGift)
+            score += 100;
+        if (enc is IFixedTrainer { IsFixedTrainer: true })
+            score += 50; // troca: OT de outro treinador
+        if (enc.IsEgg)
+            score += 10;
+        if (enc.LevelMin > current.CurrentLevel)
+            score += 30;
+        if (enc.Version != current.Version)
+            score += 5;
+        return score;
+    }
+
+    /// <summary>Reaplica no Pokemon gerado o que o usuario tinha escolhido, quando for compativel com o encontro.</summary>
+    private static void CarryOver(PKM from, PKM to, IEncounterInfo enc)
+    {
+        if (from.CurrentLevel >= enc.LevelMin && from.CurrentLevel > to.CurrentLevel)
+            to.CurrentLevel = from.CurrentLevel;
+        if (from.HeldItem != 0)
+            to.HeldItem = from.HeldItem;
+        if (from.IsNicknamed && !to.IsNicknamed)
+            to.SetNickname(from.Nickname);
+
+        // Golpes: mantem os do usuario se forem legais nesse encontro; senao, um conjunto legal sugerido.
+        Span<ushort> moves = stackalloc ushort[4];
+        from.GetMoves(moves);
+        if (moves.ContainsAnyExcept((ushort)0))
+        {
+            to.SetMoves(moves);
+            if (!new LegalityAnalysis(to).Info.Moves.All(m => m.Valid))
+                to.SetMoveset();
+        }
+        to.HealPP();
+        to.RefreshChecksum();
+    }
+
+    private static string Describe(IEncounterInfo enc, PKM before, PKM after)
+    {
+        var kind = enc is IEncounterable e ? e.LongName : "encontro";
+        var where = GetLocationName(enc);
+        var lost = new List<string>();
+        if (after.Nature != before.Nature) lost.Add("natureza");
+        if (after.IsShiny != before.IsShiny) lost.Add("shiny");
+        if (after.CurrentLevel != before.CurrentLevel) lost.Add("nível");
+        return $"{kind}" + (where.Length > 0 ? $" em {where}" : "") + (lost.Count > 0 ? $"; mudou: {string.Join(", ", lost)}" : "");
     }
 
     // Textos para os cartoes

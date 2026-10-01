@@ -18,6 +18,7 @@ public sealed class App : Application
             var settings = Services.AppSettings.Load();
             RequestedThemeVariant = settings.DarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
             var vm = new MainViewModel(settings);
+            Services.CrashLog.Install(msg => vm.Status = msg);
             if (desktop.Args is [{ } path, ..] && System.IO.File.Exists(path))
                 vm.Open(path);
             else if (settings.OpenLastSaveOnStartup && vm.HasLastSave)

@@ -23,7 +23,9 @@ namespace PKHeX.Modern.Views;
 /// </summary>
 public sealed class SlotDragController
 {
-    private const string Format = "pkhex-modern/slot";
+    // Avalonia so aceita letras, digitos e pontos no identificador (com "/" ou "-" lanca excecao).
+    private const string Format = "PKHeX.Modern.Slot";
+    private static readonly DataFormat<string> SlotFormat = DataFormat.CreateStringApplicationFormat(Format);
     private const double Threshold = 6;
 
     private readonly Window _window;
@@ -31,6 +33,7 @@ public sealed class SlotDragController
     private readonly DispatcherTimer _boxHover = new() { Interval = TimeSpan.FromMilliseconds(550) };
 
     private SlotViewModel? _pressed;
+    private bool _released;
     private Point _pressPoint;
     private SlotViewModel? _dragging;
     private SlotViewModel? _hoverTarget;
@@ -42,7 +45,7 @@ public sealed class SlotDragController
         _vm = vm;
         window.AddHandler(InputElement.PointerPressedEvent, OnPressed, RoutingStrategies.Tunnel);
         window.AddHandler(InputElement.PointerMovedEvent, OnMoved, RoutingStrategies.Tunnel);
-        window.AddHandler(InputElement.PointerReleasedEvent, (_, _) => _pressed = null, RoutingStrategies.Tunnel);
+        window.AddHandler(InputElement.PointerReleasedEvent, (_, _) => { _pressed = null; _released = true; }, RoutingStrategies.Tunnel);
         window.AddHandler(DragDrop.DragOverEvent, OnDragOver);
         window.AddHandler(DragDrop.DragLeaveEvent, (_, _) => SetHover(null, null));
         window.AddHandler(DragDrop.DropEvent, OnDrop);
@@ -73,6 +76,7 @@ public sealed class SlotDragController
         if (SlotAt(e.Source) is { IsEmpty: false } slot)
         {
             _pressed = slot;
+            _released = false;
             _pressPoint = e.GetPosition(_window);
         }
     }
@@ -90,11 +94,17 @@ public sealed class SlotDragController
         try
         {
             var data = new DataTransfer();
-            var item = DataTransferItem.Create(DataFormat.CreateStringApplicationFormat(Format), "slot");
+            var item = DataTransferItem.Create(SlotFormat, "slot");
             if (await ExportTempFile(_dragging) is { } file)
                 item.SetFile(file); // permite soltar no Explorer
+            if (_released)
+                return; // o botao foi solto enquanto o arquivo era gravado (ex.: duplo clique rapido)
             data.Add(item);
             await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move | DragDropEffects.Copy);
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex); // um arraste que falha nao pode derrubar o app
         }
         finally
         {

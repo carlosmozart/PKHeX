@@ -15,6 +15,9 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - Fora de escopo: modo clássico, plugins do PKHeX (dependem do WinForms). Fundo animado só com opção de reduzir movimento.
 
 ## Próximos passos sugeridos
+- [x] **Excluir Pokémon** (botão na barra inferior ou tecla Delete), com confirmação e Ctrl+Z.
+- [x] **Legalizar** (cartão de legalidade): gera de novo a partir de um encontro real do jogo, com PID/IV corretos, mantendo natureza, nível, item, apelido e golpes quando possível.
+- [x] **Proteção contra travamentos**: erros inesperados vão para a barra de status e para `%APPDATA%\PKHeX.Modern\crash.log`.
 - [x] **Arrastar e soltar Pokémon** entre slots, caixas e equipe (trocar, mover, copiar com Ctrl, setas trocam de caixa, soltar .pk\* importa).
 - [x] Arrastar um slot **para fora** da janela para exportar como arquivo .pk\*.
 - [x] **Barra de ações inferior** (como na referência visual): Verificar legalidade, Criar PKM, Importar, Exportar e Salvar.
