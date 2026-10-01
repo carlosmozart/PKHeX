@@ -28,7 +28,17 @@ public sealed class MainViewModel : ViewModelBase
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
         AllPages = [Boxes, Party, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s)];
         _currentPage = Boxes;
+        CheckLegalityCommand = new RelayCommand(CheckLegality, () => HasSave);
+        CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
     }
+
+    public RelayCommand CheckLegalityCommand { get; }
+    public RelayCommand CreateCommand { get; }
+
+    /// <summary>Slot selecionado com Pokemon (para Exportar PKM).</summary>
+    public bool CanExportEntity => _selectedSlot is { IsEmpty: false };
+    public string? SuggestedEntityFileName => CanExportEntity ? CoreAdapter.GetEntityFileName(_selectedSlot!.Pkm!) : null;
+    public IReadOnlyList<string> EntityExtensions => _sav is null ? [] : CoreAdapter.GetEntityExtensions(_sav);
 
     public BoxesPageViewModel Boxes { get; }
     public PartyPageViewModel Party { get; }
@@ -74,8 +84,10 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var page in AllPages)
             page.Load(sav);
         CurrentPage = Boxes;
-        foreach (var p in (string[])[nameof(HasSave), nameof(GameName), nameof(TrainerInfo), nameof(Pages)])
+        foreach (var p in (string[])[nameof(HasSave), nameof(GameName), nameof(TrainerInfo), nameof(Pages), nameof(CanExportEntity)])
             Raise(p);
+        CheckLegalityCommand.NotifyCanExecuteChanged();
+        CreateCommand.NotifyCanExecuteChanged();
         Status = $"Aberto: {System.IO.Path.GetFileName(path)}";
         Settings.LastSavePath = System.IO.Path.GetFullPath(path);
         Settings.Save();
@@ -143,6 +155,57 @@ public sealed class MainViewModel : ViewModelBase
         Status = $"{CoreAdapter.SpeciesNames[pk.Species]} importado em {dst.Location}.";
     }
 
+    /// <summary>Grava o Pokemon do slot selecionado num arquivo .pk*.</summary>
+    public void ExportEntity(string path)
+    {
+        if (_selectedSlot is not { IsEmpty: false } slot)
+            return;
+        try
+        {
+            CoreAdapter.ExportEntity(slot.Pkm!, path);
+            Status = $"{slot.Title} exportado para {path}";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Erro ao exportar: {ex.Message}";
+        }
+    }
+
+    /// <summary>Importar (botao): vai para o slot selecionado ou, sem selecao, para o primeiro slot vazio da caixa.</summary>
+    public void ImportFile(string path)
+    {
+        var dst = _selectedSlot ?? Boxes.Slots.FirstOrDefault(s => s.IsEmpty);
+        if (dst is null)
+        {
+            Status = "Não há slot vazio nesta caixa. Selecione um slot para substituir.";
+            return;
+        }
+        ImportFile(dst, path);
+    }
+
+    /// <summary>Verifica a legalidade da caixa atual e da equipe.</summary>
+    private void CheckLegality()
+    {
+        var slots = Boxes.Slots.Concat(Party.Slots).Where(s => !s.IsEmpty).ToList();
+        var bad = slots.Where(s => s.IsLegal == false).ToList();
+        Status = bad.Count == 0
+            ? $"Todos os {slots.Count} Pokémon da caixa e da equipe são legais."
+            : $"{bad.Count} de {slots.Count} com problema: " + string.Join(", ", bad.Select(s => $"{s.Title} ({s.Location})"));
+    }
+
+    /// <summary>Criar PKM: abre o editor em branco no primeiro slot vazio da caixa atual.</summary>
+    private void CreateInFirstEmpty()
+    {
+        CurrentPage = Boxes;
+        if (Boxes.Slots.FirstOrDefault(s => s.IsEmpty) is not { } slot)
+        {
+            Status = "Esta caixa está cheia. Escolha outra caixa ou um slot vazio.";
+            return;
+        }
+        SelectSlot(slot);
+        Status = $"Novo Pokémon em {slot.Location}. Escolha a espécie (ou cole um set Showdown) e clique em Aplicar.";
+    }
+
     private void RefreshSlots()
     {
         if (_sav is null)
@@ -151,6 +214,7 @@ public sealed class MainViewModel : ViewModelBase
         Party.Load(_sav);
         Editor = null; // o slot editado pode ter mudado de lugar
         _selectedSlot = null;
+        Raise(nameof(CanExportEntity));
     }
 
     private void SelectSlot(SlotViewModel slot)
@@ -159,6 +223,7 @@ public sealed class MainViewModel : ViewModelBase
             _selectedSlot.IsSelected = false;
         _selectedSlot = slot;
         slot.IsSelected = true;
+        Raise(nameof(CanExportEntity));
         if (_sav is null || slot.Pkm is null)
             return;
 
@@ -174,7 +239,8 @@ public sealed class MainViewModel : ViewModelBase
             slot.Write(_sav, pk);
             if (slot.IsParty)
                 Party.Load(_sav);
+            Raise(nameof(CanExportEntity));
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
-        }, s => Status = s);
+        }, s => Status = s, isNew: slot.IsEmpty);
     }
 }

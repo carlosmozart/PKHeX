@@ -114,6 +114,30 @@
     <Setter Property="Foreground" Value="#F5B83D" />
     <Setter Property="FontWeight" Value="Bold" />
   </Style>
+  <Style Selector="TextBlock.male">
+    <Setter Property="Foreground" Value="#4A90E2" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style Selector="TextBlock.female">
+    <Setter Property="Foreground" Value="#E85D9A" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+  <Style Selector="TextBlock.legalOk">
+    <Setter Property="Foreground" Value="{DynamicResource Good}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="11" />
+  </Style>
+  <Style Selector="TextBlock.legalBad">
+    <Setter Property="Foreground" Value="#F5A524" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="Border.actionBar">
+    <Setter Property="Background" Value="{DynamicResource SidebarBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="16,8" />
+  </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />

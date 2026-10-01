@@ -31,10 +31,10 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
           <StackPanel Orientation="Horizontal" Spacing="6">
-            <Border Classes="chip" Background="{DynamicResource Good}" IsVisible="{Binding IsLegal}">
+            <Border Classes="chip" Background="{DynamicResource Good}" IsVisible="{Binding ShowLegal}">
               <TextBlock Text="✓ Legal" />
             </Border>
-            <Border Classes="chip" Background="{DynamicResource Bad}" IsVisible="{Binding !IsLegal}">
+            <Border Classes="chip" Background="{DynamicResource Bad}" IsVisible="{Binding ShowIllegal}">
               <TextBlock Text="✕ Ilegal" />
             </Border>
             <TextBlock Text="{Binding Location}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
@@ -136,7 +136,7 @@
       </StackPanel>
     </Border>
 
-    <Expander Header="Relatório de legalidade" HorizontalAlignment="Stretch">
+    <Expander Header="Relatório de legalidade" HorizontalAlignment="Stretch" IsVisible="{Binding ShowLegality}">
       <SelectableTextBlock Text="{Binding LegalityReport}" TextWrapping="Wrap" FontSize="12" />
     </Expander>
 

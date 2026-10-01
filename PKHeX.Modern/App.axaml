@@ -22,13 +22,21 @@
       <Grid RowDefinitions="Auto,*,Auto">
         <Grid ColumnDefinitions="*,Auto">
           <TextBlock Text="{Binding Position}" Classes="slotPos" />
-          <TextBlock Grid.Column="1" Text="★" Classes="shiny" IsVisible="{Binding IsShiny}" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="★" Classes="shiny" IsVisible="{Binding IsShiny}" />
+            <TextBlock Text="✓" Classes="legalOk" IsVisible="{Binding IsLegalOk}" ToolTip.Tip="Legal" />
+            <TextBlock Text="⚠" Classes="legalBad" IsVisible="{Binding IsLegalBad}" ToolTip.Tip="Ilegal (veja o relatório no editor)" />
+          </StackPanel>
         </Grid>
         <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="84" Margin="6,4"
                RenderOptions.BitmapInterpolationMode="None" />
         <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
           <TextBlock Text="{Binding Title}" Classes="slotName" />
-          <TextBlock Text="{Binding Subtitle}" Classes="slotLevel" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+            <TextBlock Text="{Binding Subtitle}" Classes="slotLevel" />
+            <TextBlock Text="♂" Classes="male" FontSize="12" IsVisible="{Binding IsMale}" />
+            <TextBlock Text="♀" Classes="female" FontSize="12" IsVisible="{Binding IsFemale}" />
+          </StackPanel>
         </StackPanel>
       </Grid>
     </Button>
@@ -66,7 +74,12 @@
                            RenderOptions.BitmapInterpolationMode="None" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
                       <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                      <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="11" />
+                      <StackPanel Orientation="Horizontal" Spacing="3">
+                        <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="11" />
+                        <TextBlock Text="♂" Classes="male" FontSize="11" IsVisible="{Binding IsMale}" />
+                        <TextBlock Text="♀" Classes="female" FontSize="11" IsVisible="{Binding IsFemale}" />
+                        <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
+                      </StackPanel>
                     </StackPanel>
                   </Grid>
                 </Button>
@@ -102,7 +115,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:SlotViewModel">
-            <Button Classes="partyCard" Classes.selected="{Binding IsSelected}" Classes.dropTarget="{Binding IsDropTarget}"
+            <Button Classes="partyCard" HorizontalContentAlignment="Stretch" Classes.selected="{Binding IsSelected}" Classes.dropTarget="{Binding IsDropTarget}"
                     Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                     CommandParameter="{Binding}">
               <Grid ColumnDefinitions="Auto,*,Auto">
@@ -112,10 +125,18 @@
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="2">
                   <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="20" />
                   <TextBlock Text="{Binding Nickname}" Classes="muted" IsVisible="{Binding HasNickname}" />
-                  <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="15" />
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="15" />
+                    <TextBlock Text="♂" Classes="male" FontSize="15" IsVisible="{Binding IsMale}" />
+                    <TextBlock Text="♀" Classes="female" FontSize="15" IsVisible="{Binding IsFemale}" />
+                  </StackPanel>
                   <TextBlock Text="★ Shiny" Classes="shiny" IsVisible="{Binding IsShiny}" />
                 </StackPanel>
-                <TextBlock Grid.Column="2" Text="{Binding Position}" Classes="slotPos" FontSize="16" VerticalAlignment="Top" />
+                <StackPanel Grid.Column="2" Spacing="4" VerticalAlignment="Top" HorizontalAlignment="Right">
+                  <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="16" HorizontalAlignment="Right" />
+                  <TextBlock Text="✓" Classes="legalOk" FontSize="14" HorizontalAlignment="Right" IsVisible="{Binding IsLegalOk}" ToolTip.Tip="Legal" />
+                  <TextBlock Text="⚠" Classes="legalBad" FontSize="15" HorizontalAlignment="Right" IsVisible="{Binding IsLegalBad}" ToolTip.Tip="Ilegal" />
+                </StackPanel>
               </Grid>
             </Button>
           </DataTemplate>

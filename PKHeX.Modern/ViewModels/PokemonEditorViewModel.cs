@@ -16,8 +16,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     private readonly Action<PKM> _apply;
     private readonly Action<string> _status;
 
-    public PokemonEditorViewModel(PKM source, string location, Action<PKM> apply, Action<string> status)
+    public PokemonEditorViewModel(PKM source, string location, Action<PKM> apply, Action<string> status, bool isNew = false)
     {
+        _isNew = isNew;
         _pk = source.Clone();
         _apply = apply;
         _status = status;
@@ -63,7 +64,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public string IVSummary => $"IVs {IVTotal}/{_pk.MaxIV * 6}";
 
     public string Nickname { get => _pk.Nickname; set { _pk.Nickname = value; Refresh(); } }
-    public int Species { get => _pk.Species; set { if (value >= 0) { _pk.Species = (ushort)value; Refresh(); } } }
+    public int Species { get => _pk.Species; set { if (value >= 0) { _pk.Species = (ushort)value; _isNew = false; Refresh(); } } }
     public int Level { get => _pk.CurrentLevel; set { _pk.CurrentLevel = (byte)Math.Clamp(value, 1, 100); Refresh(); } }
     public int Nature { get => (int)_pk.StatAlignment; set { if (value >= 0 && value != (int)_pk.StatAlignment) { _pk.SetNature((Nature)value); Refresh(); } } }
     public int HeldItem { get => _pk.HeldItem; set { if (value >= 0) { _pk.HeldItem = value; Refresh(); } } }
@@ -76,6 +77,11 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public bool IsShiny => _pk.IsShiny;
     public Bitmap? Sprite { get; private set; }
     public bool IsLegal { get; private set; }
+    private bool _isNew;
+    /// <summary>Pokemon novo (slot vazio) ainda sem especie escolhida: o selo de legalidade fica oculto.</summary>
+    public bool ShowLegality => !_isNew;
+    public bool ShowLegal => ShowLegality && IsLegal;
+    public bool ShowIllegal => ShowLegality && !IsLegal;
     public string LegalityText { get; private set; } = "";
     public string LegalityReport { get; private set; } = "";
 
@@ -89,6 +95,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             return;
         }
         var error = CoreAdapter.ApplyShowdown(_pk, text);
+        if (error is null)
+            _isNew = false;
         Refresh();
         Raise(string.Empty); // atualiza todos os campos
         foreach (var st in Stats)
@@ -114,7 +122,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             Raise(p);
         (IsLegal, LegalityReport) = CoreAdapter.CheckLegality(_pk);
         LegalityText = IsLegal ? "Legal" : "Ilegal";
-        foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny)])
+        foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny)])
             Raise(p);
     }
 }

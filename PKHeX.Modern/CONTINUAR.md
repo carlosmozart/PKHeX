@@ -32,6 +32,9 @@ dotnet run --project PKHeX.Modern
 - **Build com o app aberto:** o build falha porque o app trava as DLLs em `bin/`. Feche o app ou compile com `-o outra_pasta`.
 - **Capturas de tela:** use `Tools/PKHeX.Modern.Render` (headless). Não capture a tela do desktop.
 - **Arrastar e soltar:** fica em `Views/SlotDragController.cs` (handlers em túnel na janela, `DataTransfer`/`DoDragDropAsync` do Avalonia 11.3). A regra de mover usa `SlotInfoBox`/`SlotInfoParty` do Core via `CoreAdapter.MoveSlot`. Ao ler um slot da equipe, use `CoreAdapter.GetPartySlot`: ler além de `PartyCount` traz dados antigos.
+- **Exportar .pk\*:** `CoreAdapter.ExportEntity` grava os dados de equipe decifrados (`WriteDecryptedDataParty`), como o PKHeX original. No arraste para fora, o `SlotDragController` grava um arquivo temporário em `%TEMP%/PKHeX.Modern/drag` e o anexa ao `DataTransferItem` com `SetFile`.
+- **Legalidade nos slots:** cada `SlotViewModel.Load` roda um `LegalityAnalysis` (ícone ✓/⚠). "Verificar legalidade" na barra inferior resume a caixa atual e a equipe na barra de status.
+- **Save de teste sem jogo:** `BlankSaveFile.Get(GameVersion.B)` (Black) grava e é reconhecido ao reabrir. Saves vazios de Gen 3/4 e Gen 7/8 falham ao gravar ou não são reconhecidos.
 - **Testes de render:** um `MainViewModel()` sem `AppSettings.Load()` não grava preferências em disco, então pode ser usado à vontade.
 
 ## Testado com

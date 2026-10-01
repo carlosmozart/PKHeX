@@ -183,6 +183,28 @@ public static class CoreAdapter
         return null;
     }
 
+    /// <summary>Nome de arquivo sugerido para exportar o Pokemon (ex.: "025 - Pikachu - 1A2B3C4D.pk3").</summary>
+    public static string GetEntityFileName(PKM pk) => PathUtil.CleanFileName(pk.FileName);
+
+    /// <summary>Grava o Pokemon num arquivo .pk* (dados decifrados, como o PKHeX original).</summary>
+    public static void ExportEntity(PKM pk, string path)
+    {
+        pk.RefreshChecksum();
+        var data = new byte[pk.SIZE_PARTY];
+        pk.WriteDecryptedDataParty(data);
+        File.WriteAllBytes(path, data);
+    }
+
+    /// <summary>Extensoes .pk* aceitas pelo save (para o seletor de arquivos).</summary>
+    public static IReadOnlyList<string> GetEntityExtensions(SaveFile sav) => sav.PKMExtensions;
+
+    /// <summary>Legalidade rapida para o icone do slot: true/false, ou null se a analise falhar.</summary>
+    public static bool? IsLegal(PKM pk)
+    {
+        try { return new LegalityAnalysis(pk).Valid; }
+        catch { return null; }
+    }
+
     // Showdown
     public static string ToShowdown(PKM pk) => ShowdownParsing.GetShowdownText(pk);
 

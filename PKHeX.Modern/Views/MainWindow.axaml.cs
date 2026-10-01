@@ -40,4 +40,33 @@ public sealed partial class MainWindow : Window
         if (file?.TryGetLocalPath() is { } path)
             VM.Export(path);
     }
+
+    private async void OnImportEntity(object? sender, RoutedEventArgs e)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Importar Pokémon",
+            AllowMultiple = false,
+            FileTypeFilter = [EntityFileType, FilePickerFileTypes.All],
+        });
+        if (files.FirstOrDefault()?.TryGetLocalPath() is { } path)
+            VM.ImportFile(path);
+    }
+
+    private async void OnExportEntity(object? sender, RoutedEventArgs e)
+    {
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Exportar Pokémon",
+            SuggestedFileName = VM.SuggestedEntityFileName,
+            FileTypeChoices = [EntityFileType],
+        });
+        if (file?.TryGetLocalPath() is { } path)
+            VM.ExportEntity(path);
+    }
+
+    private FilePickerFileType EntityFileType => new("Pokémon")
+    {
+        Patterns = [.. VM.EntityExtensions.Select(x => $"*.{x}")],
+    };
 }

@@ -77,10 +77,23 @@
       </Panel>
     </Border>
 
-    <!-- Barra de status -->
-    <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Padding="16,6"
-            BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,1,0,0">
-      <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" />
+    <!-- Barra de acoes + status -->
+    <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Classes="actionBar">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+        <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Status}" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasSave}">
+          <Button Classes="small" Content="✓  Verificar legalidade" Command="{Binding CheckLegalityCommand}"
+                  ToolTip.Tip="Verifica a caixa atual e a equipe" />
+          <Button Classes="small" Content="＋  Criar PKM" Command="{Binding CreateCommand}"
+                  ToolTip.Tip="Novo Pokémon no primeiro slot vazio da caixa" />
+          <Button Classes="small" Content="⭳  Importar" Click="OnImportEntity"
+                  ToolTip.Tip="Importa um arquivo .pk* para o slot selecionado (ou o primeiro vazio)" />
+          <Button Classes="small" Content="⭱  Exportar PKM" Click="OnExportEntity" IsEnabled="{Binding CanExportEntity}"
+                  ToolTip.Tip="Salva o Pokémon selecionado como arquivo .pk* (ou arraste o slot para fora da janela)" />
+          <Button Classes="accent small" Content="💾  Salvar" Click="OnExport" ToolTip.Tip="Exportar o save" />
+        </StackPanel>
+      </Grid>
     </Border>
   </Grid>
 </Window>

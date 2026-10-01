@@ -29,7 +29,16 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     public bool IsEmpty => Pkm is null || CoreAdapter.IsEmpty(Pkm);
     public string Title => IsEmpty ? "" : IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[Pkm!.Species];
     public string Subtitle => IsEmpty || IsEgg ? "" : $"Nv. {Pkm!.CurrentLevel}";
-    public string Tooltip => IsEmpty ? "Vazio" : $"{Title} · {Subtitle}";
+    public string Gender => IsEmpty || IsEgg ? "" : CoreAdapter.GetGenderSymbol(Pkm!);
+    public bool IsMale => Gender == "♂";
+    public bool IsFemale => Gender == "♀";
+
+    private bool? _isLegal;
+    /// <summary>Resultado da analise de legalidade (null = vazio ou falhou).</summary>
+    public bool? IsLegal { get => _isLegal; private set { Set(ref _isLegal, value); Raise(nameof(IsLegalOk)); Raise(nameof(IsLegalBad)); } }
+    public bool IsLegalOk => IsLegal == true;
+    public bool IsLegalBad => IsLegal == false;
+    public string Tooltip => IsEmpty ? "Vazio" : $"{Title} {Gender} · {Subtitle}" + (IsLegal == false ? " · ⚠ ilegal" : "");
     public string Position => $"{Slot + 1:00}";
     public bool IsShiny => !IsEmpty && Pkm!.IsShiny;
     public bool IsEgg => !IsEmpty && Pkm!.IsEgg;
@@ -41,8 +50,9 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     {
         var pk = IsParty ? CoreAdapter.GetPartySlot(sav, Slot) : CoreAdapter.GetBoxSlot(sav, Box, Slot);
         Pkm = pk;
+        IsLegal = CoreAdapter.IsEmpty(pk) ? null : CoreAdapter.IsLegal(pk);
         Sprite = IsParty ? SpriteService.GetSprite(pk) : SpriteService.GetSprite(pk, sav, Box, Slot);
-        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname)])
+        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname), nameof(Gender), nameof(IsMale), nameof(IsFemale)])
             Raise(p);
     }
 

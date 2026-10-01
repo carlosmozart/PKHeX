@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -7,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using PKHeX.Modern.Services;
 using PKHeX.Modern.ViewModels;
 
 namespace PKHeX.Modern.Views;
@@ -15,7 +18,8 @@ namespace PKHeX.Modern.Views;
 /// Arrastar e soltar de slots:
 /// - slot → slot: move/troca (Ctrl = copiar);
 /// - pairar sobre as setas de caixa troca de caixa durante o arraste;
-/// - arquivo .pk* → slot: importa; arquivo de save em qualquer outro lugar: abre o save.
+/// - arquivo .pk* → slot: importa; arquivo de save em qualquer outro lugar: abre o save;
+/// - slot → fora da janela (Explorer, desktop): exporta como arquivo .pk*.
 /// </summary>
 public sealed class SlotDragController
 {
@@ -86,13 +90,35 @@ public sealed class SlotDragController
         try
         {
             var data = new DataTransfer();
-            data.Add(DataTransferItem.Create(DataFormat.CreateStringApplicationFormat(Format), "slot"));
+            var item = DataTransferItem.Create(DataFormat.CreateStringApplicationFormat(Format), "slot");
+            if (await ExportTempFile(_dragging) is { } file)
+                item.SetFile(file); // permite soltar no Explorer
+            data.Add(item);
             await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move | DragDropEffects.Copy);
         }
         finally
         {
             _dragging = null;
             SetHover(null, null);
+        }
+    }
+
+    /// <summary>Grava o Pokemon num arquivo temporario para o arraste para fora da janela.</summary>
+    private async Task<IStorageFile?> ExportTempFile(SlotViewModel slot)
+    {
+        if (slot.Pkm is not { } pk)
+            return null;
+        try
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "PKHeX.Modern", "drag");
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, CoreAdapter.GetEntityFileName(pk));
+            CoreAdapter.ExportEntity(pk, path);
+            return await _window.StorageProvider.TryGetFileFromPathAsync(path);
+        }
+        catch (Exception)
+        {
+            return null; // sem arquivo, o arraste interno continua funcionando
         }
     }
 

@@ -2,13 +2,13 @@
 
 ## Próximos passos sugeridos
 - [x] **Arrastar e soltar Pokémon** entre slots, caixas e equipe (trocar, mover, copiar com Ctrl, setas trocam de caixa, soltar .pk\* importa).
-- [ ] Arrastar um slot **para fora** da janela para exportar como arquivo .pk\*.
-- [ ] **Barra de ações inferior** (como na referência visual): Verificar legalidade, Criar PKM, Importar, Exportar e Salvar.
-- [ ] **Exportar arquivo .pk\*** de um slot (botão "Exportar PKM"). A importação por arrastar já funciona.
+- [x] Arrastar um slot **para fora** da janela para exportar como arquivo .pk\*.
+- [x] **Barra de ações inferior** (como na referência visual): Verificar legalidade, Criar PKM, Importar, Exportar e Salvar.
+- [x] **Exportar arquivo .pk\*** de um slot (botão "Exportar PKM"). A importação por arrastar já funciona.
 - [ ] **Busca global** no topo da janela (por espécie, apelido ou golpe), destacando os slots encontrados.
 - [ ] **Golpes com tipo e PP**: chip colorido do tipo e barra de PP em cada golpe.
-- [ ] **Gênero no cartão do slot** (♂/♀ ao lado do nível).
-- [ ] **Indicador de legalidade nos slots** (ícone ✓/⚠ no canto do cartão).
+- [x] **Gênero no cartão do slot** (♂/♀ ao lado do nível).
+- [x] **Indicador de legalidade nos slots** (ícone ✓/⚠ no canto do cartão).
 - [ ] **Tradução das listas** (espécies, golpes, itens) para português, via `GameInfo.CurrentLanguage` (o PKHeX não tem PT-BR oficial, só `es`, `fr` etc.).
 - [ ] **Seletor de idioma** nas preferências.
 - [ ] **Cor de destaque configurável** (a referência visual usa ciano/teal; hoje é vermelho, definido em `Theme/Palette.axaml`).
@@ -29,5 +29,5 @@
 Imagem gerada por IA, guardada como inspiração de layout:
 https://gemini.google.com/share/0415fd854f92?skid=3674e3f1-9296-47ab-bf60-20adff9b8acc
 
-Pontos da referência que ainda não foram implementados: destaque em ciano, barra de ações inferior, busca global no topo,
+Pontos da referência que ainda não foram implementados: destaque em ciano, busca global no topo,
 golpes com barra de PP, seções de Fitas e Notas no editor, e status de legalidade no rodapé da barra lateral.
