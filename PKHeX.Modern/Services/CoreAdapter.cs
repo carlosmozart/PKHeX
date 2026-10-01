@@ -47,6 +47,14 @@ public static class CoreAdapter
 
     public static bool IsEmpty(PKM pk) => pk.Species == 0;
 
+    /// <summary>Pokemon em branco ja preenchido com os dados do treinador do save (como no PKHeX original).</summary>
+    public static PKM CreateBlank(SaveFile sav)
+    {
+        var pk = sav.BlankPKM;
+        EntityTemplates.TemplateFields(pk, sav);
+        return pk;
+    }
+
     public static PKM GetBoxSlot(SaveFile sav, int box, int slot) => sav.GetBoxSlotAtIndex(box, slot);
 
     public static void SetBoxSlot(SaveFile sav, PKM pk, int box, int slot)

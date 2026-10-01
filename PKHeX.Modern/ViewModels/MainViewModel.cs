@@ -88,7 +88,7 @@ public sealed class MainViewModel : ViewModelBase
             return;
 
         // Slot vazio: abre o editor com um Pokemon em branco para permitir criar/colar Showdown.
-        var source = slot.IsEmpty ? _sav.BlankPKM : slot.Pkm;
+        var source = slot.IsEmpty ? CoreAdapter.CreateBlank(_sav) : slot.Pkm;
         Editor = new PokemonEditorViewModel(source, slot.Location, pk =>
         {
             if (CoreAdapter.IsEmpty(pk))
