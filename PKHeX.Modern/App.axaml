@@ -15,6 +15,7 @@
   <!-- Slot da caixa: cartao com sprite grande, nome, nivel e posicao -->
   <DataTemplate DataType="vm:SlotViewModel">
     <Button Classes="slot" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
+            Classes.dropTarget="{Binding IsDropTarget}"
             ToolTip.Tip="{Binding Tooltip}"
             Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
             CommandParameter="{Binding}">
@@ -37,13 +38,43 @@
   <DataTemplate DataType="vm:BoxesPageViewModel">
     <DockPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,16">
-        <Button Content="‹" FontSize="18" Command="{Binding PreviousBoxCommand}" />
+        <Button Classes="boxArrow" Content="‹" FontSize="18" Command="{Binding PreviousBoxCommand}"
+                ToolTip.Tip="Caixa anterior (arraste um Pokémon até aqui para trocar de caixa)" />
         <StackPanel Grid.Column="1" HorizontalAlignment="Center">
           <TextBlock Text="{Binding BoxName}" Classes="title" HorizontalAlignment="Center" />
           <TextBlock Text="{Binding BoxLabel}" Classes="muted" HorizontalAlignment="Center" />
         </StackPanel>
-        <Button Grid.Column="2" Content="›" FontSize="18" Command="{Binding NextBoxCommand}" />
+        <Button Grid.Column="2" Classes="boxArrow" Content="›" FontSize="18" Command="{Binding NextBoxCommand}"
+                ToolTip.Tip="Próxima caixa (arraste um Pokémon até aqui para trocar de caixa)" />
       </Grid>
+      <Border DockPanel.Dock="Top" Classes="card" Padding="10,8" Margin="0,0,0,12" MaxWidth="1100"
+              IsVisible="{Binding ShowParty}">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Left" Text="EQUIPE" Classes="section" Margin="4,0,12,0" VerticalAlignment="Center" />
+          <ItemsControl DataContext="{Binding Party}" ItemsSource="{Binding Slots}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SlotViewModel">
+                <Button Classes="slot mini" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
+                        Classes.dropTarget="{Binding IsDropTarget}" ToolTip.Tip="{Binding Tooltip}"
+                        Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
+                        CommandParameter="{Binding}">
+                  <Grid ColumnDefinitions="Auto,*">
+                    <Image Source="{Binding Sprite}" Stretch="Uniform" Width="44" Height="40"
+                           RenderOptions.BitmapInterpolationMode="None" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+                      <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="11" />
+                    </StackPanel>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </DockPanel>
+      </Border>
       <ScrollViewer x:Name="BoxScroll" HorizontalScrollBarVisibility="Disabled">
         <Border Classes="card" Padding="12" MaxWidth="1100" VerticalAlignment="Top">
           <ItemsControl ItemsSource="{Binding Slots}">
@@ -71,7 +102,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:SlotViewModel">
-            <Button Classes="partyCard" Classes.selected="{Binding IsSelected}"
+            <Button Classes="partyCard" Classes.selected="{Binding IsSelected}" Classes.dropTarget="{Binding IsDropTarget}"
                     Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                     CommandParameter="{Binding}">
               <Grid ColumnDefinitions="Auto,*,Auto">

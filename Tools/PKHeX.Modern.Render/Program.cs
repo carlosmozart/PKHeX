@@ -12,6 +12,7 @@ void Run(string prefix, int w, int h, bool light = false)
     win.Show();
     void Shot(string name) { for (int i = 0; i < 3; i++) { Dispatcher.UIThread.RunJobs(); AvaloniaHeadlessPlatform.ForceRenderTimerTick(); } win.CaptureRenderedFrame()!.Save(Path.Combine(outDir, prefix + name)); }
     vm.Boxes.SelectSlotCommand.Execute(vm.Boxes.Slots[1]); Shot("boxes.png");
+    vm.Boxes.Slots[8].IsDropTarget = true; Shot("drag.png"); vm.Boxes.Slots[8].IsDropTarget = false;
     vm.CurrentPage = vm.Party; vm.Party.SelectSlotCommand.Execute(vm.Party.Slots[0]); Shot("party.png");
     win.Close();
 }

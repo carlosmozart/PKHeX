@@ -23,7 +23,13 @@ dotnet run --project PKHeX.Modern -- "C:\caminho\para\save.sav"   # abre direto 
 - **Saves:** abrir pelo botão, arrastando o arquivo para a janela ou pela linha de comando, e exportar.
 - **Último save:** atalho na barra lateral para reabrir o último save, mais a opção "Abrir último save ao iniciar".
 - **Caixas:** grade responsiva com sprites grandes, nome, nível, posição e ★ para shiny.
-- **Equipe:** cartões grandes com nome, apelido e nível.
+- **Equipe:** cartões grandes com nome, apelido e nível, e também uma faixa compacta acima das caixas.
+- **Arrastar e soltar:**
+  - entre slots de caixa e equipe: move ou troca; com **Ctrl**, copia;
+  - parar sobre as setas ‹ › durante o arraste troca de caixa;
+  - soltar um arquivo `.pk*` sobre um slot importa o Pokémon.
+
+  As regras do jogo são respeitadas: slots bloqueados, equipe nunca vazia nem só com ovos.
 - **Editor de Pokémon:**
   - cabeçalho com tipos coloridos, gênero e selo de legalidade;
   - gráfico hexagonal (radar) dos atributos finais;

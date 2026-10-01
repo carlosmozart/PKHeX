@@ -19,6 +19,10 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     private Bitmap? _sprite;
     public Bitmap? Sprite { get => _sprite; private set => Set(ref _sprite, value); }
 
+    private bool _isDropTarget;
+    /// <summary>Destaque enquanto um Pokemon e arrastado por cima.</summary>
+    public bool IsDropTarget { get => _isDropTarget; set => Set(ref _isDropTarget, value); }
+
     private bool _isSelected;
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
 

@@ -113,6 +113,76 @@ public static class CoreAdapter
 
     public static string GetGenderSymbol(PKM pk) => pk.Gender switch { 0 => "♂", 1 => "♀", _ => "" };
 
+    // Mover / trocar / copiar slots (usa as regras do Core: slots bloqueados, equipe so de ovos, etc.)
+    public static ISlotInfo GetSlotInfo(SaveFile sav, int box, int slot)
+        => box < 0 ? new SlotInfoParty(slot) : new SlotInfoBox(box, slot, sav);
+
+    private static PKM Read(SaveFile sav, ISlotInfo s)
+        => s is SlotInfoParty p ? GetPartySlot(sav, p.Slot) : s.Read(sav);
+
+    /// <summary>Move (troca) ou copia o Pokemon de <paramref name="src"/> para <paramref name="dst"/>. Retorna erro ou null.</summary>
+    public static string? MoveSlot(SaveFile sav, ISlotInfo src, ISlotInfo dst, bool copy)
+    {
+        if (src == dst)
+            return "";
+        if (!src.CanWriteTo(sav) || !dst.CanWriteTo(sav))
+            return "Slot bloqueado pelo jogo.";
+
+        var a = Read(sav, src);
+        var b = Read(sav, dst);
+        if (IsEmpty(a))
+            return "";
+
+        if (dst.CanWriteTo(sav, a) != WriteBlockedMessage.None)
+            return "A equipe não pode ficar só com ovos.";
+
+        if (copy)
+        {
+            var clone = a.Clone();
+            clone.RefreshChecksum();
+            dst.WriteTo(sav, clone);
+            return null;
+        }
+
+        // Retirar da equipe: ela nao pode ficar vazia nem so com ovos.
+        if (src is SlotInfoParty sp && dst is not SlotInfoParty && (IsEmpty(b) || b.IsEgg) && sav.IsPartyAllEggs(sp.Slot))
+            return "A equipe precisa ter pelo menos um Pokémon (que não seja ovo).";
+        if (!IsEmpty(b) && src.CanWriteTo(sav, b) != WriteBlockedMessage.None)
+            return "A equipe não pode ficar só com ovos.";
+
+        if (src is SlotInfoParty && dst is SlotInfoParty && IsEmpty(b))
+        {
+            // Reordenar para o fim da equipe: remove e acrescenta.
+            src.WriteTo(sav, sav.BlankPKM);
+            new SlotInfoParty(sav.PartyCount).WriteTo(sav, a);
+            return null;
+        }
+
+        dst.WriteTo(sav, a);
+        src.WriteTo(sav, IsEmpty(b) ? sav.BlankPKM : b);
+        return null;
+    }
+
+    /// <summary>Carrega um arquivo .pk* e converte para o formato do save. Retorna null se nao for compativel.</summary>
+    public static PKM? LoadEntityFile(SaveFile sav, string path)
+    {
+        if (FileUtil.GetSupportedFile(path, sav) is not PKM pk)
+            return null;
+        if (pk.GetType() == sav.PKMType)
+            return pk;
+        return EntityConverter.ConvertToType(pk, sav.PKMType, out _);
+    }
+
+    /// <summary>Grava um Pokemon vindo de arquivo num slot. Retorna erro ou null.</summary>
+    public static string? ImportToSlot(SaveFile sav, ISlotInfo dst, PKM pk)
+    {
+        if (!dst.CanWriteTo(sav))
+            return "Slot bloqueado pelo jogo.";
+        pk.RefreshChecksum();
+        dst.WriteTo(sav, pk);
+        return null;
+    }
+
     // Showdown
     public static string ToShowdown(PKM pk) => ShowdownParsing.GetShowdownText(pk);
 

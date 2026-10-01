@@ -31,6 +31,7 @@ dotnet run --project PKHeX.Modern
 - **Pokémon novo:** use `CoreAdapter.CreateBlank(sav)` (aplica `EntityTemplates.TemplateFields`). Sem isso, um set Showdown colado sai "Ilegal".
 - **Build com o app aberto:** o build falha porque o app trava as DLLs em `bin/`. Feche o app ou compile com `-o outra_pasta`.
 - **Capturas de tela:** use `Tools/PKHeX.Modern.Render` (headless). Não capture a tela do desktop.
+- **Arrastar e soltar:** fica em `Views/SlotDragController.cs` (handlers em túnel na janela, `DataTransfer`/`DoDragDropAsync` do Avalonia 11.3). A regra de mover usa `SlotInfoBox`/`SlotInfoParty` do Core via `CoreAdapter.MoveSlot`. Ao ler um slot da equipe, use `CoreAdapter.GetPartySlot`: ler além de `PartyCount` traz dados antigos.
 - **Testes de render:** um `MainViewModel()` sem `AppSettings.Load()` não grava preferências em disco, então pode ser usado à vontade.
 
 ## Testado com

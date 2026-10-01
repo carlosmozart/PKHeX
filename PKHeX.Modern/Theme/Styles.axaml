@@ -78,6 +78,22 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
     <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
   </Style>
+  <Style Selector="Button.slot.mini">
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Height" Value="56" />
+    <Setter Property="Margin" Value="3" />
+    <Setter Property="Padding" Value="6,4" />
+  </Style>
+  <Style Selector="Button.slot.dropTarget /template/ ContentPresenter, Button.partyCard.dropTarget /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource SlotHover}" />
+  </Style>
+  <Style Selector="Button.slot.dropTarget, Button.partyCard.dropTarget">
+    <Setter Property="RenderTransform" Value="scale(1.06)" />
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
   <Style Selector="TextBlock.slotPos">
     <Setter Property="FontSize" Value="11" />
     <Setter Property="FontWeight" Value="SemiBold" />

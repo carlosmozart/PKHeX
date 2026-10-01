@@ -37,6 +37,10 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
         NextBoxCommand = new RelayCommand(() => CurrentBox++, () => _sav is not null && CurrentBox < _sav.BoxCount - 1);
     }
 
+    /// <summary>Faixa da equipe exibida acima das caixas (permite arrastar entre caixa e equipe).</summary>
+    public PartyPageViewModel? Party { get; init; }
+    public bool ShowParty => Party is { Slots.Count: > 0 };
+
     public override string Title => "Caixas";
     public override string Icon => "▦";
     public RelayCommand PreviousBoxCommand { get; }
@@ -64,7 +68,10 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
         _currentBox = 0;
         Raise(nameof(CurrentBox));
         LoadBox();
+        Raise(nameof(ShowParty));
     }
+
+    public void Reload() => LoadBox();
 
     private void LoadBox()
     {

@@ -23,8 +23,8 @@ public sealed class MainViewModel : ViewModelBase
             Settings.DarkTheme = App.ToggleTheme();
             Settings.Save();
         });
-        Boxes = new BoxesPageViewModel(SelectSlot);
         Party = new PartyPageViewModel(SelectSlot);
+        Boxes = new BoxesPageViewModel(SelectSlot) { Party = Party };
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
         AllPages = [Boxes, Party, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s)];
         _currentPage = Boxes;
@@ -99,6 +99,59 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     public string? SuggestedFileName => _sav?.Metadata.FileName;
+
+    /// <summary>Arrastar e soltar: move/troca (ou copia, com Ctrl) entre slots de caixa e equipe.</summary>
+    public void MoveSlot(SlotViewModel src, SlotViewModel dst, bool copy)
+    {
+        if (_sav is null)
+            return;
+        var srcName = src.Title;
+        var error = CoreAdapter.MoveSlot(_sav,
+            CoreAdapter.GetSlotInfo(_sav, src.Box, src.Slot),
+            CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot), copy);
+        if (error == "")
+            return; // nada a fazer
+        if (error is not null)
+        {
+            Status = error;
+            return;
+        }
+        RefreshSlots();
+        Status = copy
+            ? $"{srcName} copiado para {dst.Location}. Lembre-se de exportar o save."
+            : $"{srcName} movido para {dst.Location}. Lembre-se de exportar o save.";
+    }
+
+    /// <summary>Soltar um arquivo .pk* sobre um slot.</summary>
+    public void ImportFile(SlotViewModel dst, string path)
+    {
+        if (_sav is null)
+            return;
+        var pk = CoreAdapter.LoadEntityFile(_sav, path);
+        if (pk is null)
+        {
+            Status = "Arquivo de Pokémon incompatível com este save.";
+            return;
+        }
+        var error = CoreAdapter.ImportToSlot(_sav, CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot), pk);
+        if (error is not null)
+        {
+            Status = error;
+            return;
+        }
+        RefreshSlots();
+        Status = $"{CoreAdapter.SpeciesNames[pk.Species]} importado em {dst.Location}.";
+    }
+
+    private void RefreshSlots()
+    {
+        if (_sav is null)
+            return;
+        Boxes.Reload();
+        Party.Load(_sav);
+        Editor = null; // o slot editado pode ter mudado de lugar
+        _selectedSlot = null;
+    }
 
     private void SelectSlot(SlotViewModel slot)
     {

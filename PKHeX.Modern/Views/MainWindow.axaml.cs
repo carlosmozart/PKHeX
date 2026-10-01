@@ -12,8 +12,10 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        AddHandler(DragDrop.DropEvent, OnDrop);
+        _drag = new SlotDragController(this, () => VM);
     }
+
+    private readonly SlotDragController _drag;
 
     private MainViewModel VM => (MainViewModel)DataContext!;
 
@@ -37,11 +39,5 @@ public sealed partial class MainWindow : Window
         });
         if (file?.TryGetLocalPath() is { } path)
             VM.Export(path);
-    }
-
-    private void OnDrop(object? sender, DragEventArgs e)
-    {
-        if (e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath() is { } path)
-            VM.Open(path);
     }
 }

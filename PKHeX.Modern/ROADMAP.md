@@ -1,9 +1,10 @@
 # Roadmap / Pendências
 
 ## Próximos passos sugeridos
-- [ ] **Arrastar e soltar Pokémon** entre slots, caixas e equipe (trocar, mover, clonar com Ctrl).
+- [x] **Arrastar e soltar Pokémon** entre slots, caixas e equipe (trocar, mover, copiar com Ctrl, setas trocam de caixa, soltar .pk\* importa).
+- [ ] Arrastar um slot **para fora** da janela para exportar como arquivo .pk\*.
 - [ ] **Barra de ações inferior** (como na referência visual): Verificar legalidade, Criar PKM, Importar, Exportar e Salvar.
-- [ ] **Importar/exportar arquivos .pk\*** de um slot (arrastar arquivo para o slot, botão "Exportar PKM").
+- [ ] **Exportar arquivo .pk\*** de um slot (botão "Exportar PKM"). A importação por arrastar já funciona.
 - [ ] **Busca global** no topo da janela (por espécie, apelido ou golpe), destacando os slots encontrados.
 - [ ] **Golpes com tipo e PP**: chip colorido do tipo e barra de PP em cada golpe.
 - [ ] **Gênero no cartão do slot** (♂/♀ ao lado do nível).
