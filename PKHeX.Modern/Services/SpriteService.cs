@@ -20,6 +20,15 @@ public static class SpriteService
         return Convert(gdi);
     }
 
+    /// <summary>Sprite de um encontro ou Mystery Gift (banco de encontros/eventos).</summary>
+    public static AvaloniaBitmap? GetSprite(IEncounterTemplate enc)
+    {
+        // Sem o icone da bola que o Core desenha no canto: assim o recorte deixa o Pokemon grande no cartao.
+        var shiny = enc.IsShiny ? Shiny.Always : Shiny.Never;
+        using var gdi = SpriteUtil.GetSprite(enc.Species, enc.Form, 0, 0, 0, enc.IsEgg, shiny, enc.Context);
+        return Convert(gdi);
+    }
+
     public static AvaloniaBitmap? GetSprite(PKM pk)
     {
         if (CoreAdapter.IsEmpty(pk))

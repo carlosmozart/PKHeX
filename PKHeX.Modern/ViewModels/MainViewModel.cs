@@ -29,7 +29,9 @@ public sealed class MainViewModel : ViewModelBase
         Boxes = new BoxesPageViewModel(s => _ = SelectSlotAsync(s)) { Party = Party };
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
         SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p));
-        AllPages = [Boxes, Party, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), SaveManager];
+        Encounters = new EncounterDbViewModel(UseEncounter);
+        Gifts = new GiftDbViewModel(UseEncounter);
+        AllPages = [Boxes, Party, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
         _currentPage = Boxes;
@@ -53,6 +55,8 @@ public sealed class MainViewModel : ViewModelBase
 
     public BoxesPageViewModel Boxes { get; }
     public SaveManagerViewModel SaveManager { get; }
+    public EncounterDbViewModel Encounters { get; }
+    public GiftDbViewModel Gifts { get; }
     public PartyPageViewModel Party { get; }
     private IReadOnlyList<PageViewModel> AllPages { get; }
     public IReadOnlyList<PageViewModel> Pages
@@ -114,6 +118,8 @@ public sealed class MainViewModel : ViewModelBase
             Raise(nameof(ShowEditorPanel));
             if (value == SaveManager)
                 _ = SaveManager.RefreshAsync();
+            else if (value == Gifts)
+                _ = Gifts.EnsureLoadedAsync();
         }
     }
 
@@ -130,8 +136,8 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     public bool HasSave => _sav is not null;
-    /// <summary>Painel do editor: some na pagina Saves, que usa a largura toda.</summary>
-    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager;
+    /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
+    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts;
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
     public string TrainerInfo => _sav is null ? "Arraste um arquivo ou clique em Abrir" : $"{_sav.OT} · TID {_sav.DisplayTID}";
 
@@ -407,7 +413,37 @@ public sealed class MainViewModel : ViewModelBase
             "Descartar", "Continuar editando", isDanger: true);
     }
 
-    private void SelectSlot(SlotViewModel slot)
+    /// <summary>
+    /// "Usar" no banco de encontros/eventos: gera o Pokemon e abre no editor, no slot vazio selecionado
+    /// ou no primeiro slot vazio da caixa atual. So grava ao clicar em Aplicar.
+    /// </summary>
+    private async void UseEncounter(IEncounterInfo enc)
+    {
+        if (_sav is null)
+            return;
+        var pk = EncounterDatabase.ToEntity(_sav, enc, out var error);
+        if (pk is null)
+        {
+            Status = $"Não foi possível gerar este Pokémon para o save: {error}";
+            return;
+        }
+        var slot = _selectedSlot is { IsEmpty: true, IsParty: false } s ? s : Boxes.Slots.FirstOrDefault(x => x.IsEmpty);
+        if (slot is null)
+        {
+            Status = "Esta caixa está cheia. Escolha uma caixa com espaço (ou selecione um slot vazio) e clique em Usar de novo.";
+            return;
+        }
+        if (!await ConfirmDiscardEditAsync())
+            return;
+        CurrentPage = Boxes;
+        SelectSlot(slot, pk);
+        Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gerado do banco em {slot.Location}. Confira no editor e clique em Aplicar para gravar.";
+    }
+
+    private void SelectSlot(SlotViewModel slot) => SelectSlot(slot, null);
+
+    /// <param name="generated">Pokemon vindo de fora (banco) para abrir no editor no lugar do conteudo do slot.</param>
+    private void SelectSlot(SlotViewModel slot, PKM? generated)
     {
         if (_selectedSlot is not null)
             _selectedSlot.IsSelected = false;
@@ -418,7 +454,7 @@ public sealed class MainViewModel : ViewModelBase
             return;
 
         // Slot vazio: abre o editor com um Pokemon em branco para permitir criar/colar Showdown.
-        var source = slot.IsEmpty ? CoreAdapter.CreateBlank(_sav) : slot.Pkm;
+        var source = generated ?? (slot.IsEmpty ? CoreAdapter.CreateBlank(_sav) : slot.Pkm);
         var tab = Editor?.SelectedTab ?? 0;
         Editor = new PokemonEditorViewModel(source, slot.Location, pk =>
         {
@@ -435,6 +471,6 @@ public sealed class MainViewModel : ViewModelBase
                 Party.Load(_sav);
             Raise(nameof(CanExportEntity));
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
-        }, s => Status = s, isNew: slot.IsEmpty) { SelectedTab = tab };
+        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null) { SelectedTab = tab };
     }
 }

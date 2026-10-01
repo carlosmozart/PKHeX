@@ -19,11 +19,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     private readonly Action<PKM> _apply;
     private readonly Action<string> _status;
 
-    public PokemonEditorViewModel(PKM source, string location, Action<PKM> apply, Action<string> status, bool isNew = false)
+    /// <param name="pendingApply">Pokemon que veio de fora (banco de encontros/eventos): ja conta como edicao nao aplicada.</param>
+    public PokemonEditorViewModel(PKM source, string location, Action<PKM> apply, Action<string> status, bool isNew = false, bool pendingApply = false)
     {
         _isNew = isNew;
         _pk = source.Clone();
-        _savedData = _pk.Data.ToArray();
+        _savedData = pendingApply ? [] : _pk.Data.ToArray();
         _apply = apply;
         _status = status;
         Location = location;

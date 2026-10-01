@@ -12,6 +12,90 @@
     <v:SaveManagerView />
   </DataTemplate>
 
+  <!-- Cartao de encontro / Mystery Gift (bancos "Encontros" e "Eventos") -->
+  <DataTemplate DataType="vm:EncounterCardViewModel">
+    <Border Classes="card encCard" Width="280" ToolTip.Tip="{Binding Details}">
+      <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,Auto" ColumnSpacing="12">
+        <Border Classes="spriteWell" Width="68" Height="60" VerticalAlignment="Top">
+          <Image Source="{Binding Sprite}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" Margin="4" />
+        </Border>
+        <StackPanel Grid.Column="1" Spacing="2">
+          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Kind}" Classes="muted" FontSize="11" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Level}" FontSize="12" />
+          <TextBlock Text="{Binding Location}" FontSize="12" IsVisible="{Binding HasLocation}" TextTrimming="CharacterEllipsis" />
+          <TextBlock Text="{Binding Game}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+        <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+          <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+            <Border Classes="chip" Background="{DynamicResource CardBorder}" IsVisible="{Binding IsEgg}"><TextBlock Text="Ovo" /></Border>
+            <Border Classes="chip" Background="#B8860B" IsVisible="{Binding IsShiny}"><TextBlock Text="★ Shiny" /></Border>
+          </StackPanel>
+          <Button Grid.Column="1" Classes="accent small" Content="Usar"
+                  Command="{Binding $parent[UserControl].((vm:EncounterListPageViewModel)DataContext).UseCommand}"
+                  CommandParameter="{Binding}" ToolTip.Tip="Gera este Pokémon e abre no editor (grava só ao Aplicar)" />
+        </Grid>
+      </Grid>
+    </Border>
+  </DataTemplate>
+
+  <!-- Pagina Encontros -->
+  <DataTemplate DataType="vm:EncounterDbViewModel">
+    <UserControl>
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+      <StackPanel Spacing="2">
+        <TextBlock Text="Encontros" Classes="title" />
+        <TextBlock Text="Todos os jeitos de obter uma espécie: selvagem, estático, troca, ovo e eventos." Classes="muted" FontSize="12" />
+      </StackPanel>
+      <Grid Grid.Row="1" ColumnDefinitions="320,Auto,*" ColumnSpacing="12">
+        <AutoCompleteBox ItemsSource="{Binding SpeciesNames}" Text="{Binding Species}" FilterMode="ContainsOrdinal"
+                         Watermark="Espécie (ex.: Pikachu)" MinimumPrefixLength="1" />
+        <CheckBox Grid.Column="1" Content="Só deste jogo" IsChecked="{Binding OnlyThisGame}"
+                  ToolTip.Tip="Só encontros possíveis nas versões compatíveis com este save" />
+        <TextBlock Grid.Column="2" Text="{Binding Summary}" Classes="muted" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" />
+      </Grid>
+      <ScrollViewer Grid.Row="2">
+        <StackPanel Spacing="12">
+          <ItemsControl ItemsSource="{Binding Results}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="10" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+          </ItemsControl>
+          <Button Content="Mostrar mais" HorizontalAlignment="Center" Command="{Binding ShowMoreCommand}" IsVisible="{Binding HasMore}" />
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+    </UserControl>
+  </DataTemplate>
+
+  <!-- Pagina Eventos (Mystery Gift) -->
+  <DataTemplate DataType="vm:GiftDbViewModel">
+    <UserControl>
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+      <StackPanel Spacing="2">
+        <TextBlock Text="Eventos" Classes="title" />
+        <TextBlock Text="Banco de Mystery Gift do PKHeX (eventos oficiais distribuídos)." Classes="muted" FontSize="12" />
+      </StackPanel>
+      <Grid Grid.Row="1" ColumnDefinitions="320,Auto,*" ColumnSpacing="12">
+        <TextBox Text="{Binding Search}" Watermark="Buscar por espécie, título ou jogo" />
+        <CheckBox Grid.Column="1" Content="Só deste jogo" IsChecked="{Binding OnlyThisGame}"
+                  ToolTip.Tip="Só eventos que podem existir neste jogo" />
+        <TextBlock Grid.Column="2" Text="{Binding Summary}" Classes="muted" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" />
+      </Grid>
+      <ScrollViewer Grid.Row="2">
+        <StackPanel Spacing="12">
+          <ItemsControl ItemsSource="{Binding Results}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="10" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+          </ItemsControl>
+          <Button Content="Mostrar mais" HorizontalAlignment="Center" Command="{Binding ShowMoreCommand}" IsVisible="{Binding HasMore}" />
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+    </UserControl>
+  </DataTemplate>
+
   <DataTemplate DataType="vm:PokemonEditorViewModel">
     <v:PokemonEditorView />
   </DataTemplate>

@@ -171,6 +171,9 @@
     <Setter Property="Foreground" Value="#F5A524" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
+  <Style Selector="Border.encCard">
+    <Setter Property="Padding" Value="12" />
+  </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />

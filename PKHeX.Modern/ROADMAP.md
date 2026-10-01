@@ -7,10 +7,11 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [ ] Novos modificadores no arraste: Shift = clonar, Alt = sobrescrever.
 - [x] **Atalhos de teclado**: Q/E trocam de página (circular), Esc fecha o editor ou volta para Caixas, Ctrl+1–9 vão a cada página, Ctrl+O abre, Ctrl+S/Ctrl+E salvam. Os atalhos aparecem na barra lateral e nos tooltips.
 - [x] **Cartão de legalidade com correções de um clique** (aba Visão geral): lista os problemas e oferece golpes sugeridos, golpes de reaprender (Gen 6+), encontro sugerido e IVs máximos. Trocar a espécie agora ajusta apelido, habilidade, forma e gênero.
-- [x] **Save Manager**: pasta `saves/` ao lado do exe (ou outra, em "Escolher pasta..."), saves agrupados por subpasta/console, com treinador, TID/SID, tempo de jogo, dinheiro, capturados e equipe. Busca, filtro por geração, selo "Aberto". Abre com duplo clique ou botão. É a tela inicial e a página "Saves" (Ctrl+5).
+- [x] **Save Manager**: pasta `saves/` ao lado do exe (ou outra, em "Escolher pasta..."), saves agrupados por subpasta/console, com treinador, TID/SID, tempo de jogo, dinheiro, capturados e equipe. Busca, filtro por geração, selo "Aberto". Abre com duplo clique ou botão. É a tela inicial e a página "Saves" (Ctrl+7).
 - [ ] Save Manager: ler saves dentro de `.zip` (backups do JKSV) e mostrar a capa do jogo.
 - [x] **Mensagens dentro do app**: pergunta sobreposta na janela (Enter confirma, Esc cancela) ao copiar/importar por cima de um Pokémon, trocar de slot com edição não aplicada, abrir outro save ou fechar o app com alterações não exportadas. Aviso "● Alterações não exportadas" na barra lateral.
-- [ ] **Bancos de encontros e Mystery Gift em cartões**, com painel de detalhes e o filtro "Só Pokémon deste jogo".
+- [x] **Bancos de encontros e Mystery Gift em cartões** (páginas "Encontros" e "Eventos"): busca por espécie ou texto, filtro "Só deste jogo", detalhes no tooltip, "Usar" gera o Pokémon no editor (slot vazio).
+- [ ] Bancos: painel de detalhes ao lado (golpes, IVs garantidos, bola, shiny lock), filtros por golpe/versão e rótulo de gifts do HOME.
 - Fora de escopo: modo clássico, plugins do PKHeX (dependem do WinForms). Fundo animado só com opção de reduzir movimento.
 
 ## Próximos passos sugeridos
@@ -26,7 +27,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [ ] **Seletor de idioma** nas preferências.
 - [ ] **Cor de destaque configurável** (a referência visual usa ciano/teal; hoje é vermelho, definido em `Theme/Palette.axaml`).
 - [ ] **Editor mais completo**: OT, ID, bola, local e data de encontro, fitas, memórias, Hyper Training, Tera Type, PID/EC e "Tornar shiny".
-- [ ] **Pokédex**, **Batch Editor**, **banco de dados / pesquisa**, **Mystery Gift**, **editores específicos de cada jogo** (eventos, flags, records).
+- [ ] **Pokédex**, **Batch Editor**, **banco de dados / pesquisa** (dos Pokémon salvos), **editores específicos de cada jogo** (eventos, flags, records).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [ ] **Backup automático** do save antes de exportar por cima do original.
 - [ ] **Instalador / publicação**: `dotnet publish -c Release -r win-x64 --self-contained` e um GitHub Action que gere o .exe.
