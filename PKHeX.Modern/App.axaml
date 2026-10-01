@@ -8,6 +8,10 @@
   <!-- Cada pagina/ViewModel ganha sua View aqui (um DataTemplate por feature). -->
   <Application.DataTemplates>
 
+  <DataTemplate DataType="vm:SaveManagerViewModel">
+    <v:SaveManagerView />
+  </DataTemplate>
+
   <DataTemplate DataType="vm:PokemonEditorViewModel">
     <v:PokemonEditorView />
   </DataTemplate>

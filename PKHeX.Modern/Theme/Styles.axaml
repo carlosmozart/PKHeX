@@ -151,6 +151,15 @@
   <Style Selector="TabControl.editorTabs TabItem:selected">
     <Setter Property="Foreground" Value="{DynamicResource Accent}" />
   </Style>
+  <Style Selector="Border.saveCard">
+    <Setter Property="Cursor" Value="Hand" />
+  </Style>
+  <Style Selector="Border.saveCard:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource TextMuted}" />
+  </Style>
+  <Style Selector="Border.saveCard.current">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+  </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />

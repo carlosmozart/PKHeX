@@ -66,18 +66,14 @@
 
     <!-- Conteudo -->
     <Panel Grid.Column="1" Margin="24">
-      <Border Classes="card" IsVisible="{Binding !HasSave}">
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
-          <TextBlock Text="Arraste um arquivo de save aqui" Classes="title" HorizontalAlignment="Center" />
-          <TextBlock Text="ou use o botão “Abrir save...”" Classes="muted" HorizontalAlignment="Center" />
-        </StackPanel>
-      </Border>
+      <!-- Sem save aberto: o Save Manager e a tela inicial -->
+      <ContentControl Content="{Binding SaveManager}" IsVisible="{Binding !HasSave}" />
       <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding HasSave}" />
     </Panel>
 
     <!-- Editor -->
     <Border Grid.Column="2" Width="410" Background="{DynamicResource SidebarBackground}"
-            BorderBrush="{DynamicResource CardBorder}" BorderThickness="1,0,0,0" IsVisible="{Binding HasSave}">
+            BorderBrush="{DynamicResource CardBorder}" BorderThickness="1,0,0,0" IsVisible="{Binding ShowEditorPanel}">
       <Panel>
         <TextBlock Text="Selecione um slot" Classes="muted" IsVisible="{Binding !HasEditor}"
                    HorizontalAlignment="Center" VerticalAlignment="Center" />

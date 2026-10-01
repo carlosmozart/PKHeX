@@ -27,7 +27,8 @@ public sealed class MainViewModel : ViewModelBase
         Party = new PartyPageViewModel(SelectSlot);
         Boxes = new BoxesPageViewModel(SelectSlot) { Party = Party };
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
-        AllPages = [Boxes, Party, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s)];
+        SaveManager = new SaveManagerViewModel(Settings, Open);
+        AllPages = [Boxes, Party, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), SaveManager];
         _currentPage = Boxes;
         CheckLegalityCommand = new RelayCommand(CheckLegality, () => HasSave);
         CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
@@ -48,6 +49,7 @@ public sealed class MainViewModel : ViewModelBase
     public IReadOnlyList<string> EntityExtensions => _sav is null ? [] : CoreAdapter.GetEntityExtensions(_sav);
 
     public BoxesPageViewModel Boxes { get; }
+    public SaveManagerViewModel SaveManager { get; }
     public PartyPageViewModel Party { get; }
     private IReadOnlyList<PageViewModel> AllPages { get; }
     public IReadOnlyList<PageViewModel> Pages
@@ -97,7 +99,18 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     private PageViewModel _currentPage;
-    public PageViewModel CurrentPage { get => _currentPage; set { if (value is not null) Set(ref _currentPage, value); } }
+    public PageViewModel CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            if (value is null || !Set(ref _currentPage, value))
+                return;
+            Raise(nameof(ShowEditorPanel));
+            if (value == SaveManager)
+                _ = SaveManager.RefreshAsync();
+        }
+    }
 
     public RelayCommand ToggleThemeCommand { get; }
     public RelayCommand OpenLastCommand { get; }
@@ -112,6 +125,8 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     public bool HasSave => _sav is not null;
+    /// <summary>Painel do editor: some na pagina Saves, que usa a largura toda.</summary>
+    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager;
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
     public string TrainerInfo => _sav is null ? "Arraste um arquivo ou clique em Abrir" : $"{_sav.OT} · TID {_sav.DisplayTID}";
 
@@ -137,7 +152,7 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var page in AllPages)
             page.Load(sav);
         CurrentPage = Boxes;
-        foreach (var p in (string[])[nameof(HasSave), nameof(GameName), nameof(TrainerInfo), nameof(Pages), nameof(CanExportEntity)])
+        foreach (var p in (string[])[nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(TrainerInfo), nameof(Pages), nameof(CanExportEntity)])
             Raise(p);
         CheckLegalityCommand.NotifyCanExecuteChanged();
         CreateCommand.NotifyCanExecuteChanged();

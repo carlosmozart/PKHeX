@@ -44,11 +44,12 @@ dotnet run --project PKHeX.Modern
 - **Atalhos de teclado:** `MainWindow.OnKeyDown` trata Ctrl+O/S/E/1–9 e Q/E/Esc; Ctrl+Z/Y ficam em `Window.KeyBindings`. Teclas sem modificador são ignoradas com foco em TextBox/ComboBox/NumericUpDown/CalendarDatePicker (`IsTyping`), senão Q/E trocariam de página ao digitar. Testes de teclado no headless: `win.KeyPressQwerty(PhysicalKey.X, RawInputModifiers.Control)`.
 - **Correções de legalidade:** `CoreAdapter.SuggestMoves/SuggestRelearnMoves/SuggestMetData` usam as mesmas funções do Batch Editor (`SetMoveset`, `SetRelearnMoves`, `EncounterSuggestion.GetSuggestedMetInfo`). `SuggestMetData` devolve null quando a espécie não tem encontro no jogo (ex.: Pikachu em Black). Os problemas listados vêm das linhas "Invalid"/"Fishy" do `Report()`, em inglês por enquanto.
 - **Troca de espécie:** use `CoreAdapter.ChangeSpecies` (forma 0, apelido padrão se não tinha apelido, mesmo slot de habilidade, gênero válido). Só trocar `pk.Species` deixa o Pokémon ilegal (apelido e habilidade da espécie antiga).
+- **Save Manager:** `Services/SaveLibrary.cs` varre a pasta em `Task.Run` (só Core, sem sprites); os sprites da equipe são gerados na thread da interface, sob demanda (`SaveEntryViewModel.PartySprites`). A pasta fica em `AppSettings.SavesFolder` (null = `saves` ao lado do exe). Relê ao ativar a janela e ao entrar na página. Compare caminhos com `Path.GetFullPath`: o Explorer e o `EnumerateFiles` podem misturar `/` e `\`.
 
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
 - Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".
-- **Próximo passo combinado:** editor em abas (feito), desfazer/refazer (feito), atalhos de teclado (feito), cartão de legalidade (feito). Próximo da lista: Save Manager.
+- **Próximo passo combinado:** editor em abas (feito), desfazer/refazer (feito), atalhos de teclado (feito), cartão de legalidade (feito), Save Manager (feito). Próximo da lista: mensagens dentro do app (confirmações embutidas).
 - Preferências de trabalho: respostas e UI em PT-BR; validar mudanças visuais com o render headless antes de commitar; commit e push só quando pedido.
 
 ## Testado com

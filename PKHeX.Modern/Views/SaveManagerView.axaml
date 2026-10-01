@@ -1,0 +1,106 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKHeX.Modern.ViewModels"
+             x:Class="PKHeX.Modern.Views.SaveManagerView"
+             x:DataType="vm:SaveManagerViewModel">
+  <DockPanel>
+
+    <!-- Cabecalho: titulo, pasta e acoes -->
+    <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,14">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Saves" Classes="title" />
+          <TextBlock Text="{Binding Folder}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Folder}" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+          <Button Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}" ToolTip.Tip="Relê a pasta (F5)" />
+          <Button Classes="small" Content="📁  Abrir pasta" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Abre a pasta no Explorer (cria se não existir)" />
+          <Button Classes="small" Content="Escolher pasta..." Click="OnChooseFolder" />
+        </StackPanel>
+      </Grid>
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+        <TextBox Text="{Binding Search}" Watermark="Buscar por jogo, treinador ou arquivo" />
+        <ItemsControl Grid.Column="1" ItemsSource="{Binding Generations}" VerticalAlignment="Center">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:GenerationFilterViewModel">
+              <Button Classes="small" Classes.accent="{Binding IsActive}" Content="{Binding Label}"
+                      ToolTip.Tip="Mostrar só esta geração (clique de novo para mostrar todas)"
+                      Command="{Binding $parent[UserControl].((vm:SaveManagerViewModel)DataContext).SetGenerationCommand}"
+                      CommandParameter="{Binding Generation}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Grid>
+      <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="12" IsVisible="{Binding Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    </StackPanel>
+
+    <Panel>
+      <!-- Pasta vazia: instrucoes -->
+      <Border Classes="card" IsVisible="{Binding IsEmpty}">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" MaxWidth="520">
+          <TextBlock Text="Arraste um arquivo de save aqui" Classes="title" HorizontalAlignment="Center" />
+          <TextBlock Text="ou use “Abrir save...”. Para ter seus saves sempre à mão, coloque-os na pasta acima (clique em “Abrir pasta”). Subpastas como gba, ds, 3ds e switch viram grupos."
+                     Classes="muted" TextWrapping="Wrap" TextAlignment="Center" />
+        </StackPanel>
+      </Border>
+      <TextBlock Text="Lendo saves..." Classes="muted" IsVisible="{Binding ShowLoading}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+      <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding Groups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:SaveGroupViewModel">
+              <StackPanel Spacing="8" Margin="0,0,0,18">
+                <TextBlock Text="{Binding Title}" Classes="section" />
+                <ItemsControl ItemsSource="{Binding Items}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="10" /></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:SaveEntryViewModel">
+                      <Border Classes="card saveCard" Classes.current="{Binding IsCurrent}" Width="330"
+                              DoubleTapped="OnCardDoubleTapped" ToolTip.Tip="{Binding Path}">
+                        <StackPanel Spacing="6">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding Game}" FontWeight="SemiBold" FontSize="16" TextTrimming="CharacterEllipsis" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                              <Border Classes="chip" Background="{DynamicResource Good}" IsVisible="{Binding IsCurrent}"><TextBlock Text="Aberto" /></Border>
+                              <Border Classes="chip" Background="{DynamicResource CardBorder}"><TextBlock Text="{Binding GenerationBadge}" /></Border>
+                            </StackPanel>
+                          </Grid>
+                          <TextBlock Text="{Binding Trainer}" />
+                          <TextBlock Text="{Binding Details}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                          <ItemsControl ItemsSource="{Binding PartySprites}" Height="40">
+                            <ItemsControl.ItemsPanel>
+                              <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate>
+                                <Image Source="{Binding}" Width="40" Height="40" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                          <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel VerticalAlignment="Center">
+                              <TextBlock Text="{Binding FileName}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+                              <TextBlock Text="{Binding LastWrite}" Classes="muted" FontSize="11" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Classes="accent small" Content="Abrir"
+                                    Command="{Binding $parent[UserControl].((vm:SaveManagerViewModel)DataContext).OpenCommand}"
+                                    CommandParameter="{Binding}" />
+                          </Grid>
+                        </StackPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Panel>
+  </DockPanel>
+</UserControl>

@@ -10,6 +10,8 @@ public sealed class AppSettings
     public string? LastSavePath { get; set; }
     public bool OpenLastSaveOnStartup { get; set; }
     public bool DarkTheme { get; set; } = true;
+    /// <summary>Pasta do Save Manager (null = pasta "saves" ao lado do exe).</summary>
+    public string? SavesFolder { get; set; }
 
     /// <summary>So grava em disco instancias carregadas via <see cref="Load"/> (testes usam instancias em memoria).</summary>
     [System.Text.Json.Serialization.JsonIgnore]
