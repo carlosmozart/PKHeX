@@ -38,6 +38,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         MaxIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; });
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
         MakeShinyCommand = new RelayCommand(() => { _pk.SetShiny(); RaiseAll(); });
+        SuggestMovesCommand = new RelayCommand(() => Fix("Golpes sugeridos", pk => CoreAdapter.SuggestMoves(pk)));
+        SuggestRelearnCommand = new RelayCommand(() => Fix("Golpes de reaprender", pk => CoreAdapter.SuggestRelearnMoves(pk)));
+        SuggestMetCommand = new RelayCommand(() => Fix("Encontro sugerido", CoreAdapter.SuggestMetData, "nenhum encontro possível para esta espécie neste jogo"));
+        FixIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; _status(LegalityStatus("IVs máximos: aplicado")); });
         BallList = CoreAdapter.GetBalls();
         MetLocationList = CoreAdapter.GetMetLocations(_pk);
         Refresh();
@@ -56,6 +60,37 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public RelayCommand MaxIVsCommand { get; }
     public RelayCommand ClearEVsCommand { get; }
     public RelayCommand MakeShinyCommand { get; }
+    public RelayCommand SuggestMovesCommand { get; }
+    public RelayCommand SuggestRelearnCommand { get; }
+    public RelayCommand SuggestMetCommand { get; }
+    public RelayCommand FixIVsCommand { get; }
+    /// <summary>Golpes de reaprender so existem a partir da Gen 6.</summary>
+    public bool HasRelearnMoves => _pk.Format >= 6;
+    public IReadOnlyList<string> LegalityIssues { get; private set; } = [];
+    public bool HasLegalityIssues => ShowIllegal && LegalityIssues.Count > 0;
+
+    /// <summary>Aplica uma correcao sugerida e informa o resultado na barra de status.</summary>
+    private void Fix(string what, Func<PKM, bool?> apply, string? whenNull = null)
+    {
+        bool? changed;
+        try { changed = apply(_pk); }
+        catch (Exception ex) { _status($"{what}: erro ({ex.Message})"); return; }
+        if (changed is null)
+        {
+            _status($"{what}: {whenNull ?? "indisponível"}.");
+            return;
+        }
+        if (changed == false)
+        {
+            _status($"{what}: nada a mudar.");
+            return;
+        }
+        _isNew = false;
+        RaiseAll();
+        _status(LegalityStatus($"{what}: aplicado"));
+    }
+
+    private string LegalityStatus(string done) => $"{done}. Agora: {(IsLegal ? "legal ✓" : "ainda ilegal ⚠")}. Clique em Aplicar para gravar.";
 
     /// <summary>Aba selecionada (mantida pelo MainViewModel ao trocar de slot).</summary>
     public int SelectedTab { get => _selectedTab; set => Set(ref _selectedTab, value); }
@@ -72,7 +107,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public string IVSummary => $"IVs {IVTotal}/{_pk.MaxIV * 6}";
 
     public string Nickname { get => _pk.Nickname; set { _pk.Nickname = value; Refresh(); } }
-    public int Species { get => _pk.Species; set { if (value >= 0) { _pk.Species = (ushort)value; _isNew = false; Refresh(); } } }
+    public int Species { get => _pk.Species; set { if (value >= 0 && value != _pk.Species) { CoreAdapter.ChangeSpecies(_pk, (ushort)value); _isNew = false; RaiseAll(); } } }
     public int Level { get => _pk.CurrentLevel; set { _pk.CurrentLevel = (byte)Math.Clamp(value, 1, 100); Refresh(); } }
     public int Nature { get => (int)_pk.StatAlignment; set { if (value >= 0 && value != (int)_pk.StatAlignment) { _pk.SetNature((Nature)value); Refresh(); } } }
     public int HeldItem { get => _pk.HeldItem; set { if (value >= 0) { _pk.HeldItem = value; Refresh(); } } }
@@ -168,7 +203,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             Raise(p);
         (IsLegal, LegalityReport) = CoreAdapter.CheckLegality(_pk);
         LegalityText = IsLegal ? "Legal" : "Ilegal";
-        foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
+        LegalityIssues = IsLegal ? [] : CoreAdapter.GetLegalityIssues(_pk);
+        foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityIssues), nameof(HasLegalityIssues), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
             Raise(p);
     }
 }

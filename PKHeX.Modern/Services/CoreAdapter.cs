@@ -229,6 +229,90 @@ public static class CoreAdapter
     public static void SaveBag(SaveFile sav, PlayerBag bag) => bag.CopyTo(sav);
     public static bool IsBagItemIdEditable(SaveFile sav) => sav is not (SAV9ZA or SAV9SV);
 
+    /// <summary>
+    /// Troca a especie como o PKHeX original: forma 0, apelido padrao (se nao tinha apelido),
+    /// habilidade no mesmo slot e genero valido para a nova especie.
+    /// </summary>
+    public static void ChangeSpecies(PKM pk, ushort species)
+    {
+        if (pk.Species == species)
+            return;
+        bool nicknamed = pk.IsNicknamed;
+        int abilitySlot = pk.AbilityNumber switch { 2 => 1, 4 => 2, _ => 0 };
+        pk.Species = species;
+        pk.Form = 0;
+        if (!nicknamed)
+            pk.ClearNickname();
+        pk.RefreshAbility(abilitySlot);
+        pk.Gender = pk.GetSaneGender();
+    }
+
+    // Correcoes sugeridas (as mesmas do PKHeX original / Batch Editor). Retornam false se nada mudou.
+    /// <summary>Golpes sugeridos (moveset de level-up legal), com PP cheio.</summary>
+    public static bool SuggestMoves(PKM pk)
+    {
+        Span<ushort> before = stackalloc ushort[4];
+        pk.GetMoves(before);
+        pk.SetMoveset();
+        Span<ushort> after = stackalloc ushort[4];
+        pk.GetMoves(after);
+        return !before.SequenceEqual(after);
+    }
+
+    /// <summary>Golpes de reaprender sugeridos pelo encontro (Gen 6+).</summary>
+    public static bool SuggestRelearnMoves(PKM pk)
+    {
+        if (pk.Format < 6)
+            return false;
+        Span<ushort> before = stackalloc ushort[4];
+        pk.GetRelearnMoves(before);
+        pk.SetRelearnMoves(new LegalityAnalysis(pk));
+        Span<ushort> after = stackalloc ushort[4];
+        pk.GetRelearnMoves(after);
+        return !before.SequenceEqual(after);
+    }
+
+    /// <summary>Local e nivel de encontro sugeridos (sobe o nivel atual se for menor que o minimo). Null = nenhum encontro possivel.</summary>
+    public static bool? SuggestMetData(PKM pk)
+    {
+        var enc = EncounterSuggestion.GetSuggestedMetInfo(pk);
+        if (enc is null)
+            return null;
+        var level = enc.LevelMin;
+        var current = Math.Max(EncounterSuggestion.GetLowestLevel(pk, level), level);
+        if (pk.MetLevel == level && pk.MetLocation == enc.Location && pk.CurrentLevel >= current)
+            return false;
+        pk.MetLevel = level;
+        pk.MetLocation = enc.Location;
+        if (pk.CurrentLevel < current)
+            pk.CurrentLevel = current;
+        return true;
+    }
+
+    /// <summary>Ate <paramref name="max"/> problemas de legalidade, em texto curto.</summary>
+    public static IReadOnlyList<string> GetLegalityIssues(PKM pk, int max = 4)
+    {
+        try
+        {
+            var lines = new LegalityAnalysis(pk).Report().Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var issues = new List<string>();
+            foreach (var line in lines)
+            {
+                if (issues.Count == max)
+                    break;
+                if (line.StartsWith("Invalid", StringComparison.OrdinalIgnoreCase) || line.StartsWith("Fishy", StringComparison.OrdinalIgnoreCase))
+                    issues.Add(line);
+            }
+            if (issues.Count == 0 && lines.Length > 0 && !lines[0].StartsWith("Legal", StringComparison.OrdinalIgnoreCase))
+                issues.Add(lines[0]);
+            return issues;
+        }
+        catch (Exception ex)
+        {
+            return [ex.Message];
+        }
+    }
+
     public static (bool Valid, string Report) CheckLegality(PKM pk)
     {
         try

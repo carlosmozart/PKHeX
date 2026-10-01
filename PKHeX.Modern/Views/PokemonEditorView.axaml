@@ -79,9 +79,35 @@
             </StackPanel>
           </Border>
 
-          <Expander Header="Relatório de legalidade" HorizontalAlignment="Stretch" IsVisible="{Binding ShowLegality}">
-            <SelectableTextBlock Text="{Binding LegalityReport}" TextWrapping="Wrap" FontSize="12" />
-          </Expander>
+          <Border Classes="card" IsVisible="{Binding ShowLegality}">
+            <StackPanel Spacing="8">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="LEGALIDADE" Classes="section" Margin="0" />
+                <Border Grid.Column="1" Classes="chip" Background="{DynamicResource Good}" IsVisible="{Binding ShowLegal}"><TextBlock Text="✓ Legal" /></Border>
+                <Border Grid.Column="1" Classes="chip" Background="{DynamicResource Bad}" IsVisible="{Binding ShowIllegal}"><TextBlock Text="✕ Ilegal" /></Border>
+              </Grid>
+              <ItemsControl ItemsSource="{Binding LegalityIssues}" IsVisible="{Binding HasLegalityIssues}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" FontSize="12" Margin="0,1" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="Correções sugeridas" Classes="muted" FontSize="11" Margin="0,4,0,0" />
+              <WrapPanel ItemSpacing="6" LineSpacing="6">
+                <Button Classes="small" Content="Golpes sugeridos" Command="{Binding SuggestMovesCommand}"
+                        ToolTip.Tip="Troca os golpes por um conjunto legal (aprendidos por nível)" />
+                <Button Classes="small" Content="Golpes de reaprender" Command="{Binding SuggestRelearnCommand}" IsVisible="{Binding HasRelearnMoves}"
+                        ToolTip.Tip="Preenche os golpes de reaprender a partir do encontro" />
+                <Button Classes="small" Content="Encontro sugerido" Command="{Binding SuggestMetCommand}"
+                        ToolTip.Tip="Ajusta local e nível de encontro (e o nível atual, se estiver abaixo do mínimo)" />
+                <Button Classes="small" Content="IVs máximos" Command="{Binding FixIVsCommand}" />
+              </WrapPanel>
+              <Expander Header="Relatório completo" HorizontalAlignment="Stretch">
+                <SelectableTextBlock Text="{Binding LegalityReport}" TextWrapping="Wrap" FontSize="12" />
+              </Expander>
+            </StackPanel>
+          </Border>
 
         </StackPanel>
       </TabItem>
