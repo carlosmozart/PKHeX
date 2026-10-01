@@ -41,7 +41,7 @@ public sealed partial class MainWindow : Window
 
     private void OnDrop(object? sender, DragEventArgs e)
     {
-        if (e.Data.GetFiles()?.FirstOrDefault()?.TryGetLocalPath() is { } path)
+        if (e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath() is { } path)
             VM.Open(path);
     }
 }

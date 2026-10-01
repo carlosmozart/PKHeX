@@ -5,7 +5,7 @@
     <Setter Property="Background" Value="{DynamicResource CardBackground}" />
     <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource CardRadius}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
     <Setter Property="Padding" Value="16" />
   </Style>
 
@@ -49,7 +49,7 @@
     <Setter Property="Height" Value="64" />
     <Setter Property="Margin" Value="3" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="CornerRadius" Value="{StaticResource SlotRadius}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource SlotRadius}" />
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
