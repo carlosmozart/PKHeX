@@ -12,6 +12,14 @@ winget install Microsoft.DotNet.SDK.10
 dotnet run --project PKHeX.Modern
 ```
 
+## Gerar o executável
+```bash
+dotnet publish PKHeX.Modern -p:PublishProfile=win-x64
+```
+Sai um único `PKHeX.Modern/bin/publish/win-x64/PKHeX.Modern.exe` (~64 MB, não precisa do .NET instalado; as bibliotecas nativas são extraídas na primeira execução). O perfil fica em `PKHeX.Modern/Properties/PublishProfiles/win-x64.pubxml`; o `.gitignore` do upstream ignora `*.pubxml`, então ele foi adicionado com `git add -f`.
+
+No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push no `modern-ui` (o zip fica nos artefatos da execução, aba Actions) e, ao criar uma tag `modern-v*` (ex.: `git tag modern-v0.1.0 && git push origin modern-v0.1.0`), também cria uma Release com o zip. Em forks, o GitHub Actions precisa ser habilitado uma vez na aba Actions.
+
 ## Decisões tomadas
 - **Avalonia (e não um reskin do WinForms nem Blazor)**, para ter um visual moderno e permitir multiplataforma no futuro.
 - **Não mexer no core.** Só `PKHeX.Modern/` e `Tools/` são do fork. Tudo que vem do Core passa por `Services/CoreAdapter.cs`.

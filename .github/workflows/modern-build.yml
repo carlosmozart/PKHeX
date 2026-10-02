@@ -1,0 +1,48 @@
+# PKHeX.Modern: gera o PKHeX.Modern.exe (Windows 64 bits, sem precisar do .NET instalado).
+# - Push no branch modern-ui ou execucao manual: o exe fica disponivel como artefato da execucao.
+# - Tag "modern-v*" (ex.: modern-v0.1.0): alem do artefato, cria uma Release no GitHub com o zip anexado.
+name: PKHeX.Modern build
+
+on:
+  push:
+    branches: [ modern-ui ]
+    tags: [ 'modern-v*' ]
+    paths:
+      - 'PKHeX.Modern/**'
+      - 'PKHeX.Core/**'
+      - 'PKHeX.Drawing/**'
+      - 'PKHeX.Drawing.PokeSprite/**'
+      - '.github/workflows/modern-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write # necessario apenas para criar a Release nas tags
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publicar
+        run: dotnet publish PKHeX.Modern -p:PublishProfile=win-x64
+
+      - name: Compactar
+        shell: pwsh
+        run: Compress-Archive -Path PKHeX.Modern/bin/publish/win-x64/PKHeX.Modern.exe -DestinationPath PKHeX.Modern-win-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PKHeX.Modern-win-x64
+          path: PKHeX.Modern-win-x64.zip
+
+      - name: Criar Release (somente tags modern-v*)
+        if: startsWith(github.ref, 'refs/tags/modern-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: PKHeX.Modern-win-x64.zip
+          generate_release_notes: true

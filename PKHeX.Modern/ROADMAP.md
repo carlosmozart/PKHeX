@@ -35,7 +35,8 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [ ] **Pokédex**, **Batch Editor**, **banco de dados / pesquisa** (dos Pokémon salvos), **editores específicos de cada jogo** (eventos, flags, records).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [ ] **Backup automático** do save antes de exportar por cima do original.
-- [ ] **Instalador / publicação**: `dotnet publish -c Release -r win-x64 --self-contained` e um GitHub Action que gere o .exe.
+- [x] **Publicação**: perfil `win-x64` (um único `PKHeX.Modern.exe`, sem precisar do .NET) e GitHub Action `.github/workflows/modern-build.yml` (artefato a cada push no `modern-ui`; Release com o zip em tags `modern-v*`).
+- [ ] Instalador de verdade (MSIX ou Inno Setup), ícone próprio e assinatura do exe.
 - [ ] **Multiplataforma** (Linux/macOS): trocar o `System.Drawing` dos sprites por um carregador próprio (SkiaSharp), já que o Avalonia roda em todos.
 
 ## Conhecido / observações
