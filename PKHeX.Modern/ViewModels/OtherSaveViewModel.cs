@@ -55,7 +55,7 @@ public sealed class OtherSaveViewModel : SlotPageViewModel
     public bool HasSave => Sav is not null;
     public bool HasNoSave => Sav is null;
     public string GameName => Sav is null ? "" : $"{CoreAdapter.GetGameName(Sav)} · {Sav.OT}";
-    public string FileName => FilePath is null ? "" : Path.GetFileName(FilePath);
+    public string FileName => FilePath is null ? "" : ZipSaves.DisplayName(FilePath);
 
     public IReadOnlyList<OtherSaveOption> Options { get; private set; } = [];
     private OtherSaveOption? _selectedOption;
@@ -172,7 +172,7 @@ public sealed class OtherSaveViewModel : SlotPageViewModel
             return;
         try
         {
-            var backup = SaveBackup.BeforeOverwrite(FilePath);
+            var backup = SaveBackup.BeforeOverwrite(ZipSaves.FileOf(FilePath)); // save no zip: backup do zip inteiro
             var sav = Sav;
             var path = FilePath;
             await Task.Run(() => CoreAdapter.ExportSave(sav, path));

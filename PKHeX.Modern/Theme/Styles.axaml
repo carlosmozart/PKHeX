@@ -454,6 +454,28 @@
   <Style Selector="Border.gameBadge > Image">
     <Setter Property="Stretch" Value="Uniform" />
   </Style>
+  <!-- Cartao de encontro clicavel (abre o painel de detalhes) -->
+  <Style Selector="Button.encCardButton">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="Button.encCardButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.encCardButton:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="Button.encCardButton:pressed">
+    <Setter Property="RenderTransform" Value="none" />
+  </Style>
+  <Style Selector="Border.encCard.selected">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+
   <!-- Marcacoes do editor (●▲■♥★◆): apagada, azul (ligada) ou rosa -->
   <Style Selector="Button.marking">
     <Setter Property="Width" Value="32" />

@@ -132,6 +132,15 @@ public static class PokedexService
             yield break;
         foreach (var path in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
         {
+            if (path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (var (zipPath, zipped) in ZipSaves.ReadAll(path))
+                {
+                    if (skipPath is null || !string.Equals(zipPath, skipPath, StringComparison.OrdinalIgnoreCase))
+                        yield return (zipPath, zipped);
+                }
+                continue;
+            }
             if (skipPath is not null && string.Equals(Path.GetFullPath(path), Path.GetFullPath(skipPath), StringComparison.OrdinalIgnoreCase))
                 continue;
             if (TryRead(path) is { } sav)
@@ -144,6 +153,8 @@ public static class PokedexService
     {
         try
         {
+            if (ZipSaves.IsZipPath(path, out _, out _))
+                return ZipSaves.Load(path);
             var info = new FileInfo(path);
             if (info.Length is > 0 and < 64 * 1024 * 1024 && SaveUtil.TryGetSaveFile(path, out var sav))
                 return sav;

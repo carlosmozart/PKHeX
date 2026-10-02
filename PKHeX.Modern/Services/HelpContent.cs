@@ -18,6 +18,7 @@ public static class HelpContent
         [
             new("Abrir um save", "Clique em “Abrir save...”, arraste o arquivo para a janela ou passe o caminho pela linha de comando. “↺ Último” reabre o save anterior; marque “Abrir último save ao iniciar” para fazer isso sozinho.", "Ctrl+O"),
             new("Save Manager", "Tela inicial e página Saves: lista os saves da pasta escolhida (subpastas como gba, ds, 3ds e switch viram grupos), com treinador, TID/SID, tempo de jogo, dinheiro, capturados e equipe. Busca por jogo, treinador ou arquivo e filtro por geração. Duplo clique abre.", "Ctrl+9"),
+            new("Saves dentro de .zip", "Backups do JKSV (ou qualquer .zip com saves) na pasta de saves aparecem no Save Manager com o selo ZIP, um cartão por save lá dentro. Também dá para abrir um .zip direto. Ao salvar, o app oferece gravar de volta dentro do zip (o zip inteiro ganha um backup antes) ou salvar como arquivo separado."),
             new("Selo do jogo", "Cada save mostra o Pokémon da capa nas cores da versão (Ho-Oh no HeartGold, Rayquaza no Emerald...), no Save Manager e no cartão do save aberto na barra lateral."),
             new("Salvar", "Grava as alterações no arquivo do save. Antes de salvar por cima, o arquivo anterior é copiado para os backups.", "Ctrl+S"),
             new("Alterações não exportadas", "O aviso na barra lateral mostra quantas alterações ainda não foram salvas; clique nele para ver a lista. O app pergunta antes de abrir outro save ou fechar."),
@@ -79,6 +80,8 @@ public static class HelpContent
         new("🌿", "Encontros e eventos",
         [
             new("Banco de encontros", "Procura onde e como uma espécie aparece neste jogo. “Usar” gera o Pokémon legal e abre no editor."),
+            new("Detalhes do encontro", "Clique num cartão para ver, ao lado, o que o encontro garante: shiny ou shiny lock (🔒), IVs, habilidade, natureza, gênero, bola, item, Tera Type, alpha/Gigantamax, treinador do evento e os golpes com que ele vem."),
+            new("Filtros", "Depois da busca, filtre por tipo (selvagem, estático, troca, ovo, raid, evento, GO), por versão do jogo e por golpe (só os que já vêm com ele). Presentes do Pokémon HOME ganham o selo HOME."),
             new("Eventos (Mystery Gift)", "Lista os presentes de evento que valem para o save, inclusive os da Gen 1 a 3. “Usar” leva ao editor."),
         ]),
         new("⌨️", "Atalhos",

@@ -8,7 +8,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Atalhos de teclado**: Q/E trocam de página (circular), Esc fecha o editor ou volta para Caixas, Ctrl+1–9 vão a cada página, Ctrl+O abre, Ctrl+S/Ctrl+E salvam. Os atalhos aparecem na barra lateral e nos tooltips.
 - [x] **Cartão de legalidade com correções de um clique** (aba Visão geral): lista os problemas e oferece golpes sugeridos, golpes de reaprender (Gen 6+), encontro sugerido e IVs máximos. Trocar a espécie agora ajusta apelido, habilidade, forma e gênero.
 - [x] **Save Manager**: pasta `saves/` ao lado do exe (ou outra, em "Escolher pasta..."), saves agrupados por subpasta/console, com treinador, TID/SID, tempo de jogo, dinheiro, capturados e equipe. Busca, filtro por geração, selo "Aberto". Abre com duplo clique ou botão. É a tela inicial e a página "Saves" (Ctrl+7).
-- [ ] Save Manager: ler saves dentro de `.zip` (backups do JKSV).
+- [x] **Saves dentro de `.zip`** (backups do JKSV): Save Manager, abrir direto, gravar de volta no zip com backup, Pokédex e "Outro save".
 - [x] **Selo do jogo** (Save Manager e cartão da barra lateral): Pokémon da capa nas cores da versão, com os sprites do próprio PKHeX (sem capas oficiais).
 - [x] **Modo legal** (padrão ligado): listas só com opções legais (golpes, bolas, espécies), mudanças que deixariam o Pokémon ilegal são desfeitas, Aplicar bloqueado para ilegal, troca de espécie/Showdown legaliza sozinho. Pokémon de fora (arquivo, bank, outro save, grupo do bank) que chega ilegal: pergunta Legalizar / Trazer como está.
 - [x] **Ajuda** (F1): funções explicadas com busca, **Novidades** (CHANGELOG.md embutido) e **Sobre** (versão, AllGenWiki). Regra: toda função nova entra em `Services/HelpContent.cs` e no CHANGELOG.
@@ -20,7 +20,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Modo legal, etapa 2**: habilidade, forma e Tera Type só com opções legais; "Trocar encontro" no lugar de local/nível; "Tornar shiny" bloqueado com shiny lock e, nos outros, legaliza já shiny.
 - [x] **Mensagens dentro do app**: pergunta sobreposta na janela (Enter confirma, Esc cancela) ao copiar/importar por cima de um Pokémon, trocar de slot com edição não aplicada, abrir outro save ou fechar o app com alterações não exportadas. Aviso "● Alterações não exportadas" na barra lateral.
 - [x] **Bancos de encontros e Mystery Gift em cartões** (páginas "Encontros" e "Eventos"): busca por espécie ou texto, filtro "Só deste jogo", detalhes no tooltip, "Usar" gera o Pokémon no editor (slot vazio).
-- [ ] Bancos: painel de detalhes ao lado (golpes, IVs garantidos, bola, shiny lock), filtros por golpe/versão e rótulo de gifts do HOME.
+- [x] **Bancos com painel de detalhes**: o que o encontro garante (shiny lock, IVs, habilidade, natureza, bola, item, Tera Type, treinador) e golpes; filtros por tipo, versão e golpe; selo HOME nos presentes do HOME.
 - Fora de escopo: modo clássico, plugins do PKHeX (dependem do WinForms). Fundo animado só com opção de reduzir movimento.
 
 ## Inspirado no PKVault (https://github.com/Chnapy/PKVault)

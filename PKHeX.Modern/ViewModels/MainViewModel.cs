@@ -217,8 +217,8 @@ public sealed class MainViewModel : ViewModelBase
     }
     public RelayCommand OpenLastCommand { get; }
 
-    public bool HasLastSave => Settings.LastSavePath is { } p && System.IO.File.Exists(p);
-    public string LastSaveName => HasLastSave ? System.IO.Path.GetFileName(Settings.LastSavePath!) : "";
+    public bool HasLastSave => ZipSaves.Exists(Settings.LastSavePath);
+    public string LastSaveName => HasLastSave ? ZipSaves.DisplayName(Settings.LastSavePath!) : "";
 
     public bool OpenLastSaveOnStartup
     {
@@ -472,6 +472,20 @@ public sealed class MainViewModel : ViewModelBase
 
     public void Open(string path)
     {
+        // Zip escolhido direto (Abrir save, arrastar, linha de comando): abre o save que estiver dentro.
+        string? zipNote = null;
+        if (path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(path))
+        {
+            var inside = ZipSaves.ReadAll(path).Select(x => x.Path).ToList();
+            if (inside.Count == 0)
+            {
+                Status = "Nenhum save reconhecido dentro deste .zip.";
+                return;
+            }
+            if (inside.Count > 1)
+                zipNote = $" O zip tem {inside.Count} saves; os outros aparecem no Save Manager se o zip estiver na pasta de saves.";
+            path = inside[0];
+        }
         var sav = CoreAdapter.LoadSave(path);
         if (sav is null)
         {
@@ -498,8 +512,8 @@ public sealed class MainViewModel : ViewModelBase
         RaiseSelectionChanged();
         CheckLegalityCommand.NotifyCanExecuteChanged();
         CreateCommand.NotifyCanExecuteChanged();
-        Status = $"Aberto: {System.IO.Path.GetFileName(path)}";
-        Settings.LastSavePath = System.IO.Path.GetFullPath(path);
+        Status = $"Aberto: {ZipSaves.DisplayName(path)}" + zipNote;
+        Settings.LastSavePath = ZipSaves.IsZipPath(path, out var zip, out var entry) ? ZipSaves.Combine(System.IO.Path.GetFullPath(zip), entry) : System.IO.Path.GetFullPath(path);
         Settings.Save();
         Raise(nameof(HasLastSave));
         Raise(nameof(LastSaveName));
@@ -511,12 +525,13 @@ public sealed class MainViewModel : ViewModelBase
             return;
         try
         {
-            var backup = SaveBackup.BeforeOverwrite(path); // copia o arquivo antigo antes de sobrescrever
+            var backup = SaveBackup.BeforeOverwrite(ZipSaves.FileOf(path)); // copia o arquivo antigo (ou o zip) antes de sobrescrever
             CoreAdapter.ExportSave(_sav, path);
             IsDirty = false;
+            var where = ZipSaves.IsZipPath(path, out _, out _) ? ZipSaves.DisplayName(path) : path;
             Status = backup is null
-                ? $"Salvo em {path}"
-                : $"Salvo em {path}. Backup do arquivo anterior: {System.IO.Path.GetFileName(backup)} (Saves › Backups).";
+                ? $"Salvo em {where}"
+                : $"Salvo em {where}. Backup do arquivo anterior: {System.IO.Path.GetFileName(backup)} (Saves › Backups).";
         }
         catch (Exception ex)
         {
@@ -524,7 +539,9 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
 
-    public string? SuggestedFileName => _sav?.Metadata.FileName;
+    public string? SuggestedFileName => ZipSaves.EntryFileName(_sav?.Metadata.FilePath) ?? _sav?.Metadata.FileName;
+    /// <summary>Caminho "zip|entrada" do save aberto, se ele veio de um .zip (Salvar oferece gravar de volta no zip).</summary>
+    public string? ZipSavePath => _sav?.Metadata.FilePath is { } p && ZipSaves.IsZipPath(p, out _, out _) ? p : null;
 
     /// <summary>Arrastar e soltar: move/troca (ou copia, com Ctrl) entre slots de caixa e equipe.</summary>
     public Task MoveSlotAsync(SlotViewModel src, SlotViewModel dst, bool copy)

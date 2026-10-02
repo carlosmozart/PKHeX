@@ -56,6 +56,17 @@ public static class SaveLibrary
 
         foreach (var path in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
         {
+            // Zip (ex.: backup do JKSV): cada save la dentro vira um cartao "arquivo.zip › entrada".
+            if (path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+            {
+                var before = result.Count;
+                var write = File.GetLastWriteTime(path);
+                foreach (var (zipPath, sav) in ZipSaves.ReadAll(path))
+                    result.Add(Summarize(folder, zipPath, sav, write));
+                if (result.Count == before)
+                    skipped++;
+                continue;
+            }
             if (TryRead(folder, path) is { } entry)
                 result.Add(entry);
             else
@@ -67,19 +78,32 @@ public static class SaveLibrary
     }
 
     /// <summary>Resumo de um arquivo avulso (ex.: um backup). Null se nao for um save.</summary>
-    public static SaveEntry? ReadOne(string path) => TryRead(System.IO.Path.GetDirectoryName(path) ?? "", path);
+    public static SaveEntry? ReadOne(string path) => TryRead(System.IO.Path.GetDirectoryName(ZipSaves.FileOf(path)) ?? "", path);
 
     private static SaveEntry? TryRead(string folder, string path)
     {
         try
         {
+            if (ZipSaves.IsZipPath(path, out var zip, out _))
+                return ZipSaves.Load(path) is { } zipped ? Summarize(folder, path, zipped, File.GetLastWriteTime(zip)) : null;
             var info = new FileInfo(path);
             if (info.Length == 0 || info.Length > MaxFileSize)
                 return null;
             if (!SaveUtil.TryGetSaveFile(path, out var sav))
                 return null;
+            return Summarize(folder, path, sav, info.LastWriteTime);
+        }
+        catch
+        {
+            return null; // arquivo ilegivel ou formato inesperado
+        }
+    }
 
-            var (group, order) = GetGroup(folder, path);
+    private static SaveEntry? Summarize(string folder, string path, SaveFile sav, DateTime lastWrite)
+    {
+        try
+        {
+            var (group, order) = GetGroup(folder, ZipSaves.FileOf(path));
             int caught;
             try { caught = sav.CaughtCount; } catch { caught = 0; }
             IReadOnlyList<PKM> party;
@@ -95,7 +119,7 @@ public static class SaveLibrary
                 $"{sav.PlayedHours}h {sav.PlayedMinutes:00}m",
                 sav.Money,
                 caught,
-                info.LastWriteTime,
+                lastWrite,
                 party,
                 sav.Version);
         }

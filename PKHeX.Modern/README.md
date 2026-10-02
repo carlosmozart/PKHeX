@@ -25,6 +25,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 **Saves**
 - Abrir pelo botão, arrastando o arquivo para a janela ou pela linha de comando; salvar com **Ctrl+S**.
 - **Save Manager**: tela inicial que lista os saves da pasta `saves` (ao lado do exe, ou outra à sua escolha), agrupados por console, com treinador, tempo de jogo, dinheiro e equipe. Duplo clique abre.
+- **Saves dentro de .zip** (backups do JKSV): aparecem no Save Manager com o selo ZIP; ao salvar, dá para gravar de volta no zip (com backup do zip) ou como arquivo separado.
 - **Selo do jogo**: cada save mostra o Pokémon da capa nas cores da versão (Ho-Oh no HeartGold, Rayquaza no Emerald...), no Save Manager e no cartão do save aberto na barra lateral.
 - Aviso de **alterações não exportadas**: o app pergunta antes de abrir outro save ou fechar.
 - **Backup automático**: antes de salvar por cima de um save, o arquivo anterior é copiado para `%APPDATA%\PKHeX.Modern\backups` (botão "Backups" no Save Manager lista as cópias, com **Restaurar** e **Restaurar como...**; o arquivo atual ganha um backup antes de ser substituído).
@@ -68,6 +69,8 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 **Bancos**
 - **Encontros**: todos os jeitos de obter uma espécie (selvagem, estático, troca, ovo, evento).
 - **Eventos**: banco de Mystery Gift do PKHeX, com busca, inclusive os eventos da Gen 1-3.
+- Clique num cartão para ver o **painel de detalhes**: o que o encontro garante (shiny/shiny lock, IVs, habilidade, natureza, bola, item, Tera Type, treinador do evento) e os golpes com que vem.
+- **Filtros** por tipo de encontro, versão e golpe; selo **HOME** nos presentes do Pokémon HOME.
 - "Usar" gera o Pokémon no editor, pronto para gravar.
 
 **Ajuda e atualizações**
@@ -121,6 +124,7 @@ Services/HelpContent.cs        ← texto da Ajuda (atualize a cada função nova
 Services/Changelog.cs          ← lê o CHANGELOG.md embutido (Ajuda › Novidades)
 Services/UpdateChecker.cs      ← versão do app e releases novas no GitHub
 Services/AutoUpdater.cs        ← baixa, confere e troca o exe (atualização automática)
+Services/ZipSaves.cs           ← saves dentro de .zip ("arquivo.zip|entrada")
 Services/ItemInfo.cs           ← descrição/onde conseguir itens (Assets/item-info.json, do AllGenWiki)
 Services/AppSettings.cs, CrashLog.cs
         │

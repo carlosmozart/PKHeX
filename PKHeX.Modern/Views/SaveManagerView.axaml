@@ -75,6 +75,7 @@
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Top">
                               <Border Classes="chip" Background="{DynamicResource Good}" IsVisible="{Binding IsCurrent}"><TextBlock Text="Aberto" /></Border>
+                              <Border Classes="chip" Background="#6B5BD2" IsVisible="{Binding IsZipped}" ToolTip.Tip="Save dentro de um .zip (ex.: backup do JKSV). Salvar oferece gravar de volta no zip."><TextBlock Text="ZIP" /></Border>
                               <Border Classes="chip" Background="{DynamicResource CardBorder}"><TextBlock Text="{Binding GenerationBadge}" /></Border>
                             </StackPanel>
                           </Grid>

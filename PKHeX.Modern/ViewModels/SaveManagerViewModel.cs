@@ -256,7 +256,9 @@ public sealed class SaveEntryViewModel(SaveEntry entry) : ViewModelBase
 {
     public SaveEntry Entry { get; } = entry;
     public string Path => Entry.Path;
-    public string FileName => System.IO.Path.GetFileName(Entry.Path);
+    public string FileName => ZipSaves.DisplayName(Entry.Path);
+    /// <summary>Save dentro de um .zip (backup do JKSV): selo "ZIP" no cartao.</summary>
+    public bool IsZipped => ZipSaves.IsZipPath(Entry.Path, out _, out _);
     public string Game => Entry.Game;
     public string GenerationBadge => $"Gen {Entry.Generation}";
     /// <summary>Selo do jogo (Pokemon da capa nas cores da versao).</summary>

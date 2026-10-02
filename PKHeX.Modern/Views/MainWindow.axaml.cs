@@ -149,6 +149,17 @@ public sealed partial class MainWindow : Window
 
     private async void OnExport(object? sender, RoutedEventArgs e)
     {
+        // Save que veio de um .zip: gravar de volta na mesma entrada (com backup do zip) ou exportar como arquivo.
+        if (VM.ZipSavePath is { } zipPath)
+        {
+            if (await VM.ConfirmAsync("Salvar save do .zip",
+                    $"Este save está dentro de {ZipSaves.DisplayName(zipPath)}. Gravar de volta no zip (o zip inteiro ganha um backup antes) ou salvar como um arquivo separado?",
+                    "Gravar dentro do .zip", "Salvar como arquivo...", icon: "🗜"))
+            {
+                VM.Export(zipPath);
+                return;
+            }
+        }
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Exportar save",

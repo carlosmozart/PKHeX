@@ -15,7 +15,9 @@
 
   <!-- Cartao de encontro / Mystery Gift (bancos "Encontros" e "Eventos") -->
   <DataTemplate DataType="vm:EncounterCardViewModel">
-    <Border Classes="card encCard" Width="280" ToolTip.Tip="{Binding Details}">
+    <Button Classes="encCardButton" Command="{Binding $parent[UserControl].((vm:EncounterListPageViewModel)DataContext).SelectCommand}"
+            CommandParameter="{Binding}">
+    <Border Classes="card encCard" Classes.selected="{Binding IsSelected}" Width="280">
       <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,Auto" ColumnSpacing="12">
         <Border Classes="spriteWell" Width="68" Height="60" VerticalAlignment="Top">
           <Image Source="{Binding Sprite}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" Margin="4" />
@@ -31,12 +33,85 @@
           <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
             <Border Classes="chip" Background="{DynamicResource CardBorder}" IsVisible="{Binding IsEgg}"><TextBlock Text="Ovo" /></Border>
             <Border Classes="chip" Background="#B8860B" IsVisible="{Binding IsShiny}"><TextBlock Text="★ Shiny" /></Border>
+            <Border Classes="chip" Background="{DynamicResource CardBorder}" IsVisible="{Binding IsShinyLocked}" ToolTip.Tip="Nunca é shiny (shiny lock)"><TextBlock Text="🔒" /></Border>
+            <Border Classes="chip" Background="#2F80ED" IsVisible="{Binding IsHomeGift}" ToolTip.Tip="Presente do Pokémon HOME"><TextBlock Text="HOME" /></Border>
           </StackPanel>
           <Button Grid.Column="1" Classes="accent small" Content="Usar"
                   Command="{Binding $parent[UserControl].((vm:EncounterListPageViewModel)DataContext).UseCommand}"
                   CommandParameter="{Binding}" ToolTip.Tip="Gera este Pokémon e abre no editor (grava só ao Aplicar)" />
         </Grid>
       </Grid>
+    </Border>
+    </Button>
+  </DataTemplate>
+
+  <!-- Painel de detalhes do encontro/evento selecionado (paginas Encontros e Eventos) -->
+  <DataTemplate DataType="vm:EncounterDetailViewModel">
+    <Border Classes="card" Width="340">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,0,12">
+          <Border Classes="spriteWell" Width="84" Height="76">
+            <Image Source="{Binding Card.Sprite}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" Margin="4" />
+          </Border>
+          <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+            <TextBlock Text="{Binding Card.Title}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Card.Kind}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Card.Game}" Classes="muted" FontSize="11" />
+          </StackPanel>
+          <Button Grid.Column="2" Classes="ghost small" Content="✕" VerticalAlignment="Top" ToolTip.Tip="Fechar detalhes"
+                  Command="{Binding $parent[UserControl].((vm:EncounterListPageViewModel)DataContext).CloseDetailCommand}" />
+        </Grid>
+        <Button DockPanel.Dock="Bottom" Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,12,0,0"
+                Content="Usar este encontro" Command="{Binding $parent[UserControl].((vm:EncounterListPageViewModel)DataContext).UseCommand}"
+                CommandParameter="{Binding Card}" ToolTip.Tip="Gera este Pokémon e abre no editor (grava só ao Aplicar)" />
+        <ScrollViewer>
+          <StackPanel Spacing="12">
+            <StackPanel Spacing="4">
+              <TextBlock Text="ENCONTRO" Classes="section" Margin="0" />
+              <Grid ColumnDefinitions="96,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="4">
+                <TextBlock Text="Local" Classes="muted" />
+                <TextBlock Grid.Column="1" Text="{Binding Card.Location}" TextWrapping="Wrap" />
+                <TextBlock Grid.Row="1" Text="Nível" Classes="muted" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Card.Level}" />
+                <TextBlock Grid.Row="2" Text="Tipo" Classes="muted" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Card.Category}" />
+              </Grid>
+            </StackPanel>
+            <StackPanel Spacing="4">
+              <TextBlock Text="O QUE ELE GARANTE" Classes="section" Margin="0" />
+              <ItemsControl ItemsSource="{Binding Facts}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:EncounterFact">
+                    <Grid ColumnDefinitions="96,*" Margin="0,2">
+                      <TextBlock Text="{Binding Label}" Classes="muted" />
+                      <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Image Source="{Binding BallIcon}" Width="24" Height="24" HorizontalAlignment="Left" Margin="96,2,0,0"
+                     IsVisible="{Binding BallIcon, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </StackPanel>
+            <StackPanel Spacing="6">
+              <TextBlock Text="GOLPES" Classes="section" Margin="0" />
+              <TextBlock Text="{Binding MovesHint}" Classes="muted" FontSize="12" TextWrapping="Wrap" IsVisible="{Binding !HasMoves}" />
+              <ItemsControl ItemsSource="{Binding Moves}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:EncounterMoveViewModel">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,2" Background="Transparent" ToolTip.Tip="{Binding Tip}">
+                      <Border Classes="chip" Background="{Binding TypeBrush}" MinWidth="64"><TextBlock Text="{Binding TypeName}" HorizontalAlignment="Center" /></Border>
+                      <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+            <Expander Header="Texto completo do PKHeX" HorizontalAlignment="Stretch">
+              <SelectableTextBlock Text="{Binding Details}" FontSize="12" TextWrapping="Wrap" />
+            </Expander>
+          </StackPanel>
+        </ScrollViewer>
+      </DockPanel>
     </Border>
   </DataTemplate>
 
@@ -484,7 +559,7 @@
   <!-- Pagina Encontros -->
   <DataTemplate DataType="vm:EncounterDbViewModel">
     <UserControl>
-    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
       <StackPanel Spacing="2">
         <TextBlock Text="Encontros" Classes="title" />
         <TextBlock Text="Todos os jeitos de obter uma espécie: selvagem, estático, troca, ovo e eventos." Classes="muted" FontSize="12" />
@@ -496,16 +571,26 @@
                   ToolTip.Tip="Só encontros possíveis nas versões compatíveis com este save" />
         <TextBlock Grid.Column="2" Text="{Binding Summary}" Classes="muted" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" />
       </Grid>
-      <ScrollViewer Grid.Row="2">
-        <StackPanel Spacing="12">
-          <ItemsControl ItemsSource="{Binding Results}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="10" /></ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-          </ItemsControl>
-          <Button Content="Mostrar mais" HorizontalAlignment="Center" Command="{Binding ShowMoreCommand}" IsVisible="{Binding HasMore}" />
-        </StackPanel>
-      </ScrollViewer>
+      <WrapPanel Grid.Row="2" ItemSpacing="8" LineSpacing="6" IsVisible="{Binding HasFilters}">
+        <ComboBox ItemsSource="{Binding KindOptions}" SelectedItem="{Binding KindFilter}" MinWidth="170" ToolTip.Tip="Tipo do encontro" />
+        <ComboBox ItemsSource="{Binding VersionOptions}" SelectedItem="{Binding VersionFilter}" MinWidth="170" ToolTip.Tip="Versão do jogo" />
+        <AutoCompleteBox ItemsSource="{Binding MoveNames}" Text="{Binding MoveFilter}" FilterMode="ContainsOrdinal" MinimumPrefixLength="1"
+                         Width="220" Watermark="Vem com o golpe..." ToolTip.Tip="Só encontros que já vêm sabendo este golpe" />
+        <Button Classes="ghost small" Content="✕ Limpar filtros" Command="{Binding ClearFiltersCommand}" IsVisible="{Binding IsFiltered}" />
+      </WrapPanel>
+      <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <ScrollViewer>
+          <StackPanel Spacing="12">
+            <ItemsControl ItemsSource="{Binding Results}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="10" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+            </ItemsControl>
+            <Button Content="Mostrar mais" HorizontalAlignment="Center" Command="{Binding ShowMoreCommand}" IsVisible="{Binding HasMore}" />
+          </StackPanel>
+        </ScrollViewer>
+        <ContentControl Grid.Column="1" Content="{Binding Detail}" IsVisible="{Binding HasDetail}" />
+      </Grid>
     </Grid>
     </UserControl>
   </DataTemplate>
@@ -513,7 +598,7 @@
   <!-- Pagina Eventos (Mystery Gift) -->
   <DataTemplate DataType="vm:GiftDbViewModel">
     <UserControl>
-    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
       <StackPanel Spacing="2">
         <TextBlock Text="Eventos" Classes="title" />
         <TextBlock Text="Banco de Mystery Gift do PKHeX (eventos oficiais distribuídos)." Classes="muted" FontSize="12" />
@@ -524,16 +609,26 @@
                   ToolTip.Tip="Só eventos que podem existir neste jogo" />
         <TextBlock Grid.Column="2" Text="{Binding Summary}" Classes="muted" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" />
       </Grid>
-      <ScrollViewer Grid.Row="2">
-        <StackPanel Spacing="12">
-          <ItemsControl ItemsSource="{Binding Results}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="10" /></ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-          </ItemsControl>
-          <Button Content="Mostrar mais" HorizontalAlignment="Center" Command="{Binding ShowMoreCommand}" IsVisible="{Binding HasMore}" />
-        </StackPanel>
-      </ScrollViewer>
+      <WrapPanel Grid.Row="2" ItemSpacing="8" LineSpacing="6" IsVisible="{Binding HasFilters}">
+        <ComboBox ItemsSource="{Binding KindOptions}" SelectedItem="{Binding KindFilter}" MinWidth="170" ToolTip.Tip="Tipo do encontro" />
+        <ComboBox ItemsSource="{Binding VersionOptions}" SelectedItem="{Binding VersionFilter}" MinWidth="170" ToolTip.Tip="Versão do jogo" />
+        <AutoCompleteBox ItemsSource="{Binding MoveNames}" Text="{Binding MoveFilter}" FilterMode="ContainsOrdinal" MinimumPrefixLength="1"
+                         Width="220" Watermark="Vem com o golpe..." ToolTip.Tip="Só encontros que já vêm sabendo este golpe" />
+        <Button Classes="ghost small" Content="✕ Limpar filtros" Command="{Binding ClearFiltersCommand}" IsVisible="{Binding IsFiltered}" />
+      </WrapPanel>
+      <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <ScrollViewer>
+          <StackPanel Spacing="12">
+            <ItemsControl ItemsSource="{Binding Results}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="10" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+            </ItemsControl>
+            <Button Content="Mostrar mais" HorizontalAlignment="Center" Command="{Binding ShowMoreCommand}" IsVisible="{Binding HasMore}" />
+          </StackPanel>
+        </ScrollViewer>
+        <ContentControl Grid.Column="1" Content="{Binding Detail}" IsVisible="{Binding HasDetail}" />
+      </Grid>
     </Grid>
     </UserControl>
   </DataTemplate>

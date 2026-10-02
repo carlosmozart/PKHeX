@@ -31,6 +31,17 @@ public sealed class EncounterCardViewModel(IEncounterInfo enc) : ViewModelBase
     public bool IsShiny => Encounter.IsShiny;
     public string Details => EncounterDatabase.GetDetails(Encounter);
     public string SearchText => $"{Title} {Kind} {Location} {Game}";
+    /// <summary>Selvagem, Estático, Troca, Ovo, Raid, Evento... (filtro por tipo).</summary>
+    public string Category { get; } = EncounterDatabase.GetCategory(enc);
+    public string VersionName => EncounterDatabase.GetVersionName(Encounter.Version);
+    public bool IsHomeGift => EncounterDatabase.IsHomeGift(Encounter);
+    public bool IsShinyLocked => Encounter.Shiny == Shiny.Never;
+    private IReadOnlyList<ushort>? _moves;
+    /// <summary>Golpes que ja vem com o encontro (filtro por golpe e painel de detalhes).</summary>
+    public IReadOnlyList<ushort> FixedMoves => _moves ??= EncounterDatabase.GetFixedMoves(Encounter);
+
+    private bool _isSelected;
+    public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
 
     private Bitmap? _sprite;
     private bool _spriteLoaded;
@@ -59,6 +70,100 @@ public abstract class EncounterListPageViewModel : PageViewModel
     {
         UseCommand = new RelayCommand(p => { if (p is EncounterCardViewModel c) use(c.Encounter); });
         ShowMoreCommand = new RelayCommand(() => ShowCount(Results.Count + PageSize));
+        SelectCommand = new RelayCommand(p => Selected = p as EncounterCardViewModel);
+        CloseDetailCommand = new RelayCommand(() => Selected = null);
+        ClearFiltersCommand = new RelayCommand(() => { _kind = All; _version = All; _move = ""; RaiseFilters(); ApplyFilters(); });
+    }
+
+    // Selecao e painel de detalhes
+    public RelayCommand SelectCommand { get; }
+    public RelayCommand CloseDetailCommand { get; }
+    private EncounterCardViewModel? _selected;
+    /// <summary>Cartao clicado: abre o painel de detalhes a direita.</summary>
+    public EncounterCardViewModel? Selected
+    {
+        get => _selected;
+        set
+        {
+            if (_selected == value)
+                return;
+            if (_selected is not null)
+                _selected.IsSelected = false;
+            _selected = value;
+            if (value is not null)
+                value.IsSelected = true;
+            Detail = value is null ? null : new EncounterDetailViewModel(value);
+            Raise();
+            Raise(nameof(Detail));
+            Raise(nameof(HasDetail));
+        }
+    }
+    public EncounterDetailViewModel? Detail { get; private set; }
+    public bool HasDetail => Detail is not null;
+
+    // Filtros (tipo, versao, golpe) sobre o resultado da busca
+    protected const string All = "Todos";
+    private IReadOnlyList<EncounterCardViewModel> _source = [];
+    public RelayCommand ClearFiltersCommand { get; }
+    public IReadOnlyList<string> KindOptions { get; private set; } = [All];
+    public IReadOnlyList<string> VersionOptions { get; private set; } = [All];
+    public IReadOnlyList<string> MoveNames => CoreAdapter.MoveNames;
+    private string _kind = All, _version = All, _move = "";
+    public string KindFilter { get => _kind; set { if (Set(ref _kind, value ?? All)) ApplyFilters(); } }
+    public string VersionFilter { get => _version; set { if (Set(ref _version, value ?? All)) ApplyFilters(); } }
+    /// <summary>So encontros que ja vem com este golpe (texto parcial e ignorado ate virar um golpe).</summary>
+    public string MoveFilter
+    {
+        get => _move;
+        set
+        {
+            if (!Set(ref _move, value ?? ""))
+                return;
+            if (_move.Length == 0 || CoreAdapter.FindIndex(CoreAdapter.MoveNames, _move) > 0)
+                ApplyFilters();
+        }
+    }
+    public bool HasFilters => _source.Count > 0;
+    public bool IsFiltered => _kind != All || _version != All || _move.Length > 0;
+
+    private void RaiseFilters()
+    {
+        foreach (var p in (string[])[nameof(KindFilter), nameof(VersionFilter), nameof(MoveFilter)])
+            Raise(p);
+    }
+
+    /// <summary>Novo resultado de busca: refaz as opcoes dos filtros e aplica.</summary>
+    protected void SetSource(IReadOnlyList<EncounterCardViewModel> cards)
+    {
+        _source = cards;
+        KindOptions = [All, .. cards.Select(c => c.Category).Distinct().Order()];
+        VersionOptions = [All, .. cards.Select(c => c.VersionName).Where(v => v.Length > 0).Distinct().Order()];
+        if (!KindOptions.Contains(_kind)) _kind = All;
+        if (!VersionOptions.Contains(_version)) _version = All;
+        foreach (var p in (string[])[nameof(KindOptions), nameof(VersionOptions), nameof(HasFilters)])
+            Raise(p);
+        RaiseFilters();
+        ApplyFilters();
+    }
+
+    /// <summary>Filtro extra da pagina (ex.: texto da busca de eventos).</summary>
+    protected virtual bool Matches(EncounterCardViewModel card) => true;
+
+    /// <summary>Resumo depois de filtrar (cada pagina escreve o seu).</summary>
+    protected virtual void OnFiltered(int shown, int total) { }
+
+    protected void ApplyFilters()
+    {
+        var move = _move.Length == 0 ? 0 : CoreAdapter.FindIndex(CoreAdapter.MoveNames, _move);
+        var list = _source.Where(c => (_kind == All || c.Category == _kind)
+                                      && (_version == All || c.VersionName == _version)
+                                      && (move <= 0 || c.FixedMoves.Contains((ushort)move))
+                                      && Matches(c)).ToList();
+        SetMatches(list);
+        if (Selected is { } sel && !list.Contains(sel))
+            Selected = null;
+        Raise(nameof(IsFiltered));
+        OnFiltered(list.Count, _source.Count);
     }
 
     protected SaveFile? Sav { get; private set; }
@@ -82,7 +187,10 @@ public abstract class EncounterListPageViewModel : PageViewModel
     public override void Load(SaveFile sav)
     {
         Sav = sav;
+        Selected = null;
+        _source = [];
         SetMatches([]);
+        Raise(nameof(HasFilters));
         Summary = "";
     }
 
@@ -116,6 +224,16 @@ public sealed class EncounterDbViewModel : EncounterListPageViewModel
 
     public RelayCommand SearchCommand { get; }
     public IReadOnlyList<string> SpeciesNames => CoreAdapter.SpeciesNames;
+    private string _speciesName = "";
+    private bool _onlyGame;
+
+    protected override void OnFiltered(int shown, int total)
+    {
+        Summary = total == 0
+            ? $"Nenhum encontro de {_speciesName}" + (_onlyGame ? " neste jogo. Desmarque “Só deste jogo” para ver outros jogos." : ".")
+            : (shown == total ? $"{total} encontro(s) de {_speciesName}." : $"{shown} de {total} encontro(s) de {_speciesName} com os filtros.")
+              + " Clique num cartão para ver os detalhes; Usar leva ao editor.";
+    }
 
     private string? _species;
     /// <summary>Nome da especie digitado/escolhido (busca automatica ao escolher).</summary>
@@ -168,10 +286,10 @@ public sealed class EncounterDbViewModel : EncounterListPageViewModel
             var found = await Task.Run(() => EncounterDatabase.SearchEncounters(sav, species, only, cts.Token), cts.Token);
             if (cts.IsCancellationRequested)
                 return;
-            SetMatches([.. found.Select(e => new EncounterCardViewModel(e))]);
-            Summary = found.Count == 0
-                ? $"Nenhum encontro de {CoreAdapter.SpeciesNames[species]}" + (only ? " neste jogo. Desmarque “Só deste jogo” para ver outros jogos." : ".")
-                : $"{found.Count} encontro(s) de {CoreAdapter.SpeciesNames[species]}. Clique em Usar para levar ao editor.";
+            _speciesName = CoreAdapter.SpeciesNames[species];
+            _onlyGame = only;
+            Selected = null;
+            SetSource([.. found.Select(e => new EncounterCardViewModel(e))]);
         }
         catch (OperationCanceledException)
         {
@@ -199,7 +317,7 @@ public sealed class GiftDbViewModel(Action<IEncounterInfo> use) : EncounterListP
     public override string Icon => "🎁";
 
     private string _search = "";
-    public string Search { get => _search; set { if (Set(ref _search, value)) ApplyFilter(); } }
+    public string Search { get => _search; set { if (Set(ref _search, value)) ApplyFilters(); } }
 
     public override void Load(SaveFile sav)
     {
@@ -227,7 +345,7 @@ public sealed class GiftDbViewModel(Action<IEncounterInfo> use) : EncounterListP
             var gifts = await Task.Run(() => EncounterDatabase.LoadGifts(sav, only));
             _all = [.. gifts.Select(g => new EncounterCardViewModel(g))];
             _loaded = true;
-            ApplyFilter();
+            SetSource(_all);
         }
         catch (Exception ex)
         {
@@ -239,12 +357,40 @@ public sealed class GiftDbViewModel(Action<IEncounterInfo> use) : EncounterListP
         }
     }
 
-    private void ApplyFilter()
+    protected override bool Matches(EncounterCardViewModel card)
     {
         var q = _search.Trim();
-        var matches = q.Length == 0 ? _all : [.. _all.Where(c => c.SearchText.Contains(q, StringComparison.OrdinalIgnoreCase))];
-        SetMatches(matches);
-        Summary = _all.Count == 0 ? "Nenhum evento disponível para este jogo."
-            : $"{matches.Count} de {_all.Count} evento(s)" + (q.Length > 0 ? $" para “{q}”" : "") + ". Clique em Usar para levar ao editor.";
+        return q.Length == 0 || card.SearchText.Contains(q, StringComparison.OrdinalIgnoreCase);
     }
+
+    protected override void OnFiltered(int shown, int total)
+    {
+        var q = _search.Trim();
+        Summary = total == 0 ? "Nenhum evento disponível para este jogo."
+            : $"{shown} de {total} evento(s)" + (q.Length > 0 ? $" para “{q}”" : "") + ". Clique num cartão para ver os detalhes; Usar leva ao editor.";
+    }
+}
+
+/// <summary>Painel de detalhes do encontro/evento selecionado: o que ele garante, golpes e o texto completo do PKHeX.</summary>
+public sealed class EncounterDetailViewModel(EncounterCardViewModel card)
+{
+    public EncounterCardViewModel Card { get; } = card;
+    public IReadOnlyList<EncounterFact> Facts { get; } = [.. EncounterDatabase.GetFacts(card.Encounter).Select(f => new EncounterFact(f.Label, f.Value))];
+    public IReadOnlyList<EncounterMoveViewModel> Moves { get; } = [.. card.FixedMoves.Select(m => new EncounterMoveViewModel(m, card.Encounter))];
+    public bool HasMoves => Moves.Count > 0;
+    public string MovesHint => HasMoves ? "" : "Vem com os golpes do nível em que é encontrado.";
+    public Bitmap? BallIcon => Card.Encounter is IFixedBall { FixedBall: not Ball.None } b ? SpriteService.GetBallSprite((byte)b.FixedBall) : null;
+    public string Details => Card.Details;
+}
+
+public sealed record EncounterFact(string Label, string Value);
+
+/// <summary>Golpe fixo do encontro, com o tipo e a descricao em portugues.</summary>
+public sealed class EncounterMoveViewModel(ushort move, IEncounterInfo enc)
+{
+    private readonly (string Name, uint Argb)? _type = CoreAdapter.GetMoveType(move, enc.Context);
+    public string Name => move < CoreAdapter.MoveNames.Count ? CoreAdapter.MoveNames[move] : $"#{move}";
+    public string TypeName => _type?.Name ?? "";
+    public Avalonia.Media.IBrush TypeBrush => new Avalonia.Media.SolidColorBrush(_type?.Argb ?? 0x00000000);
+    public string? Tip => GameText.GetMove(Name, enc.Generation);
 }

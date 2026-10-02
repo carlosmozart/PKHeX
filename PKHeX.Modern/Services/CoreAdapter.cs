@@ -124,7 +124,9 @@ public static class CoreAdapter
 
     public static SaveFile? LoadSave(string path)
     {
-        if (!SaveUtil.TryGetSaveFile(path, out var sav))
+        // "arquivo.zip|entrada": save dentro de um zip (backups do JKSV)
+        var sav = ZipSaves.IsZipPath(path, out _, out _) ? ZipSaves.Load(path) : SaveUtil.TryGetSaveFile(path, out var s) ? s : null;
+        if (sav is null)
             return null;
         OnSaveLoaded(sav);
         return sav;
@@ -138,6 +140,11 @@ public static class CoreAdapter
 
     public static void ExportSave(SaveFile sav, string path)
     {
+        if (ZipSaves.IsZipPath(path, out _, out _))
+        {
+            ZipSaves.Write(sav, path); // so a entrada do zip muda
+            return;
+        }
         var data = sav.Write();
         File.WriteAllBytes(path, data.Span);
     }

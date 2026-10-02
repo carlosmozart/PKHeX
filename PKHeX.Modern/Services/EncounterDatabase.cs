@@ -312,6 +312,118 @@ public static class EncounterDatabase
         return string.Join(" · ", new[] { where, kind, level, GetVersionName(enc.Version) }.Where(s => !string.IsNullOrWhiteSpace(s)));
     }
 
+    /// <summary>Categoria do encontro para o filtro (Selvagem, Estático, Troca, Ovo, Raid, Evento, GO).</summary>
+    public static string GetCategory(IEncounterInfo enc)
+    {
+        if (enc is MysteryGift)
+            return "Evento";
+        if (enc.IsEgg)
+            return "Ovo";
+        var name = enc.GetType().Name;
+        if (name.Contains("GO", StringComparison.Ordinal))
+            return "Pokémon GO";
+        if (name.Contains("Slot", StringComparison.Ordinal))
+            return "Selvagem";
+        if (name.Contains("Trade", StringComparison.Ordinal))
+            return "Troca";
+        if (name.Contains("Raid", StringComparison.Ordinal) || name.Contains("Max", StringComparison.Ordinal)
+            || name.Contains("Might", StringComparison.Ordinal) || name.Contains("Dist", StringComparison.Ordinal) || name.Contains("Tera", StringComparison.Ordinal))
+            return "Raid";
+        return "Estático / presente";
+    }
+
+    /// <summary>Golpes que o encontro ja vem sabendo (vazio = os do nivel, definidos ao gerar).</summary>
+    public static IReadOnlyList<ushort> GetFixedMoves(IEncounterInfo enc)
+    {
+        try
+        {
+            var m = enc switch
+            {
+                MysteryGift g => g.Moves,
+                IMoveset ms => ms.Moves,
+                _ => default,
+            };
+            return [.. new[] { m.Move1, m.Move2, m.Move3, m.Move4 }.Where(x => x != 0)];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    /// <summary>Presente vindo do Pokemon HOME (cartoes de evento do HOME).</summary>
+    public static bool IsHomeGift(IEncounterInfo enc) => enc is WC8 { IsHOMEGift: true } or WB8 { IsHOMEGift: true }
+        or WA8 { IsHOMEGift: true } or WC9 { IsHOMEGift: true } or WA9 { IsHOMEGift: true };
+
+    /// <summary>
+    /// O que o encontro garante, em texto curto para o painel de detalhes: shiny, IVs, habilidade, natureza,
+    /// genero, bola, item, Tera Type, alpha/Gigantamax e treinador do evento. Campos que o Core nao fixa ficam de fora.
+    /// </summary>
+    public static IReadOnlyList<(string Label, string Value)> GetFacts(IEncounterInfo enc)
+    {
+        var facts = new List<(string, string)>();
+        void Add(string label, Func<string?> value)
+        {
+            try
+            {
+                if (value() is { Length: > 0 } v)
+                    facts.Add((label, v));
+            }
+            catch
+            {
+                // campo que este tipo de encontro nao expoe
+            }
+        }
+
+        Add("Shiny", () => enc.Shiny switch
+        {
+            Shiny.Never => "nunca (shiny lock)",
+            Shiny.Always or Shiny.AlwaysStar or Shiny.AlwaysSquare => "sempre shiny",
+            Shiny.FixedValue => "PID fixo",
+            _ => "pode ser shiny",
+        });
+        Add("IVs", () => enc switch
+        {
+            IFixedIVSet { IVs.IsSpecified: true } f => FormatIVs(f.IVs),
+            IFlawlessIVCount { FlawlessIVCount: > 0 } c => $"{c.FlawlessIVCount} garantidos em 31",
+            _ => null,
+        });
+        Add("Habilidade", () => enc is IFixedAbilityNumber a ? a.Ability switch
+        {
+            AbilityPermission.OnlyFirst => "só a 1ª",
+            AbilityPermission.OnlySecond => "só a 2ª",
+            AbilityPermission.OnlyHidden => "oculta",
+            AbilityPermission.Any12H => "qualquer (inclusive a oculta)",
+            _ => null,
+        } : null);
+        Add("Natureza", () => enc switch
+        {
+            IFixedNature n when n.Nature != Nature.Random => CoreAdapter.NatureNames[(int)n.Nature],
+            MysteryGift g when g is INature gn && gn.Nature != Nature.Random => CoreAdapter.NatureNames[(int)gn.Nature],
+            _ => null,
+        });
+        Add("Gênero", () => enc is IFixedGender { Gender: < 2 } g ? (g.Gender == 0 ? "♂" : "♀") : null);
+        Add("Bola", () => enc is IFixedBall { FixedBall: not Ball.None } b ? GameInfo.Strings.balllist[(int)b.FixedBall] : null);
+        Add("Item", () => enc is MysteryGift { HeldItem: > 0 } g && g.HeldItem < GameInfo.Strings.itemlist.Length ? GameInfo.Strings.itemlist[g.HeldItem] : null);
+        Add("Tera Type", () => enc is IGemType gem ? gem.TeraType switch
+        {
+            GemType.Default => "o primeiro tipo da espécie",
+            GemType.Random => "aleatório",
+            var t => (int)t - 2 < GameInfo.Strings.types.Length ? GameInfo.Strings.types[(int)t - 2] : null,
+        } : null);
+        Add("Alpha", () => enc is IAlphaReadOnly { IsAlpha: true } ? "sim" : null);
+        Add("Gigantamax", () => enc is IGigantamaxReadOnly { CanGigantamax: true } ? "sim" : null);
+        Add("Treinador", () => enc is MysteryGift { OriginalTrainerName.Length: > 0 } g && !g.IsEgg ? $"{g.OriginalTrainerName} · TID {g.TID16:00000}" : null);
+        Add("Origem", () => IsHomeGift(enc) ? "presente do Pokémon HOME" : null);
+        return facts;
+    }
+
+    private static string FormatIVs(IndividualValueSet iv)
+    {
+        string V(sbyte v) => v < 0 ? "?" : v.ToString();
+        return $"PS {V(iv.HP)} · Atq {V(iv.ATK)} · Def {V(iv.DEF)} · AtE {V(iv.SPA)} · DeE {V(iv.SPD)} · Vel {V(iv.SPE)}";
+    }
+
     public static string GetDetails(IEncounterInfo enc)
     {
         try { return string.Join(Environment.NewLine, enc.GetTextLines()); }
