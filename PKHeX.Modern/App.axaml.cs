@@ -17,6 +17,7 @@ public sealed class App : Application
         {
             var settings = Services.AppSettings.Load();
             RequestedThemeVariant = settings.DarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
+            Theme.AccentTheme.Apply(Theme.AccentTheme.Find(settings.AccentColor));
             var vm = new MainViewModel(settings);
             Services.CrashLog.Install(msg => vm.Status = msg);
             if (desktop.Args is [{ } path, ..] && System.IO.File.Exists(path))

@@ -46,6 +46,18 @@
         <StackPanel DockPanel.Dock="Bottom" Spacing="2">
           <CheckBox Content="Abrir último save ao iniciar" FontSize="12" IsChecked="{Binding OpenLastSaveOnStartup}" />
           <Button Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
+          <ItemsControl ItemsSource="{Binding AccentOptions}" Margin="8,4,0,4" ClipToBounds="False">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:AccentOptionViewModel">
+                <Button Classes="accentDot" Classes.selected="{Binding IsSelected}" Background="{Binding Brush}"
+                        ToolTip.Tip="{Binding Name}" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SetAccentCommand}"
+                        CommandParameter="{Binding}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </StackPanel>
 
         <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding HasSave}" Classes="muted" FontSize="11" Margin="4,0,0,12"

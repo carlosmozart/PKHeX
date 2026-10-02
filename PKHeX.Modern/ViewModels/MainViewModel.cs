@@ -20,6 +20,9 @@ public sealed class MainViewModel : ViewModelBase
         Settings = settings ?? new AppSettings();
         OpenLastCommand = new RelayCommand(() => { if (HasLastSave) _ = OpenAsync(Settings.LastSavePath!); });
         CoreAdapter.SetLanguage("en");
+        var accent = Theme.AccentTheme.Find(Settings.AccentColor);
+        AccentOptions = [.. Theme.AccentTheme.Presets.Select(p => new AccentOptionViewModel(p) { IsSelected = p == accent })];
+        SetAccentCommand = new RelayCommand(p => { if (p is AccentOptionViewModel o) SetAccent(o.Preset); });
         ToggleThemeCommand = new RelayCommand(() =>
         {
             Settings.DarkTheme = App.ToggleTheme();
@@ -131,6 +134,19 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     public RelayCommand ToggleThemeCommand { get; }
+
+    // Cor de destaque
+    public IReadOnlyList<AccentOptionViewModel> AccentOptions { get; }
+    public RelayCommand SetAccentCommand { get; }
+
+    private void SetAccent(Theme.AccentPreset preset)
+    {
+        Theme.AccentTheme.Apply(preset);
+        foreach (var o in AccentOptions)
+            o.IsSelected = o.Preset == preset;
+        Settings.AccentColor = preset.Key;
+        Settings.Save();
+    }
     public RelayCommand OpenLastCommand { get; }
 
     public bool HasLastSave => Settings.LastSavePath is { } p && System.IO.File.Exists(p);
@@ -630,4 +646,14 @@ public sealed class SearchHitViewModel(StoredEntity entity, string reason, strin
 
     private Avalonia.Media.Imaging.Bitmap? _sprite;
     public Avalonia.Media.Imaging.Bitmap? Sprite => _sprite ??= SpriteService.GetSprite(Entity.Pkm);
+}
+
+/// <summary>Bolinha de cor na barra lateral.</summary>
+public sealed class AccentOptionViewModel(Theme.AccentPreset preset) : ViewModelBase
+{
+    public Theme.AccentPreset Preset { get; } = preset;
+    public Avalonia.Media.IBrush Brush => Preset.Brush;
+    public string Name => Preset.Name;
+    private bool _isSelected;
+    public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
 }

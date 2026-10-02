@@ -10,6 +10,8 @@ public sealed class AppSettings
     public string? LastSavePath { get; set; }
     public bool OpenLastSaveOnStartup { get; set; }
     public bool DarkTheme { get; set; } = true;
+    /// <summary>Cor de destaque (chave de Theme.AccentTheme.Presets: red, cyan, blue...).</summary>
+    public string? AccentColor { get; set; }
     /// <summary>Pasta do Save Manager (null = pasta "saves" ao lado do exe).</summary>
     public string? SavesFolder { get; set; }
 

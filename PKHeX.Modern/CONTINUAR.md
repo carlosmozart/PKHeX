@@ -25,7 +25,7 @@ dotnet run --project PKHeX.Modern
 - **Cores de botão:** para mudar a cor de fundo de `Button`, o seletor precisa ser `Button.x /template/ ContentPresenter`.
 - **Sprites:** os sprites do PKHeX têm 68×56 com muita borda transparente. O `SpriteService` recorta essa borda antes de converter para o Avalonia.
 - **Layout responsivo:** as grades usam `UniformGrid` com colunas calculadas pela largura (`WidthToColumnsConverter`) dentro de um `ScrollViewer`. Isso evita cartões sobrepostos em janelas menores.
-- **Cor de destaque do Fluent:** `SystemAccentColor` é sobrescrito em `Palette.axaml` (sliders, checkbox). Sem isso, eles ficam azuis.
+- **Cor de destaque:** `Theme/AccentTheme.cs` sobrescreve `Accent`, `AccentSoft`, `SystemAccentColor*` e uma lista de pincéis do Fluent (`AccentBrushKeys`) nos dicionários de tema do `Application` (têm prioridade sobre `Palette.axaml`). No tema claro, esses pincéis do Fluent guardam a cor de destaque do sistema ao carregar e não seguem `SystemAccentColor`; sem a lista, o slider ficava azul. A escolha fica em `AppSettings.AccentColor`.
 - **Natureza:** use `pk.SetNature(...)` (de `CommonEdits`), não `pk.Nature = ...`. Na Gen 3 a natureza depende do PID. Para exibir, use `StatAlignment`.
 - **Ordem dos atributos:** `pk.GetStats()` devolve H/A/B/**S**/C/D. A UI usa PS/Atq/Def/AtE/DeE/Vel, e `CoreAdapter.GetFinalStats` faz a conversão.
 - **Pokémon novo:** use `CoreAdapter.CreateBlank(sav)` (aplica `EntityTemplates.TemplateFields`). Sem isso, um set Showdown colado sai "Ilegal".
@@ -58,6 +58,8 @@ dotnet run --project PKHeX.Modern
 - **Shiny selvagem da Gen 3 (Legalizar):** o `GenerateMethodH.SetRandom` do Core rerola o PID até ficar shiny mesmo quando a natureza já bateu, o que o jogo nunca faz; a análise marca "Fishy: Unable to match encounter conditions to a possible RNG frame" e "(❌)" no Origin Seed. `Services/ShinyMethodH.cs` segue a regra do jogo (primeiro PID com a natureza fica; só aceita se já for shiny). O `Legalize` prefere resultados com `la.Info.FrameMatches` e só devolve um suspeito como último recurso, avisando. Gen 4 (Method J/K) ainda não tem esse tratamento.
 
 - **Resumo do hover nos slots:** `CoreAdapter.AnalyzeSlot` faz uma única `LegalityAnalysis` por slot e devolve a legalidade e o texto (como o `SummaryPreviewer` do PKHeX: `ShowdownParsing.GetLocalizedPreviewText` com `FirstLine + BattleTemplateConfig.DefaultHover`, mais `LegalityFormatting.AddEncounterInfo`). O texto fica em `SlotViewModel.Tooltip`.
+
+- **Avisos de legalidade:** `CoreAdapter.GetLegalityIssues` lê `la.Results` direto (Invalid primeiro, depois Fishy) com `LegalityLocalizationContext.Humanize`; o `Report()` resumido do Core não inclui os avisos Fishy.
 
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.

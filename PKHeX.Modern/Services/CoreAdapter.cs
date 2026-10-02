@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using PKHeX.Core;
 
 namespace PKHeX.Modern.Services;
@@ -373,23 +374,34 @@ public static class CoreAdapter
         return true;
     }
 
-    /// <summary>Ate <paramref name="max"/> problemas de legalidade, em texto curto.</summary>
+    /// <summary>
+    /// Ate <paramref name="max"/> problemas de legalidade em texto curto: primeiro os invalidos, depois os avisos
+    /// "Fishy" (que o relatorio resumido do Core omite). Lista vazia = legal e sem avisos.
+    /// </summary>
     public static IReadOnlyList<string> GetLegalityIssues(PKM pk, int max = 4)
     {
         try
         {
-            var lines = new LegalityAnalysis(pk).Report().Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            var issues = new List<string>();
-            foreach (var line in lines)
+            var la = new LegalityAnalysis(pk);
+            var ctx = LegalityLocalizationContext.Create(la, GameInfo.CurrentLanguage);
+            var invalid = new List<string>();
+            var fishy = new List<string>();
+            foreach (var chk in la.Results)
             {
-                if (issues.Count == max)
-                    break;
-                if (line.StartsWith("Invalid", StringComparison.OrdinalIgnoreCase) || line.StartsWith("Fishy", StringComparison.OrdinalIgnoreCase))
-                    issues.Add(line);
+                if (chk.Judgement == Severity.Invalid)
+                    invalid.Add(ctx.Humanize(chk));
+                else if (chk.Judgement == Severity.Fishy)
+                    fishy.Add(ctx.Humanize(chk));
             }
-            if (issues.Count == 0 && lines.Length > 0 && !lines[0].StartsWith("Legal", StringComparison.OrdinalIgnoreCase))
-                issues.Add(lines[0]);
-            return issues;
+            var moves = la.Info.Moves;
+            for (int i = 0; i < moves.Length; i++)
+            {
+                if (!moves[i].Valid)
+                    invalid.Add(ctx.FormatMove(moves[i], i + 1, pk.Context));
+            }
+            if (!la.Valid && invalid.Count == 0)
+                invalid.Add("Invalid: " + la.Report().Split('\n')[0].Trim());
+            return [.. invalid.Concat(fishy).Take(max)];
         }
         catch (Exception ex)
         {

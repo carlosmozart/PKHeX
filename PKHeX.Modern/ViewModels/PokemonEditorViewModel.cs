@@ -123,7 +123,11 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     /// <summary>Golpes de reaprender so existem a partir da Gen 6.</summary>
     public bool HasRelearnMoves => _pk.Format >= 6;
     public IReadOnlyList<string> LegalityIssues { get; private set; } = [];
-    public bool HasLegalityIssues => ShowIllegal && LegalityIssues.Count > 0;
+    public bool HasLegalityIssues => ShowLegality && LegalityIssues.Count > 0;
+    /// <summary>Legal, mas com avisos (ex.: sequencia RNG suspeita).</summary>
+    public bool HasWarnings => ShowLegal && LegalityIssues.Count > 0;
+    /// <summary>Legalizar aparece para ilegal e tambem para legal com avisos.</summary>
+    public bool ShowLegalize => ShowIllegal || HasWarnings;
 
     /// <summary>Aplica uma correcao sugerida e informa o resultado na barra de status.</summary>
     private void Fix(string what, Func<PKM, bool?> apply, string? whenNull = null)
@@ -267,8 +271,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             Raise(p);
         (IsLegal, LegalityReport) = CoreAdapter.CheckLegality(_pk);
         LegalityText = IsLegal ? "Legal" : "Ilegal";
-        LegalityIssues = IsLegal ? [] : CoreAdapter.GetLegalityIssues(_pk);
-        foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityIssues), nameof(HasLegalityIssues), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
+        LegalityIssues = CoreAdapter.GetLegalityIssues(_pk); // ilegal: problemas; legal: avisos "Fishy"
+        foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityIssues), nameof(HasLegalityIssues), nameof(HasWarnings), nameof(ShowLegalize), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
             Raise(p);
     }
 }

@@ -29,7 +29,8 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Indicador de legalidade nos slots** (ícone ✓/⚠ no canto do cartão).
 - [ ] **Tradução das listas** (espécies, golpes, itens) para português, via `GameInfo.CurrentLanguage` (o PKHeX não tem PT-BR oficial, só `es`, `fr` etc.).
 - [ ] **Seletor de idioma** nas preferências.
-- [ ] **Cor de destaque configurável** (a referência visual usa ciano/teal; hoje é vermelho, definido em `Theme/Palette.axaml`).
+- [x] **Cor de destaque configurável**: bolinhas na barra lateral (vermelho, ciano, azul, roxo, verde, laranja), salva nas preferências e aplicada nos temas claro e escuro.
+- [x] **Legalizar também com avisos** ("Fishy"): o cartão de legalidade lista os avisos e oferece o Legalizar.
 - [ ] **Editor mais completo**: OT, ID, bola, local e data de encontro, fitas, memórias, Hyper Training, Tera Type, PID/EC e "Tornar shiny".
 - [ ] **Pokédex**, **Batch Editor**, **banco de dados / pesquisa** (dos Pokémon salvos), **editores específicos de cada jogo** (eventos, flags, records).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
