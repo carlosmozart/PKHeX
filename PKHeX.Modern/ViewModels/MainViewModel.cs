@@ -19,7 +19,8 @@ public sealed class MainViewModel : ViewModelBase
     {
         Settings = settings ?? new AppSettings();
         OpenLastCommand = new RelayCommand(() => { if (HasLastSave) _ = OpenAsync(Settings.LastSavePath!); });
-        CoreAdapter.SetLanguage("en");
+        CoreAdapter.SetLanguage(Settings.Language);
+        _language = CoreAdapter.Languages.FirstOrDefault(l => l.Code == GameInfo.CurrentLanguage);
         var accent = Theme.AccentTheme.Find(Settings.AccentColor);
         AccentOptions = [.. Theme.AccentTheme.Presets.Select(p => new AccentOptionViewModel(p) { IsSelected = p == accent })];
         SetAccentCommand = new RelayCommand(p => { if (p is AccentOptionViewModel o) SetAccent(o.Preset); });
@@ -134,6 +135,52 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     public RelayCommand ToggleThemeCommand { get; }
+
+    // Idioma dos nomes (especies, golpes, itens, legalidade)
+    public IReadOnlyList<string> LanguageNames { get; } = [.. CoreAdapter.Languages.Select(l => l.Name)];
+    private (string Code, string Name) _language;
+    public int LanguageIndex
+    {
+        get => Math.Max(0, CoreAdapter.Languages.ToList().IndexOf(_language));
+        set
+        {
+            if ((uint)value >= (uint)CoreAdapter.Languages.Count || CoreAdapter.Languages[value] == _language)
+                return;
+            _ = ChangeLanguageAsync(CoreAdapter.Languages[value]);
+        }
+    }
+
+    private async Task ChangeLanguageAsync((string Code, string Name) lang)
+    {
+        if (!await ConfirmDiscardEditAsync())
+        {
+            Raise(nameof(LanguageIndex)); // volta a selecao
+            return;
+        }
+        _language = lang;
+        CoreAdapter.SetLanguage(lang.Code, _sav);
+        Settings.Language = lang.Code;
+        Settings.Save();
+        Raise(nameof(LanguageIndex));
+        if (_sav is not null)
+        {
+            var selected = _selectedSlot;
+            foreach (var page in AllPages)
+                page.Load(_sav); // recria listas e textos no novo idioma
+            _searchIndex = null;
+            RunSearch();
+            Editor = null;
+            _selectedSlot = null;
+            if (selected is not null)
+            {
+                var again = (selected.IsParty ? Party.Slots : Boxes.Slots).FirstOrDefault(s => s.Box == selected.Box && s.Slot == selected.Slot);
+                if (again is not null)
+                    SelectSlot(again);
+            }
+            RaiseSelectionChanged();
+        }
+        Status = $"Idioma dos nomes: {lang.Name}.";
+    }
 
     // Cor de destaque
     public IReadOnlyList<AccentOptionViewModel> AccentOptions { get; }

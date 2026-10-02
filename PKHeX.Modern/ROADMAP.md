@@ -27,8 +27,9 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Golpes com tipo e PP** (aba Golpes): chip colorido do tipo, barra de PP (atual/máximo), PP Ups (+0 a +3) e botão "PP cheio". Trocar o golpe enche o PP.
 - [x] **Gênero no cartão do slot** (♂/♀ ao lado do nível).
 - [x] **Indicador de legalidade nos slots** (ícone ✓/⚠ no canto do cartão).
-- [ ] **Tradução das listas** (espécies, golpes, itens) para português, via `GameInfo.CurrentLanguage` (o PKHeX não tem PT-BR oficial, só `es`, `fr` etc.).
-- [ ] **Seletor de idioma** nas preferências.
+- [x] **Seletor de idioma dos nomes** (barra lateral, "Nomes"): espécies, golpes, itens, naturezas, habilidades, tipos, resumo do hover e textos de legalidade nos idiomas do PKHeX (en, es, es-419, fr, de, it, ja, ko, zh). Troca na hora e fica salvo.
+- [ ] **Nomes em português**: o PKHeX não tem PT-BR; exigiria criar as listas (espécies, golpes, itens) e os textos de legalidade.
+- [ ] Atualizar as actions do workflow (`checkout`, `setup-dotnet`, `upload-artifact`) para versões com Node.js 24 (aviso de descontinuação do Node 20).
 - [x] **Cor de destaque configurável**: bolinhas na barra lateral (vermelho, ciano, azul, roxo, verde, laranja), salva nas preferências e aplicada nos temas claro e escuro.
 - [x] **Legalizar também com avisos** ("Fishy"): o cartão de legalidade lista os avisos e oferece o Legalizar.
 - [ ] **Editor mais completo**: OT, ID, bola, local e data de encontro, fitas, memórias, Hyper Training, Tera Type, PID/EC e "Tornar shiny".
@@ -42,7 +43,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 ## Conhecido / observações
 - Em saves com a equipe cheia, ainda não foi testado colocar um Pokémon num slot vazio da equipe. Ele entra na próxima posição livre.
 - Em Scarlet/Violet e Legends Z-A, o item da mochila não é editável, só a quantidade (mesma regra do PKHeX original).
-- Os nomes de natureza, golpe e item seguem o idioma `en` (`CoreAdapter.SetLanguage("en")` no `MainViewModel`).
+- Os nomes do jogo seguem o idioma escolhido em "Nomes" (padrão `en`).
 - Os sprites passam por um recorte automático da borda transparente. Por isso, Pokémon pequenos aparecem no mesmo tamanho visual dos grandes (estilo Pokémon HOME).
 
 ## Referência visual

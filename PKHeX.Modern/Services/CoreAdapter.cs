@@ -25,7 +25,23 @@ public static class CoreAdapter
     public static IReadOnlyList<ComboItem> GetMetLocations(PKM pk) => GameInfo.GetLocationList(pk.Version, pk.Context);
 
     /// <summary>Codigo de idioma do PKHeX (en, ja, fr, it, de, es, ko, zh-Hans, zh-Hant...).</summary>
-    public static void SetLanguage(string code) => GameInfo.CurrentLanguage = code;
+    public static void SetLanguage(string code, SaveFile? sav = null)
+    {
+        if (!GameLanguage.IsLanguageValid(code))
+            code = GameLanguage.DefaultLanguage;
+        // So trocar CurrentLanguage nao basta: os nomes vem de GameInfo.Strings/Sources.
+        GameInfo.CurrentLanguage = code;
+        GameInfo.Strings = GameInfo.GetStrings(code);
+        if (sav is not null)
+            GameInfo.FilteredSources = new FilteredGameDataSource(sav, GameInfo.Sources);
+    }
+
+    /// <summary>Idiomas com nomes de especies, golpes e itens no PKHeX (nao ha portugues).</summary>
+    public static IReadOnlyList<(string Code, string Name)> Languages { get; } =
+    [
+        ("en", "English"), ("es", "Español"), ("es-419", "Español (Latinoamérica)"), ("fr", "Français"),
+        ("de", "Deutsch"), ("it", "Italiano"), ("ja", "日本語"), ("ko", "한국어"), ("zh-Hans", "简体中文"), ("zh-Hant", "繁體中文"),
+    ];
 
     public static SaveFile? LoadSave(string path)
     {

@@ -63,11 +63,14 @@ No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push n
 
 - **Golpes no editor:** `MoveSlotViewModel` (um por golpe, como o `StatViewModel`) lê o PKM por índice com `CoreAdapter.GetMove/SetMove/GetPP/SetPP/GetPPUps/SetPPUps/GetMaxPP` (o PKM só tem `Move1..Move4`). `Move1..Move4` no editor continuam como atalhos. Em `ProgressBar` dentro de `Grid`, defina `MinWidth="0"`: o padrão do Fluent (200) empurra as outras colunas.
 
-- **Shiny selvagem da Gen 3 (Legalizar):** o `GenerateMethodH.SetRandom` do Core rerola o PID até ficar shiny mesmo quando a natureza já bateu, o que o jogo nunca faz; a análise marca "Fishy: Unable to match encounter conditions to a possible RNG frame" e "(❌)" no Origin Seed. `Services/ShinyMethodH.cs` segue a regra do jogo (primeiro PID com a natureza fica; só aceita se já for shiny). O `Legalize` prefere resultados com `la.Info.FrameMatches` e só devolve um suspeito como último recurso, avisando. Gen 4 (Method J/K) ainda não tem esse tratamento.
+- **Shiny selvagem da Gen 3 (Legalizar):** o `GenerateMethodH.SetRandom` do Core rerola o PID até ficar shiny mesmo quando a natureza já bateu, o que o jogo nunca faz; a análise marca "Fishy: Unable to match encounter conditions to a possible RNG frame" e "(❌)" no Origin Seed. `Services/ShinyMethodH.cs` segue a regra do jogo (primeiro PID com a natureza fica; só aceita se já for shiny). O `Legalize` prefere resultados com `la.Info.FrameMatches` e só devolve um suspeito como último recurso, avisando. Na Gen 4 não precisa: o `GenerateMethodJ/K` do Core já descarta o frame inteiro quando o PID com a natureza certa não é shiny (testado em Pt, D, HG e SS: shiny legal e com a sequência conferindo).
 
 - **Resumo do hover nos slots:** `CoreAdapter.AnalyzeSlot` faz uma única `LegalityAnalysis` por slot e devolve a legalidade e o texto (como o `SummaryPreviewer` do PKHeX: `ShowdownParsing.GetLocalizedPreviewText` com `FirstLine + BattleTemplateConfig.DefaultHover`, mais `LegalityFormatting.AddEncounterInfo`). O texto fica em `SlotViewModel.Tooltip`.
 
 - **Avisos de legalidade:** `CoreAdapter.GetLegalityIssues` lê `la.Results` direto (Invalid primeiro, depois Fishy) com `LegalityLocalizationContext.Humanize`; o `Report()` resumido do Core não inclui os avisos Fishy.
+
+- **Idioma dos nomes:** `CoreAdapter.SetLanguage(code, sav)` troca `GameInfo.CurrentLanguage` **e** `GameInfo.Strings` (só o primeiro não muda nada) e recria `FilteredSources`. Ao trocar, o `MainViewModel` recarrega todas as páginas, refaz a busca e reabre o editor no mesmo slot. A escolha fica em `AppSettings.Language`.
+- **Workflow do GitHub:** a primeira execução passou (build em ~2 min, artefato `PKHeX.Modern-win-x64`).
 
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
