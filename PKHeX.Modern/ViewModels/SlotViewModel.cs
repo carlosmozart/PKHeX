@@ -46,6 +46,12 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     /// <summary>Busca ativa e este slot nao combina: fica apagado.</summary>
     public bool IsDimmed { get => _isDimmed; set => Set(ref _isDimmed, value); }
 
+    private bool _isAttached;
+    /// <summary>Pokemon do bank anexado a um save (selo 🔗).</summary>
+    public bool IsAttached { get => _isAttached; set => Set(ref _isAttached, value); }
+    /// <summary>A que save esta anexado, ultima atualizacao e variantes guardadas (dica do 🔗).</summary>
+    public string? AttachInfo { get; set; }
+
     private bool _isMarked;
     /// <summary>Marcado na selecao multipla (Ctrl/Shift+clique).</summary>
     public bool IsMarked { get => _isMarked; set => Set(ref _isMarked, value); }

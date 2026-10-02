@@ -36,6 +36,43 @@ public sealed class OtherSaveViewModel : SlotPageViewModel
         NextBoxCommand = new RelayCommand(() => BoxIndex++, () => Sav is not null && BoxIndex < Sav.BoxCount - 1);
         SaveCommand = new RelayCommand(() => _ = SaveAsync(), () => IsDirty);
         CloseCommand = new RelayCommand(() => _ = CloseAsync(), () => HasSave);
+        UndoCommand = new RelayCommand(Undo, () => History?.CanUndo == true);
+        RedoCommand = new RelayCommand(Redo, () => History?.CanRedo == true);
+    }
+
+    /// <summary>Desfazer/refazer proprio deste save (o Ctrl+Z da janela vale para o save aberto).</summary>
+    public SlotHistory? History { get; private set; }
+    public RelayCommand UndoCommand { get; }
+    public RelayCommand RedoCommand { get; }
+    public string UndoTip => History?.UndoDescription is { } d ? $"Desfazer no outro save: {d}" : "Nada para desfazer neste save";
+    public string RedoTip => History?.RedoDescription is { } d ? $"Refazer no outro save: {d}" : "Nada para refazer neste save";
+
+    public void OnHistoryChanged()
+    {
+        UndoCommand.NotifyCanExecuteChanged();
+        RedoCommand.NotifyCanExecuteChanged();
+        Raise(nameof(UndoTip));
+        Raise(nameof(RedoTip));
+    }
+
+    private void Undo()
+    {
+        if (History?.Undo() is not { } what)
+            return;
+        MarkDirty();
+        LoadBox();
+        OnHistoryChanged();
+        _status($"Outro save: desfeito ({what}).");
+    }
+
+    private void Redo()
+    {
+        if (History?.Redo() is not { } what)
+            return;
+        MarkDirty();
+        LoadBox();
+        OnHistoryChanged();
+        _status($"Outro save: refeito ({what}).");
     }
 
     public override string Title => "Outro save";
@@ -129,6 +166,8 @@ public sealed class OtherSaveViewModel : SlotPageViewModel
         Sav = sav;
         FilePath = path;
         IsDirty = false;
+        History = new SlotHistory(sav);
+        OnHistoryChanged();
         _boxIndex = 0;
         _selectedOption = Options.FirstOrDefault(o => string.Equals(o.Path, path, StringComparison.OrdinalIgnoreCase));
         foreach (var p in (string[])[nameof(HasSave), nameof(HasNoSave), nameof(GameName), nameof(FileName), nameof(BoxIndex), nameof(SelectedOption)])
@@ -192,6 +231,8 @@ public sealed class OtherSaveViewModel : SlotPageViewModel
         Sav = null;
         FilePath = null;
         IsDirty = false;
+        History = null;
+        OnHistoryChanged();
         _selectedOption = null;
         Slots.Clear();
         foreach (var p in (string[])[nameof(HasSave), nameof(HasNoSave), nameof(GameName), nameof(FileName), nameof(SelectedOption), nameof(BoxName), nameof(BoxLabel)])

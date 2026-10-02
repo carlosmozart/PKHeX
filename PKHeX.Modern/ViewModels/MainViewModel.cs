@@ -53,6 +53,7 @@ public sealed class MainViewModel : ViewModelBase
             page.Changed = () => IsDirty = true;
         Boxes.SlotsLoaded = () => { ApplySearchHighlight(); ApplyMarks(); };
         Bank.SlotsLoaded = ApplyMarks;
+        OtherSave.SlotsLoaded = ApplyMarks;
         Bank.Sorted = ClearMarks;
         Boxes.Sort = SortBoxes;
         ClearMarksCommand = new RelayCommand(ClearMarks);
@@ -246,6 +247,57 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     public bool HasSave => _sav is not null;
+    /// <summary>Caminho do save aberto (ou "arquivo.zip|entrada"), para os vinculos do bank.</summary>
+    private string CurrentSavePath => _sav?.Metadata.FilePath ?? Settings.LastSavePath ?? "";
+    private string SaveLabel => _sav is null ? "" : $"{CoreAdapter.GetGameName(_sav)} · {_sav.OT}";
+
+    public RelayCommand SyncAttachedCommand => _syncAttached ??= new RelayCommand(() => _ = SyncAttachedAsync());
+    private RelayCommand? _syncAttached;
+
+    /// <summary>
+    /// Atualizar anexados: cada Pokemon anexado e procurado no save ligado a ele (o aberto, como esta na memoria, ou o
+    /// arquivo) e a versao do jogo volta para o bank. Os que sumiram (solto, trocado, save apagado) podem ser desanexados.
+    /// </summary>
+    private async Task SyncAttachedAsync()
+    {
+        if (BankLinks.All.Count == 0)
+        {
+            Status = "Nenhum Pokémon anexado. Ligue “Anexar ao trazer” no bank e leve um Pokémon para o save.";
+            return;
+        }
+        Status = "Atualizando anexados...";
+        var openPath = _sav?.Metadata.FilePath;
+        var sav = _sav;
+        IReadOnlyList<BankLinkResult> results;
+        try
+        {
+            results = await Task.Run(() => BankLinks.Sync(openPath, sav));
+        }
+        catch (Exception ex)
+        {
+            Status = $"Erro ao atualizar anexados: {ex.Message}";
+            return;
+        }
+        Bank.LoadBox();
+        var lost = results.Where(r => r.Lost).ToList();
+        var details = results.Select(r => $"{(r.Lost ? "⚠" : "✓")} {r.Link.Name} ({r.Link.SaveName}): {r.Message}").ToList();
+        int updated = results.Count(r => !r.Lost);
+        Status = $"Anexados: {updated} de {results.Count} atualizados" + (lost.Count > 0 ? $", {lost.Count} não encontrados." : ".");
+        if (lost.Count == 0)
+        {
+            await ConfirmAsync("Anexados atualizados", "A versão de cada Pokémon no jogo voltou para o bank.", "OK", cancelText: "", details: details, icon: "🔗");
+            return;
+        }
+        if (await ConfirmAsync("Anexados atualizados",
+                $"{lost.Count} anexado(s) não foram encontrados (o Pokémon saiu do bank, foi solto ou trocado, ou o save mudou de lugar). Desanexar esses? Os arquivos do bank não são apagados.",
+                "Desanexar os perdidos", cancelText: "Manter", details: details, icon: "🔗"))
+        {
+            foreach (var r in lost)
+                BankLinks.Detach(r.Link.Id);
+            Bank.LoadBox();
+            Status += $" {lost.Count} desanexado(s).";
+        }
+    }
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
     public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && !IsHelpOpen;
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
@@ -587,6 +639,10 @@ public sealed class MainViewModel : ViewModelBase
             return;
         var b = dst.IsEmpty ? null : dst.Pkm;
         var name = src.Title;
+        // Anexar: do bank para o save vai uma copia; o original fica no bank, ligado ao save.
+        bool attach = Bank.AttachMode && src.IsBank && !dst.IsBank && src.BankBox is { IsExternal: false };
+        if (attach)
+            mode = DropMode.Copy;
         if (mode != DropMode.Move && b is not null && !await ConfirmAsync("Substituir Pokémon?",
                 $"{dst.Title} ({dst.Location}) será substituído por {(mode == DropMode.Copy ? "uma cópia de " : "")}{name}.", "Substituir"))
             return;
@@ -656,9 +712,15 @@ public sealed class MainViewModel : ViewModelBase
                     BankStorage.WriteSlot(src.BankBox!, src.Slot, b.Clone());
                 else if (mode != DropMode.Copy)
                     BankStorage.DeleteSlot(src.BankBox!, src.Slot);
+                if (mode != DropMode.Copy)
+                    BankLinks.Detach(a); // saiu do bank: o vinculo antigo nao vale mais
+                if (attach)
+                    BankLinks.Attach(a, CurrentSavePath, SaveLabel);
                 IsDirty = true;
                 var legal = legalNote != "" ? " " + legalNote : CoreAdapter.IsLegal(converted) == false ? " Atenção: ficou ilegal depois da conversão; veja o cartão de legalidade." : "";
-                Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "trazido")} do bank para {dst.Location}.{legal} Lembre-se de salvar o save.";
+                Status = attach
+                    ? $"{name} anexado: a cópia foi para {dst.Location} e o original continua no bank (🔗). Depois de jogar, use “Atualizar anexados”.{legal} Lembre-se de salvar o save."
+                    : $"{name} {(mode == DropMode.Copy ? "copiado" : "trazido")} do bank para {dst.Location}.{legal} Lembre-se de salvar o save.";
             }
         }
         catch (Exception ex)
@@ -695,13 +757,16 @@ public sealed class MainViewModel : ViewModelBase
         var dstInfo = CoreAdapter.GetSlotInfo(dstSav, dst.Box, dst.Slot);
         if (srcSav == dstSav)
         {
-            // Dentro do outro save: as regras do Core (slots bloqueados etc.).
+            // Dentro do outro save: as regras do Core (slots bloqueados etc.). Entra no desfazer do outro save.
+            OtherSave.History?.Record($"{(mode == DropMode.Copy ? "copiar" : "mover")} {name}", SlotHistory.KeyOf(src.Box, src.Slot), SlotHistory.KeyOf(dst.Box, dst.Slot));
             if (CoreAdapter.MoveSlot(srcSav, srcInfo, dstInfo, mode == DropMode.Copy, mode == DropMode.Overwrite) is { } error)
             {
+                OtherSave.History?.Discard();
                 if (error != "")
                     Status = error;
                 return;
             }
+            OtherSave.OnHistoryChanged();
             OtherSave.MarkDirty();
             OtherSave.LoadBox();
             Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "movido")} para {dst.Location}. Salve o outro save para gravar.";
@@ -738,6 +803,11 @@ public sealed class MainViewModel : ViewModelBase
         var mainSlot = dstSav == _sav ? dst : src;
         if (mainChanges)
             _history!.Record($"{(dstSav == _sav ? "trazer" : "enviar")} {name} {(dstSav == _sav ? "do" : "para o")} outro save", SlotHistory.KeyOf(mainSlot.Box, mainSlot.Slot));
+        // O lado do outro save entra no desfazer dele.
+        var otherSlot = dstSav == _sav ? src : dst;
+        bool otherChanges = dstSav != _sav || mode != DropMode.Copy;
+        if (otherChanges)
+            OtherSave.History?.Record($"{(dstSav == _sav ? "enviar" : "receber")} {name}", SlotHistory.KeyOf(otherSlot.Box, otherSlot.Slot));
         try
         {
             CoreAdapter.ImportToSlot(dstSav, dstInfo, converted);
@@ -755,12 +825,15 @@ public sealed class MainViewModel : ViewModelBase
             OnHistoryChanged();
             IsDirty = true;
         }
-        if (dstSav != _sav || mode != DropMode.Copy)
+        if (otherChanges)
+        {
             OtherSave.MarkDirty();
+            OtherSave.OnHistoryChanged();
+        }
         OtherSave.LoadBox();
         RefreshSlots();
         var legal = legalNote != "" ? " " + legalNote : CoreAdapter.IsLegal(converted) == false ? " Atenção: ficou ilegal depois da conversão." : "";
-        Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "movido")} para {dst.Location}.{legal} Salve os dois saves para gravar (Ctrl+Z desfaz só o lado do save aberto).";
+        Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "movido")} para {dst.Location}.{legal} Salve os dois saves para gravar (Ctrl+Z desfaz o save aberto; o outro save tem ↶ próprio no painel).";
     }
 
     public void MoveSlot(SlotViewModel src, SlotViewModel dst, bool copy) => MoveSlot(src, dst, copy ? DropMode.Copy : DropMode.Move);
@@ -933,6 +1006,8 @@ public sealed class MainViewModel : ViewModelBase
         {
             if (!await ConfirmAsync("Excluir do bank?", $"{name} ({slot.Location}) será apagado do bank. Isso não pode ser desfeito.", "Excluir", isDanger: true))
                 return;
+            if (slot.Pkm is { } gone)
+                BankLinks.Detach(gone);
             BankStorage.DeleteSlot(bankBox, slot.Slot);
             _selectedSlot = null;
             Bank.LoadBox();
@@ -1033,12 +1108,15 @@ public sealed class MainViewModel : ViewModelBase
     // Selecao multipla: Ctrl+clique marca/desmarca, Shift+clique marca um intervalo, Ctrl+A marca a caixa toda.
     // Vale para caixas do save e do bank (inclusive caixas diferentes); a equipe fica de fora, porque as
     // posicoes dela mudam quando alguem sai. As marcas sao posicoes: qualquer alteracao nos slots as limpa.
-    public readonly record struct MarkKey(int Box, BankBox? Bank, int Slot);
+    /// <summary>Um slot marcado: caixa do save aberto, do outro save (<see cref="Other"/>) ou do bank.</summary>
+    public readonly record struct MarkKey(int Box, BankBox? Bank, int Slot, bool Other = false);
     private readonly List<MarkKey> _marks = [];
     private MarkKey? _markAnchor;
 
-    private static MarkKey KeyOf(SlotViewModel s) => new(s.Box, s.BankBox, s.Slot);
-    private static bool SameBox(MarkKey a, MarkKey b) => a.Box == b.Box && a.Bank == b.Bank;
+    private static MarkKey KeyOf(SlotViewModel s) => new(s.Box, s.BankBox, s.Slot, s.IsOther);
+    private static bool SameBox(MarkKey a, MarkKey b) => a.Box == b.Box && a.Bank == b.Bank && a.Other == b.Other;
+    /// <summary>Save do slot marcado (null = bank).</summary>
+    private SaveFile? SaveOf(MarkKey k) => k.Bank is not null ? null : k.Other ? OtherSave.Sav : _sav;
 
     public bool HasMarks => _marks.Count > 0;
     public string MarkedText => _marks.Count == 1 ? "1 selecionado" : $"{_marks.Count} selecionados";
@@ -1048,12 +1126,12 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Ctrl+clique (alterna) ou Shift+clique (marca do ultimo marcado ate este, na mesma caixa).</summary>
     public void ToggleMark(SlotViewModel slot, bool range)
     {
-        if (_sav is null || slot.IsParty || slot.IsEmpty || slot.IsOther)
+        if (_sav is null || slot.IsParty || slot.IsEmpty)
             return;
         var key = KeyOf(slot);
         if (range && _markAnchor is { } anchor && SameBox(anchor, key))
         {
-            var slots = slot.IsBank ? Bank.Slots : Boxes.Slots;
+            var slots = slot.IsBank ? Bank.Slots : slot.IsOther ? OtherSave.Slots : Boxes.Slots;
             int from = Math.Min(anchor.Slot, key.Slot), to = Math.Max(anchor.Slot, key.Slot);
             foreach (var s in slots.Where(s => s.Slot >= from && s.Slot <= to && !s.IsEmpty))
                 if (!_marks.Contains(KeyOf(s)))
@@ -1077,7 +1155,8 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_sav is null)
             return;
-        var slots = _markAnchor is { Bank: not null } || CurrentPage == Bank && _selectedSlot is { IsBank: true } ? Bank.Slots : Boxes.Slots;
+        var slots = _markAnchor is { Other: true } ? OtherSave.Slots
+            : _markAnchor is { Bank: not null } || CurrentPage == Bank && _selectedSlot is { IsBank: true } ? Bank.Slots : Boxes.Slots;
         foreach (var s in slots.Where(s => !s.IsEmpty))
             if (!_marks.Contains(KeyOf(s)))
                 _marks.Add(KeyOf(s));
@@ -1106,7 +1185,7 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Reaplica o destaque das marcas nos slots visiveis (depois de trocar de caixa).</summary>
     private void ApplyMarks()
     {
-        foreach (var s in Boxes.Slots.Concat(Bank.Slots))
+        foreach (var s in Boxes.Slots.Concat(Bank.Slots).Concat(OtherSave.Slots))
             s.IsMarked = _marks.Contains(KeyOf(s));
     }
 
@@ -1116,16 +1195,19 @@ public sealed class MainViewModel : ViewModelBase
         var list = new List<(MarkKey, PKM, string)>();
         if (_sav is null)
             return list;
-        foreach (var k in _marks.OrderBy(k => k.Bank is not null).ThenBy(k => k.Bank?.Folder).ThenBy(k => k.Box).ThenBy(k => k.Slot))
+        foreach (var k in _marks.OrderBy(k => k.Bank is not null).ThenBy(k => k.Other).ThenBy(k => k.Bank?.Folder).ThenBy(k => k.Box).ThenBy(k => k.Slot))
         {
-            var pk = k.Bank is { } bank ? BankStorage.ReadSlot(bank, k.Slot) : CoreAdapter.GetBoxSlot(_sav, k.Box, k.Slot);
+            var pk = k.Bank is { } bank ? BankStorage.ReadSlot(bank, k.Slot)
+                : SaveOf(k) is { } sav ? CoreAdapter.GetBoxSlot(sav, k.Box, k.Slot) : null;
             if (pk is not null && !CoreAdapter.IsEmpty(pk))
                 list.Add((k, pk, pk.IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[pk.Species]));
         }
         return list;
     }
 
-    private string MarkLocation(MarkKey k) => k.Bank is { } b ? $"bank › {b.Name} · {k.Slot + 1}" : $"{CoreAdapter.GetBoxName(_sav!, k.Box)} · {k.Slot + 1}";
+    private string MarkLocation(MarkKey k) => k.Bank is { } b ? $"bank › {b.Name} · {k.Slot + 1}"
+        : k.Other && OtherSave.Sav is { } o ? $"{OtherSave.FileName} › {CoreAdapter.GetBoxName(o, k.Box)} · {k.Slot + 1}"
+        : $"{CoreAdapter.GetBoxName(_sav!, k.Box)} · {k.Slot + 1}";
 
     /// <summary>Excluir os marcados. Os do save entram no desfazer (um passo so); os do bank sao apagados na hora.</summary>
     private async Task DeleteMarkedAsync()
@@ -1150,8 +1232,19 @@ public sealed class MainViewModel : ViewModelBase
         if (!await ConfirmAsync($"Excluir {items.Count} Pokémon?", message, "Excluir", isDanger: true, details: details, icon: "🗑"))
             return;
 
-        var fromSave = items.Where(i => i.Key.Bank is null).ToList();
+        var fromSave = items.Where(i => i.Key.Bank is null && !i.Key.Other).ToList();
+        var fromOther = items.Where(i => i.Key.Other).ToList();
         int deleted = 0;
+        if (fromOther.Count > 0 && OtherSave.Sav is { } otherSav)
+        {
+            OtherSave.History?.Record($"excluir {fromOther.Count} Pokémon", [.. fromOther.Select(i => SlotHistory.KeyOf(i.Key.Box, i.Key.Slot))]);
+            foreach (var i in fromOther)
+                if (CoreAdapter.DeleteSlot(otherSav, CoreAdapter.GetSlotInfo(otherSav, i.Key.Box, i.Key.Slot)) is null)
+                    deleted++;
+            OtherSave.MarkDirty();
+            OtherSave.OnHistoryChanged();
+            OtherSave.LoadBox();
+        }
         if (fromSave.Count > 0)
         {
             _history!.Record($"excluir {fromSave.Count} Pokémon", [.. fromSave.Select(i => SlotHistory.KeyOf(i.Key.Box, i.Key.Slot))]);
@@ -1166,6 +1259,7 @@ public sealed class MainViewModel : ViewModelBase
         }
         foreach (var i in items.Where(i => i.Key.Bank is not null).OrderByDescending(i => i.Key.Bank!.ExternalIndex).ThenByDescending(i => i.Key.Slot))
         {
+            BankLinks.Detach(i.Pkm);
             BankStorage.DeleteSlot(i.Key.Bank!, i.Key.Slot);
             deleted++;
         }
@@ -1185,31 +1279,40 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_sav is null)
             return;
-        if (dst.IsParty || dst.IsOther)
+        if (dst.IsParty)
         {
-            Status = dst.IsOther
-                ? "Para o outro save, arraste um Pokémon por vez."
-                : "Vários Pokémon de uma vez só vão para caixas (do save ou do bank). Para a equipe, arraste um por vez.";
+            Status = "Vários Pokémon de uma vez só vão para caixas (do save, do outro save ou do bank). Para a equipe, arraste um por vez.";
             return;
         }
         bool copy = mode == DropMode.Copy;
         var target = KeyOf(dst);
         bool InTarget(MarkKey k) => SameBox(k, target);
+        // Destino: save aberto, outro save ou bank (null).
+        var dstSav = dst.IsBank ? null : dst.IsOther ? OtherSave.Sav : _sav;
+        if (!dst.IsBank && dstSav is null)
+            return;
 
-        // 1) O que vai: do bank para o save precisa converter; slots bloqueados nao saem.
+        // Anexar: todos vindo do bank para um save -> vao copias; os originais ficam no bank, ligados ao save.
+        var marked = ResolveMarks();
+        bool attach = Bank.AttachMode && dstSav is not null && marked.Count > 0 && marked.All(m => m.Key.Bank is { IsExternal: false });
+        if (attach)
+            copy = true;
+        var originals = marked.ToDictionary(m => m.Key, m => m.Pkm);
+
+        // 1) O que vai: entre jogos diferentes (ou do bank para um save) cada um e convertido; slots bloqueados nao saem.
         var moving = new List<(MarkKey Key, PKM Data, string Name)>();
         var skipped = new List<string>();
-        foreach (var (key, pk, name) in ResolveMarks())
+        foreach (var (key, pk, name) in marked)
         {
-            if (!copy && key.Bank is null && !CoreAdapter.CanWriteBoxSlot(_sav, key.Box, key.Slot))
+            if (!copy && SaveOf(key) is { } srcSav && !CoreAdapter.CanWriteBoxSlot(srcSav, key.Box, key.Slot))
             {
                 skipped.Add($"{name} ({MarkLocation(key)}): slot bloqueado pelo jogo");
                 continue;
             }
             var data = pk.Clone();
-            if (!dst.IsBank && key.Bank is not null)
+            if (dstSav is not null && SaveOf(key) != dstSav)
             {
-                if (CoreAdapter.ConvertForSave(_sav, pk, out var err) is not { } converted)
+                if (CoreAdapter.ConvertForSave(dstSav, pk, out var err) is not { } converted)
                 {
                     skipped.Add($"{name} ({MarkLocation(key)}): {err}");
                     continue;
@@ -1224,11 +1327,11 @@ public sealed class MainViewModel : ViewModelBase
             return;
         }
 
-        // Do bank para o save: oferece o Legalizar para os que chegam ilegais (uma pergunta para o grupo).
+        // De fora para o save aberto (bank ou outro save): oferece o Legalizar para os que chegam ilegais (uma pergunta para o grupo).
         var legalNote = "";
-        var illegal = dst.IsBank ? [] : moving.Select((m, i) => (m, i)).Where(x => x.m.Key.Bank is not null && CoreAdapter.IsLegal(x.m.Data) == false).ToList();
+        var illegal = dstSav != _sav ? [] : moving.Select((m, i) => (m, i)).Where(x => SaveOf(x.m.Key) != _sav && CoreAdapter.IsLegal(x.m.Data) == false).ToList();
         if (illegal.Count > 0 && LegalMode && await ConfirmAsync($"{illegal.Count} Pokémon ilegais",
-                $"Estes Pokémon do bank não são legais em {CoreAdapter.GetGameName(_sav)}. Legalizar gera cada um de novo a partir de um encontro real do jogo, mantendo natureza, nível, item, apelido e golpes quando possível.",
+                $"Estes Pokémon de fora não são legais em {CoreAdapter.GetGameName(_sav)}. Legalizar gera cada um de novo a partir de um encontro real do jogo, mantendo natureza, nível, item, apelido e golpes quando possível.",
                 "✨ Legalizar", "Trazer como estão", details: [.. illegal.Select(x => x.m.Name)], icon: "🛡"))
         {
             int ok = 0;
@@ -1246,10 +1349,10 @@ public sealed class MainViewModel : ViewModelBase
 
         // 2) Onde cabe: slots livres da caixa de destino (os que estao saindo dela contam como livres).
         HashSet<int> freed = copy ? [] : moving.Where(m => InTarget(m.Key)).Select(m => m.Key.Slot).ToHashSet();
-        int size = dst.IsBank ? BankStorage.SlotsPerBox : _sav.BoxSlotCount;
-        bool Free(int i) => freed.Contains(i) || (dst.IsBank
+        int size = dstSav is null ? BankStorage.SlotsPerBox : dstSav.BoxSlotCount;
+        bool Free(int i) => freed.Contains(i) || (dstSav is null
             ? BankStorage.IsSlotFree(dst.BankBox!, i)
-            : CoreAdapter.CanWriteBoxSlot(_sav, dst.Box, i) && CoreAdapter.IsEmpty(CoreAdapter.GetBoxSlot(_sav, dst.Box, i)));
+            : CoreAdapter.CanWriteBoxSlot(dstSav, dst.Box, i) && CoreAdapter.IsEmpty(CoreAdapter.GetBoxSlot(dstSav, dst.Box, i)));
         var slots = Enumerable.Range(0, size).Select(i => (dst.Slot + i) % size).Where(Free).Take(moving.Count).ToList();
         if (slots.Count < moving.Count)
         {
@@ -1257,14 +1360,25 @@ public sealed class MainViewModel : ViewModelBase
             return;
         }
 
-        // 3) Desfazer: um passo com todos os slots do save envolvidos.
-        var keys = new List<SlotHistory.Key>();
-        if (!copy)
-            keys.AddRange(moving.Where(m => m.Key.Bank is null).Select(m => SlotHistory.KeyOf(m.Key.Box, m.Key.Slot)));
-        if (!dst.IsBank)
-            keys.AddRange(slots.Select(i => SlotHistory.KeyOf(dst.Box, i)));
-        if (keys.Count > 0)
-            _history!.Record($"{(copy ? "copiar" : "mover")} {moving.Count} Pokémon", [.. keys]);
+        // 3) Desfazer: um passo em cada save envolvido (o aberto e o outro tem historicos proprios).
+        List<SlotHistory.Key> KeysFor(SaveFile? sav)
+        {
+            var keys = new List<SlotHistory.Key>();
+            if (sav is null)
+                return keys;
+            if (!copy)
+                keys.AddRange(moving.Where(m => SaveOf(m.Key) == sav).Select(m => SlotHistory.KeyOf(m.Key.Box, m.Key.Slot)));
+            if (dstSav == sav)
+                keys.AddRange(slots.Select(i => SlotHistory.KeyOf(dst.Box, i)));
+            return keys;
+        }
+        var description = $"{(copy ? "copiar" : "mover")} {moving.Count} Pokémon";
+        var mainKeys = KeysFor(_sav);
+        var otherKeys = KeysFor(OtherSave.Sav);
+        if (mainKeys.Count > 0)
+            _history!.Record(description, [.. mainKeys]);
+        if (otherKeys.Count > 0)
+            OtherSave.History?.Record(description, [.. otherKeys]);
 
         try
         {
@@ -1272,8 +1386,8 @@ public sealed class MainViewModel : ViewModelBase
             {
                 if (k.Bank is { } bank)
                     BankStorage.DeleteSlot(bank, k.Slot);
-                else
-                    CoreAdapter.DeleteSlot(_sav, CoreAdapter.GetSlotInfo(_sav, k.Box, k.Slot));
+                else if (SaveOf(k) is { } sav)
+                    CoreAdapter.DeleteSlot(sav, CoreAdapter.GetSlotInfo(sav, k.Box, k.Slot));
             }
             // Primeiro esvazia as origens que ficam na propria caixa de destino, depois grava, por ultimo tira das outras origens
             // (assim, se algo falhar no meio, nenhum Pokemon some).
@@ -1283,30 +1397,48 @@ public sealed class MainViewModel : ViewModelBase
                     Clear(m.Key);
             for (int i = 0; i < moving.Count; i++)
             {
-                if (dst.IsBank)
+                if (dstSav is null)
                     BankStorage.WriteSlot(dst.BankBox!, slots[i], moving[i].Data);
                 else
-                    CoreAdapter.ImportToSlot(_sav, CoreAdapter.GetSlotInfo(_sav, dst.Box, slots[i]), moving[i].Data);
+                    CoreAdapter.ImportToSlot(dstSav, CoreAdapter.GetSlotInfo(dstSav, dst.Box, slots[i]), moving[i].Data);
             }
             if (!copy)
                 foreach (var m in moving.Where(m => !InTarget(m.Key)).OrderByDescending(m => m.Key.Bank?.ExternalIndex ?? 0).ThenByDescending(m => m.Key.Slot))
                     Clear(m.Key);
+            // Vinculos: saindo do bank, o vinculo antigo cai; anexando, cada original fica ligado ao save de destino.
+            foreach (var m in moving.Where(m => m.Key.Bank is not null))
+            {
+                if (!copy && dstSav is not null)
+                    BankLinks.Detach(originals[m.Key]);
+                if (attach)
+                    BankLinks.Attach(originals[m.Key], dst.IsOther ? OtherSave.FilePath ?? "" : CurrentSavePath, dst.IsOther ? OtherSave.GameName : SaveLabel);
+            }
         }
         catch (Exception ex)
         {
             Status = $"Erro ao mover: {ex.Message}";
         }
-        if (keys.Count > 0)
+        if (mainKeys.Count > 0)
         {
             IsDirty = true;
             OnHistoryChanged();
         }
+        if (otherKeys.Count > 0)
+        {
+            OtherSave.MarkDirty();
+            OtherSave.OnHistoryChanged();
+        }
         Bank.LoadBox();
+        OtherSave.LoadBox();
         RefreshSlots();
-        var where = dst.IsBank ? $"bank › {dst.BankBox!.Name}" : CoreAdapter.GetBoxName(_sav, dst.Box);
-        Status = $"{moving.Count} Pokémon {(copy ? "copiados" : "movidos")} para {where}."
+        var where = dstSav is null ? $"bank › {dst.BankBox!.Name}"
+            : dst.IsOther ? $"{OtherSave.FileName} › {CoreAdapter.GetBoxName(dstSav, dst.Box)}"
+            : CoreAdapter.GetBoxName(dstSav, dst.Box);
+        Status = $"{moving.Count} Pokémon {(attach ? "anexados (cópias)" : copy ? "copiados" : "movidos")} para {where}."
+                 + (attach ? " Os originais continuam no bank (🔗); depois de jogar, use “Atualizar anexados”." : "")
                  + legalNote
-                 + (keys.Count > 0 ? " Lembre-se de salvar o save." : "")
+                 + (mainKeys.Count > 0 ? " Lembre-se de salvar o save." : "")
+                 + (otherKeys.Count > 0 ? " Salve também o outro save (Ctrl+Z dele fica no painel)." : "")
                  + (skipped.Count > 0 ? $" {skipped.Count} ficaram onde estavam." : "");
         if (skipped.Count > 0)
             await ShowSkippedAsync($"{skipped.Count} Pokémon ficaram onde estavam", skipped);

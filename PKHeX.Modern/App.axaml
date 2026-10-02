@@ -158,6 +158,12 @@
                 <Button Classes="small danger" Content="🗑" Command="{Binding DeleteBoxCommand}" ToolTip.Tip="Excluir caixa" />
               </StackPanel>
             </Grid>
+            <WrapPanel ItemSpacing="8" LineSpacing="4" IsVisible="{Binding IsLocal}">
+              <ToggleSwitch IsChecked="{Binding AttachMode}" OnContent="🔗 Anexar ao trazer" OffContent="Anexar ao trazer" FontSize="12"
+                            ToolTip.Tip="Ligado: levar um Pokémon do bank para um save copia em vez de mover. O original fica no bank, ligado ao save, e Atualizar anexados traz de volta a versão do jogo (nível, golpes, evolução)." />
+              <Button Classes="small" Content="{Binding AttachedText}" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SyncAttachedCommand}"
+                      ToolTip.Tip="Procura cada Pokémon anexado no save ligado a ele e traz a versão do jogo para o bank (de outra geração, guarda como variante)" />
+            </WrapPanel>
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
               <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="11" VerticalAlignment="Center" />
               <Button Grid.Column="1" Classes="ghost small" Content="⇅ Ordenar" IsVisible="{Binding IsLocal}" ToolTip.Tip="Ordena esta caixa do bank (grava na hora, sem desfazer)">
@@ -195,6 +201,7 @@
                       <StackPanel Orientation="Horizontal" Spacing="3">
                         <TextBlock Text="✓" Classes="markCheck" FontSize="9" Padding="3,0" IsVisible="{Binding IsMarked}" />
                         <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                        <TextBlock Text="🔗" FontSize="9" IsVisible="{Binding IsAttached}" ToolTip.Tip="{Binding AttachInfo}" />
                       </StackPanel>
                       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
                         <TextBlock Text="★" Classes="shiny" FontSize="11" IsVisible="{Binding IsShiny}" />
@@ -237,14 +244,16 @@
                 <Button Grid.Column="2" Classes="boxArrow" Content="›" FontSize="16" Command="{Binding NextBoxCommand}"
                         ToolTip.Tip="Próxima caixa (arraste um Pokémon até aqui para trocar de caixa)" />
               </Grid>
-              <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsVisible="{Binding HasSave}">
+              <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="6" IsVisible="{Binding HasSave}">
                 <StackPanel VerticalAlignment="Center">
                   <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                   <TextBlock Text="● Alterações não salvas" Classes="unsaved" FontSize="11" IsVisible="{Binding IsDirty}" />
                 </StackPanel>
-                <Button Grid.Column="1" Classes="small accent" Content="💾  Salvar este save" Command="{Binding SaveCommand}"
+                <Button Grid.Column="1" Classes="small" Content="↶" Command="{Binding UndoCommand}" ToolTip.Tip="{Binding UndoTip}" ToolTip.ShowOnDisabled="True" />
+                <Button Grid.Column="2" Classes="small" Content="↷" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" ToolTip.ShowOnDisabled="True" />
+                <Button Grid.Column="3" Classes="small accent" Content="💾  Salvar este save" Command="{Binding SaveCommand}"
                         ToolTip.Tip="Grava as mudanças no arquivo deste save (o arquivo anterior vai para os backups)" />
-                <Button Grid.Column="2" Classes="small" Content="✕" Command="{Binding CloseCommand}" ToolTip.Tip="Fechar este save" />
+                <Button Grid.Column="4" Classes="small" Content="✕" Command="{Binding CloseCommand}" ToolTip.Tip="Fechar este save" />
               </Grid>
             </StackPanel>
             <Panel>
@@ -411,6 +420,8 @@
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
             <Button Classes="small info" Content="⇄  Sincronizar com o save aberto" Command="{Binding SyncCommand}"
                     ToolTip.Tip="Marca na Pokédex do save aberto o que foi capturado/visto nos outros saves e o que você tem guardado (caixas e bank)" />
+            <Button Classes="small" Content="⇄  Sincronizar todos os saves" Command="{Binding SyncAllCommand}"
+                    ToolTip.Tip="Registra em cada save da pasta (e no aberto) o que foi capturado ou visto nos outros e o que está guardado nas caixas/bank. Os saves fechados são gravados na hora, com backup." />
             <Button Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}"
                     ToolTip.Tip="Relê os saves da pasta, o save aberto e o bank" />
           </StackPanel>

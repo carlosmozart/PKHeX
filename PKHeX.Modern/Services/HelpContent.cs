@@ -65,7 +65,8 @@ public static class HelpContent
         [
             new("Bancos e caixas", "Armazenamento próprio, fora dos saves, em bancos → caixas (crie, renomeie, ordene e exclua). Os Pokémon ficam como arquivos .pk* no formato original.", "Ctrl+3"),
             new("Duas telas", "Bank à esquerda e save aberto à direita: arraste entre os dois. Ao trazer para o save, o Pokémon é convertido para a geração do jogo."),
-            new("Outro save", "Troque o painel esquerdo para “💾 Outro save” e mova Pokémon entre dois jogos (com conversão). Clique em “Salvar este save” para gravar o outro save."),
+            new("Outro save", "Troque o painel esquerdo para “💾 Outro save” e mova Pokémon entre dois jogos (com conversão). Seleção múltipla funciona nos dois lados; o outro save tem ↶/↷ próprios no painel. Clique em “Salvar este save” para gravar."),
+            new("Pokémon anexado", "Com “🔗 Anexar ao trazer” ligado, levar um Pokémon do bank para um save copia em vez de mover: o original fica no bank com o selo 🔗. Depois de jogar, “Atualizar anexados” traz a versão do jogo (nível, golpes, evolução) de volta para o bank; se o jogo for de outra geração, ela fica guardada como variante e o original não muda. Os que sumiram do save podem ser desanexados."),
             new("Pastas externas", "“📁＋” transforma qualquer pasta com arquivos .pk* (ex.: a do PKHeX) num banco, sem mover os arquivos."),
         ]),
         new("📖", "Pokédex",
@@ -73,7 +74,8 @@ public static class HelpContent
             new("Pokédex centralizada", "Junta a Pokédex de todos os saves da pasta, o save aberto (inclusive alterações não salvas) e o bank. Mostra o que você possui, o que foi capturado ou visto em cada jogo e os shiny.", "Ctrl+4"),
             new("Living dex e filtros", "Resumo de living dex e shiny dex; filtros por situação (faltando, shiny, alpha...), geração, tipo e fonte. “Formas e gêneros” mostra cada forma como entrada própria."),
             new("Onde está", "Selecione uma espécie para ver onde estão os seus; “Ir” abre o Pokémon no editor."),
-            new("Sincronizar", "Marca na Pokédex do save aberto o que foi capturado nos outros saves e o que você tem guardado."),
+            new("Sincronizar", "Marca na Pokédex do save aberto o que foi capturado nos outros saves e o que você tem guardado. “Sincronizar todos os saves” faz o mesmo em cada save da pasta (os fechados são gravados na hora, com backup)."),
+            new("Formas", "Em Gen 4, Gen 5, Gen 6, BDSP, Scarlet/Violet e Legends Z-A a Pokédex guarda cada forma: em “Formas e gêneros”, uma forma só conta como vista/capturada se aquele jogo a registrou. Nos outros jogos vale o dado da espécie."),
         ]),
         new("🎒", "Treinador e mochila",
         [

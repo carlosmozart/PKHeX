@@ -35,11 +35,24 @@ public sealed class DexEntry(ushort species, byte form, sbyte gender, string nam
     public List<DexSource> CaughtIn { get; private set; } = [];
     public List<DexLocation> Owned { get; } = [];
 
-    /// <summary>Formas compartilham as listas de visto/capturado da especie.</summary>
+    /// <summary>Formas compartilham as listas de visto/capturado da especie (ate a leitura por forma, em <see cref="PokedexService.Build"/>).</summary>
     internal void ShareFlags(DexEntry species)
     {
         SeenIn = species.SeenIn;
         CaughtIn = species.CaughtIn;
+    }
+
+    /// <summary>A forma passa a ter listas proprias (jogos que guardam visto/capturado por forma).</summary>
+    internal void OwnFlags()
+    {
+        if (SeenIn.Count == 0 && CaughtIn.Count == 0)
+        {
+            SeenIn = [];
+            CaughtIn = [];
+            return;
+        }
+        SeenIn = [.. SeenIn];
+        CaughtIn = [.. CaughtIn];
     }
 }
 
@@ -215,11 +228,19 @@ public static class PokedexService
                 formEntry.Owned.Add(location);
         }
 
+        // Formas de especies com mais de uma forma: listas proprias, preenchidas por save logo abaixo.
+        var formsBySpecies = forms.Where(f => f.Form > 0 || forms.Count(x => x.Species == f.Species) > 1)
+            .GroupBy(f => f.Species).ToDictionary(g => g.Key, g => g.ToList());
+        foreach (var list in formsBySpecies.Values)
+            foreach (var f in list)
+                f.OwnFlags();
+
         foreach (var (path, sav, isOpen) in saves)
         {
             var source = new DexSource(path, $"{GameInfo.GetVersionName(sav.Version)} · {sav.OT}" + (isOpen ? " (aberto)" : ""), isOpen, false, sav.MaxSpeciesID);
             sources.Add(source);
             AddPokedexFlags(entries, sav, source);
+            AddFormFlags(formsBySpecies, entries, sav, source);
             try
             {
                 for (int b = 0; b < sav.BoxCount; b++)
@@ -253,6 +274,84 @@ public static class PokedexService
             }
         }
         return new DexData([.. entries.Skip(1)], forms, sources);
+    }
+
+    /// <summary>
+    /// Visto/capturado de cada forma neste save. Nos jogos que guardam a forma (Gen 4, 5 e 6, BDSP, Scarlet/Violet,
+    /// Legends Z-A), a forma so conta se a Pokedex registrou aquela forma; nos outros, vale o dado da especie.
+    /// Onde o jogo so guarda "forma vista", a forma conta como capturada se a especie foi capturada e a forma vista.
+    /// </summary>
+    private static void AddFormFlags(Dictionary<ushort, List<DexEntry>> formsBySpecies, DexEntry[] entries, SaveFile sav, DexSource source)
+    {
+        foreach (var (species, list) in formsBySpecies)
+        {
+            var speciesEntry = entries[species];
+            bool seen = speciesEntry.SeenIn.Contains(source), caught = speciesEntry.CaughtIn.Contains(source);
+            if (!seen)
+                continue;
+            foreach (var f in list)
+            {
+                var (formSeen, formCaught) = GetFormFlags(sav, species, f.Form);
+                if (formSeen ?? true)
+                    f.SeenIn.Add(source);
+                if (caught && (formCaught ?? formSeen ?? true))
+                    f.CaughtIn.Add(source);
+            }
+        }
+    }
+
+    /// <summary>Forma vista/capturada na Pokedex do save; null = este jogo nao guarda essa informacao.</summary>
+    public static (bool? Seen, bool? Caught) GetFormFlags(SaveFile sav, ushort species, byte form)
+    {
+        try
+        {
+            switch (sav)
+            {
+                case SAV4 s4:
+                {
+                    var seenForms = s4.Dex.GetForms(species);
+                    if (seenForms.Length == 0)
+                        return (null, null); // especie sem formas registradas na Pokedex da Gen 4
+                    return (seenForms.Any(x => x != Zukan4.FORM_NONE && x == form), null);
+                }
+                case SAV5 s5:
+                {
+                    var (index, count) = s5.Zukan.GetFormIndex(species);
+                    if (count == 0 || form >= count)
+                        return (null, null);
+                    return (s5.Zukan.GetFormFlag(index + form, 0) || s5.Zukan.GetFormFlag(index + form, 1), null);
+                }
+                case SAV6XY xy:
+                    return Gen6(xy.Zukan, species, form);
+                case SAV6AO ao:
+                    return Gen6(ao.Zukan, species, form);
+                case SAV8BS bs:
+                    if (Zukan8b.GetFormCount(species) <= form)
+                        return (null, null);
+                    return (bs.Zukan.GetHasFormFlag(species, form, false) || bs.Zukan.GetHasFormFlag(species, form, true), null);
+                case SAV9SV sv:
+                    if (sv.Zukan.GetRevision() == 0)
+                        return (sv.Zukan.DexPaldea.Get(species).GetIsFormSeen(form), null);
+                    var kitakami = sv.Zukan.DexKitakami.Get(species);
+                    return (kitakami.GetSeenForm(form), kitakami.GetObtainedForm(form));
+                case SAV9ZA za:
+                    var entry = za.Zukan.GetEntry(species);
+                    return (entry.GetIsFormSeen(form), entry.GetIsFormCaught(form));
+            }
+        }
+        catch
+        {
+            // especie fora da Pokedex deste jogo
+        }
+        return (null, null);
+
+        static (bool?, bool?) Gen6(Zukan6 dex, ushort species, byte form)
+        {
+            var (index, count) = dex.GetFormIndex(species);
+            if (count == 0 || form >= count)
+                return (null, null);
+            return (dex.GetFormFlag(index + form, 0) || dex.GetFormFlag(index + form, 1), null);
+        }
     }
 
     private static void AddPokedexFlags(DexEntry[] entries, SaveFile sav, DexSource source)
@@ -317,6 +416,13 @@ public static class PokedexService
         try { return sav.GetCaught(species); } catch { return false; }
     }
 
+    /// <summary>O jogo aceita marcar "so vista"? Testa numa copia do save (a Gen 7, por exemplo, nao aceita).</summary>
+    public static bool CanRegisterSeen(SaveFile sav, ushort species)
+    {
+        try { return RegisterSeen(sav.Clone(), species); }
+        catch { return false; }
+    }
+
     /// <summary>Marca a especie como vista (so nos jogos em que o Core permite marcar visto direto). True se ficou vista.</summary>
     public static bool RegisterSeen(SaveFile sav, ushort species)
     {
@@ -324,7 +430,24 @@ public static class PokedexService
             return false;
         try
         {
-            sav.SetSeen(species, true);
+            // Gen 4 e 5: o "visto" generico do Core nao grava; marca como o jogo marca (genero visto + visto + exibido).
+            var pi = sav.Personal.GetFormEntry(species, 0);
+            byte gender = pi.Genderless ? (byte)2 : pi.OnlyFemale ? (byte)1 : (byte)0;
+            switch (sav)
+            {
+                case SAV4 s4:
+                    s4.Dex.SetSeenGender(species, gender);
+                    s4.Dex.SetSeen(species);
+                    break;
+                case SAV5 s5:
+                    s5.Zukan.SetSeen(species, gender, false);
+                    if (!s5.Zukan.GetDisplayedAny(species))
+                        s5.Zukan.SetDisplayed(species, gender, false);
+                    break;
+                default:
+                    sav.SetSeen(species, true);
+                    break;
+            }
             return sav.GetSeen(species);
         }
         catch

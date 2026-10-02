@@ -232,6 +232,14 @@ public sealed class BankPageViewModel : SlotPageViewModel
     }
 
     /// <summary>Recarrega so a caixa atual (depois de mover Pokemon).</summary>
+    private bool _attachMode;
+    /// <summary>
+    /// "Anexar ao trazer": levar um Pokemon do bank para um save copia em vez de mover; o original fica no bank,
+    /// ligado ao save, e "Atualizar anexados" traz de volta a versao do jogo.
+    /// </summary>
+    public bool AttachMode { get => _attachMode; set => Set(ref _attachMode, value); }
+    public string AttachedText => BankLinks.All.Count == 0 ? "🔗  Atualizar anexados" : $"🔗  Atualizar anexados ({BankLinks.All.Count})";
+
     public void LoadBox()
     {
         Slots.Clear();
@@ -242,6 +250,12 @@ public sealed class BankPageViewModel : SlotPageViewModel
         {
             var s = SlotViewModel.ForBank(box, _bank, i);
             s.LoadEntity(data[i]);
+            s.IsAttached = !box.IsExternal && BankLinks.IsAttached(data[i]);
+            if (s.IsAttached && BankLinks.Find(data[i]!) is { } link)
+                s.AttachInfo = $"Anexado a {link.SaveName}"
+                    + (link.LastSync is { } t ? $" · atualizado em {t:dd/MM/yyyy HH:mm}" : " · ainda não atualizado")
+                    + (link.Variants.Count > 0 ? $" · variantes: {string.Join(", ", link.Variants.Select(v => v.ToUpperInvariant()))}" : "")
+                    + ". Atualizar anexados traz a versão do jogo.";
             Slots.Add(s);
         }
         Summary = IsExternal
@@ -249,6 +263,7 @@ public sealed class BankPageViewModel : SlotPageViewModel
             : $"{BankStorage.CountBank(_bank)} Pokémon no banco · caixa {_boxIndex + 1} de {Boxes.Count}";
         Raise(nameof(Summary));
         Raise(nameof(CurrentBox));
+        Raise(nameof(AttachedText));
         PreviousBoxCommand.NotifyCanExecuteChanged();
         NextBoxCommand.NotifyCanExecuteChanged();
         SlotsLoaded?.Invoke();

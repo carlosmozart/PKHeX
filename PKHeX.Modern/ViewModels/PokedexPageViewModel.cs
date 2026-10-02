@@ -35,6 +35,7 @@ public sealed class PokedexPageViewModel : PageViewModel
         _confirm = confirm ?? ((_, _, _, _) => Task.FromResult(true));
         _report = status ?? (_ => { });
         SyncCommand = new RelayCommand(() => _ = SyncAsync(), () => _sav is { HasPokeDex: true } && !IsBusy);
+        SyncAllCommand = new RelayCommand(() => _ = SyncAllAsync(), () => !IsBusy && _sources.Count(x => !x.IsBank) > 1);
         RefreshCommand = new RelayCommand(() => _ = RefreshAsync());
         SelectCommand = new RelayCommand(p => { if (p is DexCardViewModel c) Selected = c; });
         SetGenerationCommand = new RelayCommand(p => GenerationFilter = p is int g && g != GenerationFilter ? g : null);
@@ -53,6 +54,8 @@ public sealed class PokedexPageViewModel : PageViewModel
 
     /// <summary>Sincronizar: registra na Pokedex do save aberto o que foi capturado/visto nos outros saves e o que voce tem guardado.</summary>
     public RelayCommand SyncCommand { get; }
+    /// <summary>Sincronizar todos: o mesmo para cada save da pasta (os fechados sao gravados na hora, com backup).</summary>
+    public RelayCommand SyncAllCommand { get; }
 
     public RelayCommand RefreshCommand { get; }
     public RelayCommand SelectCommand { get; }
@@ -83,7 +86,7 @@ public sealed class PokedexPageViewModel : PageViewModel
     public IReadOnlyList<DexCardViewModel> VisibleCards { get; private set; } = [];
 
     private bool _isBusy;
-    public bool IsBusy { get => _isBusy; private set { Set(ref _isBusy, value); SyncCommand.NotifyCanExecuteChanged(); } }
+    public bool IsBusy { get => _isBusy; private set { Set(ref _isBusy, value); SyncCommand.NotifyCanExecuteChanged(); SyncAllCommand.NotifyCanExecuteChanged(); } }
     public string Summary { get; private set; } = "";
     public string Stats { get; private set; } = "";
 
@@ -218,6 +221,8 @@ public sealed class PokedexPageViewModel : PageViewModel
             && (e.CaughtIn.Any(x => !x.IsOpenSave) || e.Owned.Count > 0)).ToList();
         var toSeen = _species.Where(e => e.Species <= max && !Seen(e.Species) && !toCaught.Contains(e)
             && e.SeenIn.Any(x => !x.IsOpenSave)).ToList();
+        if (toSeen.Count > 0 && !PokedexService.CanRegisterSeen(sav, toSeen[0].Species))
+            toSeen.Clear(); // jogo que nao aceita "so vista" (Gen 7)
         var game = CoreAdapter.GetGameName(sav);
         if (toCaught.Count == 0 && toSeen.Count == 0)
         {
@@ -249,6 +254,111 @@ public sealed class PokedexPageViewModel : PageViewModel
         _report($"Pokédex de {game}: {caught} capturada(s) e {seen} vista(s) registradas."
                 + (skipped > 0 ? $" {skipped} ficaram de fora (não existem na Pokédex deste jogo ou o jogo não permite marcar só como vista)." : "")
                 + " Salve o save para gravar.");
+        await RefreshAsync();
+    }
+
+    /// <summary>Uma linha do plano de "Sincronizar todos": o save, o que muda e se e o save aberto.</summary>
+    private sealed record SyncPlan(DexSource Source, SaveFile Sav, string Path, List<ushort> ToCaught, List<ushort> ToSeen);
+
+    /// <summary>
+    /// Sincroniza a Pokedex de todos os saves: o que foi capturado em qualquer save ou esta guardado em qualquer lugar
+    /// (caixas, equipe, bank) passa a capturado em cada um; o que so foi visto passa a visto. Os saves fechados sao
+    /// gravados na hora (o arquivo anterior vai para os backups); o save aberto muda na memoria e precisa ser salvo.
+    /// </summary>
+    private async Task SyncAllAsync()
+    {
+        if (_species.Count == 0)
+            return;
+        IsBusy = true;
+        List<SyncPlan> plans;
+        try
+        {
+            var species = _species;
+            var sources = _sources.Where(x => !x.IsBank).ToList();
+            var openSav = _sav;
+            plans = await Task.Run(() =>
+            {
+                var result = new List<SyncPlan>();
+                foreach (var src in sources)
+                {
+                    var sav = src.IsOpenSave ? openSav : PokedexService.TryRead(src.Id);
+                    if (sav is not { HasPokeDex: true })
+                        continue;
+                    var max = Math.Min(sav.MaxSpeciesID, PokedexService.MaxSpecies);
+                    bool Caught(ushort sp) { try { return sav.GetCaught(sp); } catch { return true; } }
+                    bool Seen(ushort sp) { try { return sav.GetSeen(sp); } catch { return true; } }
+                    var toCaught = species.Where(e => e.Species <= max && !Caught(e.Species)
+                        && (e.CaughtIn.Any(x => x.Id != src.Id) || e.Owned.Count > 0)).Select(e => e.Species).ToList();
+                    var caughtSet = toCaught.ToHashSet();
+                    var toSeen = species.Where(e => e.Species <= max && !caughtSet.Contains(e.Species) && !Seen(e.Species)
+                        && e.SeenIn.Any(x => x.Id != src.Id)).Select(e => e.Species).ToList();
+                    if (toSeen.Count > 0 && !PokedexService.CanRegisterSeen(sav, toSeen[0]))
+                        toSeen.Clear(); // jogo que nao aceita "so vista" (Gen 7): nao promete o que nao vai entrar
+                    if (toCaught.Count + toSeen.Count > 0)
+                        result.Add(new SyncPlan(src, sav, src.Id, toCaught, toSeen));
+                }
+                return result;
+            });
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+        if (plans.Count == 0)
+        {
+            _report("Todas as Pokédex já têm tudo o que os outros saves e o bank têm.");
+            return;
+        }
+        var details = plans.Select(x => $"{x.Source.Name}: {x.ToCaught.Count} capturada(s), {x.ToSeen.Count} vista(s)"
+                                         + (x.Source.IsOpenSave ? " — salve depois" : "")).ToList();
+        if (!await _confirm("Sincronizar todas as Pokédex?",
+                $"{plans.Count} save(s) recebem as espécies capturadas ou vistas nos outros saves e as guardadas nas caixas/bank. "
+                + "Os saves fechados são gravados agora (cada arquivo anterior vai para Saves › Backups); o save aberto muda na memória e precisa ser salvo.",
+                "Sincronizar todos", details))
+            return;
+
+        IsBusy = true;
+        _report("Sincronizando as Pokédex...");
+        var results = new List<string>();
+        int openChanged = 0;
+        try
+        {
+            foreach (var plan in plans)
+            {
+                var (caught, seen, error) = await Task.Run(() =>
+                {
+                    int c = 0, v = 0;
+                    foreach (var sp in plan.ToCaught)
+                        if (PokedexService.RegisterCaught(plan.Sav, sp)) c++;
+                    foreach (var sp in plan.ToSeen)
+                        if (PokedexService.RegisterSeen(plan.Sav, sp)) v++;
+                    if (plan.Source.IsOpenSave || c + v == 0)
+                        return (c, v, (string?)null);
+                    try
+                    {
+                        SaveBackup.BeforeOverwrite(ZipSaves.FileOf(plan.Path));
+                        CoreAdapter.ExportSave(plan.Sav, plan.Path);
+                        return (c, v, (string?)null);
+                    }
+                    catch (Exception ex)
+                    {
+                        return (c, v, ex.Message);
+                    }
+                });
+                if (plan.Source.IsOpenSave)
+                    openChanged = caught + seen;
+                results.Add(error is null
+                    ? $"{plan.Source.Name}: {caught} capturada(s), {seen} vista(s)"
+                    : $"{plan.Source.Name}: não gravado ({error})");
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+        if (openChanged > 0)
+            Changed?.Invoke();
+        _report("Pokédex sincronizadas. " + string.Join(" · ", results) + (openChanged > 0 ? " Salve o save aberto para gravar." : ""));
         await RefreshAsync();
     }
 
