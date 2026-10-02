@@ -41,14 +41,27 @@ public sealed class SaveManagerViewModel : PageViewModel
         OpenCommand = new RelayCommand(p => { if (p is SaveEntryViewModel e) _open(e.Path); });
     }
 
+    /// <summary>O save esta aberto numa aba? (definido pelo MainViewModel; sem ele, so o save carregado conta)</summary>
+    public Func<string, bool>? IsOpenPath { get; init; }
+    /// <summary>Rele um save aberto do disco (ex.: depois de restaurar um backup dele).</summary>
+    public Action<string>? Reload { get; init; }
+
+    private bool IsOpen(string path) => IsOpenPath?.Invoke(path) ?? IsSamePath(path, _currentPath);
+
     public override string Title => "Saves";
     public override string Icon => "🗂";
 
     public override void Load(SaveFile sav)
     {
         _currentPath = sav.Metadata.FilePath;
+        RefreshOpenMarks();
+    }
+
+    /// <summary>Atualiza o selo "Aberto" (saves nas abas).</summary>
+    public void RefreshOpenMarks()
+    {
         foreach (var e in _all)
-            e.IsCurrent = IsSamePath(e.Path, _currentPath);
+            e.IsCurrent = IsOpen(e.Path);
     }
 
     /// <summary>Saves encontrados na pasta (a pagina Bank oferece estes no painel "Outro save").</summary>
@@ -90,7 +103,7 @@ public sealed class SaveManagerViewModel : PageViewModel
     /// <summary>Restaura o backup em <paramref name="target"/> (pergunta antes). O arquivo atual ganha um backup antes.</summary>
     public async Task RestoreToAsync(BackupEntryViewModel backup, string target)
     {
-        bool isOpen = IsSamePath(target, _currentPath);
+        bool isOpen = IsOpen(target);
         var message = $"“{System.IO.Path.GetFileName(target)}” volta a ser como estava em {backup.When}."
                       + (File.Exists(target) ? " O arquivo atual ganha um backup antes, então dá para voltar atrás." : "")
                       + (isOpen ? " Esse save está aberto: ele será reaberto em seguida." : "");
@@ -109,7 +122,7 @@ public sealed class SaveManagerViewModel : PageViewModel
         }
         await RefreshBackupsAsync();
         if (isOpen)
-            _open(target); // o MainViewModel pergunta antes de descartar alteracoes nao exportadas
+            (Reload ?? _open)(target); // rele a aba do disco (o MainViewModel pergunta antes de descartar alteracoes)
     }
 
     private async Task DeleteBackupAsync(BackupEntryViewModel backup)
@@ -187,7 +200,7 @@ public sealed class SaveManagerViewModel : PageViewModel
 
         _all = [.. entries.Select(e => new SaveEntryViewModel(e)
         {
-            IsCurrent = IsSamePath(e.Path, _currentPath),
+            IsCurrent = IsOpen(e.Path),
         })];
         if (_generation is { } gen && !_all.Any(e => e.Entry.Generation == gen))
             _generation = null;

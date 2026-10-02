@@ -6,6 +6,20 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.3.4 — 03/10/2026
+
+### 💾 Saves
+- **Vários saves em abas**: cada save aberto vira uma aba no topo (selo do jogo, nome do arquivo e ● com alterações não exportadas). Abrir outro save não descarta mais o atual: cada aba guarda as próprias alterações, o desfazer/refazer, a caixa e a página. **Ctrl+Tab** / **Ctrl+Shift+Tab** trocam de aba, **Ctrl+W** fecha; fechar uma aba ou o app pergunta se houver alterações. No Save Manager, todos os saves abertos ganham o selo "Aberto", e restaurar o backup de um save aberto recarrega a aba dele.
+
+### Correções
+- **Legalizar Pokémon evoluídos**: quando o encontro é de uma pré-evolução, o Legalizar agora sobe o nível até o mínimo em que a evolução é possível (ex.: um Gengar nv. 7 vira um Gengar nv. 25 vindo de um Gastly da Pokémon Tower). Antes ele falhava e, com o modo legal ligado, o Pokémon ficava sem poder ser aplicado.
+- **Encontros do próprio jogo primeiro**: o Legalizar prefere encontros da mesma geração do save (num save de Yellow, a Pokémon Tower em vez de um encontro de Gold por tradeback).
+- **Regras de legalidade de cada save**: ao abrir ou trocar de aba, o app aplica as regras que dependem do save, como o PKHeX faz (era do cartucho do Game Boy, console virtual da Gen 1-3, treinador ativo).
+- **Ícone do Koraidon/Miraidon**: o selo de Scarlet/Violet e as espécies da Gen 9 apareciam como sprite desconhecido quando o save ativo era de um jogo mais antigo (o PKHeX só tem essas espécies no modo arte). Agora usam o sprite de arte nesses casos (Save Manager, abas, Pokédex e bank).
+
+### Interface
+- **Sprites mais nítidos**: os sprites são ampliados 4× em escala inteira (nearest neighbor) antes de ir para a tela, então os pixels ficam nítidos e do mesmo tamanho em qualquer tamanho de cartão e com a escala do Windows em 125%/150% (antes algumas linhas de pixel dobravam e o sprite ficava torto).
+
 ## 0.3.3 — 02/10/2026
 
 ### 🏦 Bank

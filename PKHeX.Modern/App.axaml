@@ -20,7 +20,7 @@
     <Border Classes="card encCard" Classes.selected="{Binding IsSelected}" Width="280">
       <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,Auto" ColumnSpacing="12">
         <Border Classes="spriteWell" Width="68" Height="60" VerticalAlignment="Top">
-          <Image Source="{Binding Sprite}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" Margin="4" />
+          <Image Source="{Binding Sprite}" Stretch="Uniform" Margin="4" />
         </Border>
         <StackPanel Grid.Column="1" Spacing="2">
           <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
@@ -51,7 +51,7 @@
       <DockPanel>
         <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,0,12">
           <Border Classes="spriteWell" Width="84" Height="76">
-            <Image Source="{Binding Card.Sprite}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" Margin="4" />
+            <Image Source="{Binding Card.Sprite}" Stretch="Uniform" Margin="4" />
           </Border>
           <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
             <TextBlock Text="{Binding Card.Title}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
@@ -193,7 +193,7 @@
                   <DataTemplate x:DataType="vm:BankVariantViewModel">
                     <Border Classes="variantRow">
                       <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="8">
-                        <Image Source="{Binding Sprite}" Width="36" Height="32" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+                        <Image Source="{Binding Sprite}" Width="36" Height="32" Stretch="Uniform" />
                         <Border Grid.Column="1" Classes="chip formatChip" VerticalAlignment="Center">
                           <TextBlock Text="{Binding Format}" />
                         </Border>
@@ -237,10 +237,8 @@
                       </StackPanel>
                     </Grid>
                     <Panel Grid.Row="1">
-                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
-                             RenderOptions.BitmapInterpolationMode="None" />
-                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                             RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
+                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
                     </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
                       <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
@@ -311,10 +309,8 @@
                       </StackPanel>
                     </Grid>
                     <Panel Grid.Row="1">
-                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
-                             RenderOptions.BitmapInterpolationMode="None" />
-                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                             RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
+                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
                     </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
                       <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
@@ -375,10 +371,8 @@
                       </StackPanel>
                     </Grid>
                     <Panel Grid.Row="1">
-                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
-                             RenderOptions.BitmapInterpolationMode="None" />
-                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                             RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
+                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
                     </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
                       <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
@@ -415,10 +409,8 @@
                       </StackPanel>
                     </Grid>
                     <Panel Grid.Row="1">
-                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
-                             RenderOptions.BitmapInterpolationMode="None" />
-                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                             RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
+                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
                     </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
                       <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
@@ -508,8 +500,7 @@
                           <TextBlock Text="●" Classes="dexOwned" FontSize="10" IsVisible="{Binding IsOwned}" />
                         </StackPanel>
                       </Grid>
-                      <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
-                             RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
                       <StackPanel Grid.Row="2" HorizontalAlignment="Center">
                         <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         <TextBlock Text="{Binding FormName}" Classes="muted" FontSize="9" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
@@ -534,7 +525,7 @@
             <StackPanel Spacing="10" DataContext="{Binding Selected}" x:DataType="vm:DexCardViewModel">
               <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                 <Border Classes="spriteWell" Width="96" Height="96">
-                  <Image Source="{Binding Sprite}" Stretch="Uniform" Margin="8" RenderOptions.BitmapInterpolationMode="None" />
+                  <Image Source="{Binding Sprite}" Stretch="Uniform" Margin="8" />
                 </Border>
                 <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
                   <TextBlock Text="{Binding Number}" Classes="muted" />
@@ -554,7 +545,7 @@
                 </StackPanel>
               </Grid>
               <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                <Image Source="{Binding ShinySprite}" Width="48" Height="48" RenderOptions.BitmapInterpolationMode="None" ToolTip.Tip="Shiny" />
+                <Image Source="{Binding ShinySprite}" Width="48" Height="48" ToolTip.Tip="Shiny" />
                 <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
               </Grid>
               <StackPanel Spacing="2">
@@ -696,10 +687,8 @@
           </StackPanel>
         </Grid>
         <Panel Grid.Row="1">
-          <Image Source="{Binding Sprite}" Stretch="Uniform" Height="84" Margin="6,4"
-                 RenderOptions.BitmapInterpolationMode="None" />
-          <Image Source="{Binding BallSprite}" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                 RenderOptions.BitmapInterpolationMode="None" ToolTip.Tip="Bola" />
+          <Image Source="{Binding Sprite}" Stretch="Uniform" Height="84" Margin="6,4" />
+          <Image Source="{Binding BallSprite}" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Bottom" ToolTip.Tip="Bola" />
         </Panel>
         <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
           <TextBlock Text="{Binding Title}" Classes="slotName" />
@@ -779,8 +768,7 @@
                         Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                         CommandParameter="{Binding}">
                   <Grid ColumnDefinitions="Auto,*">
-                    <Image Source="{Binding Sprite}" Stretch="Uniform" Width="44" Height="40"
-                           RenderOptions.BitmapInterpolationMode="None" />
+                    <Image Source="{Binding Sprite}" Stretch="Uniform" Width="44" Height="40" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
                       <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                       <StackPanel Orientation="Horizontal" Spacing="3">
@@ -829,7 +817,7 @@
                     CommandParameter="{Binding}">
               <Grid ColumnDefinitions="Auto,*,Auto">
                 <Border Classes="spriteWell">
-                  <Image Source="{Binding Sprite}" Width="104" Height="92" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+                  <Image Source="{Binding Sprite}" Width="104" Height="92" Stretch="Uniform" />
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" Spacing="2">
                   <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="20" />
@@ -1064,7 +1052,7 @@
                   <ComboBox.ItemTemplate>
                     <DataTemplate x:DataType="vm:ItemOption">
                       <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent" ToolTip.Tip="{Binding Tip}" ToolTip.Placement="Right">
-                        <Image Source="{Binding Icon}" Width="22" Height="22" RenderOptions.BitmapInterpolationMode="None" />
+                        <Image Source="{Binding Icon}" Width="22" Height="22" />
                         <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
                       </StackPanel>
                     </DataTemplate>

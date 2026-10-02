@@ -126,14 +126,18 @@ public static class CoreAdapter
     {
         // "arquivo.zip|entrada": save dentro de um zip (backups do JKSV)
         var sav = ZipSaves.IsZipPath(path, out _, out _) ? ZipSaves.Load(path) : SaveUtil.TryGetSaveFile(path, out var s) ? s : null;
-        if (sav is null)
-            return null;
-        OnSaveLoaded(sav);
         return sav;
     }
 
-    private static void OnSaveLoaded(SaveFile sav)
+    /// <summary>
+    /// Torna este o save ativo para o PKHeX.Core, como o WinForms faz ao carregar um save: regras de legalidade que
+    /// dependem do save (era do cartucho/console virtual da Gen 1-3, treinador ativo), modo dos sprites e listas
+    /// filtradas (itens, bolas, golpes do jogo). Estado global: chamar sempre que o save ativo mudar (abrir, trocar de aba).
+    /// Sem o <c>ParseSettings</c>, todo Pokemon de cartucho do Game Boy (Red/Blue/Yellow/Gold/Silver/Crystal) sai ilegal.
+    /// </summary>
+    public static void Activate(SaveFile sav)
     {
+        ParseSettings.InitFromSaveFileData(sav);
         GameInfo.FilteredSources = new FilteredGameDataSource(sav, GameInfo.Sources);
         Drawing.PokeSprite.SpriteUtil.Initialize(sav);
     }

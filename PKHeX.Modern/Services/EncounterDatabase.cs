@@ -193,6 +193,10 @@ public static class EncounterDatabase
                     continue;
                 CarryOver(current, pk, enc);
                 var la = new LegalityAnalysis(pk);
+                // Evoluiu ate a especie escolhida, mas no nivel do encontro a evolucao ainda nao e possivel
+                // (ex.: Gastly nv. 19 da Pokemon Tower virando Gengar, que exige Haunter nv. 25+): sobe o nivel.
+                if (!la.Valid && pk.Species != enc.Species && RaiseToLegalLevel(current, pk) is { } raised)
+                    la = raised;
                 if (la.Valid)
                 {
                     if (la.Info.FrameMatches)
@@ -227,6 +231,8 @@ public static class EncounterDatabase
             score += 10;
         if (enc.LevelMin > current.CurrentLevel)
             score += 30;
+        if (enc.Generation != current.Format)
+            score += 60; // outra geracao (ex.: Gold num save de Yellow, via tradeback): legal, mas inesperado; pesa mais que o nivel
         if (enc.Version != current.Version)
             score += 5;
         return score;
@@ -255,7 +261,12 @@ public static class EncounterDatabase
         if (from.IsNicknamed && !to.IsNicknamed)
             to.SetNickname(from.Nickname);
 
-        // Golpes: mantem os do usuario se forem legais nesse encontro; senao, um conjunto legal sugerido.
+        ApplyMoves(from, to);
+    }
+
+    /// <summary>Golpes: mantem os do usuario se forem legais; senao, um conjunto legal sugerido.</summary>
+    private static void ApplyMoves(PKM from, PKM to)
+    {
         Span<ushort> moves = stackalloc ushort[4];
         from.GetMoves(moves);
         if (moves.ContainsAnyExcept((ushort)0))
@@ -266,6 +277,26 @@ public static class EncounterDatabase
         }
         to.HealPP();
         to.RefreshChecksum();
+    }
+
+    /// <summary>
+    /// Procura o menor nivel (acima do atual) em que o Pokemon evoluido fica legal e reaplica os golpes nele.
+    /// Devolve a analise legal, ou null (o nivel volta ao original) se nenhum nivel resolver.
+    /// </summary>
+    private static LegalityAnalysis? RaiseToLegalLevel(PKM from, PKM pk)
+    {
+        var original = pk.CurrentLevel;
+        for (int level = original + 1; level <= 100; level++)
+        {
+            pk.CurrentLevel = (byte)level;
+            ApplyMoves(from, pk);
+            var la = new LegalityAnalysis(pk);
+            if (la.Valid)
+                return la;
+        }
+        pk.CurrentLevel = original;
+        ApplyMoves(from, pk);
+        return null;
     }
 
     private static string Describe(IEncounterInfo enc, PKM before, PKM after)

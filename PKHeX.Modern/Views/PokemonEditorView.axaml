@@ -37,7 +37,7 @@
     <Border Classes="card hero">
       <Grid ColumnDefinitions="Auto,*">
         <Border Classes="spriteWell" Width="112" Height="100">
-          <Image Source="{Binding Sprite}" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+          <Image Source="{Binding Sprite}" Stretch="Uniform" />
         </Border>
         <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="6">
           <StackPanel Orientation="Horizontal" Spacing="6">
@@ -105,8 +105,7 @@
                 <TextBlock Grid.Row="4" Text="Item" VerticalAlignment="Center" />
                 <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
                   <Image Source="{Binding HeldItemIcon}" Width="24" Height="24" IsVisible="{Binding HasItem}" VerticalAlignment="Center"
-                         ToolTip.Tip="{Binding HeldItemTip}"
-                         RenderOptions.BitmapInterpolationMode="None" />
+                         ToolTip.Tip="{Binding HeldItemTip}" />
                   <AutoCompleteBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding ItemOptions}" SelectedItem="{Binding SelectedItem}"
                                    ValueMemberBinding="{Binding Text, x:DataType=core:ComboItem}" FilterMode="ContainsOrdinal"
                                    MinimumPrefixLength="1" MaxDropDownHeight="320" Watermark="Nenhum (digite para buscar)">

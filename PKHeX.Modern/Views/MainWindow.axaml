@@ -38,7 +38,7 @@
               <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,0,2">
                 <Border Classes="gameBadge" Width="52" Height="52" Background="{Binding GameArt.Background}"
                         ToolTip.Tip="{Binding GameName}">
-                  <Image Source="{Binding GameArt.Sprite}" RenderOptions.BitmapInterpolationMode="None" />
+                  <Image Source="{Binding GameArt.Sprite}" />
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                   <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextWrapping="Wrap" />
@@ -125,7 +125,7 @@
                           Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).GoToSearchHitCommand}"
                           CommandParameter="{Binding}" ToolTip.Tip="{Binding Reason}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                      <Image Source="{Binding Sprite}" Width="28" Height="28" RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Source="{Binding Sprite}" Width="28" Height="28" />
                       <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                         <TextBlock Text="{Binding Location}" Classes="muted" FontSize="10" TextTrimming="CharacterEllipsis" />
@@ -154,7 +154,41 @@
     </Border>
 
     <!-- Conteudo -->
-    <Panel Grid.Column="1" Margin="24">
+    <DockPanel Grid.Column="1" Margin="24">
+      <!-- Abas dos saves abertos (cada save mantem alteracoes, desfazer, caixa e pagina) -->
+      <Border DockPanel.Dock="Top" Classes="saveTabsBar" IsVisible="{Binding HasTabs}">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <ItemsControl ItemsSource="{Binding OpenSaves}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SaveTabViewModel">
+                  <Button Classes="saveTab" Classes.active="{Binding IsActive}" Command="{Binding SelectCommand}" ToolTip.Tip="{Binding Tooltip}">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                      <Border Classes="gameBadge" Width="26" Height="26" CornerRadius="6" Background="{Binding Art.Background}">
+                        <Image Source="{Binding Art.Sprite}" Margin="1" />
+                      </Border>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="12" MaxWidth="170" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Game}" Classes="muted" FontSize="10" MaxWidth="170" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="●" Classes="tabDirty" IsVisible="{Binding IsDirty}" VerticalAlignment="Center"
+                                 ToolTip.Tip="Alterações não exportadas" />
+                      <Button Grid.Column="3" Classes="tabClose" Content="✕" Command="{Binding CloseCommand}"
+                              ToolTip.Tip="Fechar este save (Ctrl+W)" />
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Classes="tabNew" Content="＋" Command="{Binding NewTabCommand}"
+                    ToolTip.Tip="Abrir outro save numa aba nova (escolha no Save Manager, Ctrl+O ou arraste o arquivo). Ctrl+Tab troca de aba." />
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+      <Panel>
       <!-- Sem save aberto: o Save Manager e a tela inicial -->
       <ContentControl Content="{Binding SaveManager}" IsVisible="{Binding ShowHomeSaves}" />
       <ContentControl Content="{Binding Help}" IsVisible="{Binding IsHelpOpen}" />
@@ -170,7 +204,8 @@
           <Button Classes="small" Content="✕  Limpar" Command="{Binding ClearMarksCommand}" ToolTip.Tip="Desmarca todos (Esc)" />
         </StackPanel>
       </Border>
-    </Panel>
+      </Panel>
+    </DockPanel>
 
     <!-- Editor -->
     <Border Grid.Column="2" Width="410" Background="{DynamicResource SidebarBackground}"

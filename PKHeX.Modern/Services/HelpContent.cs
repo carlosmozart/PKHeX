@@ -17,6 +17,7 @@ public static class HelpContent
         new("💾", "Saves",
         [
             new("Abrir um save", "Clique em “Abrir save...”, arraste o arquivo para a janela ou passe o caminho pela linha de comando. “↺ Último” reabre o save anterior; marque “Abrir último save ao iniciar” para fazer isso sozinho.", "Ctrl+O"),
+            new("Vários saves em abas", "Cada save aberto vira uma aba no topo, com o selo do jogo e ● quando tem alterações não exportadas. Trocar de aba não perde nada: cada save guarda as alterações, o desfazer/refazer, a caixa e a página. Abrir um save que já está numa aba só troca para ela. “＋” vai para o Save Manager; ✕ fecha a aba (pergunta se houver alterações).", "Ctrl+Tab / Ctrl+W"),
             new("Save Manager", "Tela inicial e página Saves: lista os saves da pasta escolhida (subpastas como gba, ds, 3ds e switch viram grupos), com treinador, TID/SID, tempo de jogo, dinheiro, capturados e equipe. Busca por jogo, treinador ou arquivo e filtro por geração. Duplo clique abre.", "Ctrl+9"),
             new("Saves dentro de .zip", "Backups do JKSV (ou qualquer .zip com saves) na pasta de saves aparecem no Save Manager com o selo ZIP, um cartão por save lá dentro. Também dá para abrir um .zip direto. Ao salvar, o app oferece gravar de volta dentro do zip (o zip inteiro ganha um backup antes) ou salvar como arquivo separado."),
             new("Selo do jogo", "Cada save mostra o Pokémon da capa nas cores da versão (Ho-Oh no HeartGold, Rayquaza no Emerald...), no Save Manager e no cartão do save aberto na barra lateral."),

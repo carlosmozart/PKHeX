@@ -32,7 +32,11 @@ public sealed class MainViewModel : ViewModelBase
         Party = new PartyPageViewModel(s => _ = SelectSlotAsync(s));
         Boxes = new BoxesPageViewModel(s => _ = SelectSlotAsync(s)) { Party = Party };
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
-        SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p), (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s);
+        SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p), (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s)
+        {
+            IsOpenPath = p => FindTab(p) is not null,
+            Reload = p => _ = ReloadAsync(p),
+        };
         BankStorage.ExternalFolders = Settings.ExternalBankFolders;
         OtherSave = new OtherSaveViewModel(s => _ = SelectSlotAsync(s),
             () => SaveManager.Entries
@@ -488,6 +492,8 @@ public sealed class MainViewModel : ViewModelBase
         private set
         {
             Set(ref _isDirty, value);
+            if (_activeTab is not null)
+                _activeTab.IsDirty = value;
             Raise(nameof(PendingActions));
             Raise(nameof(PendingText));
             if (value)
@@ -497,16 +503,21 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Fechar o app: pergunta se o save principal ou o outro save tem alteracoes nao gravadas.</summary>
+    /// <summary>Fechar o app: pergunta se algum save aberto (ou o outro save) tem alteracoes nao gravadas.</summary>
     public async Task<bool> ConfirmCloseAsync()
     {
-        if (!await ConfirmDiscardChangesAsync("Fechar o PKHeX Modern"))
+        var dirty = OpenSaves.Where(t => t.IsDirty).ToList();
+        if (dirty.Count > 0 && !await ConfirmAsync("Alterações não exportadas",
+                dirty.Count == 1
+                    ? $"{dirty[0].FileName} tem alterações que ainda não foram exportadas. Fechar o PKHeX Modern vai descartá-las."
+                    : $"{dirty.Count} saves abertos têm alterações que ainda não foram exportadas. Fechar o PKHeX Modern vai descartá-las.",
+                "Descartar alterações", "Voltar", isDanger: true, details: [.. dirty.Select(t => $"● {t.FileName} ({t.Game})")]))
             return false;
         return !OtherSave.IsDirty || await ConfirmAsync("Outro save não salvo",
             $"O outro save ({OtherSave.FileName}, na página Bank) tem alterações que ainda não foram gravadas.", "Fechar sem salvar", "Voltar", isDanger: true);
     }
 
-    /// <summary>Confirma o descarte das alteracoes nao exportadas (true = pode seguir).</summary>
+    /// <summary>Confirma o descarte das alteracoes nao exportadas do save ativo (true = pode seguir).</summary>
     public async Task<bool> ConfirmDiscardChangesAsync(string action)
     {
         if (!IsDirty)
@@ -516,11 +527,182 @@ public sealed class MainViewModel : ViewModelBase
             "Descartar alterações", "Voltar", isDanger: true);
     }
 
-    /// <summary>Abre um save pela interface: pergunta antes de descartar alteracoes.</summary>
+    // Abas de saves abertos
+    /// <summary>Saves abertos, um por aba. So o ativo esta carregado nas paginas.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<SaveTabViewModel> OpenSaves { get; } = [];
+    private SaveTabViewModel? _activeTab;
+    public SaveTabViewModel? ActiveTab => _activeTab;
+    public bool HasTabs => OpenSaves.Count > 0;
+
+    /// <summary>Ctrl+Tab / Ctrl+Shift+Tab: proxima/anterior aba (circular).</summary>
+    public void CycleTab(int delta)
+    {
+        if (OpenSaves.Count < 2 || _activeTab is null)
+            return;
+        int i = (OpenSaves.IndexOf(_activeTab) + delta + OpenSaves.Count) % OpenSaves.Count;
+        _ = SwitchToAsync(OpenSaves[i]);
+    }
+    /// <summary>"＋" das abas: vai para o Save Manager (abrir outro save cria uma aba nova).</summary>
+    public RelayCommand NewTabCommand => _newTab ??= new RelayCommand(() => { IsHelpOpen = false; CurrentPage = SaveManager; });
+    private RelayCommand? _newTab;
+
+    private SaveTabViewModel? FindTab(string path)
+    {
+        var full = FullPath(path);
+        return OpenSaves.FirstOrDefault(t => string.Equals(FullPath(t.Path), full, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string FullPath(string path) => ZipSaves.IsZipPath(path, out var zip, out var entry)
+        ? ZipSaves.Combine(System.IO.Path.GetFullPath(zip), entry)
+        : System.IO.Path.GetFullPath(path);
+
+    /// <summary>Abre um save pela interface numa aba nova. Se ja estiver aberto, so troca para a aba dele.</summary>
     public async Task OpenAsync(string path)
     {
-        if (await ConfirmDiscardChangesAsync("Abrir outro save"))
+        if (FindTab(path) is { } tab)
+        {
+            await SwitchToAsync(tab);
+            Status = $"{tab.FileName} já estava aberto (aba ativada).";
+            return;
+        }
+        if (await ConfirmDiscardEditAsync())
             Open(path);
+    }
+
+    /// <summary>Troca de aba (pergunta antes de descartar uma edicao nao aplicada no editor).</summary>
+    public async Task SwitchToAsync(SaveTabViewModel tab)
+    {
+        if (tab == _activeTab)
+        {
+            IsHelpOpen = false;
+            if (CurrentPage == SaveManager)
+                CurrentPage = tab.LastPage ?? Boxes;
+            return;
+        }
+        if (!await ConfirmDiscardEditAsync())
+            return;
+        StoreActiveTab();
+        ActivateTab(tab);
+        Status = $"{tab.FileName} ({tab.Game})" + (tab.IsDirty ? " · com alterações não exportadas" : "");
+    }
+
+    /// <summary>Fecha uma aba (pergunta se houver alteracoes nao exportadas).</summary>
+    public async Task CloseTabAsync(SaveTabViewModel tab)
+    {
+        if (tab == _activeTab && !await ConfirmDiscardEditAsync())
+            return;
+        bool dirty = tab == _activeTab ? IsDirty : tab.IsDirty;
+        if (dirty && !await ConfirmAsync("Fechar sem exportar?",
+                $"{tab.FileName} tem alterações que ainda não foram exportadas. Fechar a aba vai descartá-las.",
+                "Fechar sem salvar", "Voltar", isDanger: true))
+            return;
+        int index = OpenSaves.IndexOf(tab);
+        OpenSaves.Remove(tab);
+        Raise(nameof(HasTabs));
+        if (tab == _activeTab)
+        {
+            _activeTab = null;
+            if (OpenSaves.Count > 0)
+                ActivateTab(OpenSaves[Math.Min(index, OpenSaves.Count - 1)]);
+            else
+                CloseAll();
+        }
+        SaveManager.RefreshOpenMarks();
+        Status = $"{tab.FileName} fechado.";
+    }
+
+    /// <summary>Nenhum save aberto: volta para a tela inicial (Save Manager).</summary>
+    private void CloseAll()
+    {
+        _sav = null;
+        _history = null;
+        _isDirty = false;
+        _historyAtSave = 0;
+        _searchIndex = null;
+        SearchText = "";
+        ClearMarks();
+        _selectedSlot = null;
+        Editor = null;
+        _currentPage = Boxes;
+        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(CurrentPage), nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
+            Raise(p);
+        OnHistoryChanged();
+        RaiseHome();
+        RaiseSelectionChanged();
+        CheckLegalityCommand.NotifyCanExecuteChanged();
+        CreateCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Guarda na aba ativa o que e dela antes de trocar (caixa, pagina, alteracoes pendentes).</summary>
+    private void StoreActiveTab()
+    {
+        if (_activeTab is not { } tab)
+            return;
+        tab.HistoryAtSave = _historyAtSave;
+        tab.IsDirty = IsDirty;
+        tab.CurrentBox = Boxes.CurrentBox;
+        tab.LastPage = CurrentPage == SaveManager ? tab.LastPage : CurrentPage;
+        tab.IsActive = false;
+    }
+
+    /// <summary>Carrega uma aba nas paginas: ela passa a ser "o save aberto".</summary>
+    private void ActivateTab(SaveTabViewModel tab)
+    {
+        _activeTab = tab;
+        tab.IsActive = true;
+        CoreAdapter.Activate(tab.Sav); // legalidade, sprites e listas do PKHeX passam a ser deste save
+        _sav = tab.Sav;
+        _history = tab.History;
+        _isDirty = tab.IsDirty;
+        _historyAtSave = tab.HistoryAtSave;
+        _searchIndex = null;
+        SearchText = "";
+        ClearMarks();
+        OtherSave.MainPath = tab.Path;
+        OnHistoryChanged();
+        _selectedSlot = null;
+        Editor = null;
+        foreach (var page in AllPages)
+            page.Load(tab.Sav);
+        Boxes.CurrentBox = tab.CurrentBox;
+        CurrentPage = tab.LastPage ?? Boxes;
+        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
+            Raise(p);
+        IsHelpOpen = false;
+        RaiseHome();
+        RaiseSelectionChanged();
+        CheckLegalityCommand.NotifyCanExecuteChanged();
+        CreateCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// O arquivo mudou no disco (ex.: backup restaurado): se o save estiver numa aba, rele do disco
+    /// (pergunta antes de descartar alteracoes nao exportadas). Fora das abas, abre normalmente.
+    /// </summary>
+    public async Task ReloadAsync(string path)
+    {
+        if (FindTab(path) is not { } tab)
+        {
+            await OpenAsync(path);
+            return;
+        }
+        bool dirty = tab == _activeTab ? IsDirty : tab.IsDirty;
+        if (dirty && !await ConfirmAsync("Recarregar save?",
+                $"{tab.FileName} mudou no disco, mas a aba tem alterações não exportadas. Recarregar vai descartá-las.",
+                "Recarregar", "Manter a aba como está", isDanger: true))
+            return;
+        if (tab == _activeTab && !await ConfirmDiscardEditAsync())
+            return;
+        if (CoreAdapter.LoadSave(path) is not { } sav)
+        {
+            Status = "Arquivo não reconhecido como save.";
+            return;
+        }
+        if (tab != _activeTab)
+            StoreActiveTab();
+        tab.Replace(sav);
+        ActivateTab(tab);
+        Status = $"{tab.FileName} recarregado do disco.";
     }
 
     public void Open(string path)
@@ -539,32 +721,29 @@ public sealed class MainViewModel : ViewModelBase
                 zipNote = $" O zip tem {inside.Count} saves; os outros aparecem no Save Manager se o zip estiver na pasta de saves.";
             path = inside[0];
         }
+        if (FindTab(path) is { } existing)
+        {
+            StoreActiveTab();
+            ActivateTab(existing);
+            Status = $"{existing.FileName} já estava aberto (aba ativada).";
+            return;
+        }
         var sav = CoreAdapter.LoadSave(path);
         if (sav is null)
         {
             Status = "Arquivo não reconhecido como save.";
             return;
         }
-        _sav = sav;
-        IsDirty = false;
-        _searchIndex = null;
-        SearchText = "";
-        _history = new SlotHistory(sav);
-        _historyAtSave = 0;
-        ClearMarks();
-        OtherSave.MainPath = path;
-        OnHistoryChanged();
-        Editor = null;
-        foreach (var page in AllPages)
-            page.Load(sav);
-        CurrentPage = Boxes;
-        foreach (var p in (string[])[nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages)])
-            Raise(p);
-        IsHelpOpen = false;
-        RaiseHome();
-        RaiseSelectionChanged();
-        CheckLegalityCommand.NotifyCanExecuteChanged();
-        CreateCommand.NotifyCanExecuteChanged();
+        StoreActiveTab();
+        SaveTabViewModel? tab = null;
+        tab = new SaveTabViewModel(sav, path)
+        {
+            SelectCommand = new RelayCommand(() => _ = SwitchToAsync(tab!)),
+            CloseCommand = new RelayCommand(() => _ = CloseTabAsync(tab!)),
+        };
+        OpenSaves.Add(tab);
+        Raise(nameof(HasTabs));
+        ActivateTab(tab);
         Status = $"Aberto: {ZipSaves.DisplayName(path)}" + zipNote;
         Settings.LastSavePath = ZipSaves.IsZipPath(path, out var zip, out var entry) ? ZipSaves.Combine(System.IO.Path.GetFullPath(zip), entry) : System.IO.Path.GetFullPath(path);
         Settings.Save();

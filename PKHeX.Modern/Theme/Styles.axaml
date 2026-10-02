@@ -608,4 +608,54 @@
   <Style Selector="Border.formatChip">
     <Setter Property="Background" Value="{DynamicResource TintInfoForeground}" />
   </Style>
+
+
+  <!-- Abas dos saves abertos -->
+  <Style Selector="Border.saveTabsBar">
+    <Setter Property="Margin" Value="0,-12,0,14" />
+    <Setter Property="Padding" Value="0,0,0,8" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+  <Style Selector="Button.saveTab">
+    <Setter Property="Padding" Value="8,5,4,5" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Opacity" Value="0.75" />
+  </Style>
+  <Style Selector="Button.saveTab:pointerover">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="Button.saveTab.active">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="Button.saveTab.active /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+  </Style>
+  <Style Selector="TextBlock.tabDirty">
+    <Setter Property="Foreground" Value="{DynamicResource TintWarnForeground}" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="Button.tabClose">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="5,2" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+  </Style>
+  <Style Selector="Button.tabClose:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource TintDangerBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource TintDangerForeground}" />
+  </Style>
+  <Style Selector="Button.tabNew">
+    <Setter Property="Padding" Value="12,6" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="FontSize" Value="16" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
 </Styles>

@@ -15,6 +15,15 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
         _drag = new SlotDragController(this, () => VM);
+        // Ctrl+Tab / Ctrl+Shift+Tab trocam de aba de save (em tunel: o Tab normal e consumido pela navegacao de foco).
+        AddHandler(KeyDownEvent, (_, e) =>
+        {
+            if (e.Key == Key.Tab && e.KeyModifiers.HasFlag(KeyModifiers.Control) && DataContext is MainViewModel { Dialog: null } vm)
+            {
+                vm.CycleTab(e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : +1);
+                e.Handled = true;
+            }
+        }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
         // Como no TidalHeX: ao voltar para a janela, a lista de saves e relida (novos arquivos aparecem sozinhos).
         Activated += (_, _) => { if (DataContext is MainViewModel vm && (!vm.HasSave || vm.CurrentPage == vm.SaveManager)) _ = vm.SaveManager.RefreshAsync(); };
         Closing += OnClosing;
@@ -115,6 +124,7 @@ public sealed partial class MainWindow : Window
             switch (e.Key)
             {
                 case Key.O: OnOpen(this, e); e.Handled = true; return;
+                case Key.W when vm.ActiveTab is { } tab: _ = vm.CloseTabAsync(tab); e.Handled = true; return;
                 case Key.F when vm.HasSave: this.FindControl<TextBox>("SearchBox")?.Focus(); e.Handled = true; return;
                 case Key.S or Key.E when vm.HasSave: OnExport(this, e); e.Handled = true; return;
                 case Key.A when vm.HasSave && !IsTyping(): vm.MarkAll(); e.Handled = true; return;

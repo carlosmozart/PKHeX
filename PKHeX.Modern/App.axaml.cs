@@ -9,7 +9,16 @@ namespace PKHeX.Modern;
 
 public sealed class App : Application
 {
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+        // Sprites sao pixel art. O SpriteService ja os entrega ampliados 4x com nearest neighbor; na tela, a reducao
+        // final usa bilinear simples (LowQuality, sem mipmaps): pixels nitidos e do mesmo tamanho em qualquer escala.
+        // Com None puro, escalas nao inteiras (ex.: 125% do Windows) deixam linhas de pixel duplicadas e o sprite torto.
+        // RenderOptions nao pode ser definido em estilo, por isso o tratador de classe vale para toda Image.
+        Avalonia.Controls.Image.SourceProperty.Changed.AddClassHandler<Avalonia.Controls.Image>((img, _) =>
+            Avalonia.Media.RenderOptions.SetBitmapInterpolationMode(img, Avalonia.Media.Imaging.BitmapInterpolationMode.LowQuality));
+    }
 
     public override void OnFrameworkInitializationCompleted()
     {

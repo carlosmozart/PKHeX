@@ -43,6 +43,23 @@ public static class SpriteService
         }
     }
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<ushort, bool> HasClassic = new();
+
+    /// <summary>
+    /// Gerador de sprites para a especie. No modo classico (saves ate a Gen 8) o PKHeX nao tem as especies da Gen 9
+    /// (Koraidon, Miraidon...): elas so existem no modo arte. Nesse caso usa o gerador de arte, senao o selo do
+    /// Scarlet/Violet, a Pokedex e o bank mostrariam o sprite "desconhecido".
+    /// </summary>
+    private static SpriteBuilder BuilderFor(ushort species)
+    {
+        var current = SpriteUtil.Spriter;
+        if (current != SpriteUtil.SB8s || species == 0)
+            return current;
+        bool classic = HasClassic.GetOrAdd(species, sp =>
+            PKHeX.Drawing.PokeSprite.Properties.Resources.ResourceManager.GetObject($"b_{sp}") is not null);
+        return classic ? current : SpriteUtil.SB8a;
+    }
+
     private static readonly System.Collections.Generic.Dictionary<byte, AvaloniaBitmap?> Balls = [];
 
     /// <summary>Icone da bola (cacheado por tipo de bola).</summary>
@@ -58,10 +75,7 @@ public static class SpriteService
             lock (SpeciesLock)
             {
                 using var gdi = SpriteUtil.GetBallSprite(ball);
-                using var ms = new MemoryStream();
-                gdi.Save(ms, ImageFormat.Png); // sem recorte: a bola ja ocupa a imagem
-                ms.Position = 0;
-                bmp = new AvaloniaBitmap(ms);
+                bmp = ToAvalonia(gdi, PixelScale); // sem recorte: a bola ja ocupa a imagem
             }
         }
         catch
@@ -92,10 +106,7 @@ public static class SpriteService
                 lock (SpeciesLock)
                 {
                     var gdi = SpriteUtil.Spriter.GetItemSprite(display, key.Item2); // recurso compartilhado: nao descartar
-                    using var ms = new MemoryStream();
-                    gdi.Save(ms, ImageFormat.Png);
-                    ms.Position = 0;
-                    return new AvaloniaBitmap(ms);
+                    return ToAvalonia(gdi, PixelScale);
                 }
             }
             catch
@@ -112,7 +123,7 @@ public static class SpriteService
         var shiny = enc.IsShiny ? Shiny.Always : Shiny.Never;
         lock (SpeciesLock)
         {
-            using var gdi = SpriteUtil.GetSprite(enc.Species, enc.Form, 0, 0, 0, enc.IsEgg, shiny, enc.Context);
+            using var gdi = BuilderFor(enc.Species).GetSprite(enc.Species, enc.Form, 0, 0, 0, enc.IsEgg, shiny, enc.Context);
             return Convert(gdi, enc.IsShiny);
         }
     }
@@ -138,8 +149,8 @@ public static class SpriteService
                 return cached;
             try
             {
-                using var gdi = SpriteUtil.GetSprite(species, form, (byte)gender, 0, 0, false, shiny ? Shiny.Always : Shiny.Never, context);
-                bmp = Convert(gdi, shiny);
+                using var gdi = BuilderFor(species).GetSprite(species, form, (byte)gender, 0, 0, false, shiny ? Shiny.Always : Shiny.Never, context);
+                bmp = Convert(gdi, shiny, CacheScale);
             }
             catch
             {
@@ -156,7 +167,11 @@ public static class SpriteService
             return null;
         lock (SpeciesLock)
         {
-            using var gdi = pk.Sprite();
+            var builder = BuilderFor(pk.Species);
+            using var gdi = builder == SpriteUtil.Spriter
+                ? pk.Sprite()
+                : builder.GetSprite(pk.Species, pk.Form, pk.Gender, pk is IFormArgument f ? f.FormArgument : 0, pk.SpriteItem, pk.IsEgg,
+                    pk.IsShiny ? Shiny.Always : Shiny.Never, pk.Context);
             return Convert(gdi, pk.IsShiny);
         }
     }
@@ -165,14 +180,46 @@ public static class SpriteService
     /// Os sprites do PKHeX tem bastante borda transparente; recortamos para que o Pokemon
     /// ocupe todo o espaco disponivel ao ser ampliado na interface.
     /// </summary>
-    private static AvaloniaBitmap Convert(GdiBitmap gdi, bool shiny = false)
+    private static AvaloniaBitmap Convert(GdiBitmap gdi, bool shiny = false, int scale = PixelScale)
     {
         var bounds = GetOpaqueBounds(gdi, shiny ? ShinyIconArea : GdiRectangle.Empty);
         using var cropped = bounds.IsEmpty || bounds.Size == gdi.Size ? null : gdi.Clone(bounds, PixelFormat.Format32bppArgb);
-        using var ms = new MemoryStream();
-        (cropped ?? gdi).Save(ms, ImageFormat.Png);
-        ms.Position = 0;
-        return new AvaloniaBitmap(ms);
+        return ToAvalonia(cropped ?? gdi, scale);
+    }
+
+    /// <summary>Ampliacao inteira (nearest neighbor) dos sprites. Ver <see cref="ToAvalonia"/>.</summary>
+    private const int PixelScale = 4;
+    /// <summary>Ampliacao dos sprites guardados em cache (Pokedex: ~1350 especies, exibidas pequenas).</summary>
+    private const int CacheScale = 2;
+
+    /// <summary>
+    /// Converte para o Avalonia ampliando <paramref name="scale"/> vezes com nearest neighbor. Na tela, qualquer escala
+    /// final (inclusive 125%/150% do Windows) vira uma pequena reducao de um bitmap grande, e os pixels saem nitidos e
+    /// uniformes em vez de borrados ou tortos. Toda Image de sprite precisa de tamanho fixo (Width/Height ou moldura).
+    /// O DPI fica em 96: com DPI maior, a Image do Avalonia 11.3 desenha so o canto superior esquerdo.
+    /// </summary>
+    private static AvaloniaBitmap ToAvalonia(GdiBitmap src, int scale)
+    {
+        int w = src.Width * scale, h = src.Height * scale;
+        using var big = new GdiBitmap(w, h, PixelFormat.Format32bppArgb);
+        using (var g = System.Drawing.Graphics.FromImage(big))
+        {
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+            g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
+            g.DrawImage(src, new GdiRectangle(0, 0, w, h));
+        }
+        var data = big.LockBits(new GdiRectangle(0, 0, w, h), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+        try
+        {
+            // GDI 32bppArgb = BGRA sem pre-multiplicacao.
+            return new AvaloniaBitmap(Avalonia.Platform.PixelFormat.Bgra8888, Avalonia.Platform.AlphaFormat.Unpremul,
+                data.Scan0, new Avalonia.PixelSize(w, h), new Avalonia.Vector(96, 96), data.Stride);
+        }
+        finally
+        {
+            big.UnlockBits(data);
+        }
     }
 
     /// <param name="ignore">Area cujos pixels nao contam para o recorte (icone de brilho).</param>

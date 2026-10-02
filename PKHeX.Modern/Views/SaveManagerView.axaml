@@ -67,7 +67,7 @@
                         <StackPanel Spacing="6">
                           <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                             <Border Classes="gameBadge" Width="48" Height="48" Background="{Binding Art.Background}">
-                              <Image Source="{Binding Art.Sprite}" RenderOptions.BitmapInterpolationMode="None" />
+                              <Image Source="{Binding Art.Sprite}" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                               <TextBlock Text="{Binding Game}" FontWeight="SemiBold" FontSize="16" TextTrimming="CharacterEllipsis" />
@@ -86,7 +86,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                               <DataTemplate>
-                                <Image Source="{Binding}" Width="40" Height="40" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+                                <Image Source="{Binding}" Width="40" Height="40" Stretch="Uniform" />
                               </DataTemplate>
                             </ItemsControl.ItemTemplate>
                           </ItemsControl>
@@ -165,7 +165,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                               <DataTemplate>
-                                <Image Source="{Binding}" Width="40" Height="40" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+                                <Image Source="{Binding}" Width="40" Height="40" Stretch="Uniform" />
                               </DataTemplate>
                             </ItemsControl.ItemTemplate>
                           </ItemsControl>
