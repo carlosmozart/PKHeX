@@ -53,7 +53,7 @@ public static class HelpContent
         ]),
         new("🛡", "Modo legal",
         [
-            new("O que faz", "Chave na barra lateral, ligada por padrão. O editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo) e desfaz na hora qualquer mudança que deixaria o Pokémon ilegal, explicando o motivo."),
+            new("O que faz", "Cartão na barra lateral (verde = ligado, âmbar = desligado; clique para alternar), ligado por padrão. O editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo) e desfaz na hora qualquer mudança que deixaria o Pokémon ilegal, explicando o motivo."),
             new("Opções legais", "Habilidade e Tera Type só listam o que o encontro permite; formas de batalha somem da lista. Na Gen 3–5 a habilidade vem do PID: para trocar, use ✨ Legalizar."),
             new("Trocar encontro", "Na aba Encontro, local e nível ficam travados: escolha um encontro real deste jogo na lista “Trocar encontro” e o Pokémon é gerado de novo a partir dele, mantendo natureza, nível, item, apelido e golpes quando possível."),
             new("Shiny", "“Tornar shiny” fica bloqueado quando o encontro nunca é shiny (shiny lock). Nos outros, o Pokémon é gerado de novo já shiny, com PID/IV corretos."),

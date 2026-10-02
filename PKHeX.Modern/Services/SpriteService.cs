@@ -15,6 +15,23 @@ public static class SpriteService
     /// <summary>Uma geracao de sprite por vez: o gerador do PKHeX (GDI) e chamado tambem fora da thread da interface.</summary>
     private static readonly object SpeciesLock = new();
 
+    /// <summary>
+    /// Area do icone de brilho que o PKHeX desenha no canto superior esquerdo dos shiny.
+    /// O recorte ignora essa area (os cartoes mostram a propria estrela).
+    /// </summary>
+    private static readonly GdiRectangle ShinyIconArea;
+
+    static SpriteService()
+    {
+        // O WinForms liga isto nas configuracoes (Sprite.ShinySprites). Desligado, o PKHeX usa o sprite
+        // com as cores normais e so desenha o icone de brilho por cima.
+        SpriteName.AllowShinySprite = true;
+
+        var a = PKHeX.Drawing.PokeSprite.Properties.Resources.rare_icon_alt;
+        var b = PKHeX.Drawing.PokeSprite.Properties.Resources.rare_icon_alt_2;
+        ShinyIconArea = new GdiRectangle(0, 0, System.Math.Max(a.Width, b.Width), System.Math.Max(a.Height, b.Height));
+    }
+
     public static AvaloniaBitmap? GetSprite(PKM pk, SaveFile sav, int box, int slot)
     {
         if (CoreAdapter.IsEmpty(pk))
@@ -22,7 +39,7 @@ public static class SpriteService
         lock (SpeciesLock)
         {
             using var gdi = pk.Sprite(sav, box, slot);
-            return Convert(gdi);
+            return Convert(gdi, pk.IsShiny);
         }
     }
 
@@ -96,7 +113,7 @@ public static class SpriteService
         lock (SpeciesLock)
         {
             using var gdi = SpriteUtil.GetSprite(enc.Species, enc.Form, 0, 0, 0, enc.IsEgg, shiny, enc.Context);
-            return Convert(gdi);
+            return Convert(gdi, enc.IsShiny);
         }
     }
 
@@ -122,7 +139,7 @@ public static class SpriteService
             try
             {
                 using var gdi = SpriteUtil.GetSprite(species, form, (byte)gender, 0, 0, false, shiny ? Shiny.Always : Shiny.Never, context);
-                bmp = Convert(gdi);
+                bmp = Convert(gdi, shiny);
             }
             catch
             {
@@ -140,7 +157,7 @@ public static class SpriteService
         lock (SpeciesLock)
         {
             using var gdi = pk.Sprite();
-            return Convert(gdi);
+            return Convert(gdi, pk.IsShiny);
         }
     }
 
@@ -148,9 +165,9 @@ public static class SpriteService
     /// Os sprites do PKHeX tem bastante borda transparente; recortamos para que o Pokemon
     /// ocupe todo o espaco disponivel ao ser ampliado na interface.
     /// </summary>
-    private static AvaloniaBitmap Convert(GdiBitmap gdi)
+    private static AvaloniaBitmap Convert(GdiBitmap gdi, bool shiny = false)
     {
-        var bounds = GetOpaqueBounds(gdi);
+        var bounds = GetOpaqueBounds(gdi, shiny ? ShinyIconArea : GdiRectangle.Empty);
         using var cropped = bounds.IsEmpty || bounds.Size == gdi.Size ? null : gdi.Clone(bounds, PixelFormat.Format32bppArgb);
         using var ms = new MemoryStream();
         (cropped ?? gdi).Save(ms, ImageFormat.Png);
@@ -158,7 +175,8 @@ public static class SpriteService
         return new AvaloniaBitmap(ms);
     }
 
-    private static GdiRectangle GetOpaqueBounds(GdiBitmap bmp)
+    /// <param name="ignore">Area cujos pixels nao contam para o recorte (icone de brilho).</param>
+    private static GdiRectangle GetOpaqueBounds(GdiBitmap bmp, GdiRectangle ignore)
     {
         var rect = new GdiRectangle(0, 0, bmp.Width, bmp.Height);
         var data = bmp.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -173,7 +191,7 @@ public static class SpriteService
             {
                 for (int x = 0; x < bmp.Width; x++)
                 {
-                    if ((pixels[(y * bmp.Width) + x] >>> 24) < 16)
+                    if ((pixels[(y * bmp.Width) + x] >>> 24) < 16 || ignore.Contains(x, y))
                         continue;
                     if (x < minX) minX = x;
                     if (x > maxX) maxX = x;

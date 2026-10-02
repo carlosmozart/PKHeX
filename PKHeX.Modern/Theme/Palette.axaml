@@ -25,6 +25,8 @@
       <SolidColorBrush x:Key="TintInfoBackground" Color="#244C8DF6" />
       <SolidColorBrush x:Key="TintDangerForeground" Color="#FF7A80" />
       <SolidColorBrush x:Key="TintDangerBackground" Color="#24E5484D" />
+      <SolidColorBrush x:Key="TintWarnForeground" Color="#F5B83D" />
+      <SolidColorBrush x:Key="TintWarnBackground" Color="#24F5B83D" />
     </ResourceDictionary>
     <ResourceDictionary x:Key="Light">
       <SolidColorBrush x:Key="AppBackground" Color="#F4F5F8" />
@@ -48,6 +50,8 @@
       <SolidColorBrush x:Key="TintInfoBackground" Color="#1F2563EB" />
       <SolidColorBrush x:Key="TintDangerForeground" Color="#B42328" />
       <SolidColorBrush x:Key="TintDangerBackground" Color="#1FD93D42" />
+      <SolidColorBrush x:Key="TintWarnForeground" Color="#A15C00" />
+      <SolidColorBrush x:Key="TintWarnBackground" Color="#24E89B0C" />
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
   <CornerRadius x:Key="CardRadius">12</CornerRadius>

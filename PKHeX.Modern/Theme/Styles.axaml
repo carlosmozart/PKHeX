@@ -548,4 +548,45 @@
   <Style Selector="Slider.stat:pointerover /template/ RepeatButton#PART_DecreaseButton">
     <Setter Property="Background" Value="{Binding $parent[Slider].Foreground}" />
   </Style>
+
+  <!-- Cartao do modo legal (barra lateral) -->
+  <Style Selector="ToggleButton.legalCard">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="ToggleButton.legalCard /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource TintWarnBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TintWarnForeground}" />
+  </Style>
+  <Style Selector="ToggleButton.legalCard:checked /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource TintGoodBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TintGoodForeground}" />
+  </Style>
+  <Style Selector="ToggleButton.legalCard:pointerover /template/ ContentPresenter">
+    <Setter Property="Opacity" Value="0.85" />
+  </Style>
+  <Style Selector="ToggleButton.legalCard Path.legalShield">
+    <Setter Property="Fill" Value="{DynamicResource TintWarnForeground}" />
+  </Style>
+  <Style Selector="ToggleButton.legalCard:checked Path.legalShield">
+    <Setter Property="Fill" Value="{DynamicResource TintGoodForeground}" />
+  </Style>
+  <Style Selector="ToggleButton.legalCard Path.legalMark">
+    <Setter Property="Stroke" Value="{DynamicResource SidebarBackground}" />
+  </Style>
+  <Style Selector="ToggleButton.legalCard TextBlock.legalTitle">
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{DynamicResource TintWarnForeground}" />
+  </Style>
+  <Style Selector="ToggleButton.legalCard:checked TextBlock.legalTitle">
+    <Setter Property="Foreground" Value="{DynamicResource TintGoodForeground}" />
+  </Style>
+  <Style Selector="ToggleButton.legalCard TextBlock.legalState">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+  </Style>
 </Styles>

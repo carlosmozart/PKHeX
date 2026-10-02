@@ -6,6 +6,14 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### Interface
+- **Modo legal mais visível**: virou um cartão na barra lateral, verde com escudo ✓ quando ligado e âmbar com escudo ! quando desligado, com o estado escrito. Clique no cartão para ligar ou desligar.
+
+### Correções
+- **Sprites shiny**: os Pokémon shiny agora aparecem com as cores shiny e no mesmo tamanho dos outros. Antes vinham com as cores normais, pequenos, e o ícone de brilho do canto aparecia como um fragmento solto (caixas, equipe, bank, Pokédex, encontros e eventos).
+
 ## 0.3.2 — 02/10/2026
 
 ### 🏦 Bank
