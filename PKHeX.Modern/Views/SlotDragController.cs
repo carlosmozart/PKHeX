@@ -66,7 +66,7 @@ public sealed class SlotDragController
 
     private static Button? ArrowAt(object? source)
         => (source as Visual)?.GetSelfAndVisualAncestors().OfType<Button>()
-            .FirstOrDefault(b => b.Classes.Contains("boxArrow"));
+            .FirstOrDefault(b => b.Classes.Contains("boxArrow") || b.Classes.Contains("boxTab"));
 
     private void OnPressed(object? sender, PointerPressedEventArgs e)
     {

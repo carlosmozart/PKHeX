@@ -227,6 +227,10 @@
   <Style Selector="TextBlock.bad">
     <Setter Property="Foreground" Value="#F5A524" />
   </Style>
+  <Style Selector="Button.unsavedLink">
+    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
   <Style Selector="TextBlock.unsaved">
     <Setter Property="Foreground" Value="#F5A524" />
     <Setter Property="FontWeight" Value="SemiBold" />
@@ -303,6 +307,19 @@
   </Style>
   <Style Selector="Button.slot.compact:pointerover">
     <Setter Property="RenderTransform" Value="scale(1.03)" />
+  </Style>
+  <!-- Abas de caixa -->
+  <Style Selector="Button.boxTab">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="MinWidth" Value="0" />
+  </Style>
+  <Style Selector="Button.boxTab.current /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Accent}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.boxTab.current">
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />

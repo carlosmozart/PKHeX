@@ -23,6 +23,9 @@ public sealed class SlotHistory(SaveFile sav, int limit = 50)
     private readonly Stack<Snapshot> _redo = new();
 
     public bool CanUndo => _undo.Count > 0;
+    /// <summary>Descricao de cada alteracao que pode ser desfeita, da mais antiga para a mais nova.</summary>
+    public IReadOnlyList<string> Descriptions => [.. _undo.Select(u => u.Description)];
+    public int Count => _undo.Count;
     public bool CanRedo => _redo.Count > 0;
     public string? UndoDescription => CanUndo ? _undo[^1].Description : null;
     public string? RedoDescription => CanRedo ? _redo.Peek().Description : null;

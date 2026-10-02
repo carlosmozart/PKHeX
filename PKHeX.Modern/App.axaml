@@ -96,8 +96,12 @@
                         <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
                       </StackPanel>
                     </Grid>
-                    <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
-                           RenderOptions.BitmapInterpolationMode="None" />
+                    <Panel Grid.Row="1">
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
+                             RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                             RenderOptions.BitmapInterpolationMode="None" />
+                    </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
                       <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
                       <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="10" HorizontalAlignment="Center" />
@@ -150,8 +154,12 @@
                         <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
                       </StackPanel>
                     </Grid>
-                    <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
-                           RenderOptions.BitmapInterpolationMode="None" />
+                    <Panel Grid.Row="1">
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
+                             RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                             RenderOptions.BitmapInterpolationMode="None" />
+                    </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
                       <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
                       <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="10" HorizontalAlignment="Center" />
@@ -183,8 +191,12 @@
                         <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
                       </StackPanel>
                     </Grid>
-                    <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
-                           RenderOptions.BitmapInterpolationMode="None" />
+                    <Panel Grid.Row="1">
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
+                             RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                             RenderOptions.BitmapInterpolationMode="None" />
+                    </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
                       <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
                       <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="10" HorizontalAlignment="Center" />
@@ -278,8 +290,12 @@
             <TextBlock Text="⚠" Classes="legalBad" IsVisible="{Binding IsLegalBad}" ToolTip.Tip="Ilegal (veja o relatório no editor)" />
           </StackPanel>
         </Grid>
-        <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="84" Margin="6,4"
-               RenderOptions.BitmapInterpolationMode="None" />
+        <Panel Grid.Row="1">
+          <Image Source="{Binding Sprite}" Stretch="Uniform" Height="84" Margin="6,4"
+                 RenderOptions.BitmapInterpolationMode="None" />
+          <Image Source="{Binding BallSprite}" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                 RenderOptions.BitmapInterpolationMode="None" ToolTip.Tip="Bola" />
+        </Panel>
         <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
           <TextBlock Text="{Binding Title}" Classes="slotName" />
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
@@ -295,6 +311,19 @@
   <!-- Caixas -->
   <DataTemplate DataType="vm:BoxesPageViewModel">
     <DockPanel>
+      <ScrollViewer DockPanel.Dock="Top" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,10">
+        <ItemsControl ItemsSource="{Binding BoxTabs}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:BoxTabViewModel">
+              <Button Classes="boxTab" Classes.current="{Binding IsCurrent}" Content="{Binding Name}" Command="{Binding GoCommand}"
+                      ToolTip.Tip="Ir para esta caixa (durante o arraste, pare em cima para trocar)" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,16">
         <Button Classes="boxArrow" Content="‹" FontSize="18" Command="{Binding PreviousBoxCommand}"
                 ToolTip.Tip="Caixa anterior (arraste um Pokémon até aqui para trocar de caixa)" />

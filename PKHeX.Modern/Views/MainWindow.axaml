@@ -37,8 +37,10 @@
             <StackPanel Spacing="2">
               <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextWrapping="Wrap" />
               <TextBlock Text="{Binding TrainerInfo}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
-              <TextBlock Text="● Alterações não exportadas" Classes="unsaved" FontSize="11" Margin="0,4,0,0"
-                         IsVisible="{Binding IsDirty}" ToolTip.Tip="Use Salvar (Ctrl+S) para gravar o arquivo do save" />
+              <Button Classes="ghost unsavedLink" Margin="-8,2,0,-4" IsVisible="{Binding IsDirty}" Command="{Binding ShowPendingCommand}"
+                      ToolTip.Tip="Ver a lista e salvar (Ctrl+S grava o arquivo do save)">
+                <TextBlock Text="{Binding PendingText}" Classes="unsaved" FontSize="11" TextDecorations="Underline" />
+              </Button>
             </StackPanel>
           </Border>
         </StackPanel>

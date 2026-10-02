@@ -59,6 +59,8 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     public string Tooltip => IsEmpty ? "Vazio" : _summary;
     public string Position => $"{Slot + 1:00}";
     public bool IsShiny => !IsEmpty && Pkm!.IsShiny;
+    /// <summary>Icone da bola em que foi capturado (canto inferior esquerdo do cartao).</summary>
+    public Bitmap? BallSprite => IsEmpty || IsEgg ? null : SpriteService.GetBallSprite(Pkm!.Ball);
     public bool IsEgg => !IsEmpty && Pkm!.IsEgg;
     public string Nickname => IsEmpty ? "" : Pkm!.IsNicknamed ? Pkm.Nickname : "";
     public bool HasNickname => Nickname.Length > 0;
@@ -71,7 +73,7 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
         Pkm = pk;
         (IsLegal, _summary) = CoreAdapter.IsEmpty(pk) ? (null, "") : CoreAdapter.AnalyzeSlot(pk);
         Sprite = IsParty ? SpriteService.GetSprite(pk) : SpriteService.GetSprite(pk, sav, Box, Slot);
-        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname), nameof(Gender), nameof(IsMale), nameof(IsFemale)])
+        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname), nameof(Gender), nameof(IsMale), nameof(IsFemale), nameof(BallSprite)])
             Raise(p);
     }
 
@@ -81,7 +83,7 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
         Pkm = pk;
         (IsLegal, _summary) = pk is null || CoreAdapter.IsEmpty(pk) ? (null, "") : CoreAdapter.AnalyzeSlot(pk);
         Sprite = pk is null ? null : SpriteService.GetSprite(pk);
-        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname), nameof(Gender), nameof(IsMale), nameof(IsFemale)])
+        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname), nameof(Gender), nameof(IsMale), nameof(IsFemale), nameof(BallSprite)])
             Raise(p);
     }
 

@@ -65,6 +65,9 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
     }
 
     public string BoxName => _sav is null ? "" : CoreAdapter.GetBoxName(_sav, CurrentBox);
+
+    /// <summary>Abas com o nome de cada caixa (clique ou pare em cima durante o arraste para trocar).</summary>
+    public ObservableCollection<BoxTabViewModel> BoxTabs { get; } = [];
     public int FilledCount => Slots.Count(s => !s.IsEmpty);
     public string BoxLabel => _sav is null ? "" : $"Caixa {CurrentBox + 1} de {_sav.BoxCount} · {FilledCount}/{Slots.Count} Pokémon";
 
@@ -72,6 +75,12 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
     {
         _sav = sav;
         _currentBox = 0;
+        BoxTabs.Clear();
+        for (int i = 0; i < sav.BoxCount; i++)
+        {
+            int box = i;
+            BoxTabs.Add(new BoxTabViewModel(CoreAdapter.GetBoxName(sav, i), new RelayCommand(() => CurrentBox = box)));
+        }
         Raise(nameof(CurrentBox));
         LoadBox();
         Raise(nameof(ShowParty));
@@ -92,6 +101,8 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
         }
         Raise(nameof(BoxName));
         Raise(nameof(BoxLabel));
+        for (int i = 0; i < BoxTabs.Count; i++)
+            BoxTabs[i].IsCurrent = i == CurrentBox;
         SlotsLoaded?.Invoke();
         PreviousBoxCommand.NotifyCanExecuteChanged();
         NextBoxCommand.NotifyCanExecuteChanged();
@@ -237,4 +248,13 @@ public sealed class BagItemViewModel(PlayerBag bag, InventoryType type, Inventor
         get => item.Count;
         set { item.Count = item.Index == 0 ? 0 : bag.Clamp(type, item.Index, (int)value); Raise(); }
     }
+}
+
+/// <summary>Uma aba de caixa no topo da pagina Caixas.</summary>
+public sealed class BoxTabViewModel(string name, RelayCommand go) : ViewModelBase
+{
+    public string Name { get; } = name;
+    public RelayCommand GoCommand { get; } = go;
+    private bool _isCurrent;
+    public bool IsCurrent { get => _isCurrent; set => Set(ref _isCurrent, value); }
 }

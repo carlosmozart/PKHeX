@@ -16,6 +16,7 @@ public sealed partial class MainWindow : Window
         // Como no TidalHeX: ao voltar para a janela, a lista de saves e relida (novos arquivos aparecem sozinhos).
         Activated += (_, _) => { if (DataContext is MainViewModel vm && (!vm.HasSave || vm.CurrentPage == vm.SaveManager)) _ = vm.SaveManager.RefreshAsync(); };
         Closing += OnClosing;
+        DataContextChanged += (_, _) => { if (DataContext is MainViewModel vm) vm.SaveRequested += () => OnExport(this, new RoutedEventArgs()); };
     }
 
     private bool _closeConfirmed;

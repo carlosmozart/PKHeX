@@ -18,7 +18,8 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o código dele (web + .NET) não é reaproveitado, só as ideias.
 - [x] **Bank local** (etapa 1): armazenamento próprio fora dos saves, em bancos → caixas; página "Bank" com duas telas (bank | save aberto) só quando ela está selecionada; arrastar entre bank e save com conversão de geração (`EntityConverter`).
 - [ ] Bank (etapa 2): variantes por geração e Pokémon "anexado" (sincroniza bank ↔ save), mover entre dois saves, pasta externa de `.pk*` como banco.
-- [ ] **Interface**: caixas e saves em abas; ícones de item, bola e alpha nos cartões; barra de "ações pendentes" com o Salvar.
+- [x] **Interface**: caixas em abas (clique, ou pare em cima durante o arraste); ícone da bola nos cartões (o item e o alpha já vêm no sprite do PKHeX); "● N alterações não exportadas" abre a lista com Salvar.
+- [ ] Abas também para os saves abertos (depende de abrir mais de um save ao mesmo tempo, etapa 2 do bank).
 - [ ] **Ações**: evoluir por troca (com item quando exigido), seleção múltipla (mover/excluir vários), ordenar caixas pela Pokédex.
 - [ ] **Pokédex centralizada**: todos os saves + bank, formas/gêneros/shiny, filtros (visto, capturado, possuído, shiny, alpha, tipo, geração), living dex e shiny dex, sincronizar Pokédex entre saves.
 - [ ] **Backups**: lista dos backups com restaurar dentro do app.

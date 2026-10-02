@@ -86,6 +86,9 @@ No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push n
 - **Bank local:** `Services/BankStorage.cs` (pastas: banco → "NN Nome" da caixa → "NN Espécie.pkX", formato original, sem conversão). `SlotViewModel.ForBank(...)` cria slots do bank (`IsBank`, `BankBox`); o arrastar usa o mesmo `SlotDragController` e o `MainViewModel.MoveWithBankAsync` decide o caminho: bank↔bank (arquivos), save→bank (grava no formato do save; troca só se o do bank couber no save), bank→save (`CoreAdapter.ConvertForSave`, que recusa conversões impossíveis, ex.: PK5 → PK4). O lado do save entra no desfazer e precisa ser salvo; o lado do bank é gravado na hora (desfazer um "guardar no bank" devolve ao save, mas a cópia continua no bank). Nos testes, use `BankStorage.Root = <pasta temporária>`.
 - **Pergunta com texto:** `MainViewModel.PromptAsync(título, mensagem, inicial)` (usado para nomes de banco/caixa).
 
+- **Abas de caixa:** `BoxesPageViewModel.BoxTabs` (`BoxTabViewModel` com `GoCommand`). O `SlotDragController` trata botões com a classe `boxTab` como as setas: parar em cima durante o arraste troca de caixa.
+- **Pendências:** `MainViewModel.PendingActions` = descrições do `SlotHistory` desde o último salvar/abrir (`_historyAtSave`). O link "● N alterações" abre a lista; "Salvar agora" dispara `SaveRequested`, que a `MainWindow` trata abrindo o seletor de arquivo.
+
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
 - Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".
@@ -93,5 +96,6 @@ No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push n
 - Preferências de trabalho: respostas e UI em PT-BR; validar mudanças visuais com o render headless antes de commitar; commit e push só quando pedido.
 
 ## Testado com
+- **Saves reais de teste:** pasta `saves/` na raiz do repositório (Red, Yellow, Crystal, Ruby, Sapphire, Emerald, FireRed, HeartGold, Black, Y, Omega Ruby, Alpha Sapphire, Moon, Ultra Moon). Ela **não é versionada**: está em `.git/info/exclude` (local). Em outro PC, copie a pasta manualmente e repita `echo /saves/ >> .git/info/exclude`. Nos testes, só leia esses arquivos; para testar "Salvar", use uma cópia em pasta temporária.
 - `FireRed_e.sav` (FR/LG, Gen 3): caixas, equipe, treinador, mochila, Showdown, exportar e reabrir (checksums válidos).
 - Save pós-jogo de Pokémon Black (Gen 5): equipe com gênero e legalidade, barra de ações. A Caixa 1 está vazia, então os cartões de caixa preenchidos não aparecem nas capturas.

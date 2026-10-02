@@ -50,6 +50,7 @@ public sealed class MainViewModel : ViewModelBase
         CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
         DeleteCommand = new RelayCommand(() => _ = DeleteSelectedAsync(), () => CanExportEntity);
         UndoCommand = new RelayCommand(Undo, () => _history?.CanUndo == true);
+        ShowPendingCommand = new RelayCommand(() => _ = ShowPendingAsync());
         RedoCommand = new RelayCommand(Redo, () => _history?.CanRedo == true);
     }
 
@@ -300,6 +301,31 @@ public sealed class MainViewModel : ViewModelBase
         finally { if (Dialog == dialog) Dialog = null; }
     }
 
+    // Alteracoes pendentes (desde que o save foi aberto ou salvo)
+    private int _historyAtSave;
+    /// <summary>Alteracoes de slots ainda nao salvas, da mais antiga para a mais nova.</summary>
+    public IReadOnlyList<string> PendingActions => _history is null ? [] : [.. _history.Descriptions.Skip(Math.Min(_historyAtSave, _history.Count))];
+    public string PendingText => PendingActions.Count switch
+    {
+        0 => "● Alterações não exportadas",
+        1 => "● 1 alteração não exportada",
+        var n => $"● {n} alterações não exportadas",
+    };
+    public RelayCommand ShowPendingCommand { get; }
+    /// <summary>A janela pede para salvar (abre o seletor de arquivo); a View trata.</summary>
+    public event Action? SaveRequested;
+
+    private async Task ShowPendingAsync()
+    {
+        var list = PendingActions.Select((d, i) => $"{i + 1}. {char.ToUpper(d[0])}{d[1..]}").ToList();
+        if (list.Count == 0)
+            list.Add("Alterações na mochila ou nos dados do treinador.");
+        if (await ConfirmAsync("Alterações não exportadas",
+                "Estas alterações ainda não estão no arquivo do save. Use Salvar para gravar (Ctrl+Z desfaz a última).",
+                "Salvar agora", "Fechar", isDanger: true, details: list, icon: "●"))
+            SaveRequested?.Invoke();
+    }
+
     private bool _isDirty;
     /// <summary>Ha alteracoes no save que ainda nao foram exportadas.</summary>
     public bool IsDirty
@@ -308,8 +334,12 @@ public sealed class MainViewModel : ViewModelBase
         private set
         {
             Set(ref _isDirty, value);
+            Raise(nameof(PendingActions));
+            Raise(nameof(PendingText));
             if (value)
                 InvalidateSearch(); // algo no save mudou
+            else
+                _historyAtSave = _history?.Count ?? 0;
         }
     }
 
@@ -343,6 +373,7 @@ public sealed class MainViewModel : ViewModelBase
         _searchIndex = null;
         SearchText = "";
         _history = new SlotHistory(sav);
+        _historyAtSave = 0;
         OnHistoryChanged();
         Editor = null;
         foreach (var page in AllPages)
@@ -668,8 +699,10 @@ public sealed class MainViewModel : ViewModelBase
 
             if (bad.Count == 0)
             {
-                Status = $"Legalidade: os {all.Count} Pokémon do save são legais.";
-                await ConfirmAsync("Tudo legal", $"Os {all.Count} Pokémon do save (todas as caixas e a equipe) passaram na verificação de legalidade.",
+                Status = all.Count == 1 ? "Legalidade: o Pokémon do save é legal." : $"Legalidade: os {all.Count} Pokémon do save são legais.";
+                await ConfirmAsync("Tudo legal", all.Count == 1
+                        ? "O único Pokémon do save passou na verificação de legalidade."
+                        : $"Os {all.Count} Pokémon do save (todas as caixas e a equipe) passaram na verificação de legalidade.",
                     "OK", cancelText: "", icon: "✓");
                 return;
             }
@@ -746,6 +779,8 @@ public sealed class MainViewModel : ViewModelBase
         RedoCommand.NotifyCanExecuteChanged();
         Raise(nameof(UndoTip));
         Raise(nameof(RedoTip));
+        Raise(nameof(PendingActions));
+        Raise(nameof(PendingText));
     }
 
     private void RefreshSlots()

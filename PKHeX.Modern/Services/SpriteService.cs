@@ -20,6 +20,32 @@ public static class SpriteService
         return Convert(gdi);
     }
 
+    private static readonly System.Collections.Generic.Dictionary<byte, AvaloniaBitmap?> Balls = [];
+
+    /// <summary>Icone da bola (cacheado por tipo de bola).</summary>
+    public static AvaloniaBitmap? GetBallSprite(byte ball)
+    {
+        if (ball == 0)
+            return null;
+        if (Balls.TryGetValue(ball, out var cached))
+            return cached;
+        AvaloniaBitmap? bmp;
+        try
+        {
+            using var gdi = SpriteUtil.GetBallSprite(ball);
+            using var ms = new MemoryStream();
+            gdi.Save(ms, ImageFormat.Png); // sem recorte: a bola ja ocupa a imagem
+            ms.Position = 0;
+            bmp = new AvaloniaBitmap(ms);
+        }
+        catch
+        {
+            bmp = null;
+        }
+        Balls[ball] = bmp;
+        return bmp;
+    }
+
     /// <summary>Sprite de um encontro ou Mystery Gift (banco de encontros/eventos).</summary>
     public static AvaloniaBitmap? GetSprite(IEncounterTemplate enc)
     {
