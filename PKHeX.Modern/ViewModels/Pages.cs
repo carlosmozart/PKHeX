@@ -171,7 +171,7 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
             _bag = CoreAdapter.GetBag(sav);
             bool editable = CoreAdapter.IsBagItemIdEditable(sav);
             foreach (var p in _bag.Pouches)
-                Pouches.Add(new PouchViewModel(_bag, p, editable));
+                Pouches.Add(new PouchViewModel(_bag, p, editable, CoreAdapter.GetItemNames(sav)));
         }
         catch (Exception ex)
         {
@@ -193,10 +193,10 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
 
 public sealed class PouchViewModel : ViewModelBase
 {
-    public PouchViewModel(PlayerBag bag, InventoryPouch pouch, bool editable)
+    /// <param name="names">Nomes na numeracao do save (Gen 1-3 tem numeracao propria).</param>
+    public PouchViewModel(PlayerBag bag, InventoryPouch pouch, bool editable, IReadOnlyList<string> names)
     {
         Name = pouch.Type.ToString();
-        var names = CoreAdapter.ItemNames;
         Options = [.. pouch.GetAllItems().ToArray().Prepend((ushort)0).Distinct()
             .Select(id => new ItemOption(id, id == 0 ? "(nenhum)" : id < names.Count && names[id].Length > 0 ? names[id] : $"Item #{id}"))];
         Items = [.. pouch.Items.Select(it => new BagItemViewModel(bag, pouch.Type, it, Options, editable))];

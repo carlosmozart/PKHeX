@@ -18,6 +18,13 @@
       <SolidColorBrush x:Key="AccentSoft" Color="#3A1F24" />
       <SolidColorBrush x:Key="Good" Color="#46A758" />
       <SolidColorBrush x:Key="Bad" Color="#E5484D" />
+      <!-- Botoes da barra inferior: texto e fundo translucido por funcao -->
+      <SolidColorBrush x:Key="TintGoodForeground" Color="#5FD068" />
+      <SolidColorBrush x:Key="TintGoodBackground" Color="#2446A758" />
+      <SolidColorBrush x:Key="TintInfoForeground" Color="#7FB2FF" />
+      <SolidColorBrush x:Key="TintInfoBackground" Color="#244C8DF6" />
+      <SolidColorBrush x:Key="TintDangerForeground" Color="#FF7A80" />
+      <SolidColorBrush x:Key="TintDangerBackground" Color="#24E5484D" />
     </ResourceDictionary>
     <ResourceDictionary x:Key="Light">
       <SolidColorBrush x:Key="AppBackground" Color="#F4F5F8" />
@@ -35,6 +42,12 @@
       <SolidColorBrush x:Key="AccentSoft" Color="#FCE8E9" />
       <SolidColorBrush x:Key="Good" Color="#2F8A42" />
       <SolidColorBrush x:Key="Bad" Color="#D93D42" />
+      <SolidColorBrush x:Key="TintGoodForeground" Color="#237A35" />
+      <SolidColorBrush x:Key="TintGoodBackground" Color="#1F2F8A42" />
+      <SolidColorBrush x:Key="TintInfoForeground" Color="#1D4ED8" />
+      <SolidColorBrush x:Key="TintInfoBackground" Color="#1F2563EB" />
+      <SolidColorBrush x:Key="TintDangerForeground" Color="#B42328" />
+      <SolidColorBrush x:Key="TintDangerBackground" Color="#1FD93D42" />
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
   <CornerRadius x:Key="CardRadius">12</CornerRadius>

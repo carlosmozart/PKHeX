@@ -7,12 +7,12 @@ PKHeX
 ![License](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
 > ### 🎨 Fork: PKHeX Modern
-> Este fork adiciona o **[PKHeX.Modern](PKHeX.Modern/README.md)**, uma interface alternativa em **Avalonia** com tema escuro/claro,
-> construída por cima do `PKHeX.Core` sem modificá-lo. O PKHeX original (WinForms) continua intacto.
+> Este fork adiciona o **[PKHeX.Modern](PKHeX.Modern/README.md)**, uma interface alternativa em **Avalonia**, em português, com tema escuro/claro,
+> busca enquanto digita, Legalizar, bancos de encontros/eventos e Save Manager. Construída por cima do `PKHeX.Core` sem modificá-lo; o PKHeX original (WinForms) continua intacto.
 >
 > ![PKHeX Modern](PKHeX.Modern/docs/boxes.png)
 >
-> `dotnet run --project PKHeX.Modern` · [Roadmap](PKHeX.Modern/ROADMAP.md) · [Como continuar o desenvolvimento](PKHeX.Modern/CONTINUAR.md)
+> **[⬇ Baixar para Windows](https://github.com/carlosmozart/PKHeX/releases/latest)** · [Funcionalidades](PKHeX.Modern/README.md) · [Roadmap](PKHeX.Modern/ROADMAP.md) · [Como continuar o desenvolvimento](PKHeX.Modern/CONTINUAR.md)
 
 Pokémon core series save editor, programmed in [C#](https://en.wikipedia.org/wiki/C_Sharp_%28programming_language%29).
 

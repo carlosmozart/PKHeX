@@ -12,8 +12,6 @@ public sealed class AppSettings
     public bool DarkTheme { get; set; } = true;
     /// <summary>Cor de destaque (chave de Theme.AccentTheme.Presets: red, cyan, blue...).</summary>
     public string? AccentColor { get; set; }
-    /// <summary>Idioma dos nomes do jogo (codigo do PKHeX: en, es, fr, de, it, ja, ko, zh-Hans...).</summary>
-    public string Language { get; set; } = "en";
     /// <summary>Pasta do Save Manager (null = pasta "saves" ao lado do exe).</summary>
     public string? SavesFolder { get; set; }
 

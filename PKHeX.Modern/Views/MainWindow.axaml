@@ -44,12 +44,6 @@
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Bottom" Spacing="2">
-          <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" Margin="0,0,0,6">
-            <TextBlock Text="Nomes" Classes="muted" FontSize="12" VerticalAlignment="Center" />
-            <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" FontSize="12" ItemsSource="{Binding LanguageNames}"
-                      SelectedIndex="{Binding LanguageIndex}"
-                      ToolTip.Tip="Idioma de espécies, golpes, itens e textos de legalidade (o PKHeX não tem português)" />
-          </Grid>
           <CheckBox Content="Abrir último save ao iniciar" FontSize="12" IsChecked="{Binding OpenLastSaveOnStartup}" />
           <Button Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
           <ItemsControl ItemsSource="{Binding AccentOptions}" Margin="8,4,0,4" ClipToBounds="False">
@@ -141,17 +135,17 @@
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasSave}">
           <Button Classes="small" Content="↶" FontSize="16" Padding="10,0" Command="{Binding UndoCommand}" ToolTip.Tip="{Binding UndoTip}" />
           <Button Classes="small" Content="↷" FontSize="16" Padding="10,0" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" />
-          <Button Classes="small" Content="✓  Verificar legalidade" Command="{Binding CheckLegalityCommand}"
+          <Button Classes="small good" Content="✓  Verificar legalidade" Command="{Binding CheckLegalityCommand}"
                   ToolTip.Tip="Verifica a caixa atual e a equipe" />
-          <Button Classes="small" Content="＋  Criar PKM" Command="{Binding CreateCommand}"
+          <Button Classes="small info" Content="＋  Criar PKM" Command="{Binding CreateCommand}"
                   ToolTip.Tip="Novo Pokémon no primeiro slot vazio da caixa" />
           <Button Classes="small" Content="⭳  Importar" Click="OnImportEntity"
                   ToolTip.Tip="Importa um arquivo .pk* para o slot selecionado (ou o primeiro vazio)" />
-          <Button Classes="small" Content="🗑  Excluir" Command="{Binding DeleteCommand}"
+          <Button Classes="small danger" Content="🗑  Excluir" Command="{Binding DeleteCommand}"
                   ToolTip.Tip="Apaga o Pokémon selecionado (Delete). Dá para desfazer com Ctrl+Z" />
           <Button Classes="small" Content="⭱  Exportar PKM" Click="OnExportEntity" IsEnabled="{Binding CanExportEntity}"
                   ToolTip.Tip="Salva o Pokémon selecionado como arquivo .pk* (ou arraste o slot para fora da janela)" />
-          <Button Classes="accent small" Content="💾  Salvar" Click="OnExport" ToolTip.Tip="Exportar o save (Ctrl+S)" />
+          <Button Classes="accent small primary" Content="💾  Salvar" Click="OnExport" ToolTip.Tip="Exportar o save (Ctrl+S)" />
         </StackPanel>
       </Grid>
     </Border>

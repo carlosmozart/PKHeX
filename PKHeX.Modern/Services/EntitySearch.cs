@@ -57,8 +57,9 @@ public static class EntitySearch
             if (move != 0 && Contains(Name(CoreAdapter.MoveNames, move), query))
                 return $"golpe {Name(CoreAdapter.MoveNames, move)}";
         }
-        if (pk.HeldItem > 0 && Contains(Name(CoreAdapter.ItemNames, pk.HeldItem), query))
-            return $"item {Name(CoreAdapter.ItemNames, pk.HeldItem)}";
+        var item = CoreAdapter.GetHeldItemName(pk);
+        if (item.Length > 0 && Contains(item, query))
+            return $"item {item}";
         return null;
     }
 

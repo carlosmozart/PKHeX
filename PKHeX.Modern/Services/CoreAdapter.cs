@@ -14,7 +14,22 @@ public static class CoreAdapter
 {
     public static IReadOnlyList<string> SpeciesNames => GameInfo.Strings.specieslist;
     public static IReadOnlyList<string> MoveNames => GameInfo.Strings.movelist;
+    /// <summary>Lista geral de itens (numeracao da Gen 4+). Para um Pokemon ou save, use <see cref="GetItemNames(PKM)"/>.</summary>
     public static IReadOnlyList<string> ItemNames => GameInfo.Strings.itemlist;
+
+    /// <summary>Nomes de itens na numeracao do formato do Pokemon (Gen 1-3 tem numeracao propria).</summary>
+    public static IReadOnlyList<string> GetItemNames(PKM pk) => GameInfo.Strings.GetItemStrings(pk.Context, pk.Version);
+    public static IReadOnlyList<string> GetItemNames(SaveFile sav) => GameInfo.Strings.GetItemStrings(sav.Context, sav.Version);
+
+    /// <summary>Nome do item que o Pokemon segura ("" se nenhum).</summary>
+    public static string GetHeldItemName(PKM pk)
+    {
+        var names = GetItemNames(pk);
+        return pk.HeldItem > 0 && pk.HeldItem < names.Count ? names[pk.HeldItem] : "";
+    }
+
+    /// <summary>Itens que podem ser segurados no save carregado (Text/Value), como na lista do PKHeX.</summary>
+    public static IReadOnlyList<ComboItem> GetHeldItemOptions() => GameInfo.FilteredSources.Items;
     public static IReadOnlyList<string> NatureNames => GameInfo.Strings.natures;
     public static IReadOnlyList<string> AbilityNames => GameInfo.Strings.abilitylist;
 
@@ -36,12 +51,55 @@ public static class CoreAdapter
             GameInfo.FilteredSources = new FilteredGameDataSource(sav, GameInfo.Sources);
     }
 
-    /// <summary>Idiomas com nomes de especies, golpes e itens no PKHeX (nao ha portugues).</summary>
-    public static IReadOnlyList<(string Code, string Name)> Languages { get; } =
-    [
-        ("en", "English"), ("es", "Español"), ("es-419", "Español (Latinoamérica)"), ("fr", "Français"),
-        ("de", "Deutsch"), ("it", "Italiano"), ("ja", "日本語"), ("ko", "한국어"), ("zh-Hans", "简体中文"), ("zh-Hant", "繁體中文"),
-    ];
+    /// <summary>
+    /// Nomes de 1 ate <paramref name="max"/> (sem vazios), para os campos com sugestoes enquanto se digita.
+    /// O indice 0 ("nenhum") fica de fora; use <see cref="FindIndex"/> para voltar do nome ao indice.
+    /// </summary>
+    public static IReadOnlyList<string> GetNames(IReadOnlyList<string> list, int max)
+    {
+        var result = new List<string>(Math.Min(max, list.Count));
+        for (int i = 1; i <= max && i < list.Count; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(list[i]))
+                result.Add(list[i]);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Golpes que o Pokemon pode aprender oficialmente (nivel, TM/TR, tutor, ovo, encontro), como no PKHeX.
+    /// Retorna um vetor indexado pelo ID do golpe.
+    /// </summary>
+    public static bool[] GetLearnableMoves(PKM pk)
+    {
+        var result = new bool[MoveNames.Count];
+        try
+        {
+            var info = new LegalMoveInfo();
+            info.ReloadMoves(new LegalityAnalysis(pk));
+            for (int i = 1; i < result.Length && i <= pk.MaxMoveID; i++)
+                result[i] = info.CanLearn((ushort)i);
+        }
+        catch
+        {
+            // sem analise: nenhum golpe destacado
+        }
+        return result;
+    }
+
+    /// <summary>Indice do nome na lista (sem diferenciar maiusculas), ou -1.</summary>
+    public static int FindIndex(IReadOnlyList<string> list, string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return -1;
+        name = name.Trim();
+        for (int i = 1; i < list.Count; i++)
+        {
+            if (string.Equals(list[i], name, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+        return -1;
+    }
 
     public static SaveFile? LoadSave(string path)
     {

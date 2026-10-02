@@ -18,6 +18,9 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Excluir Pokémon** (botão na barra inferior ou tecla Delete), com confirmação e Ctrl+Z.
 - [x] **Legalizar** (cartão de legalidade): gera de novo a partir de um encontro real do jogo, com PID/IV corretos, mantendo natureza, nível, item, apelido e golpes quando possível.
 - [x] **Resumo ao passar o mouse** nos cartões de caixa e equipe, igual ao do PKHeX: set (item, habilidade, nível, IVs/EVs, natureza, golpes) e encontro (tipo, local, PID, Origin Seed, frame), mais o primeiro problema de legalidade.
+- [x] **Busca enquanto digita** no editor: espécie, item e os 4 golpes (parte do nome já filtra). Na lista de golpes, os que o Pokémon aprende oficialmente ficam no topo com fundo verde.
+- [x] **Itens por geração**: editor, mochila e busca usam a numeração de itens de cada jogo (antes a Gen 1-3 mostrava o item errado ou nenhum).
+- [x] **Legalizar mantém a evolução**: se o encontro é de uma pré-evolução (Dratini para um Dragonite), evolui até a espécie escolhida.
 - [x] **Proteção contra travamentos**: erros inesperados vão para a barra de status e para `%APPDATA%\PKHeX.Modern\crash.log`.
 - [x] **Arrastar e soltar Pokémon** entre slots, caixas e equipe (trocar, mover, copiar com Ctrl, setas trocam de caixa, soltar .pk\* importa).
 - [x] Arrastar um slot **para fora** da janela para exportar como arquivo .pk\*.
@@ -27,12 +30,11 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Golpes com tipo e PP** (aba Golpes): chip colorido do tipo, barra de PP (atual/máximo), PP Ups (+0 a +3) e botão "PP cheio". Trocar o golpe enche o PP.
 - [x] **Gênero no cartão do slot** (♂/♀ ao lado do nível).
 - [x] **Indicador de legalidade nos slots** (ícone ✓/⚠ no canto do cartão).
-- [x] **Seletor de idioma dos nomes** (barra lateral, "Nomes"): espécies, golpes, itens, naturezas, habilidades, tipos, resumo do hover e textos de legalidade nos idiomas do PKHeX (en, es, es-419, fr, de, it, ja, ko, zh). Troca na hora e fica salvo.
-- [ ] **Nomes em português**: o PKHeX não tem PT-BR; exigiria criar as listas (espécies, golpes, itens) e os textos de legalidade.
+- Decisão: só a **interface** é em português. Nomes do jogo (espécies, golpes, itens) e textos de legalidade ficam em inglês, como no PKHeX (o seletor de idioma dos nomes foi removido).
 - [ ] Atualizar as actions do workflow (`checkout`, `setup-dotnet`, `upload-artifact`) para versões com Node.js 24 (aviso de descontinuação do Node 20).
 - [x] **Cor de destaque configurável**: bolinhas na barra lateral (vermelho, ciano, azul, roxo, verde, laranja), salva nas preferências e aplicada nos temas claro e escuro.
 - [x] **Legalizar também com avisos** ("Fishy"): o cartão de legalidade lista os avisos e oferece o Legalizar.
-- [ ] **Editor mais completo**: OT, ID, bola, local e data de encontro, fitas, memórias, Hyper Training, Tera Type, PID/EC e "Tornar shiny".
+- [ ] **Editor mais completo**: fitas, memórias, Hyper Training, Tera Type, formas, PID/EC editáveis, contest stats e marcações. (OT, ID, bola, encontro e "Tornar shiny" já estão nas abas.)
 - [ ] **Pokédex**, **Batch Editor**, **banco de dados / pesquisa** (dos Pokémon salvos), **editores específicos de cada jogo** (eventos, flags, records).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [ ] **Backup automático** do save antes de exportar por cima do original.
@@ -43,7 +45,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 ## Conhecido / observações
 - Em saves com a equipe cheia, ainda não foi testado colocar um Pokémon num slot vazio da equipe. Ele entra na próxima posição livre.
 - Em Scarlet/Violet e Legends Z-A, o item da mochila não é editável, só a quantidade (mesma regra do PKHeX original).
-- Os nomes do jogo seguem o idioma escolhido em "Nomes" (padrão `en`).
+- Os nomes do jogo (espécies, golpes, itens) ficam em inglês; só a interface é em português.
 - Os sprites passam por um recorte automático da borda transparente. Por isso, Pokémon pequenos aparecem no mesmo tamanho visual dos grandes (estilo Pokémon HOME).
 
 ## Referência visual

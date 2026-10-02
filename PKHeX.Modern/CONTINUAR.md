@@ -24,7 +24,7 @@ No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push n
 - **Avalonia (e não um reskin do WinForms nem Blazor)**, para ter um visual moderno e permitir multiplataforma no futuro.
 - **Não mexer no core.** Só `PKHeX.Modern/` e `Tools/` são do fork. Tudo que vem do Core passa por `Services/CoreAdapter.cs`.
 - **Branch de trabalho: `modern-ui`.** O `master` acompanha o upstream.
-- **Interface em português (PT-BR).** Os nomes do jogo (espécies, golpes) seguem em inglês por enquanto.
+- **Interface em português (PT-BR).** Os nomes do jogo (espécies, golpes, itens) ficam em inglês, como no PKHeX.
 - **Cor de destaque vermelha**, inspirada na Pokébola. A referência visual usa ciano, o que fica como opção futura (ver ROADMAP).
 - **Editor trabalha sobre uma cópia (Clone).** Só grava no save ao clicar em "Aplicar alterações". Mochila e treinador também exigem exportar o save.
 
@@ -69,8 +69,12 @@ No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push n
 
 - **Avisos de legalidade:** `CoreAdapter.GetLegalityIssues` lê `la.Results` direto (Invalid primeiro, depois Fishy) com `LegalityLocalizationContext.Humanize`; o `Report()` resumido do Core não inclui os avisos Fishy.
 
-- **Idioma dos nomes:** `CoreAdapter.SetLanguage(code, sav)` troca `GameInfo.CurrentLanguage` **e** `GameInfo.Strings` (só o primeiro não muda nada) e recria `FilteredSources`. Ao trocar, o `MainViewModel` recarrega todas as páginas, refaz a busca e reabre o editor no mesmo slot. A escolha fica em `AppSettings.Language`.
+- **Idioma:** só a interface é em PT-BR; os nomes do jogo ficam em inglês (`CoreAdapter.SetLanguage("en")`). Se um dia voltar a ter troca de idioma: `SetLanguage` precisa trocar `GameInfo.Strings` (não só `CurrentLanguage`) e recriar `FilteredSources`.
 - **Workflow do GitHub:** a primeira execução passou (build em ~2 min, artefato `PKHeX.Modern-win-x64`).
+
+- **Itens:** o `HeldItem` usa a numeração do formato (na Gen 3 o Lucky Egg é 197, não o índice da `itemlist`). Para nomes, use `CoreAdapter.GetItemNames(pk|sav)` / `GetHeldItemName(pk)`; para a lista de itens que podem ser segurados, `GameInfo.FilteredSources.Items` (`ComboItem` com o valor certo). `CoreAdapter.ItemNames` é só a lista geral (Gen 4+).
+- **Campos com sugestões (AutoCompleteBox):** espécie, item e golpes no editor. As propriedades `SelectedSpeciesName`, `SelectedItem` e `MoveSlotViewModel.MoveName` são `object?` e ignoram texto parcial até virar um valor válido. Golpes que o Pokémon aprende vêm de `LegalMoveInfo` (`CoreAdapter.GetLearnableMoves`), recalculados só quando espécie/forma/nível/encontro mudam.
+- **Legalizar e evoluções:** os encontros de uma espécie incluem os das pré-evoluções; o `CarryOver` evolui o Pokémon gerado até a espécie/forma do original (até a Gen 5 o gênero vem do PID e não é recalculado).
 
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.

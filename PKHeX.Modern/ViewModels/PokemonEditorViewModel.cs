@@ -43,7 +43,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         ];
         foreach (var s in Stats)
             s.Changed += Refresh;
-        Moves = [.. Enumerable.Range(0, 4).Select(i => new MoveSlotViewModel(() => _pk, i))];
+        Moves = [.. Enumerable.Range(0, 4).Select(i => new MoveSlotViewModel(() => _pk, i, () => MoveOptions))];
         foreach (var m in Moves)
             m.Changed += Refresh;
         HealPPCommand = new RelayCommand(() => { _pk.HealPP(); foreach (var m in Moves) m.RaiseAll(); _status("PP restaurado."); });
@@ -63,6 +63,51 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public IReadOnlyList<string> SpeciesList => CoreAdapter.SpeciesNames;
     public IReadOnlyList<string> MoveList => CoreAdapter.MoveNames;
+    /// <summary>Especies que existem neste formato (para o campo com sugestoes).</summary>
+    public IReadOnlyList<string> SpeciesNames => _speciesNames ??= CoreAdapter.GetNames(CoreAdapter.SpeciesNames, _pk.MaxSpeciesID);
+    private IReadOnlyList<string>? _speciesNames;
+    /// <summary>Golpes que existem neste formato (para os campos com sugestoes).</summary>
+    public IReadOnlyList<string> MoveNames => _moveNames ??= CoreAdapter.GetNames(CoreAdapter.MoveNames, _pk.MaxMoveID);
+    private IReadOnlyList<string>? _moveNames;
+
+    /// <summary>
+    /// Opcoes da lista de golpes: primeiro os que o Pokemon aprende oficialmente (fundo verde), depois os demais,
+    /// cada grupo em ordem alfabetica. Recalculado so quando especie/forma/nivel/encontro mudam.
+    /// </summary>
+    public IReadOnlyList<MoveOption> MoveOptions
+    {
+        get
+        {
+            var key = (_pk.Species, _pk.Form, _pk.CurrentLevel, _pk.MetLevel, _pk.MetLocation, _pk.Version, _pk.IsEgg, GameInfo.CurrentLanguage);
+            if (_moveOptions is not null && key.Equals(_moveOptionsKey))
+                return _moveOptions;
+            _moveOptionsKey = key;
+            var learn = CoreAdapter.GetLearnableMoves(_pk);
+            var names = CoreAdapter.MoveNames;
+            var list = new List<MoveOption>();
+            for (int i = 1; i <= _pk.MaxMoveID && i < names.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(names[i]))
+                    list.Add(new MoveOption(i, names[i], learn[i]));
+            }
+            _moveOptions = [.. list.OrderByDescending(o => o.IsLearnable).ThenBy(o => o.Name, StringComparer.CurrentCultureIgnoreCase)];
+            return _moveOptions;
+        }
+    }
+    private IReadOnlyList<MoveOption>? _moveOptions;
+    private object? _moveOptionsKey;
+
+    /// <summary>Especie escolhida pelo nome (AutoCompleteBox). Texto parcial e ignorado ate virar um nome valido.</summary>
+    public object? SelectedSpeciesName
+    {
+        get => SpeciesName;
+        set
+        {
+            var index = CoreAdapter.FindIndex(CoreAdapter.SpeciesNames, value as string);
+            if (index > 0)
+                Species = index;
+        }
+    }
     public IReadOnlyList<string> ItemList => CoreAdapter.ItemNames;
     public IReadOnlyList<string> NatureList => CoreAdapter.NatureNames;
     public IReadOnlyList<StatViewModel> Stats { get; }
@@ -170,7 +215,39 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public int Species { get => _pk.Species; set { if (value >= 0 && value != _pk.Species) { CoreAdapter.ChangeSpecies(_pk, (ushort)value); _isNew = false; RaiseAll(); } } }
     public int Level { get => _pk.CurrentLevel; set { _pk.CurrentLevel = (byte)Math.Clamp(value, 1, 100); Refresh(); } }
     public int Nature { get => (int)_pk.StatAlignment; set { if (value >= 0 && value != (int)_pk.StatAlignment) { _pk.SetNature((Nature)value); Refresh(); } } }
-    public int HeldItem { get => _pk.HeldItem; set { if (value >= 0) { _pk.HeldItem = value; Refresh(); } } }
+    public int HeldItem { get => _pk.HeldItem; set { if (value >= 0) { _pk.HeldItem = value; Refresh(); Raise(nameof(SelectedItem)); Raise(nameof(HasItem)); } } }
+
+    /// <summary>Itens que podem ser segurados neste jogo, em ordem alfabetica (numeracao certa por geracao).</summary>
+    public IReadOnlyList<ComboItem> ItemOptions => _itemOptions ??= [.. CoreAdapter.GetHeldItemOptions()
+        .Where(i => i.Value > 0 && !string.IsNullOrWhiteSpace(i.Text))
+        .OrderBy(i => i.Text, StringComparer.CurrentCultureIgnoreCase)];
+    private IReadOnlyList<ComboItem>? _itemOptions;
+
+    /// <summary>Item escolhido na lista com sugestoes. Texto parcial e ignorado ate virar um item.</summary>
+    public object? SelectedItem
+    {
+        get
+        {
+            var item = _pk.HeldItem;
+            if (item == 0)
+                return null;
+            return ItemOptions.FirstOrDefault(i => i.Value == item)
+                ?? new ComboItem(CoreAdapter.GetHeldItemName(_pk) is { Length: > 0 } n ? n : $"Item #{item}", item);
+        }
+        set
+        {
+            var id = value switch
+            {
+                ComboItem c => c.Value,
+                string s => ItemOptions.FirstOrDefault(i => string.Equals(i.Text, s.Trim(), StringComparison.OrdinalIgnoreCase))?.Value ?? -1,
+                _ => -1,
+            };
+            if (id > 0)
+                HeldItem = id;
+        }
+    }
+    public bool HasItem => _pk.HeldItem > 0;
+    public RelayCommand ClearItemCommand => new(() => HeldItem = 0);
     /// <summary>Os 4 golpes (tipo, PP e PP Ups). Use Moves[i].Move para trocar um golpe.</summary>
     public IReadOnlyList<MoveSlotViewModel> Moves { get; }
     // Atalhos mantidos para codigo existente (testes, Showdown).
@@ -267,7 +344,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         StatTotal = 0; EVTotal = 0; IVTotal = 0;
         foreach (var st in Stats) { StatTotal += st.Total; EVTotal += st.EV; IVTotal += st.IV; }
         Types = [.. System.Linq.Enumerable.Select(CoreAdapter.GetTypes(_pk), t => new TypeChip(t.Name, t.Argb))];
-        foreach (var p in (string[])[nameof(RadarValues), nameof(StatTotal), nameof(EVTotal), nameof(IVTotal), nameof(EVSummary), nameof(IVSummary), nameof(Types), nameof(GenderSymbol), nameof(SpeciesName)])
+        foreach (var p in (string[])[nameof(RadarValues), nameof(StatTotal), nameof(EVTotal), nameof(IVTotal), nameof(EVSummary), nameof(IVSummary), nameof(Types), nameof(GenderSymbol), nameof(SpeciesName), nameof(SelectedSpeciesName), nameof(MoveOptions)])
             Raise(p);
         (IsLegal, LegalityReport) = CoreAdapter.CheckLegality(_pk);
         LegalityText = IsLegal ? "Legal" : "Ilegal";
@@ -283,7 +360,13 @@ public sealed record TypeChip(string Name, uint Argb)
 }
 
 /// <summary>Um golpe no editor: escolha do golpe, chip do tipo, barra de PP e PP Ups.</summary>
-public sealed class MoveSlotViewModel(Func<PKM> pk, int index) : ViewModelBase
+/// <summary>Uma opcao da lista de golpes. <see cref="IsLearnable"/> = aprende oficialmente (fundo verde, no topo).</summary>
+public sealed record MoveOption(int Index, string Name, bool IsLearnable)
+{
+    public override string ToString() => Name;
+}
+
+public sealed class MoveSlotViewModel(Func<PKM> pk, int index, Func<IReadOnlyList<MoveOption>> options) : ViewModelBase
 {
     public event Action? Changed;
     public void RaiseAll() => Raise(string.Empty);
@@ -309,6 +392,31 @@ public sealed class MoveSlotViewModel(Func<PKM> pk, int index) : ViewModelBase
     }
 
     public bool HasMove => Move > 0;
+
+    /// <summary>Golpe escolhido na lista com sugestoes. Texto parcial e ignorado ate virar um golpe.</summary>
+    public object? MoveName
+    {
+        get
+        {
+            var move = Move;
+            return move == 0 ? null : options().FirstOrDefault(o => o.Index == move);
+        }
+        set
+        {
+            var index = value switch
+            {
+                MoveOption o => o.Index,
+                string s => CoreAdapter.FindIndex(CoreAdapter.MoveNames, s),
+                _ => -1,
+            };
+            if (index > 0)
+                Move = index;
+        }
+    }
+
+    /// <summary>O golpe atual esta entre os que o Pokemon aprende (borda verde no campo).</summary>
+    public bool IsLearnable => MoveName is MoveOption { IsLearnable: true };
+    public RelayCommand ClearCommand => new(() => Move = 0);
     private (string Name, uint Argb)? Type => CoreAdapter.GetMoveType((ushort)Move, pk().Context);
     public string TypeName => Type?.Name ?? "";
     public Avalonia.Media.IBrush TypeBrush => new Avalonia.Media.SolidColorBrush(Type?.Argb ?? 0x00000000);

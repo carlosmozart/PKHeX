@@ -40,6 +40,43 @@
     <Setter Property="Foreground" Value="White" />
     <Setter Property="Opacity" Value="0.9" />
   </Style>
+  <!-- Botoes coloridos por funcao (barra inferior): good = verde, info = azul, danger = vermelho, soft = destaque suave -->
+  <Style Selector="Button.good, Button.info, Button.danger, Button.soft">
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Button.good /template/ ContentPresenter, Button.good:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource TintGoodBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource TintGoodForeground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TintGoodBackground}" />
+  </Style>
+  <Style Selector="Button.info /template/ ContentPresenter, Button.info:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource TintInfoBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource TintInfoForeground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TintInfoBackground}" />
+  </Style>
+  <Style Selector="Button.danger /template/ ContentPresenter, Button.danger:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource TintDangerBackground}" />
+    <Setter Property="Foreground" Value="{DynamicResource TintDangerForeground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource TintDangerBackground}" />
+  </Style>
+  <Style Selector="Button.soft /template/ ContentPresenter, Button.soft:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+    <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+  </Style>
+  <Style Selector="Button.good:pointerover /template/ ContentPresenter, Button.info:pointerover /template/ ContentPresenter, Button.danger:pointerover /template/ ContentPresenter, Button.soft:pointerover /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource TextMuted}" />
+  </Style>
+  <Style Selector="Button.good:disabled, Button.info:disabled, Button.danger:disabled, Button.soft:disabled">
+    <Setter Property="Opacity" Value="0.45" />
+  </Style>
+  <!-- Salvar: o botao mais importante da barra -->
+  <Style Selector="Button.primary">
+    <Setter Property="Padding" Value="16,5" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+
   <Style Selector="Button.ghost">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -230,6 +267,18 @@
   </Style>
   <Style Selector="Button.accentDot.selected">
     <Setter Property="RenderTransform" Value="scale(1.2)" />
+  </Style>
+  <!-- Lista de golpes: os que o Pokemon aprende ficam no topo com fundo verde -->
+  <Style Selector="Border.moveOption">
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="Margin" Value="-8,-4" />
+    <Setter Property="CornerRadius" Value="4" />
+  </Style>
+  <Style Selector="Border.moveOption.learnable">
+    <Setter Property="Background" Value="#2E46A758" />
+  </Style>
+  <Style Selector="Border.moveOption.learnable TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Good}" />
   </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />

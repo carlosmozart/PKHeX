@@ -60,8 +60,10 @@
                 <TextBlock Text="Apelido" VerticalAlignment="Center" />
                 <TextBox Grid.Column="1" Text="{Binding Nickname}" />
                 <TextBlock Grid.Row="1" Text="Espécie" VerticalAlignment="Center" />
-                <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding SpeciesList}" SelectedIndex="{Binding Species}" />
+                <AutoCompleteBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding SpeciesNames}"
+                                 SelectedItem="{Binding SelectedSpeciesName}" FilterMode="ContainsOrdinal" MinimumPrefixLength="1"
+                                 MaxDropDownHeight="320" Watermark="Digite para buscar a espécie"
+                                 ToolTip.Tip="Digite parte do nome (ex.: chu) e escolha na lista" />
                 <TextBlock Grid.Row="2" Text="Nível" VerticalAlignment="Center" />
                 <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
                   <Slider Minimum="1" Maximum="100" Value="{Binding Level}" IsSnapToTickEnabled="True" TickFrequency="1" />
@@ -71,8 +73,19 @@
                 <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding NatureList}" SelectedIndex="{Binding Nature}" />
                 <TextBlock Grid.Row="4" Text="Item" VerticalAlignment="Center" />
-                <ComboBox Grid.Row="4" Grid.Column="1" HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding ItemList}" SelectedIndex="{Binding HeldItem}" />
+                <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                  <AutoCompleteBox HorizontalAlignment="Stretch" ItemsSource="{Binding ItemOptions}" SelectedItem="{Binding SelectedItem}"
+                                   ValueMemberBinding="{Binding Text, x:DataType=core:ComboItem}" FilterMode="ContainsOrdinal"
+                                   MinimumPrefixLength="1" MaxDropDownHeight="320" Watermark="Nenhum (digite para buscar)">
+                    <AutoCompleteBox.ItemTemplate>
+                      <DataTemplate x:DataType="core:ComboItem">
+                        <TextBlock Text="{Binding Text}" />
+                      </DataTemplate>
+                    </AutoCompleteBox.ItemTemplate>
+                  </AutoCompleteBox>
+                  <Button Grid.Column="1" Classes="ghost small" Content="✕" Command="{Binding ClearItemCommand}"
+                          IsVisible="{Binding HasItem}" ToolTip.Tip="Remover item" />
+                </Grid>
                 <TextBlock Grid.Row="5" Text="Habilidade" VerticalAlignment="Center" />
                 <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding AbilityName}" FontWeight="SemiBold" VerticalAlignment="Center" />
               </Grid>
@@ -183,8 +196,27 @@
                   <DataTemplate x:DataType="vm:MoveSlotViewModel">
                     <Border Classes="moveRow">
                       <StackPanel Spacing="6">
-                        <ComboBox HorizontalAlignment="Stretch" SelectedIndex="{Binding Move}"
-                                  ItemsSource="{Binding $parent[UserControl].((vm:PokemonEditorViewModel)DataContext).MoveList}" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                          <AutoCompleteBox HorizontalAlignment="Stretch" SelectedItem="{Binding MoveName}"
+                                           ItemsSource="{Binding $parent[UserControl].((vm:PokemonEditorViewModel)DataContext).MoveOptions}"
+                                           ValueMemberBinding="{Binding Name, x:DataType=vm:MoveOption}"
+                                           FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="360"
+                                           Watermark="Digite para buscar o golpe"
+                                           ToolTip.Tip="Golpes em verde: aprende oficialmente (nível, TM, tutor, ovo ou encontro)">
+                            <AutoCompleteBox.ItemTemplate>
+                              <DataTemplate x:DataType="vm:MoveOption">
+                                <Border Classes="moveOption" Classes.learnable="{Binding IsLearnable}">
+                                  <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="{Binding Name}" />
+                                    <TextBlock Grid.Column="1" Text="✓" FontWeight="Bold" IsVisible="{Binding IsLearnable}" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </AutoCompleteBox.ItemTemplate>
+                          </AutoCompleteBox>
+                          <Button Grid.Column="1" Classes="ghost small" Content="✕" Command="{Binding ClearCommand}"
+                                  IsVisible="{Binding HasMove}" ToolTip.Tip="Remover golpe" />
+                        </Grid>
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" IsVisible="{Binding HasMove}">
                           <Border Classes="chip" Background="{Binding TypeBrush}" MinWidth="64" VerticalAlignment="Center">
                             <TextBlock Text="{Binding TypeName}" HorizontalAlignment="Center" />

@@ -1,15 +1,60 @@
 # PKHeX Modern
 
-Interface alternativa para o [PKHeX](https://github.com/kwsch/PKHeX), feita em **Avalonia + Fluent**, com tema escuro e claro.
-Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos originais. Assim, as atualizações do PKHeX oficial entram por merge sem conflitos.
+Interface alternativa para o [PKHeX](https://github.com/kwsch/PKHeX), feita em **Avalonia + Fluent**, com tema escuro e claro e interface em português.
+Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos originais: as regras de save, legalidade e encontros são as mesmas do PKHeX, e as atualizações do PKHeX oficial entram por merge sem conflitos.
 
 ![Caixas e editor](docs/boxes.png)
 
-| Equipe | Janela compacta |
+| Golpes com busca (verde = aprende) | Banco de encontros |
 |---|---|
-| ![Equipe](docs/party.png) | ![Compacta](docs/compact.png) |
+| ![Golpes](docs/moves.png) | ![Encontros](docs/encounters.png) |
+| **Busca global (Ctrl+F)** | **Equipe** |
+| ![Busca](docs/search.png) | ![Equipe](docs/party.png) |
 
-## Como rodar
+## Download
+
+Baixe o `PKHeX.Modern-win-x64.zip` na página de [Releases](https://github.com/carlosmozart/PKHeX/releases), extraia e abra o `PKHeX.Modern.exe`.
+É um único executável para Windows 10/11 (64 bits) e **não precisa do .NET instalado**. Na primeira execução ele demora alguns segundos a mais, porque extrai as bibliotecas nativas.
+
+> O Windows pode mostrar o aviso do SmartScreen, porque o executável não é assinado. Clique em "Mais informações" e "Executar assim mesmo".
+
+## Funcionalidades
+
+**Saves**
+- Abrir pelo botão, arrastando o arquivo para a janela ou pela linha de comando; salvar com **Ctrl+S**.
+- **Save Manager**: tela inicial que lista os saves da pasta `saves` (ao lado do exe, ou outra à sua escolha), agrupados por console, com treinador, tempo de jogo, dinheiro e equipe. Duplo clique abre.
+- Aviso de **alterações não exportadas**: o app pergunta antes de abrir outro save ou fechar.
+
+**Caixas e equipe**
+- Cartões grandes com sprite, nome, nível, gênero, ★ shiny e ✓/⚠ de legalidade.
+- **Resumo ao passar o mouse**, igual ao do PKHeX: set (item, habilidade, IVs/EVs, natureza, golpes) e encontro (local, PID, Origin Seed).
+- **Arrastar e soltar** entre caixa e equipe (Ctrl copia), trocar de caixa parando sobre as setas, soltar `.pk*` para importar e arrastar para fora da janela para exportar.
+- **Busca global (Ctrl+F)** por espécie, apelido, golpe, item, "shiny" ou "ovo" em todas as caixas.
+- **Desfazer/refazer** (Ctrl+Z / Ctrl+Y) e **Excluir** (Delete).
+
+**Editor de Pokémon** (abas: Visão geral, Atributos, Golpes, Encontro, Treinador, Extras)
+- Espécie, item e golpes com **busca enquanto digita**; na lista de golpes, os que o Pokémon aprende ficam no topo, em verde.
+- Golpes com tipo colorido, barra de PP e PP Ups.
+- Gráfico radar dos atributos, sliders de IV/EV e ▲/▼ da natureza.
+- Bola, local, nível e data de encontro; treinador original; felicidade, PID/EC e "Tornar shiny".
+- **Legalidade**: lista os problemas e avisos e oferece correções de um clique, inclusive **Legalizar**, que gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny) mantendo natureza, nível, item, apelido e golpes.
+- Colar e copiar no formato **Showdown**.
+
+**Bancos**
+- **Encontros**: todos os jeitos de obter uma espécie (selvagem, estático, troca, ovo, evento).
+- **Eventos**: banco de Mystery Gift do PKHeX, com busca.
+- "Usar" gera o Pokémon no editor, pronto para gravar.
+
+**Outros**
+- Treinador (nome, TID/SID, dinheiro, tempo de jogo) e Mochila.
+- Tema claro/escuro e **cor de destaque** configurável.
+- Atalhos: Q/E trocam de página, Ctrl+1–7 vão direto, Esc volta, Ctrl+O abre.
+
+As preferências ficam em `%APPDATA%\PKHeX.Modern\settings.json`. Se algo der errado, os detalhes ficam em `%APPDATA%\PKHeX.Modern\crash.log`.
+
+Os nomes do jogo (espécies, golpes, itens) e os textos de legalidade ficam em inglês, como no PKHeX; só a interface é em português.
+
+## Rodar a partir do código
 
 Requisitos: Windows e [.NET SDK 10](https://dotnet.microsoft.com/download).
 
@@ -18,45 +63,31 @@ dotnet run --project PKHeX.Modern
 dotnet run --project PKHeX.Modern -- "C:\caminho\para\save.sav"   # abre direto um save
 ```
 
-## Funcionalidades
+Gerar o executável único:
 
-- **Saves:** abrir pelo botão, arrastando o arquivo para a janela ou pela linha de comando, e exportar.
-- **Último save:** atalho na barra lateral para reabrir o último save, mais a opção "Abrir último save ao iniciar".
-- **Caixas:** grade responsiva com sprites grandes, nome, nível, posição e ★ para shiny.
-- **Equipe:** cartões grandes com nome, apelido e nível, e também uma faixa compacta acima das caixas.
-- **Arrastar e soltar:**
-  - entre slots de caixa e equipe: move ou troca; com **Ctrl**, copia;
-  - parar sobre as setas ‹ › durante o arraste troca de caixa;
-  - soltar um arquivo `.pk*` sobre um slot importa o Pokémon.
+```bash
+dotnet publish PKHeX.Modern -p:PublishProfile=win-x64
+```
 
-  As regras do jogo são respeitadas: slots bloqueados, equipe nunca vazia nem só com ovos.
-- **Editor de Pokémon:**
-  - cabeçalho com tipos coloridos, gênero e selo de legalidade;
-  - gráfico hexagonal (radar) dos atributos finais;
-  - por atributo: barra do valor base, sliders de IV e EV, total calculado e ▲/▼ da natureza;
-  - espécie, nível, natureza, item, habilidade e golpes;
-  - colar e copiar no formato **Showdown**;
-  - slot vazio abre um Pokémon em branco, já com os dados do treinador.
-- **Treinador:** nome, TID/SID, dinheiro e tempo de jogo.
-- **Mochila:** bolsos em abas, com item e quantidade dentro dos limites do jogo.
-- **Tema:** claro e escuro, e a escolha fica salva.
-
-As preferências ficam em `%APPDATA%\PKHeX.Modern\settings.json`.
+A cada push no branch `modern-ui`, o GitHub Actions gera o executável (aba Actions). Uma tag `modern-v*` também cria a Release.
 
 ## Arquitetura
 
 ```
 PKHeX.Core / PKHeX.Drawing.*   ← upstream, intocados
         │
-Services/CoreAdapter.cs        ← ÚNICO ponto de contato com o Core
-Services/SpriteService.cs      ← sprites System.Drawing → Avalonia (com recorte da borda transparente)
-Services/AppSettings.cs        ← preferências do usuário
+Services/CoreAdapter.cs        ← ponto principal de contato com o Core
+Services/EncounterDatabase.cs  ← bancos de encontros/eventos e Legalizar
+Services/ShinyMethodH.cs       ← shiny da Gen 3 com sequência RNG do jogo
+Services/SlotHistory.cs        ← desfazer/refazer
+Services/SaveLibrary.cs        ← Save Manager
+Services/EntitySearch.cs       ← busca global
+Services/SpriteService.cs      ← sprites System.Drawing → Avalonia
+Services/AppSettings.cs, CrashLog.cs
         │
 ViewModels/                    ← estado e lógica (Pages.cs = páginas da barra lateral)
-Views/ + App.axaml             ← XAML; DataTemplates de cada página ficam em App.axaml
-Controls/                      ← controles próprios (StatRadar, conversores)
-Theme/Palette.axaml            ← cores (dark/light), incluindo a cor de destaque do Fluent
-Theme/Styles.axaml             ← estilos (cards, slots, chips, sliders)
+Views/ + App.axaml             ← XAML; DataTemplates das páginas ficam em App.axaml
+Theme/                         ← Palette.axaml (cores), Styles.axaml, AccentTheme.cs
 ```
 
 ## Atualizando com o PKHeX oficial
@@ -67,15 +98,8 @@ git merge upstream/master
 dotnet build PKHeX.Modern
 ```
 
-Fora de `PKHeX.Modern/` e `Tools/`, o fork altera apenas uma linha no `PKHeX.slnx` e um bloco no `README.md` da raiz.
-Se o build quebrar depois de um merge, o erro estará quase sempre em `Services/CoreAdapter.cs`.
-
-## Adicionando uma tela nova
-
-1. Crie um ViewModel. Para uma página da barra lateral, herde `PageViewModel` (em `ViewModels/Pages.cs`).
-2. Registre a página em `AllPages`, no `MainViewModel`.
-3. Adicione um `DataTemplate` para ela em `App.axaml`.
-4. Se precisar de algo novo do Core, exponha via `CoreAdapter`.
+Fora de `PKHeX.Modern/`, `Tools/` e `.github/workflows/modern-build.yml`, o fork altera apenas uma linha no `PKHeX.slnx` e um bloco no `README.md` da raiz.
+Se o build quebrar depois de um merge, o erro estará quase sempre em `Services/`.
 
 ## Capturas de tela automáticas
 
@@ -83,6 +107,6 @@ Se o build quebrar depois de um merge, o erro estará quase sempre em `Services/
 dotnet run --project Tools/PKHeX.Modern.Render -- "save.sav" "pasta_saida"
 ```
 
-Renderiza a interface sem abrir janela (Avalonia headless). É útil para conferir o layout em larguras diferentes.
+Renderiza a interface sem abrir janela (Avalonia headless), útil para conferir o layout.
 
 Veja também: [ROADMAP.md](ROADMAP.md) (pendências) e [CONTINUAR.md](CONTINUAR.md) (contexto para continuar em outro PC).

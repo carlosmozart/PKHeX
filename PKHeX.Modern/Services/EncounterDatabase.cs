@@ -182,6 +182,19 @@ public static class EncounterDatabase
     /// <summary>Reaplica no Pokemon gerado o que o usuario tinha escolhido, quando for compativel com o encontro.</summary>
     private static void CarryOver(PKM from, PKM to, IEncounterInfo enc)
     {
+        // O encontro pode ser de uma pre-evolucao (ex.: Dratini para um Dragonite): evolui ate a especie escolhida.
+        if (to.Species != from.Species || to.Form != from.Form)
+        {
+            bool nicknamed = to.IsNicknamed;
+            int abilitySlot = to.AbilityNumber switch { 2 => 1, 4 => 2, _ => 0 };
+            to.Species = from.Species;
+            to.Form = from.Form;
+            if (!nicknamed)
+                to.ClearNickname();
+            to.RefreshAbility(abilitySlot);
+            if (from.Format >= 6)
+                to.Gender = to.GetSaneGender(); // ate a Gen 5 o genero vem do PID e nao muda ao evoluir
+        }
         if (from.CurrentLevel >= enc.LevelMin && from.CurrentLevel > to.CurrentLevel)
             to.CurrentLevel = from.CurrentLevel;
         if (from.HeldItem != 0)
