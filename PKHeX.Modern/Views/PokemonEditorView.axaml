@@ -92,6 +92,28 @@
             </StackPanel>
           </Border>
 
+          <!-- Evoluir por troca: so aparece para especies que evoluem assim -->
+          <Border Classes="card" IsVisible="{Binding HasTradeEvolutions}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="EVOLUÇÃO POR TROCA" Classes="section" Margin="0" />
+              <ItemsControl ItemsSource="{Binding TradeEvolutions}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:TradeEvolutionOption">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                      <Button Classes="small info" Content="{Binding Label, StringFormat='🔄  {0}'}" Command="{Binding Command}"
+                              IsEnabled="{Binding !IsBlocked}" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" />
+                      <TextBlock Grid.Column="1" Text="{Binding Requirement}" Classes="muted" FontSize="12"
+                                 VerticalAlignment="Center" TextWrapping="Wrap" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
           <Border Classes="card" IsVisible="{Binding ShowLegality}">
             <StackPanel Spacing="8">
               <Grid ColumnDefinitions="*,Auto">

@@ -22,7 +22,7 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [ ] Abas também para os saves abertos (depende de abrir mais de um save ao mesmo tempo, etapa 2 do bank).
 - [x] **Seleção múltipla**: Ctrl+clique marca/desmarca, Shift+clique marca um intervalo, Ctrl+A marca a caixa toda (vale entre caixas e no bank). Arrastar um marcado leva o grupo para os slots livres da caixa de destino (save ou bank, com conversão); Delete exclui todos. Barra flutuante com o total, Excluir e Limpar (Esc).
 - [x] **Ordenar caixas** (botão "⇅ Ordenar"): esta caixa ou todas, por Pokédex, nome, nível, shiny, tipo, IVs, data de captura ou só juntar. Também no bank (caixa atual). Um passo no Ctrl+Z.
-- [ ] **Ações**: evoluir por troca (com item quando exigido).
+- [x] **Evoluir por troca** (editor, aba Visão geral): mostra as evoluções por troca da espécie (com o item exigido ou o parceiro Shelmet/Karrablast), consome o item se estiver segurando, respeita a Everstone e, da Gen 6 em diante, registra o parceiro de troca (HT) para continuar legal. Testado da Gen 1 à 7.
 - [ ] **Pokédex centralizada**: todos os saves + bank, formas/gêneros/shiny, filtros (visto, capturado, possuído, shiny, alpha, tipo, geração), living dex e shiny dex, sincronizar Pokédex entre saves.
 - [ ] **Backups**: lista dos backups com restaurar dentro do app.
 

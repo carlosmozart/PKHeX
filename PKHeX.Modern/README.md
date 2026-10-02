@@ -47,6 +47,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` na página de [Releases](https://github.com/c
 - Bola, local, nível e data de encontro; treinador original; felicidade, PID/EC e "Tornar shiny".
 - **Verificar legalidade** (barra inferior): confere o save inteiro e mostra o resultado numa janela.
 - **Legalidade** no editor: lista os problemas e avisos e oferece correções de um clique, inclusive **Legalizar**, que gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny) mantendo natureza, nível, item, apelido e golpes.
+- **Evoluir por troca** (Kadabra, Onix + Metal Coat, Shelmet/Karrablast...), sem precisar de um segundo jogo; da Gen 6 em diante registra o parceiro de troca para o Pokémon continuar legal.
 - Colar e copiar no formato **Showdown**.
 
 **Bancos**

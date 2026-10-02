@@ -488,6 +488,88 @@ public static class CoreAdapter
         pk.Gender = pk.GetSaneGender();
     }
 
+    // Evoluir por troca
+    /// <summary>Uma evolucao por troca possivel: destino, o que a troca exige e se algo impede (Everstone).</summary>
+    public sealed record TradeEvolution(ushort Species, byte Form, string Name, string Requirement, int ItemId, string? Blocked);
+
+    /// <summary>Evolucoes por troca da especie/forma atual, pela tabela de evolucoes do jogo do Pokemon.</summary>
+    public static IReadOnlyList<TradeEvolution> GetTradeEvolutions(PKM pk)
+    {
+        if (IsEmpty(pk) || pk.IsEgg)
+            return [];
+        EvolutionTree tree;
+        try { tree = EvolutionTree.GetEvolutionTree(pk.Context); }
+        catch (ArgumentOutOfRangeException) { return []; }
+        var items = GetItemNames(pk);
+        var held = GetHeldItemName(pk);
+        var list = new List<TradeEvolution>();
+        foreach (var m in tree.Forward.GetForward(pk.Species, pk.Form).Span)
+        {
+            if (!m.Method.IsTrade || m.Species > pk.MaxSpeciesID)
+                continue;
+            int item = m.Method == EvolutionType.TradeHeldItem ? m.Argument
+                : pk.Context == EntityContext.Gen2 && Gen2TradeItems.TryGetValue(m.Species, out var name2) ? FindItem(items, name2) : 0;
+            var requirement = m.Method == EvolutionType.TradeShelmetKarrablast
+                ? $"troca por um {SpeciesNames[pk.Species == (ushort)PKHeX.Core.Species.Shelmet ? (ushort)PKHeX.Core.Species.Karrablast : (ushort)PKHeX.Core.Species.Shelmet]}"
+                : item > 0 ? $"troca segurando {(item < items.Count && items[item].Length > 0 ? items[item] : $"item #{item}")}"
+                : "troca";
+            var blocked = held == "Everstone" ? "está segurando uma Everstone, que impede a evolução" : null;
+            list.Add(new TradeEvolution(m.Species, m.GetDestinationForm(pk.Form), SpeciesNames[m.Species], requirement, item, blocked));
+        }
+        return list;
+    }
+
+    /// <summary>Na Gen 2 a tabela do Core nao guarda o item exigido; estes sao os do jogo (destino → item).</summary>
+    private static readonly Dictionary<ushort, string> Gen2TradeItems = new()
+    {
+        [(ushort)PKHeX.Core.Species.Steelix] = "Metal Coat", [(ushort)PKHeX.Core.Species.Scizor] = "Metal Coat",
+        [(ushort)PKHeX.Core.Species.Kingdra] = "Dragon Scale", [(ushort)PKHeX.Core.Species.Porygon2] = "Up-Grade",
+        [(ushort)PKHeX.Core.Species.Politoed] = "King's Rock", [(ushort)PKHeX.Core.Species.Slowking] = "King's Rock",
+    };
+
+    /// <summary>Indice do item pelo nome, ignorando maiusculas, espacos, hifens e apostrofos (os nomes variam entre geracoes).</summary>
+    private static int FindItem(IReadOnlyList<string> items, string name)
+    {
+        static string Key(string s) => new([.. s.ToUpperInvariant().Where(char.IsLetterOrDigit)]);
+        var key = Key(name);
+        for (int i = 1; i < items.Count; i++)
+            if (Key(items[i]) == key)
+                return i;
+        return 0;
+    }
+
+    /// <summary>
+    /// Evolui como numa troca de verdade: o Pokemon vai para outro treinador, evolui (o item exigido e consumido) e volta.
+    /// A partir da Gen 6 o jogo registra quem o recebeu (HT); sem isso a evolucao por troca fica ilegal, entao, se ele
+    /// nunca saiu do dono, fica registrado um parceiro de troca generico ("PKHeX"). Retorna o texto do que foi feito.
+    /// </summary>
+    public static string EvolveByTrade(PKM pk, TradeEvolution evo, ITrainerInfo? owner)
+    {
+        var handler = pk as IHandlerUpdate;
+        bool simulateTrade = handler is not null && owner is not null && pk.Format >= 6 && pk.IsUntraded;
+        if (simulateTrade)
+            handler!.UpdateHandler(new SimpleTrainerInfo(owner!.Version) { Language = owner.Language });
+
+        bool nicknamed = pk.IsNicknamed;
+        int abilitySlot = pk.AbilityNumber switch { 2 => 1, 4 => 2, _ => 0 };
+        var from = SpeciesNames[pk.Species];
+        pk.Species = evo.Species;
+        pk.Form = evo.Form;
+        if (!nicknamed)
+            pk.ClearNickname();
+        pk.RefreshAbility(abilitySlot);
+        bool consumed = evo.ItemId > 0 && pk.HeldItem == evo.ItemId;
+        if (consumed)
+            pk.HeldItem = 0;
+        pk.ResetPartyStats();
+
+        if (simulateTrade)
+            handler!.UpdateHandler(owner!); // volta para o dono
+        pk.RefreshChecksum();
+        return $"{from} evoluiu para {evo.Name} ({evo.Requirement}{(consumed ? "; o item foi consumido" : "")}"
+               + $"{(simulateTrade ? "; parceiro de troca registrado como \"PKHeX\"" : "")})";
+    }
+
     // Correcoes sugeridas (as mesmas do PKHeX original / Batch Editor). Retornam false se nada mudou.
     /// <summary>Golpes sugeridos (moveset de level-up legal), com PP cheio.</summary>
     public static bool SuggestMoves(PKM pk)

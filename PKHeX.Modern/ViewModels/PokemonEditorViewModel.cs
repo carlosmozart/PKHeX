@@ -162,6 +162,45 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             IsLegalizing = false;
         }
     }
+    // Evoluir por troca
+    private (ushort, byte, int) _tradeKey = (ushort.MaxValue, 0, 0);
+    private IReadOnlyList<TradeEvolutionOption> _tradeEvolutions = [];
+    /// <summary>Evolucoes por troca da especie atual (ex.: Kadabra → Alakazam, Onix + Metal Coat → Steelix).</summary>
+    public IReadOnlyList<TradeEvolutionOption> TradeEvolutions
+    {
+        get
+        {
+            var key = (_pk.Species, _pk.Form, _pk.HeldItem);
+            if (key != _tradeKey)
+            {
+                _tradeKey = key;
+                _tradeEvolutions = [.. CoreAdapter.GetTradeEvolutions(_pk).Select(e => new TradeEvolutionOption(e, new RelayCommand(() => EvolveByTrade(e))))];
+            }
+            return _tradeEvolutions;
+        }
+    }
+    public bool HasTradeEvolutions => TradeEvolutions.Count > 0;
+
+    private void EvolveByTrade(CoreAdapter.TradeEvolution evo)
+    {
+        if (evo.Blocked is { } why)
+        {
+            _status($"Não evolui: {SpeciesName} {why}. Tire o item e tente de novo.");
+            return;
+        }
+        try
+        {
+            var done = CoreAdapter.EvolveByTrade(_pk, evo, _sav);
+            _isNew = false;
+            RaiseAll();
+            _status(LegalityStatus(done));
+        }
+        catch (Exception ex)
+        {
+            _status($"Evoluir por troca: erro ({ex.Message})");
+        }
+    }
+
     public RelayCommand SuggestRelearnCommand { get; }
     public RelayCommand SuggestMetCommand { get; }
     public RelayCommand FixIVsCommand { get; }
@@ -479,4 +518,16 @@ public sealed class StatViewModel(string name, string color, Func<int> getIV, Ac
         foreach (var p in (string[])[nameof(Total), nameof(Base), nameof(NatureMod), nameof(IsBoosted), nameof(IsHindered), nameof(NatureArrow), nameof(BaseRatio)])
             Raise(p);
     }
+}
+
+/// <summary>Botao "Evoluir por troca" de um destino.</summary>
+public sealed class TradeEvolutionOption(CoreAdapter.TradeEvolution evo, RelayCommand command)
+{
+    public string Label => $"Evoluir para {evo.Name}";
+    public string Requirement => evo.Requirement;
+    public bool IsBlocked => evo.Blocked is not null;
+    public string Tooltip => evo.Blocked is { } why
+        ? $"Não dá: {why}."
+        : $"Simula a troca ({evo.Requirement}){(evo.ItemId > 0 ? "; o item é consumido se estiver segurando" : "")}. Clique em Aplicar para gravar.";
+    public RelayCommand Command { get; } = command;
 }
