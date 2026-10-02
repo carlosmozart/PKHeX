@@ -454,6 +454,26 @@
   <Style Selector="Border.gameBadge > Image">
     <Setter Property="Stretch" Value="Uniform" />
   </Style>
+  <!-- Marcacoes do editor (●▲■♥★◆): apagada, azul (ligada) ou rosa -->
+  <Style Selector="Button.marking">
+    <Setter Property="Width" Value="32" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
+    <Setter Property="Opacity" Value="0.55" />
+  </Style>
+  <Style Selector="Button.marking.on">
+    <Setter Property="Foreground" Value="#4FA3F7" />
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+  <Style Selector="Button.marking.pink">
+    <Setter Property="Foreground" Value="#F06292" />
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
   <!-- Modo legal: aviso acima do Aplicar quando o Pokemon esta ilegal -->
   <Style Selector="Border.legalBlock">
     <Setter Property="CornerRadius" Value="8" />

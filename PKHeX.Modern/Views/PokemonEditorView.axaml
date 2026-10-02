@@ -60,7 +60,7 @@
           <Border Classes="card">
             <StackPanel>
               <TextBlock Text="GERAL" Classes="section" Margin="0,0,0,8" />
-              <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+              <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
                 <TextBlock Text="Apelido" VerticalAlignment="Center" />
                 <TextBox Grid.Column="1" Text="{Binding Nickname}" />
                 <TextBlock Grid.Row="1" Text="Espécie" VerticalAlignment="Center" />
@@ -94,7 +94,17 @@
                           IsVisible="{Binding HasItem}" ToolTip.Tip="Remover item" />
                 </Grid>
                 <TextBlock Grid.Row="5" Text="Habilidade" VerticalAlignment="Center" />
-                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding AbilityName}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="5" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding AbilityOptions}"
+                          SelectedItem="{Binding SelectedAbility}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}"
+                          ToolTip.Tip="{Binding AbilityTip}" />
+                <TextBlock Grid.Row="6" Text="Forma" VerticalAlignment="Center" IsVisible="{Binding HasForms}" />
+                <ComboBox Grid.Row="6" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding FormOptions}" IsVisible="{Binding HasForms}"
+                          SelectedItem="{Binding SelectedForm}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}"
+                          ToolTip.Tip="Formas que existem neste jogo. No modo legal, trocar a forma gera o Pokémon de novo a partir de um encontro dela." />
+                <TextBlock Grid.Row="7" Text="Tera Type" VerticalAlignment="Center" IsVisible="{Binding HasTera}" />
+                <ComboBox Grid.Row="7" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding TeraOptions}" IsVisible="{Binding HasTera}"
+                          SelectedItem="{Binding SelectedTera}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}"
+                          ToolTip.Tip="Como as Tera Shards: muda o Tera Type (voltar ao original desfaz a troca)" />
               </Grid>
             </StackPanel>
           </Border>
@@ -208,6 +218,24 @@
             </StackPanel>
           </Border>
 
+          <!-- Hyper Training (Gen 7+) -->
+          <Border Classes="card" IsVisible="{Binding HasHyperTraining}">
+            <StackPanel Spacing="6">
+              <TextBlock Text="HYPER TRAINING" Classes="section" Margin="0" />
+              <TextBlock Text="Conta como IV 31 no atributo. Exige nível 100 (50 em Scarlet/Violet)." Classes="muted" FontSize="11" TextWrapping="Wrap" />
+              <ItemsControl ItemsSource="{Binding HyperTraining}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><UniformGrid Columns="6" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:HyperTrainViewModel">
+                    <CheckBox Content="{Binding Label}" IsChecked="{Binding IsOn}" FontSize="12" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
         </StackPanel>
       </TabItem>
       <TabItem Header="Golpes">
@@ -234,7 +262,7 @@
                                            ToolTip.Tip="Golpes em verde: aprende oficialmente (nível, TM, tutor, ovo ou encontro)">
                             <AutoCompleteBox.ItemTemplate>
                               <DataTemplate x:DataType="vm:MoveOption">
-                                <Border Classes="moveOption" Classes.learnable="{Binding IsLearnable}">
+                                <Border Classes="moveOption" Classes.learnable="{Binding IsLearnable}" ToolTip.Tip="{Binding Tip}" ToolTip.Placement="Right">
                                   <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Text="{Binding Name}" />
                                     <TextBlock Grid.Column="1" Text="✓" FontWeight="Bold" IsVisible="{Binding IsLearnable}" />
@@ -256,6 +284,8 @@
                                     IsVisible="{Binding $parent[UserControl].((vm:PokemonEditorViewModel)DataContext).HasPPUps}"
                                     ToolTip.Tip="PP Ups" />
                         </Grid>
+                        <TextBlock Text="{Binding Tip}" Classes="muted" FontSize="11" TextWrapping="Wrap"
+                                   IsVisible="{Binding Tip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                       </StackPanel>
                     </Border>
                   </DataTemplate>
@@ -272,17 +302,26 @@
           <Border Classes="card">
             <StackPanel>
               <TextBlock Text="ENCONTRO" Classes="section" Margin="0,0,0,8" />
-              <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+              <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
                 <TextBlock Text="Jogo de origem" VerticalAlignment="Center" />
                 <TextBlock Grid.Column="1" Text="{Binding OriginGame}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="5" Text="Encontro" VerticalAlignment="Center" IsVisible="{Binding LegalMode}" />
+                <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding CurrentEncounter}" TextWrapping="Wrap" VerticalAlignment="Center" IsVisible="{Binding LegalMode}" />
+                <TextBlock Grid.Row="6" Text="Trocar encontro" VerticalAlignment="Center" IsVisible="{Binding LegalMode}" />
+                <ComboBox Grid.Row="6" Grid.Column="1" HorizontalAlignment="Stretch" IsVisible="{Binding LegalMode}" MaxDropDownHeight="360"
+                          ItemsSource="{Binding EncounterOptions}" SelectedItem="{Binding SelectedEncounter}" PlaceholderText="Escolha outro encontro deste jogo"
+                          ToolTip.Tip="Modo legal: em vez de mudar local e nível à mão, escolha um encontro real; o Pokémon é gerado de novo a partir dele, mantendo natureza, nível, item, apelido e golpes quando possível." />
                 <TextBlock Grid.Row="1" Text="Bola" VerticalAlignment="Center" />
                 <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding BallList}"
                           SelectedItem="{Binding Ball}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}" />
                 <TextBlock Grid.Row="2" Text="Local" VerticalAlignment="Center" />
                 <ComboBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding MetLocationList}"
-                          SelectedItem="{Binding MetLocation}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}" />
+                          SelectedItem="{Binding MetLocation}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}"
+                          IsEnabled="{Binding !LegalMode}" ToolTip.ShowOnDisabled="True"
+                          ToolTip.Tip="No modo legal, local e nível vêm do encontro: use “Trocar encontro” abaixo" />
                 <TextBlock Grid.Row="3" Text="Nível" VerticalAlignment="Center" />
-                <NumericUpDown Grid.Row="3" Grid.Column="1" Width="110" HorizontalAlignment="Left" Minimum="0" Maximum="100" FormatString="0" Value="{Binding MetLevel}" />
+                <NumericUpDown Grid.Row="3" Grid.Column="1" Width="110" HorizontalAlignment="Left" Minimum="0" Maximum="100" FormatString="0" Value="{Binding MetLevel}"
+                               IsEnabled="{Binding !LegalMode}" />
                 <TextBlock Grid.Row="4" Text="Data" VerticalAlignment="Center" IsVisible="{Binding HasMetDate}" />
                 <CalendarDatePicker Grid.Row="4" Grid.Column="1" SelectedDate="{Binding MetDate}" IsVisible="{Binding HasMetDate}" />
               </Grid>
@@ -316,20 +355,36 @@
           <Border Classes="card">
             <StackPanel>
               <TextBlock Text="EXTRAS" Classes="section" Margin="0,0,0,8" />
-              <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+              <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
                 <TextBlock Text="Felicidade" VerticalAlignment="Center" />
                 <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
                   <Slider Minimum="0" Maximum="255" Value="{Binding Friendship}" IsSnapToTickEnabled="True" TickFrequency="1" />
                   <NumericUpDown Grid.Column="1" Width="110" Minimum="0" Maximum="255" FormatString="0" Value="{Binding Friendship}" />
                 </Grid>
                 <TextBlock Grid.Row="1" Text="PID" VerticalAlignment="Center" />
-                <SelectableTextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PID}" FontFamily="Consolas,monospace" VerticalAlignment="Center" />
-                <TextBlock Grid.Row="2" Text="EC" VerticalAlignment="Center" />
-                <SelectableTextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EncryptionConstant}" FontFamily="Consolas,monospace" VerticalAlignment="Center" />
-                <Button Grid.Row="3" Grid.Column="1" Classes="small" Content="★  Tornar shiny" Command="{Binding MakeShinyCommand}"
-                        ToolTip.Tip="Gera um PID shiny (na Gen 3/4 a natureza pode mudar)" />
+                <TextBox Grid.Row="1" Grid.Column="1" Width="140" HorizontalAlignment="Left" MaxLength="8" FontFamily="Consolas,monospace"
+                         Text="{Binding PIDText, UpdateSourceTrigger=LostFocus}"
+                         ToolTip.Tip="Hexadecimal; vale ao sair do campo. No modo legal, um PID que deixe o Pokémon ilegal é desfeito." />
+                <TextBlock Grid.Row="2" Text="EC" VerticalAlignment="Center" IsVisible="{Binding HasEC}" />
+                <TextBox Grid.Row="2" Grid.Column="1" Width="140" HorizontalAlignment="Left" MaxLength="8" FontFamily="Consolas,monospace"
+                         Text="{Binding ECText, UpdateSourceTrigger=LostFocus}" IsVisible="{Binding HasEC}"
+                         ToolTip.Tip="Encryption Constant (Gen 6+), hexadecimal" />
+                <TextBlock Grid.Row="3" Text="Marcações" VerticalAlignment="Center" IsVisible="{Binding HasMarkings}" />
+                <ItemsControl Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Markings}" IsVisible="{Binding HasMarkings}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:MarkingViewModel">
+                      <Button Classes="marking" Classes.on="{Binding IsOn}" Classes.pink="{Binding IsPink}" Content="{Binding Symbol}"
+                              Command="{Binding ToggleCommand}" ToolTip.Tip="Clique para marcar (Gen 7+: azul → rosa → nenhuma)" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Grid.Row="4" Grid.Column="1" Classes="small" Content="★  Tornar shiny" Command="{Binding MakeShinyCommand}"
+                        ToolTip.Tip="{Binding ShinyTip}" ToolTip.ShowOnDisabled="True" />
               </Grid>
-              <TextBlock Text="Fitas, memórias e Hyper Training: em breve." Classes="muted" FontSize="12" Margin="0,12,0,0" />
+              <TextBlock Text="Fitas e memórias: em breve." Classes="muted" FontSize="12" Margin="0,12,0,0" />
             </StackPanel>
           </Border>
         </StackPanel>

@@ -1,4 +1,4 @@
-"""Gera PKHeX.Modern/Assets/item-info.json a partir dos dados do AllGenWiki (projeto HoennKantoWiki).
+"""Gera PKHeX.Modern/Assets/item-info.json e text-info.json a partir dos dados do AllGenWiki (projeto HoennKantoWiki).
 
 Uso: python Tools/build_item_info.py [caminho do HoennKantoWiki]
 
@@ -6,6 +6,9 @@ Junta, por item e por geracao:
 - descricao em portugues (data/genN/item-descriptions.json);
 - como obter itens-chave (data/genN/key-items.json);
 - onde encontrar itens de evolucao por versao (data/genN/item-locations.json).
+
+E, em text-info.json, a descricao em portugues de golpes e habilidades por geracao
+(data/genN/i18n/pt.json), guardando o texto so nas geracoes em que ele muda.
 
 A chave e o nome em ingles so com letras e numeros, minusculo ("King's Rock" -> "kingsrock"),
 que e como o app procura pelo nome do item do PKHeX.
@@ -79,3 +82,27 @@ os.makedirs(os.path.dirname(out), exist_ok=True)
 with open(out, 'w', encoding='utf-8') as f:
     json.dump(dict(sorted(items.items())), f, ensure_ascii=False, separators=(',', ':'))
 print(f'{len(items)} itens -> {os.path.normpath(out)} ({os.path.getsize(out) // 1024} KB)')
+
+# Golpes e habilidades: {"moves": {chave: {geracao: texto}}, "abilities": {...}}
+texts = {'moves': {}, 'abilities': {}}
+folders = sorted(glob.glob(os.path.join(wiki, 'data', 'gen*')), key=lambda f: int(re.search(r'gen(\d+)$', f).group(1)) if re.search(r'gen(\d+)$', f) else 0)
+for folder in folders:
+    m = re.search(r'gen(\d+)$', folder)
+    path = os.path.join(folder, 'i18n', 'pt.json')
+    if not m or not os.path.exists(path):
+        continue
+    gen = m.group(1)
+    pt = load(path)
+    for kind in texts:
+        for slug, text in (pt.get(kind) or {}).items():
+            if not isinstance(text, str) or not text.strip():
+                continue
+            byGen = texts[kind].setdefault(key(slug), {})
+            last = byGen[max(byGen, key=int)] if byGen else None
+            if text.strip() != last:
+                byGen[gen] = text.strip()
+
+out2 = os.path.join(os.path.dirname(out), 'text-info.json')
+with open(out2, 'w', encoding='utf-8') as f:
+    json.dump({k: dict(sorted(v.items())) for k, v in texts.items()}, f, ensure_ascii=False, separators=(',', ':'))
+print(f"{len(texts['moves'])} golpes, {len(texts['abilities'])} habilidades -> {os.path.normpath(out2)} ({os.path.getsize(out2) // 1024} KB)")

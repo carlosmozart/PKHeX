@@ -38,6 +38,10 @@ public static class HelpContent
         [
             new("Abas", "Visão geral, Atributos, Golpes, Encontro, Treinador e Extras. A aba aberta continua a mesma ao trocar de slot. As mudanças só vão para o save ao clicar em “Aplicar alterações”."),
             new("Busca enquanto digita", "Espécie, item e golpes têm sugestões. Os golpes que o Pokémon aprende aparecem em verde, no topo da lista."),
+            new("Descrições em português", "Golpes, habilidades e itens mostram a descrição em português da geração do save (passe o mouse; nos golpes, ela aparece embaixo). Os textos vêm do AllGenWiki."),
+            new("Habilidade, forma e Tera Type", "Escolhidos em listas na Visão geral. A habilidade oculta aparece marcada; a forma só lista as que existem no jogo; o Tera Type (Scarlet/Violet) funciona como as Tera Shards."),
+            new("Extras", "PID e EC editáveis em hexadecimal (valem ao sair do campo), marcações ●▲■♥★◆ (na Gen 7+ cada clique alterna azul → rosa → nenhuma) e Tornar shiny."),
+            new("Hyper Training", "Na aba Atributos (Gen 7+): marca o atributo como treinado, contando como IV 31. Exige nível 100 (50 em Scarlet/Violet)."),
             new("Legalidade e correções", "O cartão de legalidade lista os problemas e oferece correções de um clique: golpes sugeridos, golpes de reaprender, encontro sugerido e IVs máximos."),
             new("✨ Legalizar", "Gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny), mantendo natureza, nível, item, apelido e golpes quando possível."),
             new("Showdown", "“Colar Showdown” importa um set da área de transferência; “Copiar Showdown” exporta o Pokémon."),
@@ -46,7 +50,10 @@ public static class HelpContent
         new("🛡", "Modo legal",
         [
             new("O que faz", "Chave na barra lateral, ligada por padrão. O editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo) e desfaz na hora qualquer mudança que deixaria o Pokémon ilegal, explicando o motivo."),
-            new("Aplicar só legal", "Um Pokémon ilegal não pode ser aplicado; use ✨ Legalizar ou as correções sugeridas. Trocar a espécie ou colar um set Showdown legaliza sozinho."),
+            new("Opções legais", "Habilidade e Tera Type só listam o que o encontro permite; formas de batalha somem da lista. Na Gen 3–5 a habilidade vem do PID: para trocar, use ✨ Legalizar."),
+            new("Trocar encontro", "Na aba Encontro, local e nível ficam travados: escolha um encontro real deste jogo na lista “Trocar encontro” e o Pokémon é gerado de novo a partir dele, mantendo natureza, nível, item, apelido e golpes quando possível."),
+            new("Shiny", "“Tornar shiny” fica bloqueado quando o encontro nunca é shiny (shiny lock). Nos outros, o Pokémon é gerado de novo já shiny, com PID/IV corretos."),
+            new("Aplicar só legal", "Um Pokémon ilegal não pode ser aplicado; use ✨ Legalizar ou as correções sugeridas. Trocar a espécie, a forma ou colar um set Showdown legaliza sozinho."),
             new("Pokémon de fora", "Arquivo .pk*, bank ou outro save: se chegar ilegal ao save aberto, o app oferece “✨ Legalizar” ou “Trazer como está”."),
             new("Desligado", "Vale qualquer valor, como no PKHeX clássico. Use com cuidado."),
         ]),

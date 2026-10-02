@@ -495,6 +495,181 @@ public static class CoreAdapter
     /// Troca a especie como o PKHeX original: forma 0, apelido padrao (se nao tinha apelido),
     /// habilidade no mesmo slot e genero valido para a nova especie.
     /// </summary>
+    // Marcacoes (●▲■♥★◆). Gen 3 tem 4 (ordem ●■▲♥); Gen 4-6, 6 liga/desliga; Gen 7+, 6 com cor (azul/rosa).
+    public static int GetMarkingCount(PKM pk) => pk is IAppliedMarkings m ? m.MarkingCount : 0;
+
+    public static string GetMarkingSymbol(PKM pk, int index) => pk is IAppliedMarkings3 and not IAppliedMarkings4
+        ? (index switch { 0 => "●", 1 => "■", 2 => "▲", _ => "♥" })
+        : (index switch { 0 => "●", 1 => "▲", 2 => "■", 3 => "♥", 4 => "★", _ => "◆" });
+
+    /// <summary>0 = desligada, 1 = ligada (azul), 2 = rosa.</summary>
+    public static int GetMarking(PKM pk, int index) => pk switch
+    {
+        IAppliedMarkings<bool> b => b.GetMarking(index) ? 1 : 0,
+        IAppliedMarkings<MarkingColor> c => c.GetMarking(index) switch { MarkingColor.Blue => 1, MarkingColor.Pink => 2, _ => 0 },
+        _ => 0,
+    };
+
+    public static void CycleMarking(PKM pk, int index)
+    {
+        switch (pk)
+        {
+            case IAppliedMarkings<bool> b:
+                b.SetMarking(index, !b.GetMarking(index));
+                break;
+            case IAppliedMarkings<MarkingColor> c:
+                c.SetMarking(index, c.GetMarking(index) switch { MarkingColor.None => MarkingColor.Blue, MarkingColor.Blue => MarkingColor.Pink, _ => MarkingColor.None });
+                break;
+        }
+    }
+
+    // Hyper Training: indice na ordem da interface (PS, Atq, Def, AtE, DeE, Vel)
+    public static bool GetHyperTrain(IHyperTrain h, int index) => index switch
+    {
+        0 => h.HT_HP, 1 => h.HT_ATK, 2 => h.HT_DEF, 3 => h.HT_SPA, 4 => h.HT_SPD, _ => h.HT_SPE,
+    };
+
+    public static void SetHyperTrain(IHyperTrain h, int index, bool value)
+    {
+        switch (index)
+        {
+            case 0: h.HT_HP = value; break;
+            case 1: h.HT_ATK = value; break;
+            case 2: h.HT_DEF = value; break;
+            case 3: h.HT_SPA = value; break;
+            case 4: h.HT_SPD = value; break;
+            default: h.HT_SPE = value; break;
+        }
+        if (h is PKM pk)
+            pk.ResetPartyStats();
+    }
+
+    /// <summary>A mudanca deixa o Pokemon legal? Testa numa copia (filtros do modo legal).</summary>
+    public static bool IsLegalWith(PKM pk, Action<PKM> change)
+    {
+        try
+        {
+            var copy = pk.Clone();
+            change(copy);
+            return new LegalityAnalysis(copy).Valid;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Habilidades da especie/forma: valor = indice (0, 1 ou 2 = oculta).</summary>
+    public static IReadOnlyList<ComboItem> GetAbilityOptions(PKM pk)
+    {
+        var p = pk.PersonalInfo;
+        var current = GetAbilityIndex(pk);
+        var list = new List<ComboItem>();
+        var byId = new Dictionary<int, int>(); // habilidade -> posicao na lista (slots repetidos viram uma opcao)
+        for (int i = 0; i < p.AbilityCount; i++)
+        {
+            var id = p.GetAbilityAtIndex(i);
+            if (id <= 0 || id >= AbilityNames.Count)
+                continue;
+            var item = new ComboItem(i == 2 ? $"{AbilityNames[id]} (oculta)" : AbilityNames[id], i);
+            if (byId.TryGetValue(id, out var at))
+            {
+                if (i == current)
+                    list[at] = item; // mesmo nome nos dois slots: fica o slot que o Pokemon usa
+                continue;
+            }
+            byId[id] = list.Count;
+            list.Add(item);
+        }
+        return list;
+    }
+
+    /// <summary>Indice da habilidade atual (0, 1 ou 2), pelo AbilityNumber (1, 2, 4).</summary>
+    public static int GetAbilityIndex(PKM pk) => pk.AbilityNumber switch { 2 => 1, 4 => 2, _ => 0 };
+
+    public static void SetAbilityIndex(PKM pk, int index) => pk.SetAbilityIndex(index);
+
+    /// <summary>Formas da especie que existem no jogo do Pokemon (valor = forma). Vazio se a especie so tem uma.</summary>
+    /// <param name="table">Tabela do jogo do save (formas presentes neste jogo).</param>
+    public static IReadOnlyList<ComboItem> GetFormOptions(PKM pk, IPersonalTable table, bool hideBattleOnly)
+    {
+        if (pk.Species > table.MaxSpeciesID)
+            return [];
+        // A lista de nomes do Core inclui formas que a tabela de atributos nao separa (ex.: as letras do Unown).
+        string[] names;
+        try { names = FormConverter.GetFormList(pk.Species, GameInfo.Strings.types, GameInfo.Strings.forms, GameInfo.GenderSymbolUnicode, pk.Context); }
+        catch { names = []; }
+        var tableCount = table.GetFormEntry(pk.Species, 0).FormCount;
+        var count = Math.Max(names.Length, (int)tableCount);
+        if (count <= 1)
+            return [];
+        var list = new List<ComboItem>();
+        for (byte f = 0; f < count; f++)
+        {
+            if (f < tableCount && !table.IsPresentInGame(pk.Species, f))
+                continue;
+            if (hideBattleOnly && f != pk.Form && FormInfo.IsBattleOnlyForm(pk.Species, f, pk.Format))
+                continue;
+            var name = f < names.Length ? names[f] : "";
+            list.Add(new ComboItem(string.IsNullOrWhiteSpace(name) ? $"Forma {f}" : name, f));
+        }
+        return list.Count > 1 ? list : [];
+    }
+
+    /// <summary>Troca a forma mantendo o slot da habilidade e o genero coerente.</summary>
+    public static void SetForm(PKM pk, byte form)
+    {
+        if (pk.Form == form)
+            return;
+        var slot = GetAbilityIndex(pk);
+        pk.Form = form;
+        pk.RefreshAbility(slot);
+        pk.Gender = pk.GetSaneGender();
+    }
+
+    /// <summary>Tera Types (18 tipos + Stellar), valor = numero do tipo.</summary>
+    public static IReadOnlyList<ComboItem> GetTeraOptions()
+    {
+        var names = GameInfo.Strings.types;
+        var list = new List<ComboItem>();
+        for (int t = 0; t <= TeraTypeUtil.MaxType && t < names.Length; t++)
+            list.Add(new ComboItem(names[t], t));
+        list.Add(new ComboItem("Stellar", TeraTypeUtil.Stellar));
+        return list;
+    }
+
+    /// <summary>Tera Type atual (o trocado com Tera Shards, se houver; senao o original).</summary>
+    public static int GetTeraType(PKM pk) => pk is ITeraType t ? (int)t.GetTeraType() : -1;
+
+    /// <summary>Troca o Tera Type como as Tera Shards: guarda no "override" (voltar ao original limpa o override).</summary>
+    public static void SetTeraType(PKM pk, int type)
+    {
+        if (pk is not ITeraType t)
+            return;
+        t.TeraTypeOverride = type == (int)t.TeraTypeOriginal ? (MoveType)TeraTypeUtil.OverrideNone : (MoveType)type;
+    }
+
+    /// <summary>O encontro reconhecido nunca e shiny (ex.: lendarios com shiny lock).</summary>
+    public static bool IsShinyLocked(PKM pk)
+    {
+        try { return new LegalityAnalysis(pk).EncounterMatch.Shiny == Shiny.Never; }
+        catch { return false; }
+    }
+
+    /// <summary>Descricao do encontro reconhecido pela analise de legalidade.</summary>
+    public static string GetCurrentEncounterLabel(PKM pk)
+    {
+        try
+        {
+            var enc = new LegalityAnalysis(pk).EncounterMatch;
+            return enc is IEncounterInfo info && enc is not EncounterInvalid ? EncounterDatabase.GetShortLabel(info) : "não reconhecido";
+        }
+        catch
+        {
+            return "não reconhecido";
+        }
+    }
+
     public static void ChangeSpecies(PKM pk, ushort species)
     {
         if (pk.Species == species)

@@ -89,3 +89,51 @@ public static class ItemInfo
         return byGen[best.ToString()];
     }
 }
+
+/// <summary>
+/// Descricao em portugues de golpes e habilidades por geracao, do AllGenWiki (Assets/text-info.json,
+/// gerado por Tools/build_item_info.py). O texto so e guardado quando muda de uma geracao para outra.
+/// </summary>
+public static class GameText
+{
+    private static Dictionary<string, Dictionary<string, Dictionary<string, string>>>? _data;
+    private static readonly object Lock = new();
+
+    private static Dictionary<string, Dictionary<string, Dictionary<string, string>>> Data
+    {
+        get
+        {
+            lock (Lock)
+                return _data ??= Load();
+        }
+    }
+
+    private static Dictionary<string, Dictionary<string, Dictionary<string, string>>> Load()
+    {
+        try
+        {
+            using var stream = typeof(GameText).Assembly.GetManifestResourceStream("text-info.json");
+            return stream is null ? [] : JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(stream) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public static string? GetMove(string? name, int generation) => Get("moves", name, generation);
+    public static string? GetAbility(string? name, int generation) => Get("abilities", name, generation);
+
+    /// <summary>Texto da geracao pedida ou da ultima mudanca antes dela; se o golpe so existe depois, o primeiro texto.</summary>
+    private static string? Get(string kind, string? name, int generation)
+    {
+        if (string.IsNullOrWhiteSpace(name) || !Data.TryGetValue(kind, out var all))
+            return null;
+        var key = new string([.. name.ToLowerInvariant().Where(char.IsAsciiLetterOrDigit)]);
+        if (!all.TryGetValue(key, out var byGen) || byGen.Count == 0)
+            return null;
+        var gens = byGen.Keys.Select(k => int.TryParse(k, out var g) ? g : 0).OrderBy(g => g).ToList();
+        var best = gens.LastOrDefault(g => g <= generation);
+        return byGen[(best == 0 ? gens[0] : best).ToString()];
+    }
+}

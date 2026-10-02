@@ -55,11 +55,13 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 **Editor de Pokémon** (abas: Visão geral, Atributos, Golpes, Encontro, Treinador, Extras)
 - Espécie, item e golpes com **busca enquanto digita**; na lista de golpes, os que o Pokémon aprende ficam no topo, em verde.
 - Golpes com tipo colorido, barra de PP e PP Ups.
-- Gráfico radar dos atributos, sliders de IV/EV e ▲/▼ da natureza.
-- Bola, local, nível e data de encontro; treinador original; felicidade, PID/EC e "Tornar shiny".
+- Golpes e habilidades com a **descrição em português** (dados do AllGenWiki), na lista e no campo.
+- Habilidade (inclusive a oculta), **forma** e **Tera Type** (Scarlet/Violet) escolhidos em listas.
+- Gráfico radar dos atributos, sliders de IV/EV, ▲/▼ da natureza e **Hyper Training** (Gen 7+).
+- Bola, local, nível e data de encontro; treinador original; felicidade, **PID/EC editáveis**, **marcações** (●▲■♥★◆, com azul/rosa na Gen 7+) e "Tornar shiny".
 - **Verificar legalidade** (barra inferior): confere o save inteiro e mostra o resultado numa janela.
 - **Legalidade** no editor: lista os problemas e avisos e oferece correções de um clique, inclusive **Legalizar**, que gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny) mantendo natureza, nível, item, apelido e golpes.
-- **Modo legal** (chave na barra lateral, ligado por padrão): o editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo), desfaz na hora qualquer mudança que deixaria o Pokémon ilegal (explicando o motivo) e só deixa **Aplicar** um Pokémon legal. Trocar a espécie ou colar um set Showdown legaliza automaticamente. Pokémon **de fora** (arquivo `.pk*`, bank ou outro save) que chega ilegal ao save aberto ganha a opção **✨ Legalizar** ou **Trazer como está**. Desligado, vale qualquer valor.
+- **Modo legal** (chave na barra lateral, ligado por padrão): o editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo), desfaz na hora qualquer mudança que deixaria o Pokémon ilegal (explicando o motivo) e só deixa **Aplicar** um Pokémon legal. Habilidade, forma e Tera Type só listam o que é legal; em vez de mexer em local e nível, a aba Encontro oferece **Trocar encontro** (gera de novo a partir de um encontro real escolhido); "Tornar shiny" fica bloqueado em encontros com shiny lock e, nos outros, gera de novo já shiny. Trocar a espécie, a forma ou colar um set Showdown legaliza automaticamente. Pokémon **de fora** (arquivo `.pk*`, bank ou outro save) que chega ilegal ao save aberto ganha a opção **✨ Legalizar** ou **Trazer como está**. Desligado, vale qualquer valor.
 - **Evoluir por troca** (Kadabra, Onix + Metal Coat, Shelmet/Karrablast...), sem precisar de um segundo jogo; da Gen 6 em diante registra o parceiro de troca para o Pokémon continuar legal.
 - Colar e copiar no formato **Showdown**.
 

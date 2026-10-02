@@ -13,6 +13,14 @@ Formato: "## versão — data", "### seção", "- item".
 - Mudanças que deixariam o Pokémon ilegal são desfeitas na hora, com o motivo na barra de status.
 - **Aplicar** só grava Pokémon legal; trocar a espécie ou colar um set Showdown legaliza sozinho.
 - Pokémon **de fora** (arquivo .pk*, bank ou outro save) que chega ilegal ao save aberto ganha a opção **✨ Legalizar** ou **Trazer como está**.
+- Habilidade, forma e Tera Type só listam opções legais; formas de batalha somem da lista.
+- **Trocar encontro** (aba Encontro): escolha um encontro real e o Pokémon é gerado de novo a partir dele, em vez de mexer em local e nível à mão.
+- **Tornar shiny** fica bloqueado em encontros com shiny lock e, nos outros, gera de novo já shiny com PID/IV corretos.
+
+### ✏️ Editor
+- **Habilidade** escolhida numa lista (com a oculta), **forma** e **Tera Type** (Scarlet/Violet).
+- **PID e EC editáveis**, **marcações** (●▲■♥★◆, azul/rosa na Gen 7+) e **Hyper Training** (Gen 7+).
+- Descrição em português de **golpes e habilidades** (AllGenWiki), na lista e no campo.
 
 ### 🎮 Selo do jogo
 - O Pokémon da capa nas cores da versão identifica cada save no Save Manager e no cartão do save aberto.

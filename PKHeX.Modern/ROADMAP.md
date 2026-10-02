@@ -15,8 +15,9 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Verificar atualizações**: consulta as releases `modern-v*` do GitHub ao abrir (desligável) e mostra aviso com link.
 - [x] **Atualização automática**: baixa o zip da release, confere o SHA-256 do GitHub, troca o exe (o antigo vira `.old`) e oferece reiniciar; reabre o save. Desligável em Ajuda › Sobre.
 - [x] **Mochila com ícones** (e no item segurado do editor), com descrição em PT e onde conseguir vindas do AllGenWiki (`Tools/build_item_info.py`).
-- [ ] Usar mais dados do AllGenWiki: descrição de golpes e habilidades, locais de encontro em PT.
-- [ ] Modo legal, etapa 2: filtrar também local de encontro, habilidade e formas; desabilitar "Tornar shiny" em encontros shiny-locked.
+- [x] **Descrição de golpes e habilidades** em PT (AllGenWiki, `Assets/text-info.json`).
+- [ ] Usar mais dados do AllGenWiki: locais de encontro em PT, onde conseguir TMs.
+- [x] **Modo legal, etapa 2**: habilidade, forma e Tera Type só com opções legais; "Trocar encontro" no lugar de local/nível; "Tornar shiny" bloqueado com shiny lock e, nos outros, legaliza já shiny.
 - [x] **Mensagens dentro do app**: pergunta sobreposta na janela (Enter confirma, Esc cancela) ao copiar/importar por cima de um Pokémon, trocar de slot com edição não aplicada, abrir outro save ou fechar o app com alterações não exportadas. Aviso "● Alterações não exportadas" na barra lateral.
 - [x] **Bancos de encontros e Mystery Gift em cartões** (páginas "Encontros" e "Eventos"): busca por espécie ou texto, filtro "Só deste jogo", detalhes no tooltip, "Usar" gera o Pokémon no editor (slot vazio).
 - [ ] Bancos: painel de detalhes ao lado (golpes, IVs garantidos, bola, shiny lock), filtros por golpe/versão e rótulo de gifts do HOME.
@@ -59,8 +60,9 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [x] Actions do workflow atualizadas para versões com Node.js 24 (checkout v7, setup-dotnet v6, upload-artifact v7, action-gh-release v3).
 - [x] **Cor de destaque configurável**: bolinhas na barra lateral (vermelho, ciano, azul, roxo, verde, laranja), salva nas preferências e aplicada nos temas claro e escuro.
 - [x] **Legalizar também com avisos** ("Fishy"): o cartão de legalidade lista os avisos e oferece o Legalizar.
-- [ ] **Editor mais completo**: fitas, memórias, Hyper Training, Tera Type, formas, PID/EC editáveis, contest stats e marcações. (OT, ID, bola, encontro e "Tornar shiny" já estão nas abas.)
-- [ ] **Pokédex**, **Batch Editor**, **banco de dados / pesquisa** (dos Pokémon salvos), **editores específicos de cada jogo** (eventos, flags, records).
+- [x] **Editor, parte 1**: habilidade em lista, formas, Tera Type, PID/EC editáveis, marcações e Hyper Training.
+- [ ] **Editor, parte 2**: fitas, memórias, contest stats, Dynamax/Gigantamax, alpha/nobre.
+- [ ] **Batch Editor**, **banco de dados / pesquisa** (dos Pokémon salvos), **editores específicos de cada jogo** (eventos, flags, records).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [x] **Backup automático**: antes de salvar por cima de um save, o arquivo anterior vai para `%APPDATA%\PKHeX.Modern\backups` (20 mais recentes por save; botão "Backups" no Save Manager).
 - [x] **Publicação**: perfil `win-x64` (um único `PKHeX.Modern.exe`, sem precisar do .NET) e GitHub Action `.github/workflows/modern-build.yml` (artefato a cada push no `modern-ui`; Release com o zip em tags `modern-v*`).

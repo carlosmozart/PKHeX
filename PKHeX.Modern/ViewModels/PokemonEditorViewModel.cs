@@ -51,7 +51,11 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         ApplyCommand = new RelayCommand(Apply, () => CanApply);
         MaxIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; });
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
-        MakeShinyCommand = new RelayCommand(() => { _pk.SetShiny(); RaiseAll(); });
+        MakeShinyCommand = new RelayCommand(MakeShiny, () => CanMakeShiny);
+        Markings = [.. Enumerable.Range(0, CoreAdapter.GetMarkingCount(_pk)).Select(i => new MarkingViewModel(() => _pk, i, Refresh))];
+        HyperTraining = _pk is IHyperTrain
+            ? [.. Enumerable.Range(0, 6).Select(i => new HyperTrainViewModel(() => _pk, i, StatLabelsShort[i], Refresh))]
+            : [];
         LegalizeCommand = new RelayCommand(() => _ = LegalizeAsync(), () => !IsLegalizing);
         SuggestMovesCommand = new RelayCommand(() => Fix("Golpes sugeridos", pk => CoreAdapter.SuggestMoves(pk)));
         SuggestRelearnCommand = new RelayCommand(() => Fix("Golpes de reaprender", pk => CoreAdapter.SuggestRelearnMoves(pk)));
@@ -175,7 +179,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             {
                 // Modo legal: so os golpes que o Pokemon aprende de forma legal.
                 if (!string.IsNullOrWhiteSpace(names[i]) && (learn[i] || !LegalMode))
-                    list.Add(new MoveOption(i, names[i], learn[i]));
+                    list.Add(new MoveOption(i, names[i], learn[i], _pk.Format));
             }
             _moveOptions = [.. list.OrderByDescending(o => o.IsLearnable).ThenBy(o => o.Name, StringComparer.CurrentCultureIgnoreCase)];
             return _moveOptions;
@@ -217,7 +221,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     /// apelido e golpes quando possivel. Roda em segundo plano (na Gen 3/4 a busca de PID pode levar alguns segundos).
     /// </summary>
     /// <param name="restore">Modo legal: versao para voltar se nao der para legalizar (troca de especie, Showdown).</param>
-    private async Task LegalizeAsync(PKM? restore = null)
+    /// <param name="only">Gerar a partir deste encontro (lista "Trocar encontro").</param>
+    private async Task LegalizeAsync(PKM? restore = null, IEncounterInfo? only = null)
     {
         if (_sav is null)
         {
@@ -232,7 +237,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         {
             var current = _pk.Clone();
             var sav = _sav;
-            var (result, message) = await Task.Run(() => (EncounterDatabase.Legalize(sav, current, out var m), m));
+            var (result, message) = await Task.Run(() => (EncounterDatabase.Legalize(sav, current, out var m, default, only), m));
             if (result is null)
             {
                 RestoreAfterFailedLegalize(restore);
@@ -445,26 +450,246 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         set { if (value is not null && !_ballReselect) { _pk.Ball = (byte)value.Value; Refresh(); } }
     }
 
-    /// <summary>Recalcula a lista de bolas quando especie/encontro mudam (so no modo legal ela depende do Pokemon).</summary>
+    /// <summary>
+    /// Recalcula as listas que dependem do Pokemon (bola, habilidade, forma, Tera Type) quando especie/encontro mudam.
+    /// No modo legal, cada opcao e testada numa copia e so ficam as legais (mais a atual).
+    /// </summary>
     private void RefreshBalls()
     {
-        object key = LegalMode ? (_pk.Species, _pk.Form, _pk.Version, _pk.MetLocation, _pk.MetLevel, _pk.IsEgg, _pk.Ball, IsLegal) : "all";
+        object key = (LegalMode, IsLegal, (_pk.Species, _pk.Form, _pk.Version, _pk.MetLocation, _pk.MetLevel, _pk.IsEgg),
+            (_pk.Ball, _pk.PID, _pk.AbilityNumber, CoreAdapter.GetTeraType(_pk)));
         if (key.Equals(_ballKey))
             return;
         _ballKey = key;
+        bool filter = LegalMode && IsLegal;
+        IReadOnlyList<ComboItem> balls;
         if (!LegalMode)
-            BallList = _allBalls;
+            balls = _allBalls;
         else
         {
             var legal = CoreAdapter.GetLegalBalls(_pk);
-            BallList = [.. _allBalls.Where(b => legal.Contains(b.Value) || b.Value == _pk.Ball)];
+            balls = [.. _allBalls.Where(b => legal.Contains(b.Value) || b.Value == _pk.Ball)];
         }
-        Raise(nameof(BallList));
-        // A ComboBox perde a selecao quando a lista muda: limpa e seleciona de novo depois do layout.
+        var abilityIndex = CoreAdapter.GetAbilityIndex(_pk);
+        IReadOnlyList<ComboItem> abilities = [.. CoreAdapter.GetAbilityOptions(_pk)
+            .Where(a => !filter || a.Value == abilityIndex || CoreAdapter.IsLegalWith(_pk, p => CoreAdapter.SetAbilityIndex(p, a.Value)))];
+        var forms = _sav is null ? [] : CoreAdapter.GetFormOptions(_pk, _sav.Personal, hideBattleOnly: LegalMode);
+        var tera = CoreAdapter.GetTeraType(_pk);
+        IReadOnlyList<ComboItem> teras = tera < 0 ? [] : [.. CoreAdapter.GetTeraOptions()
+            .Where(t => !filter || t.Value == tera || CoreAdapter.IsLegalWith(_pk, p => CoreAdapter.SetTeraType(p, t.Value)))];
+        IsShinyLocked = LegalMode && !_pk.IsShiny && CoreAdapter.IsShinyLocked(_pk);
+        CurrentEncounter = CoreAdapter.GetCurrentEncounterLabel(_pk);
+        foreach (var p in (string[])[nameof(IsShinyLocked), nameof(CanMakeShiny), nameof(ShinyTip), nameof(CurrentEncounter), nameof(AbilityTip)])
+            Raise(p);
+        MakeShinyCommand.NotifyCanExecuteChanged();
+
+        // So troca a lista se o conteudo mudou: a ComboBox perde a selecao (e devolve a antiga) quando recebe outra lista.
+        var changed = new List<string>();
+        if (!SameItems(BallList, balls)) { BallList = balls; changed.Add(nameof(BallList)); }
+        if (!SameItems(AbilityOptions, abilities)) { AbilityOptions = abilities; changed.Add(nameof(AbilityOptions)); }
+        if (!SameItems(FormOptions, forms)) { FormOptions = forms; changed.AddRange([nameof(FormOptions), nameof(HasForms)]); }
+        if (!SameItems(TeraOptions, teras)) { TeraOptions = teras; changed.AddRange([nameof(TeraOptions), nameof(HasTera)]); }
+        if (changed.Count == 0)
+        {
+            RaiseSelections();
+            return;
+        }
+        // Ignora o que a ComboBox devolver enquanto troca de lista; depois do layout, seleciona de novo.
         _ballReselect = true;
-        Raise(nameof(Ball));
-        Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ballReselect = false; Raise(nameof(Ball)); }, Avalonia.Threading.DispatcherPriority.Background);
+        foreach (var p in changed)
+            Raise(p);
+        RaiseSelections();
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ballReselect = false; RaiseSelections(); }, Avalonia.Threading.DispatcherPriority.Background);
     }
+
+    private static bool SameItems(IReadOnlyList<ComboItem> a, IReadOnlyList<ComboItem> b)
+    {
+        if (a.Count != b.Count)
+            return false;
+        for (int i = 0; i < a.Count; i++)
+        {
+            if (a[i].Value != b[i].Value || a[i].Text != b[i].Text)
+                return false;
+        }
+        return true;
+    }
+
+    private void RaiseSelections()
+    {
+        foreach (var p in (string[])[nameof(Ball), nameof(SelectedAbility), nameof(SelectedForm), nameof(SelectedTera)])
+            Raise(p);
+    }
+
+    // Habilidade
+    public IReadOnlyList<ComboItem> AbilityOptions { get; private set; } = [];
+    public ComboItem? SelectedAbility
+    {
+        get => _ballReselect ? null : Find(AbilityOptions, CoreAdapter.GetAbilityIndex(_pk));
+        set
+        {
+            if (value is null || _ballReselect || value.Value == CoreAdapter.GetAbilityIndex(_pk))
+                return;
+            CoreAdapter.SetAbilityIndex(_pk, value.Value);
+            RaiseAll();
+        }
+    }
+    /// <summary>Descricao da habilidade (AllGenWiki) e, na Gen 3-5, o aviso de que ela vem do PID.</summary>
+    public string? AbilityTip
+    {
+        get
+        {
+            var text = GameText.GetAbility(AbilityName, _pk.Format);
+            if (LegalMode && _pk.Format <= 5 && AbilityOptions.Count > 1)
+                text = (text is null ? "" : text + "\n\n") + "Na Gen 3–5 a habilidade depende do PID: para trocar mantendo legal, use ✨ Legalizar.";
+            return text;
+        }
+    }
+
+    // Forma
+    public IReadOnlyList<ComboItem> FormOptions { get; private set; } = [];
+    public bool HasForms => FormOptions.Count > 1;
+    public ComboItem? SelectedForm
+    {
+        get => _ballReselect ? null : Find(FormOptions, _pk.Form);
+        set
+        {
+            if (value is null || _ballReselect || value.Value == _pk.Form)
+                return;
+            // Outra forma costuma ser outro encontro: no modo legal, gera de novo (ou volta se nao der).
+            var before = _pk.Clone();
+            _guardSuspended = LegalMode;
+            CoreAdapter.SetForm(_pk, (byte)value.Value);
+            _isNew = false;
+            RaiseAll();
+            LegalizeOrRestore(before);
+        }
+    }
+
+    // Tera Type (Scarlet/Violet)
+    public IReadOnlyList<ComboItem> TeraOptions { get; private set; } = [];
+    public bool HasTera => TeraOptions.Count > 0;
+    public ComboItem? SelectedTera
+    {
+        get => _ballReselect ? null : Find(TeraOptions, CoreAdapter.GetTeraType(_pk));
+        set
+        {
+            if (value is null || _ballReselect || value.Value == CoreAdapter.GetTeraType(_pk))
+                return;
+            CoreAdapter.SetTeraType(_pk, value.Value);
+            Refresh();
+        }
+    }
+
+    // Shiny
+    /// <summary>Modo legal: o encontro nunca e shiny (shiny lock).</summary>
+    public bool IsShinyLocked { get; private set; }
+    public bool CanMakeShiny => !_pk.IsShiny && !IsShinyLocked && !CoreAdapter.IsEmpty(_pk);
+    public string ShinyTip => _pk.IsShiny ? "Já é shiny."
+        : IsShinyLocked ? "Modo legal: este encontro nunca é shiny (shiny lock)."
+        : LegalMode ? "Gera de novo a partir do encontro já como shiny, mantendo natureza, nível, item e golpes."
+        : "Gera um PID shiny (na Gen 3/4 a natureza pode mudar).";
+
+    private void MakeShiny()
+    {
+        if (!LegalMode)
+        {
+            _pk.SetShiny();
+            RaiseAll();
+            return;
+        }
+        // Modo legal: shiny no PID costuma quebrar a correlacao PID/IV; o Legalizar refaz pedindo shiny.
+        var before = _pk.Clone();
+        _guardSuspended = true;
+        _pk.SetShiny();
+        _isNew = false;
+        RaiseAll();
+        LegalizeOrRestore(before);
+    }
+
+    // Encontro (modo legal: escolher outro encontro real em vez de mexer em local/nivel)
+    public string CurrentEncounter { get; private set; } = "";
+    private (ushort, byte)? _encounterKey;
+    private IReadOnlyList<EncounterChoice> _encounterOptions = [];
+    /// <summary>Encontros possiveis da especie/forma neste jogo (calculado so quando a aba Encontro aparece).</summary>
+    public IReadOnlyList<EncounterChoice> EncounterOptions
+    {
+        get
+        {
+            var key = (_pk.Species, _pk.Form);
+            if (_sav is null || CoreAdapter.IsEmpty(_pk))
+                return [];
+            if (key != _encounterKey)
+            {
+                _encounterKey = key;
+                try
+                {
+                    _encounterOptions = [.. EncounterDatabase.SearchEncounters(_sav, _pk.Species, onlyThisGame: true)
+                        .Where(e => e.Form == _pk.Form || e is MysteryGift)
+                        .Take(80)
+                        .Select(e => new EncounterChoice(EncounterDatabase.GetShortLabel(e), e))
+                        .DistinctBy(c => c.Label)];
+                }
+                catch
+                {
+                    _encounterOptions = [];
+                }
+            }
+            return _encounterOptions;
+        }
+    }
+    /// <summary>Escolher um encontro na lista gera o Pokemon de novo a partir dele (mantendo natureza, nivel, golpes...).</summary>
+    public EncounterChoice? SelectedEncounter
+    {
+        get => null;
+        set
+        {
+            if (value is null)
+                return;
+            var before = _pk.Clone();
+            _guardSuspended = true;
+            _ = LegalizeAsync(before, value.Encounter);
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => Raise(nameof(SelectedEncounter)), Avalonia.Threading.DispatcherPriority.Background);
+        }
+    }
+
+    // Marcacoes e Hyper Training
+    public IReadOnlyList<MarkingViewModel> Markings { get; }
+    public bool HasMarkings => Markings.Count > 0;
+    public IReadOnlyList<HyperTrainViewModel> HyperTraining { get; }
+    public bool HasHyperTraining => HyperTraining.Count > 0;
+    private static readonly string[] StatLabelsShort = ["PS", "Atq", "Def", "AtE", "DeE", "Vel"];
+
+    // PID / EC editaveis (hexadecimal, aplicado ao sair do campo)
+    public string PIDText
+    {
+        get => $"{_pk.PID:X8}";
+        set
+        {
+            if (uint.TryParse(value?.Trim(), System.Globalization.NumberStyles.HexNumber, null, out var v) && v != _pk.PID)
+            {
+                _pk.PID = v;
+                RaiseAll();
+            }
+            else
+                Raise();
+        }
+    }
+    public string ECText
+    {
+        get => $"{_pk.EncryptionConstant:X8}";
+        set
+        {
+            if (uint.TryParse(value?.Trim(), System.Globalization.NumberStyles.HexNumber, null, out var v) && v != _pk.EncryptionConstant)
+            {
+                _pk.EncryptionConstant = v;
+                RaiseAll();
+            }
+            else
+                Raise();
+        }
+    }
+    /// <summary>Gen 3-5 nao tem EC proprio (vem do PID).</summary>
+    public bool HasEC => _pk.Format >= 6;
     public ComboItem? MetLocation { get => Find(MetLocationList, _pk.MetLocation); set { if (value is not null) { _pk.MetLocation = (ushort)value.Value; Refresh(); } } }
     public int MetLevel { get => _pk.MetLevel; set { _pk.MetLevel = (byte)Math.Clamp(value, 0, 100); Refresh(); } }
     public bool HasMetDate => _pk.MetDate is not null;
@@ -502,6 +727,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             st.RaiseAll();
         foreach (var m in Moves)
             m.RaiseAll();
+        foreach (var h in HyperTraining)
+            h.RaiseAll();
+        foreach (var mk in Markings)
+            mk.RaiseAll();
     }
 
     public string AbilityName => (uint)_pk.Ability < CoreAdapter.AbilityNames.Count ? CoreAdapter.AbilityNames[_pk.Ability] : "?";
@@ -569,9 +798,53 @@ public sealed record TypeChip(string Name, uint Argb)
 
 /// <summary>Um golpe no editor: escolha do golpe, chip do tipo, barra de PP e PP Ups.</summary>
 /// <summary>Uma opcao da lista de golpes. <see cref="IsLearnable"/> = aprende oficialmente (fundo verde, no topo).</summary>
-public sealed record MoveOption(int Index, string Name, bool IsLearnable)
+public sealed record MoveOption(int Index, string Name, bool IsLearnable, int Generation = 9)
 {
+    /// <summary>Descricao em portugues (AllGenWiki), na lista de golpes.</summary>
+    public string? Tip => GameText.GetMove(Name, Generation);
     public override string ToString() => Name;
+}
+
+/// <summary>Um encontro possivel na lista "Trocar encontro" (modo legal).</summary>
+public sealed record EncounterChoice(string Label, IEncounterInfo Encounter)
+{
+    public override string ToString() => Label;
+}
+
+/// <summary>Uma marcacao (●▲■♥★◆). Gen 3-6: liga/desliga; Gen 7+: nenhuma → azul → rosa.</summary>
+public sealed class MarkingViewModel(Func<PKM> pk, int index, Action changed) : ViewModelBase
+{
+    public void RaiseAll() => Raise(string.Empty);
+    public string Symbol => CoreAdapter.GetMarkingSymbol(pk(), index);
+    /// <summary>0 = desligada, 1 = ligada/azul, 2 = rosa.</summary>
+    public int State => CoreAdapter.GetMarking(pk(), index);
+    public bool IsOn => State == 1;
+    public bool IsPink => State == 2;
+    public RelayCommand ToggleCommand => new(() =>
+    {
+        CoreAdapter.CycleMarking(pk(), index);
+        Raise(nameof(State)); Raise(nameof(IsOn)); Raise(nameof(IsPink));
+        changed();
+    });
+}
+
+/// <summary>Hyper Training de um atributo (Gen 7+): conta como IV 31 nos atributos.</summary>
+public sealed class HyperTrainViewModel(Func<PKM> pk, int index, string label, Action changed) : ViewModelBase
+{
+    public string Label { get; } = label;
+    public bool IsOn
+    {
+        get => pk() is IHyperTrain h && CoreAdapter.GetHyperTrain(h, index);
+        set
+        {
+            if (pk() is not IHyperTrain h || value == IsOn)
+                return;
+            CoreAdapter.SetHyperTrain(h, index, value);
+            Raise();
+            changed();
+        }
+    }
+    public void RaiseAll() => Raise(string.Empty);
 }
 
 public sealed class MoveSlotViewModel(Func<PKM> pk, int index, Func<IReadOnlyList<MoveOption>> options) : ViewModelBase
@@ -629,6 +902,8 @@ public sealed class MoveSlotViewModel(Func<PKM> pk, int index, Func<IReadOnlyLis
 
     /// <summary>O golpe atual esta entre os que o Pokemon aprende (borda verde no campo).</summary>
     public bool IsLearnable => MoveName is MoveOption { IsLearnable: true };
+    /// <summary>Descricao do golpe em portugues (AllGenWiki), quando houver.</summary>
+    public string? Tip => HasMove ? GameText.GetMove(CoreAdapter.MoveNames[Move], pk().Format) : null;
     public RelayCommand ClearCommand => new(() => Move = 0);
     private (string Name, uint Argb)? Type => CoreAdapter.GetMoveType((ushort)Move, pk().Context);
     public string TypeName => Type?.Name ?? "";

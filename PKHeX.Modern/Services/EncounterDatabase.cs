@@ -155,9 +155,10 @@ public static class EncounterDatabase
     /// de cada geracao) e reaplica o que o usuario escolheu: natureza, genero, shiny, nivel, item, apelido e golpes.
     /// Devolve o primeiro resultado legal, ou null com o motivo.
     /// </summary>
-    public static PKM? Legalize(SaveFile sav, PKM current, out string message, CancellationToken token = default)
+    /// <param name="only">Encontro escolhido pelo usuario (modo legal, "Trocar encontro"); null = procura o melhor.</param>
+    public static PKM? Legalize(SaveFile sav, PKM current, out string message, CancellationToken token = default, IEncounterInfo? only = null)
     {
-        var encounters = SearchEncounters(sav, current.Species, onlyThisGame: true, token)
+        var encounters = only is not null ? [only] : SearchEncounters(sav, current.Species, onlyThisGame: true, token)
             .Where(e => e.Form == current.Form || e is MysteryGift)
             .OrderBy(e => GetPreference(e, current))
             .Take(25)
@@ -297,6 +298,20 @@ public static class EncounterDatabase
     }
 
     /// <summary>Resumo de varias linhas (o mesmo do tooltip do PKHeX original).</summary>
+    /// <summary>Rotulo curto de um encontro: local, tipo e nivel (lista "Trocar encontro" do editor).</summary>
+    public static string GetShortLabel(IEncounterInfo enc)
+    {
+        var kind = enc switch
+        {
+            MysteryGift g when !string.IsNullOrWhiteSpace(g.CardTitle) => g.CardTitle.Replace('　', ' ').Trim(),
+            IEncounterable e => e.LongName,
+            _ => "",
+        };
+        var level = enc.LevelMin == enc.LevelMax ? $"Nv. {enc.LevelMin}" : $"Nv. {enc.LevelMin}–{enc.LevelMax}";
+        var where = GetLocationName(enc);
+        return string.Join(" · ", new[] { where, kind, level, GetVersionName(enc.Version) }.Where(s => !string.IsNullOrWhiteSpace(s)));
+    }
+
     public static string GetDetails(IEncounterInfo enc)
     {
         try { return string.Join(Environment.NewLine, enc.GetTextLines()); }
