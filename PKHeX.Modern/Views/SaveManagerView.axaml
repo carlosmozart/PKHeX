@@ -15,6 +15,7 @@
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
           <Button Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}" ToolTip.Tip="Relê a pasta (F5)" />
           <Button Classes="small" Content="📁  Abrir pasta" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Abre a pasta no Explorer (cria se não existir)" />
+          <Button Classes="small" Content="🛟  Backups" Command="{Binding OpenBackupsCommand}" ToolTip.Tip="Cópias automáticas feitas antes de salvar por cima de um save" />
           <Button Classes="small" Content="Escolher pasta..." Click="OnChooseFolder" />
         </StackPanel>
       </Grid>

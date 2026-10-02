@@ -233,7 +233,8 @@ public static class CoreAdapter
         => s is SlotInfoParty p ? GetPartySlot(sav, p.Slot) : s.Read(sav);
 
     /// <summary>Move (troca) ou copia o Pokemon de <paramref name="src"/> para <paramref name="dst"/>. Retorna erro ou null.</summary>
-    public static string? MoveSlot(SaveFile sav, ISlotInfo src, ISlotInfo dst, bool copy)
+    /// <param name="overwrite">Mover sobrescrevendo: o destino recebe o Pokemon e a origem fica vazia (sem troca).</param>
+    public static string? MoveSlot(SaveFile sav, ISlotInfo src, ISlotInfo dst, bool copy, bool overwrite = false)
     {
         if (src == dst)
             return "";
@@ -253,6 +254,19 @@ public static class CoreAdapter
             var clone = a.Clone();
             clone.RefreshChecksum();
             dst.WriteTo(sav, clone);
+            return null;
+        }
+
+        if (overwrite)
+        {
+            // Origem fica vazia: na equipe, ela nao pode ficar sem Pokemon (que nao seja ovo).
+            if (src is SlotInfoParty sp0 && dst is not SlotInfoParty && sav.IsPartyAllEggs(sp0.Slot))
+                return "A equipe precisa ter pelo menos um Pokémon (que não seja ovo).";
+            dst.WriteTo(sav, a);
+            if (src is SlotInfoParty && dst is SlotInfoParty dp && ((SlotInfoParty)src).Slot < dp.Slot)
+                new SlotInfoParty(((SlotInfoParty)src).Slot).WriteTo(sav, sav.BlankPKM); // equipe: os seguintes sobem
+            else
+                src.WriteTo(sav, sav.BlankPKM);
             return null;
         }
 

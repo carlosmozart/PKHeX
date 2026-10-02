@@ -76,6 +76,13 @@ No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push n
 - **Campos com sugestões (AutoCompleteBox):** espécie, item e golpes no editor. As propriedades `SelectedSpeciesName`, `SelectedItem` e `MoveSlotViewModel.MoveName` são `object?` e ignoram texto parcial até virar um valor válido. Golpes que o Pokémon aprende vêm de `LegalMoveInfo` (`CoreAdapter.GetLearnableMoves`), recalculados só quando espécie/forma/nível/encontro mudam.
 - **Legalizar e evoluções:** os encontros de uma espécie incluem os das pré-evoluções; o `CarryOver` evolui o Pokémon gerado até a espécie/forma do original (até a Gen 5 o gênero vem do PID e não é recalculado).
 
+- **Backup automático:** `Services/SaveBackup.cs`, chamado em `MainViewModel.Export` antes de gravar. Nome "<save> AAAA-MM-DD HH-MM-SS<ext>" (com " (2)" se repetir no mesmo segundo). A limpeza (20 por save) ordena pela data de **criação**, porque `File.Copy` mantém a data de modificação do save original.
+- **Modos de soltar:** `DropMode` (Move, Copy, Overwrite) no `MainViewModel`; o `SlotDragController` escolhe pela tecla (Ctrl/Shift = Copy, Alt = Overwrite). `CoreAdapter.MoveSlot(..., overwrite: true)` grava o destino e esvazia a origem (na equipe, os seguintes sobem).
+
+- **Eventos da Gen 1-3:** `EncounterEvent.GetAllEvents` só tem Gen 4+; os eventos clássicos (WC3, Colosseum/XD, PCNY, PCJP, Mew/Celebi) ficam em listas `internal` do Core. `EncounterDatabase.LoadGifts` chega neles pelo gerador de encontros com `EncounterMovesetGenerator.PriorityList = [EncounterTypeGroup.Mystery]`, espécie por espécie (~0,1 s). Eventos da geração do save vêm primeiro.
+- **Rastreador do HOME:** na Gen 8+, Pokémon vindos de outra geração ou presentes do HOME (card 9000+) precisam de `IHomeTrack.Tracker` ≠ 0; o `ToEntity` sorteia um quando falta.
+- **Janelas de aviso:** `ConfirmAsync(..., cancelText: "", details: linhas, icon: "✓")` mostra um aviso com um botão só e uma lista rolável (usado no Verificar legalidade).
+
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
 - Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".

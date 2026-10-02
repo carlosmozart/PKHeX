@@ -60,15 +60,62 @@ public static class EncounterDatabase
     }
 
     /// <summary>Todos os Mystery Gifts conhecidos; <paramref name="onlyThisGame"/> mantem so os que existem neste jogo.</summary>
-    public static IReadOnlyList<MysteryGift> LoadGifts(SaveFile sav, bool onlyThisGame)
+    /// <remarks>
+    /// O banco de Mystery Gift do PKHeX (<see cref="EncounterEvent.GetAllEvents"/>) so tem eventos da Gen 4 em diante.
+    /// Os eventos da Gen 1-3 (WC3, Colosseum/XD, PCNY, Mew/Celebi) ficam em listas internas do Core; chegamos neles
+    /// pelo gerador de encontros filtrado so por "Mystery", como faz o banco de encontros do PKHeX.
+    /// Eventos da propria geracao do save vem primeiro.
+    /// </remarks>
+    public static IReadOnlyList<IEncounterInfo> LoadGifts(SaveFile sav, bool onlyThisGame, CancellationToken token = default)
     {
-        IEnumerable<MysteryGift> db = EncounterEvent.GetAllEvents();
-        if (onlyThisGame && EntityPresenceFilters.GetFilterGift<MysteryGift>(sav.Context, sav.Generation) is { } filter)
-            db = db.Where(filter);
-        var list = db.ToList();
-        foreach (var mg in list)
-            mg.GiftUsed = false;
-        return list;
+        var result = new List<IEncounterInfo>();
+        if (sav.Generation <= 3)
+            result.AddRange(GetClassicGifts(sav, token));
+
+        if (sav.Generation >= 4 || !onlyThisGame)
+        {
+            IEnumerable<MysteryGift> db = EncounterEvent.GetAllEvents();
+            if (onlyThisGame && EntityPresenceFilters.GetFilterGift<MysteryGift>(sav.Context, sav.Generation) is { } filter)
+                db = db.Where(filter);
+            foreach (var mg in db)
+            {
+                mg.GiftUsed = false;
+                result.Add(mg);
+            }
+        }
+        return [.. result.OrderBy(g => g.Generation == sav.Generation ? 0 : 1)]; // estavel: mantem a ordem dentro de cada grupo
+    }
+
+    /// <summary>Eventos da Gen 1-3 compativeis com o save, via gerador de encontros (tipo Mystery).</summary>
+    private static List<IEncounterInfo> GetClassicGifts(SaveFile sav, CancellationToken token)
+    {
+        var settings = new SearchSettings { Context = sav.Context, Generation = sav.Generation, Species = 0 };
+        var versions = settings.GetVersions(sav);
+        var pk = sav.BlankPKM;
+        var seen = new HashSet<IEncounterInfo>(ReferenceEqualityComparer.Instance);
+        var result = new List<IEncounterInfo>();
+        try
+        {
+            EncounterMovesetGenerator.PriorityList = [EncounterTypeGroup.Mystery];
+            for (ushort species = 1; species <= sav.MaxSpeciesID; species++)
+            {
+                token.ThrowIfCancellationRequested();
+                pk.Species = species;
+                pk.Form = 0;
+                pk.SetGender(pk.GetSaneGender());
+                EncounterMovesetGenerator.OptimizeCriteria(pk, sav);
+                foreach (var enc in EncounterMovesetGenerator.GenerateEncounters(pk, ReadOnlyMemory<ushort>.Empty, versions))
+                {
+                    if (enc is not IEncounterEgg && seen.Add(enc))
+                        result.Add(enc);
+                }
+            }
+        }
+        finally
+        {
+            EncounterMovesetGenerator.ResetFilters();
+        }
+        return result;
     }
 
     /// <summary>Gera o Pokemon do encontro/gift ja no formato do save. Retorna null e o erro se nao der para converter.</summary>
@@ -88,6 +135,11 @@ public static class EncounterDatabase
                 return null;
             }
             sav.AdaptToSaveFile(pk);
+            // Vindo de outra geracao para a Gen 8+, ou presente distribuido pelo HOME (card 9000+), o jogo exige o
+            // rastreador do HOME (senao: "Pokemon HOME Transfer Tracker is missing").
+            bool needsTracker = enc.Context != pk.Context || enc is MysteryGift { CardID: >= 9000 };
+            if (pk is IHomeTrack { Tracker: 0 } home && needsTracker && pk.Format >= 8)
+                home.Tracker = (ulong)Random.Shared.NextInt64(1, long.MaxValue);
             pk.RefreshChecksum();
             return pk;
         }

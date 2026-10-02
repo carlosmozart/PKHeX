@@ -44,7 +44,7 @@ public sealed class MainViewModel : ViewModelBase
         GoToSearchHitCommand = new RelayCommand(p => { if (p is SearchHitViewModel h) _ = GoToSearchHitAsync(h); });
         _searchTimer.Tick += (_, _) => { _searchTimer.Stop(); RunSearch(); };
         _currentPage = Boxes;
-        CheckLegalityCommand = new RelayCommand(CheckLegality, () => HasSave);
+        CheckLegalityCommand = new RelayCommand(() => _ = CheckLegalityAsync(), () => HasSave && !_checkingLegality);
         CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
         DeleteCommand = new RelayCommand(() => _ = DeleteSelectedAsync(), () => CanExportEntity);
         UndoCommand = new RelayCommand(Undo, () => _history?.CanUndo == true);
@@ -272,10 +272,11 @@ public sealed class MainViewModel : ViewModelBase
     public bool HasDialog => Dialog is not null;
 
     /// <summary>Mostra uma pergunta dentro da janela e espera a resposta (true = confirmar).</summary>
-    public async Task<bool> ConfirmAsync(string title, string message, string confirmText, string cancelText = "Cancelar", bool isDanger = false)
+    public async Task<bool> ConfirmAsync(string title, string message, string confirmText, string cancelText = "Cancelar", bool isDanger = false,
+        IReadOnlyList<string>? details = null, string icon = "")
     {
         Dialog?.Complete(false); // so uma pergunta por vez
-        var dialog = new ConfirmDialogViewModel(title, message, confirmText, cancelText, isDanger);
+        var dialog = new ConfirmDialogViewModel(title, message, confirmText, cancelText, isDanger, details, icon);
         Dialog = dialog;
         try { return await dialog.Result; }
         finally { if (Dialog == dialog) Dialog = null; }
@@ -347,9 +348,12 @@ public sealed class MainViewModel : ViewModelBase
             return;
         try
         {
+            var backup = SaveBackup.BeforeOverwrite(path); // copia o arquivo antigo antes de sobrescrever
             CoreAdapter.ExportSave(_sav, path);
             IsDirty = false;
-            Status = $"Salvo em {path}";
+            Status = backup is null
+                ? $"Salvo em {path}"
+                : $"Salvo em {path}. Backup do arquivo anterior: {System.IO.Path.GetFileName(backup)} (Saves › Backups).";
         }
         catch (Exception ex)
         {
@@ -360,27 +364,36 @@ public sealed class MainViewModel : ViewModelBase
     public string? SuggestedFileName => _sav?.Metadata.FileName;
 
     /// <summary>Arrastar e soltar: move/troca (ou copia, com Ctrl) entre slots de caixa e equipe.</summary>
-    public async Task MoveSlotAsync(SlotViewModel src, SlotViewModel dst, bool copy)
+    public Task MoveSlotAsync(SlotViewModel src, SlotViewModel dst, bool copy)
+        => MoveSlotAsync(src, dst, copy ? DropMode.Copy : DropMode.Move);
+
+    /// <summary>Soltar um slot em outro: mover/trocar, copiar (Ctrl ou Shift) ou sobrescrever (Alt).</summary>
+    public async Task MoveSlotAsync(SlotViewModel src, SlotViewModel dst, DropMode mode)
     {
         if (_sav is null || src == dst)
             return;
-        if (copy && !dst.IsEmpty && !src.IsEmpty && !await ConfirmAsync("Substituir Pokémon?",
-                $"{dst.Title} ({dst.Location}) será substituído por uma cópia de {src.Title}. Dá para desfazer com Ctrl+Z.",
+        if (mode != DropMode.Move && !dst.IsEmpty && !src.IsEmpty && !await ConfirmAsync("Substituir Pokémon?",
+                mode == DropMode.Copy
+                    ? $"{dst.Title} ({dst.Location}) será substituído por uma cópia de {src.Title}. Dá para desfazer com Ctrl+Z."
+                    : $"{dst.Title} ({dst.Location}) será substituído por {src.Title}, e o slot de origem fica vazio. Dá para desfazer com Ctrl+Z.",
                 "Substituir"))
             return;
-        MoveSlot(src, dst, copy);
+        MoveSlot(src, dst, mode);
     }
 
-    public void MoveSlot(SlotViewModel src, SlotViewModel dst, bool copy)
+    public void MoveSlot(SlotViewModel src, SlotViewModel dst, bool copy) => MoveSlot(src, dst, copy ? DropMode.Copy : DropMode.Move);
+
+    public void MoveSlot(SlotViewModel src, SlotViewModel dst, DropMode mode)
     {
         if (_sav is null)
             return;
+        var copy = mode == DropMode.Copy;
         var srcName = src.Title;
-        _history!.Record(copy ? $"copiar {srcName}" : $"mover {srcName}",
+        _history!.Record(mode switch { DropMode.Copy => $"copiar {srcName}", DropMode.Overwrite => $"sobrescrever com {srcName}", _ => $"mover {srcName}" },
             SlotHistory.KeyOf(src.Box, src.Slot), SlotHistory.KeyOf(dst.Box, dst.Slot));
         var error = CoreAdapter.MoveSlot(_sav,
             CoreAdapter.GetSlotInfo(_sav, src.Box, src.Slot),
-            CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot), copy);
+            CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot), copy, mode == DropMode.Overwrite);
         if (error is not null)
         {
             _history.Discard();
@@ -391,9 +404,12 @@ public sealed class MainViewModel : ViewModelBase
         OnHistoryChanged();
         IsDirty = true;
         RefreshSlots();
-        Status = copy
-            ? $"{srcName} copiado para {dst.Location}. Lembre-se de exportar o save."
-            : $"{srcName} movido para {dst.Location}. Lembre-se de exportar o save.";
+        Status = mode switch
+        {
+            DropMode.Copy => $"{srcName} copiado para {dst.Location}. Lembre-se de exportar o save.",
+            DropMode.Overwrite => $"{srcName} sobrescreveu {dst.Location} (a origem ficou vazia). Lembre-se de exportar o save.",
+            _ => $"{srcName} movido para {dst.Location}. Lembre-se de exportar o save.",
+        };
     }
 
     /// <summary>Soltar um arquivo .pk* sobre um slot (pergunta antes de substituir um Pokemon).</summary>
@@ -485,13 +501,61 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     /// <summary>Verifica a legalidade da caixa atual e da equipe.</summary>
-    private void CheckLegality()
+    private bool _checkingLegality;
+
+    /// <summary>
+    /// Verificar legalidade: analisa o save inteiro (todas as caixas e a equipe) em segundo plano e mostra o
+    /// resultado numa janela, com a lista do que tem problema e um atalho para o primeiro.
+    /// </summary>
+    public async Task CheckLegalityAsync()
     {
-        var slots = Boxes.Slots.Concat(Party.Slots).Where(s => !s.IsEmpty).ToList();
-        var bad = slots.Where(s => s.IsLegal == false).ToList();
-        Status = bad.Count == 0
-            ? $"Todos os {slots.Count} Pokémon da caixa e da equipe são legais."
-            : $"{bad.Count} de {slots.Count} com problema: " + string.Join(", ", bad.Select(s => $"{s.Title} ({s.Location})"));
+        if (_sav is null || _checkingLegality)
+            return;
+        _checkingLegality = true;
+        CheckLegalityCommand.NotifyCanExecuteChanged();
+        Status = "Verificando a legalidade de todo o save...";
+        try
+        {
+            var sav = _sav;
+            var all = EntitySearch.ReadAll(sav);
+            var bad = await Task.Run(() => all
+                .Where(e => CoreAdapter.IsLegal(e.Pkm) == false)
+                .Select(e => (Entity: e, Issues: CoreAdapter.GetLegalityIssues(e.Pkm, 1))) // motivo so para os ilegais
+                .ToList());
+
+            string Where(StoredEntity e) => e.Box < 0 ? $"Equipe · {e.Slot + 1}" : $"{CoreAdapter.GetBoxName(sav, e.Box)} · {e.Slot + 1}";
+            string Name(PKM pk) => pk.IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[pk.Species];
+
+            if (bad.Count == 0)
+            {
+                Status = $"Legalidade: os {all.Count} Pokémon do save são legais.";
+                await ConfirmAsync("Tudo legal", $"Os {all.Count} Pokémon do save (todas as caixas e a equipe) passaram na verificação de legalidade.",
+                    "OK", cancelText: "", icon: "✓");
+                return;
+            }
+
+            Status = $"Legalidade: {bad.Count} de {all.Count} Pokémon com problema.";
+            const int max = 30;
+            var lines = bad.Take(max)
+                .Select(r => $"⚠ {Name(r.Entity.Pkm)} ({Where(r.Entity)}): {r.Issues.FirstOrDefault() ?? "ilegal"}")
+                .ToList();
+            if (bad.Count > max)
+                lines.Add($"… e mais {bad.Count - max}.");
+            var goTo = await ConfirmAsync($"{bad.Count} Pokémon com problema",
+                $"De {all.Count} Pokémon no save, {bad.Count} não passaram na verificação. Abra cada um no editor e use as correções do cartão de legalidade (ou Legalizar).",
+                "Ir para o primeiro", "Fechar", isDanger: true, details: lines, icon: "⚠");
+            if (goTo)
+                await GoToSearchHitAsync(new SearchHitViewModel(bad[0].Entity, "", ""));
+        }
+        catch (Exception ex)
+        {
+            Status = $"Erro ao verificar a legalidade: {ex.Message}";
+        }
+        finally
+        {
+            _checkingLegality = false;
+            CheckLegalityCommand.NotifyCanExecuteChanged();
+        }
     }
 
     /// <summary>Criar PKM: abre o editor em branco no primeiro slot vazio da caixa atual.</summary>
@@ -657,4 +721,15 @@ public sealed class AccentOptionViewModel(Theme.AccentPreset preset) : ViewModel
     public string Name => Preset.Name;
     private bool _isSelected;
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
+}
+
+/// <summary>O que acontece ao soltar um slot em outro.</summary>
+public enum DropMode
+{
+    /// <summary>Move (troca se o destino estiver ocupado).</summary>
+    Move,
+    /// <summary>Copia (Ctrl ou Shift).</summary>
+    Copy,
+    /// <summary>Sobrescreve o destino e esvazia a origem (Alt).</summary>
+    Overwrite,
 }

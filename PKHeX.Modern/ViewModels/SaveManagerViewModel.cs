@@ -27,6 +27,7 @@ public sealed class SaveManagerViewModel : PageViewModel
         _open = open;
         RefreshCommand = new RelayCommand(() => _ = RefreshAsync());
         OpenFolderCommand = new RelayCommand(OpenFolder);
+        OpenBackupsCommand = new RelayCommand(() => OpenInExplorer(SaveBackup.Folder));
         OpenCommand = new RelayCommand(p => { if (p is SaveEntryViewModel e) _open(e.Path); });
     }
 
@@ -42,6 +43,8 @@ public sealed class SaveManagerViewModel : PageViewModel
 
     public RelayCommand RefreshCommand { get; }
     public RelayCommand OpenFolderCommand { get; }
+    /// <summary>Abre a pasta dos backups automaticos (feitos antes de salvar por cima de um save).</summary>
+    public RelayCommand OpenBackupsCommand { get; }
     public RelayCommand OpenCommand { get; }
 
     public string Folder
@@ -127,6 +130,19 @@ public sealed class SaveManagerViewModel : PageViewModel
         Groups.Clear();
         foreach (var g in visible.GroupBy(e => e.Entry.Group))
             Groups.Add(new SaveGroupViewModel(g.Key, [.. g]));
+    }
+
+    private static void OpenInExplorer(string folder)
+    {
+        try
+        {
+            Directory.CreateDirectory(folder);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true });
+        }
+        catch
+        {
+            // sem explorador de arquivos disponivel
+        }
     }
 
     private void OpenFolder()

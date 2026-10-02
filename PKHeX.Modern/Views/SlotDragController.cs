@@ -16,7 +16,7 @@ namespace PKHeX.Modern.Views;
 
 /// <summary>
 /// Arrastar e soltar de slots:
-/// - slot → slot: move/troca (Ctrl = copiar);
+/// - slot → slot: move/troca (Ctrl ou Shift = copiar; Alt = sobrescrever, origem fica vazia);
 /// - pairar sobre as setas de caixa troca de caixa durante o arraste;
 /// - arquivo .pk* → slot: importa; arquivo de save em qualquer outro lugar: abre o save;
 /// - slot → fora da janela (Explorer, desktop): exporta como arquivo .pk*.
@@ -140,7 +140,7 @@ public sealed class SlotDragController
 
         if (_dragging is not null)
             e.DragEffects = slot is null ? DragDropEffects.None
-                : e.KeyModifiers.HasFlag(KeyModifiers.Control) ? DragDropEffects.Copy : DragDropEffects.Move;
+                : GetMode(e.KeyModifiers) == DropMode.Copy ? DragDropEffects.Copy : DragDropEffects.Move;
         else
             e.DragEffects = e.DataTransfer.Contains(DataFormat.File) ? DragDropEffects.Copy : DragDropEffects.None;
         e.Handled = true;
@@ -155,7 +155,7 @@ public sealed class SlotDragController
         if (_dragging is { } src)
         {
             if (target is not null)
-                _ = _vm().MoveSlotAsync(src, target, e.KeyModifiers.HasFlag(KeyModifiers.Control));
+                _ = _vm().MoveSlotAsync(src, target, GetMode(e.KeyModifiers));
             return;
         }
 
@@ -166,6 +166,12 @@ public sealed class SlotDragController
         else
             _ = _vm().OpenAsync(path);
     }
+
+    /// <summary>Ctrl ou Shift = copiar; Alt = sobrescrever (origem fica vazia); sem tecla = mover/trocar.</summary>
+    private static DropMode GetMode(KeyModifiers keys)
+        => keys.HasFlag(KeyModifiers.Alt) ? DropMode.Overwrite
+            : keys.HasFlag(KeyModifiers.Control) || keys.HasFlag(KeyModifiers.Shift) ? DropMode.Copy
+            : DropMode.Move;
 
     private void SetHover(SlotViewModel? slot, Button? arrow)
     {

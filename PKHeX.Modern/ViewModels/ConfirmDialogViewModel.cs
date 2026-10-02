@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace PKHeX.Modern.ViewModels;
@@ -10,8 +11,11 @@ public sealed class ConfirmDialogViewModel : ViewModelBase
 {
     private readonly TaskCompletionSource<bool> _result = new();
 
-    public ConfirmDialogViewModel(string title, string message, string confirmText, string cancelText, bool isDanger)
+    public ConfirmDialogViewModel(string title, string message, string confirmText, string cancelText, bool isDanger,
+        IReadOnlyList<string>? details = null, string icon = "")
     {
+        Details = details ?? [];
+        Icon = icon;
         Title = title;
         Message = message;
         ConfirmText = confirmText;
@@ -27,6 +31,14 @@ public sealed class ConfirmDialogViewModel : ViewModelBase
     public string CancelText { get; }
     /// <summary>Acao que descarta dados: botao de confirmar em vermelho.</summary>
     public bool IsDanger { get; }
+    /// <summary>Linhas extras (ex.: lista de Pokemon com problema), exibidas numa lista rolavel.</summary>
+    public IReadOnlyList<string> Details { get; }
+    public bool HasDetails => Details.Count > 0;
+    /// <summary>Simbolo grande ao lado do titulo (✓, ⚠...).</summary>
+    public string Icon { get; }
+    public bool HasIcon => Icon.Length > 0;
+    /// <summary>Sem texto de cancelar = aviso com um botao so.</summary>
+    public bool HasCancel => CancelText.Length > 0;
 
     public RelayCommand ConfirmCommand { get; }
     public RelayCommand CancelCommand { get; }

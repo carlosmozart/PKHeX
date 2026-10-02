@@ -24,11 +24,12 @@ Baixe o `PKHeX.Modern-win-x64.zip` na página de [Releases](https://github.com/c
 - Abrir pelo botão, arrastando o arquivo para a janela ou pela linha de comando; salvar com **Ctrl+S**.
 - **Save Manager**: tela inicial que lista os saves da pasta `saves` (ao lado do exe, ou outra à sua escolha), agrupados por console, com treinador, tempo de jogo, dinheiro e equipe. Duplo clique abre.
 - Aviso de **alterações não exportadas**: o app pergunta antes de abrir outro save ou fechar.
+- **Backup automático**: antes de salvar por cima de um save, o arquivo anterior é copiado para `%APPDATA%\PKHeX.Modern\backups` (botão "Backups" no Save Manager).
 
 **Caixas e equipe**
 - Cartões grandes com sprite, nome, nível, gênero, ★ shiny e ✓/⚠ de legalidade.
 - **Resumo ao passar o mouse**, igual ao do PKHeX: set (item, habilidade, IVs/EVs, natureza, golpes) e encontro (local, PID, Origin Seed).
-- **Arrastar e soltar** entre caixa e equipe (Ctrl copia), trocar de caixa parando sobre as setas, soltar `.pk*` para importar e arrastar para fora da janela para exportar.
+- **Arrastar e soltar** entre caixa e equipe (Ctrl ou Shift copia, Alt sobrescreve deixando a origem vazia), trocar de caixa parando sobre as setas, soltar `.pk*` para importar e arrastar para fora da janela para exportar.
 - **Busca global (Ctrl+F)** por espécie, apelido, golpe, item, "shiny" ou "ovo" em todas as caixas.
 - **Desfazer/refazer** (Ctrl+Z / Ctrl+Y) e **Excluir** (Delete).
 
@@ -37,12 +38,13 @@ Baixe o `PKHeX.Modern-win-x64.zip` na página de [Releases](https://github.com/c
 - Golpes com tipo colorido, barra de PP e PP Ups.
 - Gráfico radar dos atributos, sliders de IV/EV e ▲/▼ da natureza.
 - Bola, local, nível e data de encontro; treinador original; felicidade, PID/EC e "Tornar shiny".
-- **Legalidade**: lista os problemas e avisos e oferece correções de um clique, inclusive **Legalizar**, que gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny) mantendo natureza, nível, item, apelido e golpes.
+- **Verificar legalidade** (barra inferior): confere o save inteiro e mostra o resultado numa janela.
+- **Legalidade** no editor: lista os problemas e avisos e oferece correções de um clique, inclusive **Legalizar**, que gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny) mantendo natureza, nível, item, apelido e golpes.
 - Colar e copiar no formato **Showdown**.
 
 **Bancos**
 - **Encontros**: todos os jeitos de obter uma espécie (selvagem, estático, troca, ovo, evento).
-- **Eventos**: banco de Mystery Gift do PKHeX, com busca.
+- **Eventos**: banco de Mystery Gift do PKHeX, com busca, inclusive os eventos da Gen 1-3.
 - "Usar" gera o Pokémon no editor, pronto para gravar.
 
 **Outros**
@@ -83,6 +85,7 @@ Services/SlotHistory.cs        ← desfazer/refazer
 Services/SaveLibrary.cs        ← Save Manager
 Services/EntitySearch.cs       ← busca global
 Services/SpriteService.cs      ← sprites System.Drawing → Avalonia
+Services/SaveBackup.cs         ← backup antes de sobrescrever um save
 Services/AppSettings.cs, CrashLog.cs
         │
 ViewModels/                    ← estado e lógica (Pages.cs = páginas da barra lateral)

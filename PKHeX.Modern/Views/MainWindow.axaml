@@ -136,7 +136,7 @@
           <Button Classes="small" Content="↶" FontSize="16" Padding="10,0" Command="{Binding UndoCommand}" ToolTip.Tip="{Binding UndoTip}" />
           <Button Classes="small" Content="↷" FontSize="16" Padding="10,0" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" />
           <Button Classes="small good" Content="✓  Verificar legalidade" Command="{Binding CheckLegalityCommand}"
-                  ToolTip.Tip="Verifica a caixa atual e a equipe" />
+                  ToolTip.Tip="Verifica todos os Pokémon do save (caixas e equipe) e mostra o resultado" />
           <Button Classes="small info" Content="＋  Criar PKM" Command="{Binding CreateCommand}"
                   ToolTip.Tip="Novo Pokémon no primeiro slot vazio da caixa" />
           <Button Classes="small" Content="⭳  Importar" Click="OnImportEntity"
@@ -153,12 +153,27 @@
     <!-- Pergunta dentro da janela (ConfirmAsync): cobre tudo e bloqueia cliques ate responder -->
     <Border Grid.ColumnSpan="3" Grid.RowSpan="2" Classes="dialogBackdrop" IsVisible="{Binding HasDialog}">
       <Border Classes="card dialog" DataContext="{Binding Dialog}" x:DataType="vm:ConfirmDialogViewModel"
-              HorizontalAlignment="Center" VerticalAlignment="Center" Width="440">
+              HorizontalAlignment="Center" VerticalAlignment="Center" Width="520">
         <StackPanel Spacing="14">
-          <TextBlock Text="{Binding Title}" Classes="title" FontSize="18" />
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="{Binding Icon}" FontSize="26" VerticalAlignment="Center" IsVisible="{Binding HasIcon}"
+                       Classes.good="{Binding !IsDanger}" Classes.bad="{Binding IsDanger}" />
+            <TextBlock Text="{Binding Title}" Classes="title" FontSize="18" VerticalAlignment="Center" TextWrapping="Wrap" />
+          </StackPanel>
           <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+          <Border Classes="dialogDetails" IsVisible="{Binding HasDetails}">
+            <ScrollViewer MaxHeight="300">
+              <ItemsControl ItemsSource="{Binding Details}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <SelectableTextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12" Margin="0,2" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Border>
           <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-            <Button Content="{Binding CancelText}" Command="{Binding CancelCommand}" ToolTip.Tip="Esc" />
+            <Button Content="{Binding CancelText}" Command="{Binding CancelCommand}" ToolTip.Tip="Esc" IsVisible="{Binding HasCancel}" />
             <Button Classes="accent" Content="{Binding ConfirmText}" Command="{Binding ConfirmCommand}" ToolTip.Tip="Enter" />
           </StackPanel>
         </StackPanel>

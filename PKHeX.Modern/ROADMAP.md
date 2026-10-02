@@ -4,7 +4,7 @@
 Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinForms + WebView2, então o código dele não serve aqui.
 - [x] **Editor em abas**: Visão geral, Atributos, Golpes, Encontro (bola, local, nível, data), Treinador (OT, TID, SID, gênero) e Extras (felicidade, PID/EC, tornar shiny). A aba ativa se mantém ao trocar de slot.
 - [x] **Desfazer/refazer** nos slots (Ctrl+Z, Ctrl+Y ou Ctrl+Shift+Z, e botões ↶/↷ na barra inferior): mover, copiar, importar e aplicar no editor.
-- [ ] Novos modificadores no arraste: Shift = clonar, Alt = sobrescrever.
+- [x] Modificadores no arraste: Ctrl ou Shift = copiar, Alt = sobrescrever (a origem fica vazia), com confirmação e Ctrl+Z.
 - [x] **Atalhos de teclado**: Q/E trocam de página (circular), Esc fecha o editor ou volta para Caixas, Ctrl+1–9 vão a cada página, Ctrl+O abre, Ctrl+S/Ctrl+E salvam. Os atalhos aparecem na barra lateral e nos tooltips.
 - [x] **Cartão de legalidade com correções de um clique** (aba Visão geral): lista os problemas e oferece golpes sugeridos, golpes de reaprender (Gen 6+), encontro sugerido e IVs máximos. Trocar a espécie agora ajusta apelido, habilidade, forma e gênero.
 - [x] **Save Manager**: pasta `saves/` ao lado do exe (ou outra, em "Escolher pasta..."), saves agrupados por subpasta/console, com treinador, TID/SID, tempo de jogo, dinheiro, capturados e equipe. Busca, filtro por geração, selo "Aberto". Abre com duplo clique ou botão. É a tela inicial e a página "Saves" (Ctrl+7).
@@ -21,6 +21,8 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Busca enquanto digita** no editor: espécie, item e os 4 golpes (parte do nome já filtra). Na lista de golpes, os que o Pokémon aprende oficialmente ficam no topo com fundo verde.
 - [x] **Itens por geração**: editor, mochila e busca usam a numeração de itens de cada jogo (antes a Gen 1-3 mostrava o item errado ou nenhum).
 - [x] **Legalizar mantém a evolução**: se o encontro é de uma pré-evolução (Dratini para um Dragonite), evolui até a espécie escolhida.
+- [x] **Verificar legalidade** confere o save inteiro em segundo plano e mostra o resultado numa janela (lista com local e motivo, botão "Ir para o primeiro").
+- [x] **Eventos nos jogos da Gen 1-3**: a base de eventos agora inclui os eventos dessas gerações (ex.: 288 no FireRed/Emerald). Presentes de outra geração ou do HOME na Gen 8+ recebem o rastreador do HOME.
 - [x] **Proteção contra travamentos**: erros inesperados vão para a barra de status e para `%APPDATA%\PKHeX.Modern\crash.log`.
 - [x] **Arrastar e soltar Pokémon** entre slots, caixas e equipe (trocar, mover, copiar com Ctrl, setas trocam de caixa, soltar .pk\* importa).
 - [x] Arrastar um slot **para fora** da janela para exportar como arquivo .pk\*.
@@ -31,13 +33,13 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Gênero no cartão do slot** (♂/♀ ao lado do nível).
 - [x] **Indicador de legalidade nos slots** (ícone ✓/⚠ no canto do cartão).
 - Decisão: só a **interface** é em português. Nomes do jogo (espécies, golpes, itens) e textos de legalidade ficam em inglês, como no PKHeX (o seletor de idioma dos nomes foi removido).
-- [ ] Atualizar as actions do workflow (`checkout`, `setup-dotnet`, `upload-artifact`) para versões com Node.js 24 (aviso de descontinuação do Node 20).
+- [x] Actions do workflow atualizadas para versões com Node.js 24 (checkout v7, setup-dotnet v6, upload-artifact v7, action-gh-release v3).
 - [x] **Cor de destaque configurável**: bolinhas na barra lateral (vermelho, ciano, azul, roxo, verde, laranja), salva nas preferências e aplicada nos temas claro e escuro.
 - [x] **Legalizar também com avisos** ("Fishy"): o cartão de legalidade lista os avisos e oferece o Legalizar.
 - [ ] **Editor mais completo**: fitas, memórias, Hyper Training, Tera Type, formas, PID/EC editáveis, contest stats e marcações. (OT, ID, bola, encontro e "Tornar shiny" já estão nas abas.)
 - [ ] **Pokédex**, **Batch Editor**, **banco de dados / pesquisa** (dos Pokémon salvos), **editores específicos de cada jogo** (eventos, flags, records).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
-- [ ] **Backup automático** do save antes de exportar por cima do original.
+- [x] **Backup automático**: antes de salvar por cima de um save, o arquivo anterior vai para `%APPDATA%\PKHeX.Modern\backups` (20 mais recentes por save; botão "Backups" no Save Manager).
 - [x] **Publicação**: perfil `win-x64` (um único `PKHeX.Modern.exe`, sem precisar do .NET) e GitHub Action `.github/workflows/modern-build.yml` (artefato a cada push no `modern-ui`; Release com o zip em tags `modern-v*`).
 - [ ] Instalador de verdade (MSIX ou Inno Setup), ícone próprio e assinatura do exe.
 - [ ] **Multiplataforma** (Linux/macOS): trocar o `System.Drawing` dos sprites por um carregador próprio (SkiaSharp), já que o Avalonia roda em todos.
