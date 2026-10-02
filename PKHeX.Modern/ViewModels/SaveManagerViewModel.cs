@@ -51,6 +51,9 @@ public sealed class SaveManagerViewModel : PageViewModel
             e.IsCurrent = IsSamePath(e.Path, _currentPath);
     }
 
+    /// <summary>Saves encontrados na pasta (a pagina Bank oferece estes no painel "Outro save").</summary>
+    public IReadOnlyList<SaveEntryViewModel> Entries => _all;
+
     public RelayCommand RefreshCommand { get; }
     public RelayCommand OpenFolderCommand { get; }
     /// <summary>Mostra a lista de backups automaticos (feitos antes de salvar por cima de um save).</summary>

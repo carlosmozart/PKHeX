@@ -44,18 +44,30 @@
     <UserControl>
     <Grid ColumnDefinitions="*,16,*">
 
-      <!-- Esquerda: bank local -->
+      <!-- Esquerda: bank local, pasta externa ou um segundo save -->
       <Border Classes="card bankPane">
         <DockPanel>
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="0,0,0,10">
+            <Button Classes="small" Classes.accent="{Binding ShowBank}" Content="🏦  Bank" Command="{Binding ShowBankCommand}"
+                    ToolTip.Tip="Bancos do app e pastas de arquivos .pk*" />
+            <Button Classes="small" Classes.accent="{Binding ShowOther}" Content="💾  Outro save" Command="{Binding ShowOtherCommand}"
+                    ToolTip.Tip="Abre um segundo save aqui para mover Pokémon entre dois jogos (com conversão de geração)" />
+          </StackPanel>
+          <Panel>
+          <DockPanel IsVisible="{Binding ShowBank}">
           <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-              <TextBlock Text="🏦 BANK" Classes="section" Margin="0" VerticalAlignment="Center" />
+              <TextBlock Text="BANCO" Classes="section" Margin="0" VerticalAlignment="Center" />
               <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Banks}" SelectedItem="{Binding SelectedBank}"
                         ToolTip.Tip="Banco (cada banco tem as suas caixas)" />
               <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
                 <Button Classes="small" Content="＋" Command="{Binding NewBankCommand}" ToolTip.Tip="Novo banco" />
-                <Button Classes="small" Content="✎" Command="{Binding RenameBankCommand}" ToolTip.Tip="Renomear banco" />
-                <Button Classes="small danger" Content="🗑" Command="{Binding DeleteBankCommand}" ToolTip.Tip="Excluir banco (e todas as caixas dele)" />
+                <Button Classes="small" Content="📁＋" Command="{Binding AddFolderCommand}"
+                        ToolTip.Tip="Usar uma pasta com arquivos .pk* como banco (ex.: a pasta de Pokémon do PKHeX). Os arquivos ficam onde estão." />
+                <Button Classes="small" Content="✎" Command="{Binding RenameBankCommand}" IsVisible="{Binding IsLocal}" ToolTip.Tip="Renomear banco" />
+                <Button Classes="small danger" Content="🗑" Command="{Binding DeleteBankCommand}" IsVisible="{Binding IsLocal}" ToolTip.Tip="Excluir banco (e todas as caixas dele)" />
+                <Button Classes="small" Content="✕ Pasta" Command="{Binding RemoveFolderCommand}" IsVisible="{Binding IsExternal}"
+                        ToolTip.Tip="Tira a pasta da lista de bancos (os arquivos não são apagados)" />
               </StackPanel>
             </Grid>
             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
@@ -64,7 +76,7 @@
               <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding BoxNames}" SelectedIndex="{Binding BoxIndex}" />
               <Button Grid.Column="2" Classes="boxArrow" Content="›" FontSize="16" Command="{Binding NextBoxCommand}"
                       ToolTip.Tip="Próxima caixa (arraste um Pokémon até aqui para trocar de caixa)" />
-              <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4">
+              <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsLocal}">
                 <Button Classes="small" Content="＋ Caixa" Command="{Binding NewBoxCommand}" ToolTip.Tip="Nova caixa neste banco" />
                 <Button Classes="small" Content="✎" Command="{Binding RenameBoxCommand}" ToolTip.Tip="Renomear caixa" />
                 <Button Classes="small danger" Content="🗑" Command="{Binding DeleteBoxCommand}" ToolTip.Tip="Excluir caixa" />
@@ -72,7 +84,7 @@
             </Grid>
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
               <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="11" VerticalAlignment="Center" />
-              <Button Grid.Column="1" Classes="ghost small" Content="⇅ Ordenar" ToolTip.Tip="Ordena esta caixa do bank (grava na hora, sem desfazer)">
+              <Button Grid.Column="1" Classes="ghost small" Content="⇅ Ordenar" IsVisible="{Binding IsLocal}" ToolTip.Tip="Ordena esta caixa do bank (grava na hora, sem desfazer)">
                 <Button.Flyout>
                   <MenuFlyout Placement="BottomEdgeAlignedRight">
               <MenuItem Header="Ordenar esta caixa por" ItemsSource="{Binding SortOptions}">
@@ -87,7 +99,7 @@
                 </Button.Flyout>
               </Button>
               <Button Grid.Column="2" Classes="ghost small" Content="📁 Pasta" Command="{Binding OpenFolderCommand}"
-                      ToolTip.Tip="Abre a pasta desta caixa (os Pokémon são arquivos .pk*)" />
+                      ToolTip.Tip="Abre a pasta desta caixa no Explorer (os Pokémon são arquivos .pk*)" />
             </Grid>
           </StackPanel>
           <ScrollViewer HorizontalScrollBarVisibility="Disabled">
@@ -129,6 +141,81 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
           </ScrollViewer>
+          </DockPanel>
+
+          <!-- Outro save -->
+          <DockPanel IsVisible="{Binding $parent[UserControl].((vm:BankPageViewModel)DataContext).ShowOther}" DataContext="{Binding Other}" x:DataType="vm:OtherSaveViewModel">
+            <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedOption}"
+                          PlaceholderText="Escolha um save da pasta do Save Manager" />
+                <Button Grid.Column="1" Classes="small" Content="📂  Abrir arquivo..." Command="{Binding BrowseCommand}" />
+              </Grid>
+              <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" IsVisible="{Binding HasSave}">
+                <Button Classes="boxArrow" Content="‹" FontSize="16" Command="{Binding PreviousBoxCommand}"
+                        ToolTip.Tip="Caixa anterior (arraste um Pokémon até aqui para trocar de caixa)" />
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                  <TextBlock Text="{Binding BoxName}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                  <TextBlock Text="{Binding BoxLabel}" Classes="muted" FontSize="11" HorizontalAlignment="Center" />
+                </StackPanel>
+                <Button Grid.Column="2" Classes="boxArrow" Content="›" FontSize="16" Command="{Binding NextBoxCommand}"
+                        ToolTip.Tip="Próxima caixa (arraste um Pokémon até aqui para trocar de caixa)" />
+              </Grid>
+              <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsVisible="{Binding HasSave}">
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Text="● Alterações não salvas" Classes="unsaved" FontSize="11" IsVisible="{Binding IsDirty}" />
+                </StackPanel>
+                <Button Grid.Column="1" Classes="small accent" Content="💾  Salvar este save" Command="{Binding SaveCommand}"
+                        ToolTip.Tip="Grava as mudanças no arquivo deste save (o arquivo anterior vai para os backups)" />
+                <Button Grid.Column="2" Classes="small" Content="✕" Command="{Binding CloseCommand}" ToolTip.Tip="Fechar este save" />
+              </Grid>
+            </StackPanel>
+            <Panel>
+              <TextBlock IsVisible="{Binding HasNoSave}" Classes="muted" TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" Margin="20"
+                         Text="Escolha outro save para mover Pokémon entre ele e o save aberto à direita. Cada Pokémon é convertido para a geração do jogo de destino; depois salve os dois saves." />
+              <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding HasSave}">
+                <ItemsControl ItemsSource="{Binding Slots}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><UniformGrid Columns="6" /></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:SlotViewModel">
+                <Button Classes="slot compact" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
+                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}" Classes.marked="{Binding IsMarked}"
+                        ToolTip.Tip="{Binding Tooltip}"
+                        Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
+                        CommandParameter="{Binding}">
+                  <Grid RowDefinitions="Auto,*,Auto">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <StackPanel Orientation="Horizontal" Spacing="3">
+                        <TextBlock Text="✓" Classes="markCheck" FontSize="9" Padding="3,0" IsVisible="{Binding IsMarked}" />
+                        <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                        <TextBlock Text="★" Classes="shiny" FontSize="11" IsVisible="{Binding IsShiny}" />
+                        <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
+                      </StackPanel>
+                    </Grid>
+                    <Panel Grid.Row="1">
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
+                             RenderOptions.BitmapInterpolationMode="None" />
+                      <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                             RenderOptions.BitmapInterpolationMode="None" />
+                    </Panel>
+                    <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
+                      <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="10" HorizontalAlignment="Center" />
+                    </StackPanel>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+            </Panel>
+          </DockPanel>
+          </Panel>
         </DockPanel>
       </Border>
 

@@ -6,8 +6,14 @@ using PKHeX.Core;
 
 namespace PKHeX.Modern.Services;
 
-/// <summary>Uma caixa do bank: pasta "NN Nome" dentro da pasta do banco.</summary>
-public sealed record BankBox(string Folder, string Name);
+/// <summary>
+/// Uma caixa do bank: pasta "NN Nome" dentro da pasta do banco. Numa pasta externa (<see cref="ExternalIndex"/> &gt;= 0),
+/// <see cref="Folder"/> e a propria pasta e a caixa e o grupo de 30 arquivos de numero <see cref="ExternalIndex"/>.
+/// </summary>
+public sealed record BankBox(string Folder, string Name, int ExternalIndex = -1)
+{
+    public bool IsExternal => ExternalIndex >= 0;
+}
 
 /// <summary>
 /// Bank local: armazenamento de Pokemon fora dos saves (como o Pokemon HOME, mas offline).
@@ -27,6 +33,39 @@ public static class BankStorage
 
     public static string Root { get; set; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PKHeX.Modern", "bank");
+
+    // Pastas externas: qualquer pasta com arquivos .pk* (ex.: a pasta de Pokemon do PKHeX) usada como banco.
+    // Os arquivos ficam como estao; as caixas sao grupos de 30, na ordem em que os arquivos foram criados.
+    // Arquivo novo entra no fim; substituir um Pokemon mantem a posicao (a data de criacao e preservada).
+    /// <summary>Pastas externas registradas (guardadas nas preferencias; o MainViewModel liga esta lista).</summary>
+    public static IList<string> ExternalFolders { get; set; } = [];
+
+    /// <summary>Prefixo que identifica um banco externo na lista de bancos.</summary>
+    public const string ExternalPrefix = "📁 ";
+
+    public static bool IsExternalBank(string bank) => bank.StartsWith(ExternalPrefix, StringComparison.Ordinal);
+
+    /// <summary>Nome do banco externo na lista ("📁 Pasta"); o caminho e resolvido por <see cref="GetExternalPath"/>.</summary>
+    public static string GetExternalBankName(string folder) => ExternalPrefix + (Path.GetFileName(folder.TrimEnd('\\', '/')) is { Length: > 0 } n ? n : folder);
+
+    public static string? GetExternalPath(string bank)
+        => ExternalFolders.FirstOrDefault(f => GetExternalBankName(f) == bank);
+
+    private static readonly HashSet<string> EntityExtensions = new(
+        EntityFileExtension.GetExtensionsAll().Select(e => "." + e), StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Arquivos de Pokemon da pasta externa, na ordem das caixas (criacao, depois nome).</summary>
+    private static List<FileInfo> GetExternalFiles(string folder)
+        => !Directory.Exists(folder) ? [] : [.. new DirectoryInfo(folder).GetFiles()
+            .Where(f => EntityExtensions.Contains(f.Extension))
+            .OrderBy(f => f.CreationTimeUtc).ThenBy(f => f.Name, StringComparer.OrdinalIgnoreCase)];
+
+    private static FileInfo? GetExternalFile(BankBox box, int slot)
+    {
+        var files = GetExternalFiles(box.Folder);
+        int index = (box.ExternalIndex * SlotsPerBox) + slot;
+        return index < files.Count ? files[index] : null;
+    }
 
     // Bancos
     /// <summary>Bancos existentes (cria o "Principal" com uma caixa se ainda nao houver nenhum).</summary>
@@ -74,6 +113,14 @@ public static class BankStorage
     // Caixas
     public static IReadOnlyList<BankBox> GetBoxes(string bank)
     {
+        if (IsExternalBank(bank))
+        {
+            // Sempre sobra espaco no fim para soltar mais Pokemon.
+            var path = GetExternalPath(bank) ?? "";
+            int count = GetExternalFiles(path).Count;
+            return [.. Enumerable.Range(0, (count / SlotsPerBox) + 1)
+                .Select(i => new BankBox(path, $"Arquivos {(i * SlotsPerBox) + 1}–{(i + 1) * SlotsPerBox}", i))];
+        }
         var dir = Path.Combine(Root, bank);
         Directory.CreateDirectory(dir);
         var boxes = Directory.GetDirectories(dir)
@@ -120,6 +167,13 @@ public static class BankStorage
     public static PKM?[] ReadBox(BankBox box)
     {
         var result = new PKM?[SlotsPerBox];
+        if (box.IsExternal)
+        {
+            var files = GetExternalFiles(box.Folder).Skip(box.ExternalIndex * SlotsPerBox).Take(SlotsPerBox).ToList();
+            for (int i = 0; i < files.Count; i++)
+                result[i] = ReadEntity(files[i].FullName);
+            return result;
+        }
         if (!Directory.Exists(box.Folder))
             return result;
         foreach (var file in Directory.GetFiles(box.Folder))
@@ -133,11 +187,27 @@ public static class BankStorage
     }
 
     public static PKM? ReadSlot(BankBox box, int slot)
-        => FindFile(box, slot) is { } file ? ReadEntity(file) : null;
+        => box.IsExternal ? GetExternalFile(box, slot) is { } f ? ReadEntity(f.FullName) : null
+            : FindFile(box, slot) is { } file ? ReadEntity(file) : null;
 
     /// <summary>Grava o Pokemon no slot, no formato original dele (substitui o que houver).</summary>
     public static void WriteSlot(BankBox box, int slot, PKM pk)
     {
+        if (box.IsExternal)
+        {
+            // Pasta externa: nome no padrao do PKHeX. Substituindo, o arquivo novo herda a posicao do antigo.
+            var old = GetExternalFile(box, slot);
+            var path = Path.Combine(box.Folder, CoreAdapter.GetEntityFileName(pk));
+            var stem = Path.GetFileNameWithoutExtension(path);
+            for (int i = 2; File.Exists(path) && !string.Equals(path, old?.FullName, StringComparison.OrdinalIgnoreCase); i++)
+                path = Path.Combine(box.Folder, $"{stem} ({i}){Path.GetExtension(path)}");
+            var created = old?.CreationTimeUtc;
+            old?.Delete();
+            CoreAdapter.ExportEntity(pk, path);
+            if (created is { } c)
+                File.SetCreationTimeUtc(path, c);
+            return;
+        }
         Directory.CreateDirectory(box.Folder);
         DeleteSlot(box, slot);
         var name = CoreAdapter.IsEmpty(pk) ? "Pokemon" : CleanName(pk.IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[pk.Species]);
@@ -145,10 +215,19 @@ public static class BankStorage
     }
 
     /// <summary>Nao ha arquivo neste slot (um arquivo ilegivel tambem ocupa o slot).</summary>
-    public static bool IsSlotFree(BankBox box, int slot) => FindFile(box, slot) is null;
+    public static bool IsSlotFree(BankBox box, int slot) => box.IsExternal ? GetExternalFile(box, slot) is null : FindFile(box, slot) is null;
 
+    /// <summary>
+    /// Apaga o Pokemon do slot. Na pasta externa os arquivos seguintes sobem uma posicao: ao apagar varios,
+    /// apague do ultimo para o primeiro.
+    /// </summary>
     public static void DeleteSlot(BankBox box, int slot)
     {
+        if (box.IsExternal)
+        {
+            GetExternalFile(box, slot)?.Delete();
+            return;
+        }
         if (FindFile(box, slot) is { } file)
             File.Delete(file);
     }
@@ -156,6 +235,8 @@ public static class BankStorage
     /// <summary>Ordena a caixa do bank (os Pokemon ficam nos primeiros slots, sem espacos). Retorna quantos ha na caixa.</summary>
     public static int SortBox(BankBox box, CoreAdapter.BoxSortOption option)
     {
+        if (box.IsExternal)
+            throw new InvalidOperationException("pastas externas ficam na ordem dos arquivos; ordene num banco do app.");
         var current = ReadBox(box).OfType<PKM>().ToList();
         // Um arquivo que nao deu para ler seria apagado ao regravar a caixa: nesse caso nao mexe em nada.
         var files = Directory.Exists(box.Folder) ? Directory.GetFiles(box.Folder).Count(f => GetSlot(Path.GetFileName(f)) is >= 0 and < SlotsPerBox) : 0;
@@ -171,7 +252,7 @@ public static class BankStorage
 
     /// <summary>Quantos Pokemon ha no banco inteiro (para o resumo).</summary>
     public static int CountBank(string bank)
-        => GetBoxes(bank).Sum(b => Directory.Exists(b.Folder) ? Directory.GetFiles(b.Folder).Count(f => GetSlot(Path.GetFileName(f)) is >= 0 and < SlotsPerBox) : 0);
+        => IsExternalBank(bank) ? GetExternalFiles(GetExternalPath(bank) ?? "").Count : GetBoxes(bank).Sum(b => Directory.Exists(b.Folder) ? Directory.GetFiles(b.Folder).Count(f => GetSlot(Path.GetFileName(f)) is >= 0 and < SlotsPerBox) : 0);
 
     private static string? FindFile(BankBox box, int slot)
         => Directory.Exists(box.Folder) ? Directory.GetFiles(box.Folder).FirstOrDefault(f => GetSlot(Path.GetFileName(f)) == slot) : null;

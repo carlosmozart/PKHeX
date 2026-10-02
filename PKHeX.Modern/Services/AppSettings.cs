@@ -14,6 +14,8 @@ public sealed class AppSettings
     public string? AccentColor { get; set; }
     /// <summary>Pasta do Save Manager (null = pasta "saves" ao lado do exe).</summary>
     public string? SavesFolder { get; set; }
+    /// <summary>Pastas de arquivos .pk* usadas como bancos externos (pagina Bank).</summary>
+    public System.Collections.Generic.List<string> ExternalBankFolders { get; set; } = [];
 
     /// <summary>So grava em disco instancias carregadas via <see cref="Load"/> (testes usam instancias em memoria).</summary>
     [System.Text.Json.Serialization.JsonIgnore]

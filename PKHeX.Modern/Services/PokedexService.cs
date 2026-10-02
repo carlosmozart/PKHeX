@@ -117,7 +117,7 @@ public static class PokedexService
         {
             var bank = new DexSource("bank", "Bank", false, true, MaxSpecies);
             sources.Add(bank);
-            foreach (var name in BankStorage.GetBanks())
+            foreach (var name in BankStorage.GetBanks().Concat(BankStorage.ExternalFolders.Select(BankStorage.GetExternalBankName)))
             {
                 foreach (var box in BankStorage.GetBoxes(name))
                 {

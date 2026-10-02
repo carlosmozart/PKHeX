@@ -30,6 +30,8 @@ Baixe o `PKHeX.Modern-win-x64.zip` na página de [Releases](https://github.com/c
 - Armazenamento próprio, fora dos saves, em **bancos → caixas** (crie, renomeie e exclua). Os Pokémon ficam como arquivos `.pk*` em `%APPDATA%\PKHeX.Modern\bank`, no formato original.
 - Página **Bank** com duas telas lado a lado: bank à esquerda e o save aberto à direita. Arraste para guardar ou trazer (Ctrl/Shift copia, Alt sobrescreve).
 - Ao trazer para o save, o Pokémon é **convertido para a geração do jogo** (ex.: um Pokémon da Gen 4 vai para Black como Gen 5); se não der, o app avisa e nada muda.
+- **Pastas externas** (botão 📁＋): qualquer pasta com arquivos `.pk*` (ex.: a pasta de Pokémon do PKHeX) vira um banco, sem mover os arquivos.
+- **Outro save**: no lugar do bank, abra um segundo save e arraste Pokémon entre os dois jogos (com conversão de geração); "Salvar este save" grava com backup.
 
 **Pokédex centralizada**
 - Página **Pokédex** com as 1025 espécies, juntando a Pokédex de todos os saves da pasta, o save aberto e o bank.

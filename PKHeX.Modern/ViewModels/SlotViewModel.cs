@@ -12,6 +12,13 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     /// <summary>Slot do bank local: cria um slot ligado a uma caixa do bank (nao a um save).</summary>
     public static SlotViewModel ForBank(BankBox box, string bankName, int slot) => new(-2, slot) { BankBox = box, BankName = bankName };
 
+    /// <summary>Slot de caixa do segundo save (painel "Outro save" da pagina Bank).</summary>
+    public static SlotViewModel ForOther(SaveFile sav, int box, int slot) => new(box, slot) { OtherSave = sav };
+
+    /// <summary>Segundo save deste slot (null = save principal ou bank).</summary>
+    public SaveFile? OtherSave { get; private init; }
+    public bool IsOther => OtherSave is not null;
+
     /// <summary>Caixa do bank deste slot (null = slot de save).</summary>
     public BankBox? BankBox { get; private init; }
     public string BankName { get; private init; } = "";
@@ -69,6 +76,7 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     public string Nickname => IsEmpty ? "" : Pkm!.IsNicknamed ? Pkm.Nickname : "";
     public bool HasNickname => Nickname.Length > 0;
     public string Location => IsBank ? $"bank {BankName} › {BankBox!.Name}, slot {Slot + 1}"
+        : IsOther ? $"{CoreAdapter.GetGameName(OtherSave!)} ({OtherSave!.OT}), caixa {Box + 1}, slot {Slot + 1}"
         : IsParty ? $"equipe, posição {Slot + 1}" : $"caixa {Box + 1}, slot {Slot + 1}";
 
     public void Load(SaveFile sav)

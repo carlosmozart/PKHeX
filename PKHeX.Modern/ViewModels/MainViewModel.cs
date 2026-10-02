@@ -33,8 +33,14 @@ public sealed class MainViewModel : ViewModelBase
         Boxes = new BoxesPageViewModel(s => _ = SelectSlotAsync(s)) { Party = Party };
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
         SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p), (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s);
-        Bank = new BankPageViewModel(s => _ = SelectSlotAsync(s), PromptAsync,
+        BankStorage.ExternalFolders = Settings.ExternalBankFolders;
+        OtherSave = new OtherSaveViewModel(s => _ = SelectSlotAsync(s),
+            () => SaveManager.Entries
+                .Where(e => _sav?.Metadata.FilePath is not { } open || !string.Equals(System.IO.Path.GetFullPath(e.Path), System.IO.Path.GetFullPath(open), StringComparison.OrdinalIgnoreCase))
+                .Select(e => new OtherSaveOption(e.Path, $"{e.Game} · {e.Entry.Trainer} — {e.FileName}")),
             (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s);
+        Bank = new BankPageViewModel(s => _ = SelectSlotAsync(s), PromptAsync,
+            (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s, Settings, OtherSave);
         Pokedex = new PokedexPageViewModel(Settings, (box, slot) => _ = GoToSlotAsync(box, slot));
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
@@ -77,6 +83,8 @@ public sealed class MainViewModel : ViewModelBase
     public SaveManagerViewModel SaveManager { get; }
     /// <summary>Bank local (pagina com duas telas: bank | save).</summary>
     public BankPageViewModel Bank { get; }
+    /// <summary>Segundo save (painel "Outro save" da pagina Bank).</summary>
+    public OtherSaveViewModel OtherSave { get; }
     /// <summary>Pokedex centralizada (saves da pasta + save aberto + bank).</summary>
     public PokedexPageViewModel Pokedex { get; }
     public EncounterDbViewModel Encounters { get; }
@@ -376,6 +384,15 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Fechar o app: pergunta se o save principal ou o outro save tem alteracoes nao gravadas.</summary>
+    public async Task<bool> ConfirmCloseAsync()
+    {
+        if (!await ConfirmDiscardChangesAsync("Fechar o PKHeX Modern"))
+            return false;
+        return !OtherSave.IsDirty || await ConfirmAsync("Outro save não salvo",
+            $"O outro save ({OtherSave.FileName}, na página Bank) tem alterações que ainda não foram gravadas.", "Fechar sem salvar", "Voltar", isDanger: true);
+    }
+
     /// <summary>Confirma o descarte das alteracoes nao exportadas (true = pode seguir).</summary>
     public async Task<bool> ConfirmDiscardChangesAsync(string action)
     {
@@ -408,6 +425,7 @@ public sealed class MainViewModel : ViewModelBase
         _history = new SlotHistory(sav);
         _historyAtSave = 0;
         ClearMarks();
+        OtherSave.MainPath = path;
         OnHistoryChanged();
         Editor = null;
         foreach (var page in AllPages)
@@ -458,6 +476,11 @@ public sealed class MainViewModel : ViewModelBase
         if (src.IsMarked && _marks.Count > 1)
         {
             await MoveMarkedAsync(dst, mode);
+            return;
+        }
+        if (src.IsOther || dst.IsOther)
+        {
+            await MoveWithOtherAsync(src, dst, mode);
             return;
         }
         if (src.IsBank || dst.IsBank)
@@ -563,6 +586,97 @@ public sealed class MainViewModel : ViewModelBase
         }
         Bank.LoadBox();
         RefreshSlots();
+    }
+
+    /// <summary>
+    /// Mover/copiar/sobrescrever envolvendo o outro save (painel esquerdo da pagina Bank). Entre os dois saves o
+    /// Pokemon e convertido para a geracao do destino (numa troca, o que volta tambem). O lado do save principal entra
+    /// no Ctrl+Z; o outro save so muda na memoria ate clicar em "Salvar este save".
+    /// </summary>
+    private async Task MoveWithOtherAsync(SlotViewModel src, SlotViewModel dst, DropMode mode)
+    {
+        if (_sav is null || src.Pkm is not { } a || src.IsEmpty)
+            return;
+        if (src.IsBank || dst.IsBank)
+        {
+            Status = "Para mover entre o bank e o outro save, passe pelo save aberto (ou abra o outro save à direita).";
+            return;
+        }
+        var srcSav = src.OtherSave ?? _sav;
+        var dstSav = dst.OtherSave ?? _sav;
+        var b = dst.IsEmpty ? null : dst.Pkm;
+        var name = src.Title;
+        if (mode != DropMode.Move && b is not null && !await ConfirmAsync("Substituir Pokémon?",
+                $"{dst.Title} ({dst.Location}) será substituído por {(mode == DropMode.Copy ? "uma cópia de " : "")}{name}.", "Substituir"))
+            return;
+
+        var srcInfo = CoreAdapter.GetSlotInfo(srcSav, src.Box, src.Slot);
+        var dstInfo = CoreAdapter.GetSlotInfo(dstSav, dst.Box, dst.Slot);
+        if (srcSav == dstSav)
+        {
+            // Dentro do outro save: as regras do Core (slots bloqueados etc.).
+            if (CoreAdapter.MoveSlot(srcSav, srcInfo, dstInfo, mode == DropMode.Copy, mode == DropMode.Overwrite) is { } error)
+            {
+                if (error != "")
+                    Status = error;
+                return;
+            }
+            OtherSave.MarkDirty();
+            OtherSave.LoadBox();
+            Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "movido")} para {dst.Location}. Salve o outro save para gravar.";
+            return;
+        }
+
+        // Entre os dois saves: converte para a geracao do destino.
+        if (CoreAdapter.ConvertForSave(dstSav, a, out var err) is not { } converted)
+        {
+            Status = $"{name} não pode ir para {CoreAdapter.GetGameName(dstSav)}: {err}";
+            return;
+        }
+        PKM? back = null;
+        if (mode == DropMode.Move && b is not null && (back = CoreAdapter.ConvertForSave(srcSav, b, out var err2)) is null)
+        {
+            Status = $"Não dá para trocar: {dst.Title} não pode ir para {CoreAdapter.GetGameName(srcSav)} ({err2}). Solte num slot vazio.";
+            return;
+        }
+        if (mode != DropMode.Copy && back is null && src.IsParty && srcSav.IsPartyAllEggs(src.Slot))
+        {
+            Status = "A equipe precisa ter pelo menos um Pokémon (que não seja ovo).";
+            return;
+        }
+        if (!dstInfo.CanWriteTo(dstSav) || (mode != DropMode.Copy && !srcInfo.CanWriteTo(srcSav)))
+        {
+            Status = "Slot bloqueado pelo jogo.";
+            return;
+        }
+
+        bool mainChanges = dstSav == _sav || mode != DropMode.Copy;
+        var mainSlot = dstSav == _sav ? dst : src;
+        if (mainChanges)
+            _history!.Record($"{(dstSav == _sav ? "trazer" : "enviar")} {name} {(dstSav == _sav ? "do" : "para o")} outro save", SlotHistory.KeyOf(mainSlot.Box, mainSlot.Slot));
+        try
+        {
+            CoreAdapter.ImportToSlot(dstSav, dstInfo, converted);
+            if (back is not null)
+                CoreAdapter.ImportToSlot(srcSav, srcInfo, back);
+            else if (mode != DropMode.Copy)
+                CoreAdapter.DeleteSlot(srcSav, srcInfo);
+        }
+        catch (Exception ex)
+        {
+            Status = $"Erro ao mover: {ex.Message}";
+        }
+        if (mainChanges)
+        {
+            OnHistoryChanged();
+            IsDirty = true;
+        }
+        if (dstSav != _sav || mode != DropMode.Copy)
+            OtherSave.MarkDirty();
+        OtherSave.LoadBox();
+        RefreshSlots();
+        var legal = CoreAdapter.IsLegal(converted) == false ? " Atenção: ficou ilegal depois da conversão." : "";
+        Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "movido")} para {dst.Location}.{legal} Salve os dois saves para gravar (Ctrl+Z desfaz só o lado do save aberto).";
     }
 
     public void MoveSlot(SlotViewModel src, SlotViewModel dst, bool copy) => MoveSlot(src, dst, copy ? DropMode.Copy : DropMode.Move);
@@ -674,6 +788,22 @@ public sealed class MainViewModel : ViewModelBase
         if (_sav is null || _selectedSlot is not { IsEmpty: false } slot)
             return;
         var name = slot.Title;
+        if (slot is { IsOther: true, OtherSave: { } other })
+        {
+            if (!await ConfirmAsync("Excluir do outro save?", $"{name} ({slot.Location}) será apagado do outro save (só vale depois de salvá-lo; não entra no Ctrl+Z).", "Excluir", isDanger: true))
+                return;
+            if (CoreAdapter.DeleteSlot(other, CoreAdapter.GetSlotInfo(other, slot.Box, slot.Slot)) is { Length: > 0 } otherError)
+            {
+                Status = otherError;
+                return;
+            }
+            OtherSave.MarkDirty();
+            OtherSave.LoadBox();
+            _selectedSlot = null;
+            RaiseSelectionChanged();
+            Status = $"{name} excluído do outro save. Salve-o para gravar.";
+            return;
+        }
         if (slot is { IsBank: true, BankBox: { } bankBox })
         {
             if (!await ConfirmAsync("Excluir do bank?", $"{name} ({slot.Location}) será apagado do bank. Isso não pode ser desfeito.", "Excluir", isDanger: true))
@@ -793,7 +923,7 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Ctrl+clique (alterna) ou Shift+clique (marca do ultimo marcado ate este, na mesma caixa).</summary>
     public void ToggleMark(SlotViewModel slot, bool range)
     {
-        if (_sav is null || slot.IsParty || slot.IsEmpty)
+        if (_sav is null || slot.IsParty || slot.IsEmpty || slot.IsOther)
             return;
         var key = KeyOf(slot);
         if (range && _markAnchor is { } anchor && SameBox(anchor, key))
@@ -909,7 +1039,7 @@ public sealed class MainViewModel : ViewModelBase
                 IsDirty = true;
             OnHistoryChanged();
         }
-        foreach (var i in items.Where(i => i.Key.Bank is not null))
+        foreach (var i in items.Where(i => i.Key.Bank is not null).OrderByDescending(i => i.Key.Bank!.ExternalIndex).ThenByDescending(i => i.Key.Slot))
         {
             BankStorage.DeleteSlot(i.Key.Bank!, i.Key.Slot);
             deleted++;
@@ -930,9 +1060,11 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_sav is null)
             return;
-        if (dst.IsParty)
+        if (dst.IsParty || dst.IsOther)
         {
-            Status = "Vários Pokémon de uma vez só vão para caixas (do save ou do bank). Para a equipe, arraste um por vez.";
+            Status = dst.IsOther
+                ? "Para o outro save, arraste um Pokémon por vez."
+                : "Vários Pokémon de uma vez só vão para caixas (do save ou do bank). Para a equipe, arraste um por vez.";
             return;
         }
         bool copy = mode == DropMode.Copy;
@@ -1000,8 +1132,9 @@ public sealed class MainViewModel : ViewModelBase
             }
             // Primeiro esvazia as origens que ficam na propria caixa de destino, depois grava, por ultimo tira das outras origens
             // (assim, se algo falhar no meio, nenhum Pokemon some).
+            // (em pasta externa os arquivos seguintes sobem ao apagar: apaga do ultimo para o primeiro)
             if (!copy)
-                foreach (var m in moving.Where(m => InTarget(m.Key)))
+                foreach (var m in moving.Where(m => InTarget(m.Key)).OrderByDescending(m => m.Key.Bank?.ExternalIndex ?? 0).ThenByDescending(m => m.Key.Slot))
                     Clear(m.Key);
             for (int i = 0; i < moving.Count; i++)
             {
@@ -1011,7 +1144,7 @@ public sealed class MainViewModel : ViewModelBase
                     CoreAdapter.ImportToSlot(_sav, CoreAdapter.GetSlotInfo(_sav, dst.Box, slots[i]), moving[i].Data);
             }
             if (!copy)
-                foreach (var m in moving.Where(m => !InTarget(m.Key)))
+                foreach (var m in moving.Where(m => !InTarget(m.Key)).OrderByDescending(m => m.Key.Bank?.ExternalIndex ?? 0).ThenByDescending(m => m.Key.Slot))
                     Clear(m.Key);
         }
         catch (Exception ex)
@@ -1130,9 +1263,9 @@ public sealed class MainViewModel : ViewModelBase
     public async Task SelectSlotAsync(SlotViewModel slot)
     {
         ClearMarks(); // clique simples desfaz a selecao multipla
-        if (slot.IsBank)
+        if (slot.IsBank || slot.IsOther)
         {
-            // No bank so destaca (o editor fica nas paginas do save); Excluir e Exportar PKM funcionam no selecionado.
+            // No bank (e no outro save) so destaca (o editor fica nas paginas do save); Excluir e Exportar PKM funcionam no selecionado.
             if (_selectedSlot is not null)
                 _selectedSlot.IsSelected = false;
             _selectedSlot = slot;

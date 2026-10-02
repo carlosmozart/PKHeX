@@ -16,7 +16,23 @@ public sealed partial class MainWindow : Window
         // Como no TidalHeX: ao voltar para a janela, a lista de saves e relida (novos arquivos aparecem sozinhos).
         Activated += (_, _) => { if (DataContext is MainViewModel vm && (!vm.HasSave || vm.CurrentPage == vm.SaveManager)) _ = vm.SaveManager.RefreshAsync(); };
         Closing += OnClosing;
-        DataContextChanged += (_, _) => { if (DataContext is MainViewModel vm) vm.SaveRequested += () => OnExport(this, new RoutedEventArgs()); };
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is not MainViewModel vm)
+                return;
+            vm.SaveRequested += () => OnExport(this, new RoutedEventArgs());
+            // Seletores de arquivo/pasta usados pela pagina Bank (pasta externa e outro save).
+            vm.Bank.PickFolder = async () => (await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Pasta com arquivos .pk* para usar como banco",
+                AllowMultiple = false,
+            })).FirstOrDefault()?.TryGetLocalPath();
+            vm.OtherSave.PickFile = async () => (await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Abrir outro save",
+                AllowMultiple = false,
+            })).FirstOrDefault()?.TryGetLocalPath();
+        };
     }
 
     private bool _closeConfirmed;
@@ -24,10 +40,10 @@ public sealed partial class MainWindow : Window
     /// <summary>Fechar com alteracoes nao exportadas: pergunta dentro da janela antes de sair.</summary>
     private async void OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (_closeConfirmed || DataContext is not MainViewModel { IsDirty: true } vm)
+        if (_closeConfirmed || DataContext is not MainViewModel vm || (!vm.IsDirty && !vm.OtherSave.IsDirty))
             return;
         e.Cancel = true;
-        if (await vm.ConfirmDiscardChangesAsync("Fechar o PKHeX Modern"))
+        if (await vm.ConfirmCloseAsync())
         {
             _closeConfirmed = true;
             Close();
