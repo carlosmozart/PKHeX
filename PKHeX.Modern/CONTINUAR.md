@@ -57,6 +57,8 @@ dotnet run --project PKHeX.Modern
 
 - **Shiny selvagem da Gen 3 (Legalizar):** o `GenerateMethodH.SetRandom` do Core rerola o PID até ficar shiny mesmo quando a natureza já bateu, o que o jogo nunca faz; a análise marca "Fishy: Unable to match encounter conditions to a possible RNG frame" e "(❌)" no Origin Seed. `Services/ShinyMethodH.cs` segue a regra do jogo (primeiro PID com a natureza fica; só aceita se já for shiny). O `Legalize` prefere resultados com `la.Info.FrameMatches` e só devolve um suspeito como último recurso, avisando. Gen 4 (Method J/K) ainda não tem esse tratamento.
 
+- **Resumo do hover nos slots:** `CoreAdapter.AnalyzeSlot` faz uma única `LegalityAnalysis` por slot e devolve a legalidade e o texto (como o `SummaryPreviewer` do PKHeX: `ShowdownParsing.GetLocalizedPreviewText` com `FirstLine + BattleTemplateConfig.DefaultHover`, mais `LegalityFormatting.AddEncounterInfo`). O texto fica em `SlotViewModel.Tooltip`.
+
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
 - Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".

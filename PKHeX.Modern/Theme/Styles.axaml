@@ -198,6 +198,14 @@
     <Setter Property="Foreground" Value="#4FA3F7" />
     <Setter Property="MinWidth" Value="0" />
   </Style>
+  <!-- Resumo do hover nos slots (como no PKHeX): largo o bastante para as linhas do set e do encontro -->
+  <Style Selector="Button.slot, Button.partyCard">
+    <Setter Property="ToolTip.ShowDelay" Value="250" />
+  </Style>
+  <Style Selector="ToolTip">
+    <Setter Property="MaxWidth" Value="520" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />

@@ -203,7 +203,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:SlotViewModel">
-            <Button Classes="partyCard" HorizontalContentAlignment="Stretch" Classes.selected="{Binding IsSelected}" Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
+            <Button Classes="partyCard" HorizontalContentAlignment="Stretch" ToolTip.Tip="{Binding Tooltip}" Classes.selected="{Binding IsSelected}" Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
                     Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                     CommandParameter="{Binding}">
               <Grid ColumnDefinitions="Auto,*,Auto">

@@ -46,7 +46,9 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     public bool? IsLegal { get => _isLegal; private set { Set(ref _isLegal, value); Raise(nameof(IsLegalOk)); Raise(nameof(IsLegalBad)); } }
     public bool IsLegalOk => IsLegal == true;
     public bool IsLegalBad => IsLegal == false;
-    public string Tooltip => IsEmpty ? "Vazio" : $"{Title} {Gender} · {Subtitle}" + (IsLegal == false ? " · ⚠ ilegal" : "");
+    private string _summary = "";
+    /// <summary>Resumo do hover, igual ao do PKHeX (set + encontro).</summary>
+    public string Tooltip => IsEmpty ? "Vazio" : _summary;
     public string Position => $"{Slot + 1:00}";
     public bool IsShiny => !IsEmpty && Pkm!.IsShiny;
     public bool IsEgg => !IsEmpty && Pkm!.IsEgg;
@@ -58,7 +60,7 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     {
         var pk = IsParty ? CoreAdapter.GetPartySlot(sav, Slot) : CoreAdapter.GetBoxSlot(sav, Box, Slot);
         Pkm = pk;
-        IsLegal = CoreAdapter.IsEmpty(pk) ? null : CoreAdapter.IsLegal(pk);
+        (IsLegal, _summary) = CoreAdapter.IsEmpty(pk) ? (null, "") : CoreAdapter.AnalyzeSlot(pk);
         Sprite = IsParty ? SpriteService.GetSprite(pk) : SpriteService.GetSprite(pk, sav, Box, Slot);
         foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname), nameof(Gender), nameof(IsMale), nameof(IsFemale)])
             Raise(p);

@@ -255,6 +255,47 @@ public static class CoreAdapter
         catch { return null; }
     }
 
+    // Ordem do resumo do hover: a mesma do PKHeX (primeira linha + BattleTemplateConfig.DefaultHover).
+    private static readonly BattleTemplateToken[] HoverOrder = [BattleTemplateToken.FirstLine, .. BattleTemplateConfig.DefaultHover];
+
+    /// <summary>
+    /// Legalidade e o resumo que o PKHeX mostra ao passar o mouse no slot: set (item, habilidade, nivel, IVs/EVs,
+    /// natureza, golpes) + informacoes do encontro (tipo, local, PID, Origin Seed...). Uma unica analise para os dois.
+    /// </summary>
+    public static (bool? Legal, string Summary) AnalyzeSlot(PKM pk)
+    {
+        LegalityAnalysis la;
+        try { la = new LegalityAnalysis(pk); }
+        catch (Exception ex) { return (null, ex.Message); }
+
+        var lines = new List<string>(16);
+        try
+        {
+            var settings = new BattleTemplateExportSettings(HoverOrder, GameInfo.CurrentLanguage);
+            lines.Add(ShowdownParsing.GetLocalizedPreviewText(pk, settings));
+        }
+        catch
+        {
+            lines.Add(SpeciesNames[pk.Species]);
+        }
+        try
+        {
+            var ctx = LegalityLocalizationContext.Create(la, GameInfo.CurrentLanguage);
+            lines.Add(string.Empty);
+            LegalityFormatting.AddEncounterInfo(ctx, lines);
+            if (!la.Valid && GetLegalityIssues(pk, 1) is [var issue])
+            {
+                lines.Add(string.Empty);
+                lines.Add("⚠ " + issue);
+            }
+        }
+        catch
+        {
+            // sem informacoes de encontro: fica so o set
+        }
+        return (la.Valid, string.Join(Environment.NewLine, lines).Trim());
+    }
+
     // Showdown
     public static string ToShowdown(PKM pk) => ShowdownParsing.GetShowdownText(pk);
 
