@@ -30,6 +30,24 @@ public sealed partial class SaveManagerView : UserControl
         }
     }
 
+    /// <summary>Restaurar como...: escolhe o arquivo de destino (sugere a pasta do save de origem e o nome original).</summary>
+    private async void OnRestoreAs(object? sender, RoutedEventArgs e)
+    {
+        if (VM is not { } vm || (sender as Control)?.DataContext is not BackupEntryViewModel backup
+            || TopLevel.GetTopLevel(this)?.StorageProvider is not { } storage)
+            return;
+        var start = backup.Source is { } src && System.IO.Path.GetDirectoryName(src) is { } dir && System.IO.Directory.Exists(dir)
+            ? await storage.TryGetFolderFromPathAsync(dir) : null;
+        var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Restaurar backup como",
+            SuggestedFileName = backup.SaveName,
+            SuggestedStartLocation = start,
+        });
+        if (file?.TryGetLocalPath() is { } path)
+            await vm.RestoreToAsync(backup, path);
+    }
+
     private async void OnChooseFolder(object? sender, RoutedEventArgs e)
     {
         if (VM is not { } vm || TopLevel.GetTopLevel(this)?.StorageProvider is not { } storage)

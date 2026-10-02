@@ -20,14 +20,24 @@ public sealed class SaveManagerViewModel : PageViewModel
     private readonly Action<string> _open;
     private IReadOnlyList<SaveEntryViewModel> _all = [];
     private string? _currentPath;
+    private readonly Func<string, string, string, Task<bool>> _confirm;
+    private readonly Action<string> _status;
 
-    public SaveManagerViewModel(AppSettings settings, Action<string> open)
+    /// <param name="confirm">Confirmacao (titulo, mensagem, botao) → true/false.</param>
+    public SaveManagerViewModel(AppSettings settings, Action<string> open,
+        Func<string, string, string, Task<bool>>? confirm = null, Action<string>? status = null)
     {
         _settings = settings;
         _open = open;
-        RefreshCommand = new RelayCommand(() => _ = RefreshAsync());
+        _confirm = confirm ?? ((_, _, _) => Task.FromResult(true));
+        _status = status ?? (_ => { });
+        RefreshCommand = new RelayCommand(() => _ = ShowBackups ? RefreshBackupsAsync() : RefreshAsync());
         OpenFolderCommand = new RelayCommand(OpenFolder);
-        OpenBackupsCommand = new RelayCommand(() => OpenInExplorer(SaveBackup.Folder));
+        OpenBackupsCommand = new RelayCommand(() => { ShowBackups = true; _ = RefreshBackupsAsync(); });
+        BackToSavesCommand = new RelayCommand(() => ShowBackups = false);
+        OpenBackupsFolderCommand = new RelayCommand(() => OpenInExplorer(SaveBackup.Folder));
+        RestoreCommand = new RelayCommand(p => { if (p is BackupEntryViewModel b && b.Source is { } src) _ = RestoreToAsync(b, src); });
+        DeleteBackupCommand = new RelayCommand(p => { if (p is BackupEntryViewModel b) _ = DeleteBackupAsync(b); });
         OpenCommand = new RelayCommand(p => { if (p is SaveEntryViewModel e) _open(e.Path); });
     }
 
@@ -43,8 +53,77 @@ public sealed class SaveManagerViewModel : PageViewModel
 
     public RelayCommand RefreshCommand { get; }
     public RelayCommand OpenFolderCommand { get; }
-    /// <summary>Abre a pasta dos backups automaticos (feitos antes de salvar por cima de um save).</summary>
+    /// <summary>Mostra a lista de backups automaticos (feitos antes de salvar por cima de um save).</summary>
     public RelayCommand OpenBackupsCommand { get; }
+    public RelayCommand BackToSavesCommand { get; }
+    public RelayCommand OpenBackupsFolderCommand { get; }
+    public RelayCommand RestoreCommand { get; }
+    public RelayCommand DeleteBackupCommand { get; }
+
+    // Backups
+    private bool _showBackups;
+    /// <summary>Mostrando a lista de backups no lugar dos saves.</summary>
+    public bool ShowBackups { get => _showBackups; set { if (Set(ref _showBackups, value)) Raise(nameof(ShowSaves)); } }
+    public bool ShowSaves => !ShowBackups;
+    public ObservableCollection<BackupGroupViewModel> BackupGroups { get; } = [];
+    public string BackupFolder => SaveBackup.Folder;
+    private string _backupSummary = "";
+    public string BackupSummary { get => _backupSummary; private set => Set(ref _backupSummary, value); }
+    public bool HasNoBackups => !IsLoading && BackupGroups.Count == 0;
+
+    /// <summary>Le os backups (e o resumo de cada um) em segundo plano.</summary>
+    public async Task RefreshBackupsAsync()
+    {
+        IsLoading = true;
+        var items = await Task.Run(() => SaveBackup.List().Select(b => (Info: b, Entry: SaveLibrary.ReadOne(b.Path))).ToList());
+        BackupGroups.Clear();
+        foreach (var g in items.GroupBy(i => i.Info.SaveName, StringComparer.OrdinalIgnoreCase))
+            BackupGroups.Add(new BackupGroupViewModel(g.Key, [.. g.Select(i => new BackupEntryViewModel(i.Info, i.Entry))]));
+        BackupSummary = items.Count == 0 ? "" : $"{items.Count} backup(s) de {BackupGroups.Count} save(s) · até 20 por save, os mais antigos saem sozinhos";
+        IsLoading = false;
+        Raise(nameof(HasNoBackups));
+    }
+
+    /// <summary>Restaura o backup em <paramref name="target"/> (pergunta antes). O arquivo atual ganha um backup antes.</summary>
+    public async Task RestoreToAsync(BackupEntryViewModel backup, string target)
+    {
+        bool isOpen = IsSamePath(target, _currentPath);
+        var message = $"“{System.IO.Path.GetFileName(target)}” volta a ser como estava em {backup.When}."
+                      + (File.Exists(target) ? " O arquivo atual ganha um backup antes, então dá para voltar atrás." : "")
+                      + (isOpen ? " Esse save está aberto: ele será reaberto em seguida." : "");
+        if (!await _confirm("Restaurar backup?", message, "Restaurar"))
+            return;
+        try
+        {
+            var safety = SaveBackup.Restore(backup.Info, target);
+            _status($"Backup de {backup.When} restaurado em {target}."
+                    + (safety is not null ? $" O arquivo anterior está nos backups ({System.IO.Path.GetFileName(safety)})." : ""));
+        }
+        catch (Exception ex)
+        {
+            _status($"Não deu para restaurar: {ex.Message}");
+            return;
+        }
+        await RefreshBackupsAsync();
+        if (isOpen)
+            _open(target); // o MainViewModel pergunta antes de descartar alteracoes nao exportadas
+    }
+
+    private async Task DeleteBackupAsync(BackupEntryViewModel backup)
+    {
+        if (!await _confirm("Excluir backup?", $"O backup de {backup.SaveName} feito em {backup.When} será apagado. Isso não pode ser desfeito.", "Excluir"))
+            return;
+        try
+        {
+            SaveBackup.Delete(backup.Info);
+            _status($"Backup de {backup.When} excluído.");
+        }
+        catch (Exception ex)
+        {
+            _status($"Não deu para excluir: {ex.Message}");
+        }
+        await RefreshBackupsAsync();
+    }
     public RelayCommand OpenCommand { get; }
 
     public string Folder
@@ -189,4 +268,24 @@ public sealed class SaveEntryViewModel(SaveEntry entry) : ViewModelBase
     private IReadOnlyList<Bitmap>? _party;
     /// <summary>Sprites da equipe, gerados so quando o cartao aparece.</summary>
     public IReadOnlyList<Bitmap> PartySprites => _party ??= [.. Entry.Party.Select(SpriteService.GetSprite).OfType<Bitmap>()];
+}
+
+public sealed record BackupGroupViewModel(string Title, IReadOnlyList<BackupEntryViewModel> Items);
+
+/// <summary>Um backup na lista: resumo do save (como os cartoes de saves), data e origem.</summary>
+public sealed class BackupEntryViewModel(BackupInfo info, SaveEntry? entry) : ViewModelBase
+{
+    public BackupInfo Info { get; } = info;
+    public SaveEntry? Entry { get; } = entry;
+    public string SaveName => Info.SaveName;
+    public string? Source => Info.Source;
+    public bool CanRestore => Source is not null;
+    public string Game => Entry?.Game ?? "Arquivo não reconhecido como save";
+    public string Trainer => Entry is null ? "" : Entry.Trainer + (Entry.TrainerIsFemale ? "  ♀" : "  ♂");
+    public string Details => Entry is null ? "" : $"{Entry.PlayTime} · ${Entry.Money:N0}" + (Entry.Caught > 0 ? $" · {Entry.Caught} capturados" : "");
+    public string When => Info.Created.ToString("dd/MM/yyyy HH:mm:ss");
+    public string SourceText => Source is null ? "Origem desconhecida (backup antigo): use “Restaurar como...”" : $"Volta para: {Source}";
+
+    private IReadOnlyList<Bitmap>? _party;
+    public IReadOnlyList<Bitmap> PartySprites => _party ??= Entry is null ? [] : [.. Entry.Party.Select(SpriteService.GetSprite).OfType<Bitmap>()];
 }

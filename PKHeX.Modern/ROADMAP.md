@@ -24,7 +24,7 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [x] **Ordenar caixas** (botão "⇅ Ordenar"): esta caixa ou todas, por Pokédex, nome, nível, shiny, tipo, IVs, data de captura ou só juntar. Também no bank (caixa atual). Um passo no Ctrl+Z.
 - [x] **Evoluir por troca** (editor, aba Visão geral): mostra as evoluções por troca da espécie (com o item exigido ou o parceiro Shelmet/Karrablast), consome o item se estiver segurando, respeita a Everstone e, da Gen 6 em diante, registra o parceiro de troca (HT) para continuar legal. Testado da Gen 1 à 7.
 - [ ] **Pokédex centralizada**: todos os saves + bank, formas/gêneros/shiny, filtros (visto, capturado, possuído, shiny, alpha, tipo, geração), living dex e shiny dex, sincronizar Pokédex entre saves.
-- [ ] **Backups**: lista dos backups com restaurar dentro do app.
+- [x] **Backups**: lista dos backups no Save Manager (botão Backups), agrupados por save, com resumo (jogo, treinador, tempo, equipe). Restaurar volta para o arquivo de origem (registrada em index.json; o arquivo atual ganha um backup antes e, se o save estiver aberto, é reaberto), Restaurar como... grava em outro lugar e dá para excluir.
 
 ## Próximos passos sugeridos
 - [x] **Excluir Pokémon** (botão na barra inferior ou tecla Delete), com confirmação e Ctrl+Z.

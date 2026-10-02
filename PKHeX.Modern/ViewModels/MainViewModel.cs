@@ -32,7 +32,7 @@ public sealed class MainViewModel : ViewModelBase
         Party = new PartyPageViewModel(s => _ = SelectSlotAsync(s));
         Boxes = new BoxesPageViewModel(s => _ = SelectSlotAsync(s)) { Party = Party };
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
-        SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p));
+        SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p), (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s);
         Bank = new BankPageViewModel(s => _ = SelectSlotAsync(s), PromptAsync,
             (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s);
         Encounters = new EncounterDbViewModel(UseEncounter);

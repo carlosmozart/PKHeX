@@ -3,7 +3,8 @@
              xmlns:vm="using:PKHeX.Modern.ViewModels"
              x:Class="PKHeX.Modern.Views.SaveManagerView"
              x:DataType="vm:SaveManagerViewModel">
-  <DockPanel>
+  <Panel>
+  <DockPanel IsVisible="{Binding ShowSaves}">
 
     <!-- Cabecalho: titulo, pasta e acoes -->
     <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,14">
@@ -15,7 +16,7 @@
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
           <Button Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}" ToolTip.Tip="Relê a pasta (F5)" />
           <Button Classes="small" Content="📁  Abrir pasta" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Abre a pasta no Explorer (cria se não existir)" />
-          <Button Classes="small" Content="🛟  Backups" Command="{Binding OpenBackupsCommand}" ToolTip.Tip="Cópias automáticas feitas antes de salvar por cima de um save" />
+          <Button Classes="small" Content="🛟  Backups" Command="{Binding OpenBackupsCommand}" ToolTip.Tip="Lista as cópias automáticas feitas antes de salvar por cima de um save, com Restaurar" />
           <Button Classes="small" Content="Escolher pasta..." Click="OnChooseFolder" />
         </StackPanel>
       </Grid>
@@ -104,4 +105,84 @@
       </ScrollViewer>
     </Panel>
   </DockPanel>
+
+  <!-- Backups: copias automaticas, com Restaurar (volta ao local de origem) e Restaurar como... -->
+  <DockPanel IsVisible="{Binding ShowBackups}">
+    <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,14">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Backups" Classes="title" />
+          <TextBlock Text="{Binding BackupFolder}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding BackupFolder}" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+          <Button Classes="small" Content="‹  Voltar aos saves" Command="{Binding BackToSavesCommand}" />
+          <Button Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}" ToolTip.Tip="Relê a pasta de backups (F5)" />
+          <Button Classes="small" Content="📁  Abrir pasta" Command="{Binding OpenBackupsFolderCommand}" />
+        </StackPanel>
+      </Grid>
+      <TextBlock Text="{Binding BackupSummary}" Classes="muted" FontSize="12" IsVisible="{Binding BackupSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    </StackPanel>
+    <Panel>
+      <Border Classes="card" IsVisible="{Binding HasNoBackups}">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" MaxWidth="520">
+          <TextBlock Text="Nenhum backup ainda" Classes="title" HorizontalAlignment="Center" />
+          <TextBlock Text="Toda vez que você salva por cima de um save, o arquivo anterior é copiado para cá. Assim dá para voltar atrás se algo der errado."
+                     Classes="muted" TextWrapping="Wrap" TextAlignment="Center" />
+        </StackPanel>
+      </Border>
+      <ScrollViewer>
+        <ItemsControl ItemsSource="{Binding BackupGroups}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:BackupGroupViewModel">
+              <StackPanel Spacing="8" Margin="0,0,0,18">
+                <TextBlock Text="{Binding Title}" Classes="section" />
+                <ItemsControl ItemsSource="{Binding Items}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><WrapPanel ItemSpacing="10" LineSpacing="10" /></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BackupEntryViewModel">
+                      <Border Classes="card saveCard" Width="330" ToolTip.Tip="{Binding Info.Path}">
+                        <StackPanel Spacing="6">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding When}" FontWeight="SemiBold" FontSize="16" />
+                            <Button Grid.Column="1" Classes="ghost small danger" Content="🗑" ToolTip.Tip="Excluir este backup"
+                                    Command="{Binding $parent[UserControl].((vm:SaveManagerViewModel)DataContext).DeleteBackupCommand}"
+                                    CommandParameter="{Binding}" />
+                          </Grid>
+                          <TextBlock Text="{Binding Game}" />
+                          <TextBlock Text="{Binding Trainer}" Classes="muted" FontSize="12" />
+                          <TextBlock Text="{Binding Details}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                          <ItemsControl ItemsSource="{Binding PartySprites}" Height="40">
+                            <ItemsControl.ItemsPanel>
+                              <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate>
+                                <Image Source="{Binding}" Width="40" Height="40" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                          <TextBlock Text="{Binding SourceText}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                          <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                            <Button Classes="small" Content="Restaurar como..." Click="OnRestoreAs"
+                                    ToolTip.Tip="Escolhe onde gravar o backup (outro arquivo ou o save original)" />
+                            <Button Classes="accent small" Content="↺  Restaurar" IsVisible="{Binding CanRestore}"
+                                    Command="{Binding $parent[UserControl].((vm:SaveManagerViewModel)DataContext).RestoreCommand}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip.Tip="Grava este backup de volta no save de origem (o arquivo atual ganha um backup antes)" />
+                          </StackPanel>
+                        </StackPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Panel>
+  </DockPanel>
+  </Panel>
 </UserControl>

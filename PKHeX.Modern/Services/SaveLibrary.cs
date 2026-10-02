@@ -65,6 +65,9 @@ public static class SaveLibrary
             .ThenBy(e => e.Generation).ThenBy(e => e.Game).ThenBy(e => System.IO.Path.GetFileName(e.Path))];
     }
 
+    /// <summary>Resumo de um arquivo avulso (ex.: um backup). Null se nao for um save.</summary>
+    public static SaveEntry? ReadOne(string path) => TryRead(System.IO.Path.GetDirectoryName(path) ?? "", path);
+
     private static SaveEntry? TryRead(string folder, string path)
     {
         try
