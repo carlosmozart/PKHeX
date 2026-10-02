@@ -385,7 +385,7 @@ public sealed class BankVariantViewModel(BankVariant variant, RelayCommand use, 
     public Avalonia.Media.Imaging.Bitmap? Sprite { get; } = SpriteService.GetSprite(variant.Pk);
     public string Format { get; } = variant.Pk.Extension.ToUpperInvariant();
     public string Title { get; } = $"{(variant.Pk.IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[variant.Pk.Species])} · Nv. {variant.Pk.CurrentLevel}";
-    public string Detail { get; } = $"Veio de {GameInfo.GetVersionName(variant.Pk.Version)} (formato da Gen {variant.Pk.Format}) · guardada em {variant.Saved:dd/MM/yyyy HH:mm}";
+    public string Detail { get; } = $"Formato da Gen {variant.Pk.Format} · origem {GameInfo.GetVersionName(variant.Pk.Version)} · guardada em {variant.Saved:dd/MM/yyyy HH:mm}";
     public RelayCommand UseCommand { get; } = use;
     public RelayCommand DeleteCommand { get; } = delete;
 }

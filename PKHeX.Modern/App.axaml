@@ -184,6 +184,34 @@
                       ToolTip.Tip="Abre a pasta desta caixa no Explorer (os Pokémon são arquivos .pk*)" />
             </Grid>
           </StackPanel>
+          <!-- Variantes do anexado selecionado (versao de cada jogo de outra geracao) -->
+          <Border DockPanel.Dock="Bottom" Classes="variantsPanel" IsVisible="{Binding HasVariants}">
+            <StackPanel Spacing="6">
+              <TextBlock Text="{Binding VariantsTitle}" Classes="section" Margin="0" TextTrimming="CharacterEllipsis" />
+              <ItemsControl ItemsSource="{Binding Variants}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:BankVariantViewModel">
+                    <Border Classes="variantRow">
+                      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="8">
+                        <Image Source="{Binding Sprite}" Width="36" Height="32" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="None" />
+                        <Border Grid.Column="1" Classes="chip formatChip" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Format}" />
+                        </Border>
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="10" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Detail}" />
+                        </StackPanel>
+                        <Button Grid.Column="3" Classes="small" Content="✎ Abrir no editor" Command="{Binding UseCommand}"
+                                ToolTip.Tip="Leva esta versão para o save aberto (convertida, se precisar), no lugar da cópia anexada ou num slot vazio. Ao Aplicar, o anexado passa a apontar para este save." />
+                        <Button Grid.Column="4" Classes="small danger" Content="🗑" Command="{Binding DeleteCommand}"
+                                ToolTip.Tip="Apaga esta variante (o original do bank não muda)" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
           <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <ItemsControl ItemsSource="{Binding Slots}">
             <ItemsControl.ItemsPanel>

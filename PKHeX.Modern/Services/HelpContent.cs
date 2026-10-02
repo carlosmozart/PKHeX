@@ -67,6 +67,7 @@ public static class HelpContent
             new("Duas telas", "Bank à esquerda e save aberto à direita: arraste entre os dois. Ao trazer para o save, o Pokémon é convertido para a geração do jogo."),
             new("Outro save", "Troque o painel esquerdo para “💾 Outro save” e mova Pokémon entre dois jogos (com conversão). Seleção múltipla funciona nos dois lados; o outro save tem ↶/↷ próprios no painel. Clique em “Salvar este save” para gravar."),
             new("Pokémon anexado", "Com “🔗 Anexar ao trazer” ligado, levar um Pokémon do bank para um save copia em vez de mover: o original fica no bank com o selo 🔗. Depois de jogar, “Atualizar anexados” traz a versão do jogo (nível, golpes, evolução) de volta para o bank; se o jogo for de outra geração, ela fica guardada como variante e o original não muda. Os que sumiram do save podem ser desanexados."),
+            new("Variantes", "Clique num Pokémon anexado (🔗) do bank para ver, embaixo da grade, as versões que voltaram de jogos de outra geração. “✎ Abrir no editor” leva a variante escolhida para o save aberto (convertida, se precisar), no lugar da cópia anexada ou num slot vazio da caixa; ao Aplicar, o anexado passa a apontar para este save. “🗑” apaga só a variante; o original do bank não muda."),
             new("Pastas externas", "“📁＋” transforma qualquer pasta com arquivos .pk* (ex.: a do PKHeX) num banco, sem mover os arquivos."),
         ]),
         new("📖", "Pokédex",
