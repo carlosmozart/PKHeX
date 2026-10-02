@@ -92,11 +92,17 @@ No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push n
 - **Abas de caixa:** `BoxesPageViewModel.BoxTabs` (`BoxTabViewModel` com `GoCommand`). O `SlotDragController` trata botões com a classe `boxTab` como as setas: parar em cima durante o arraste troca de caixa.
 - **Pendências:** `MainViewModel.PendingActions` = descrições do `SlotHistory` desde o último salvar/abrir (`_historyAtSave`). O link "● N alterações" abre a lista; "Salvar agora" dispara `SaveRequested`, que a `MainWindow` trata abrindo o seletor de arquivo.
 
-## Estado atual e próximo passo (2026-10-01)
-- Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
-- Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".
-- **Próximo passo combinado:** editor em abas (feito), desfazer/refazer (feito), atalhos de teclado (feito), cartão de legalidade (feito), Save Manager (feito), mensagens dentro do app (feito), bancos de encontros e eventos (feito). A lista inspirada no TidalHeX terminou; próximos candidatos no ROADMAP: busca global, golpes com tipo e PP, tradução das listas, cor de destaque configurável.
-- Preferências de trabalho: respostas e UI em PT-BR; validar mudanças visuais com o render headless antes de commitar; commit e push só quando pedido.
+## Estado atual e próximo passo (2026-10-02)
+- Última release publicada: **0.3.2** (tag `modern-v0.3.2`, commit `49df84c61`). Fluxo de release: subir `<Version>` no csproj, trocar "Próxima versão" no CHANGELOG pela versão e data, tag `modern-vX.Y.Z` (o CI publica o zip), `gh release edit --latest` com título e notas em PT-BR.
+- **Em andamento (não commitado, compila sem erros, ainda não testado):**
+  - **Pokédex, etapa 4:** `PokedexService.GetFormFlags` ganhou Sword/Shield (`Zukan8.GetSeenRegion`, regiões 0–3) e Legends Arceus (`PokedexSave8a.HasFormStorage`/`HasAnyPokeObtainFlags`/`HasAnyPokeSeenInWildFlags`). A Gen 7 e Let's Go só guardam a forma *exibida*, então continuam usando o dado da espécie. Ajuda (item "Formas") já atualizada.
+  - **Bank, etapa 4 (variantes):** `BankLinks.GetVariants`/`DeleteVariant`/`Relink` + record `BankVariant`; `Attach` preserva as variantes ao reanexar; `BankStorage.ReadEntity` virou `internal`. `BankPageViewModel`: `Variants`, `HasVariants`, `VariantsTitle`, `ShowVariants(slot)`, `UseVariant` e a classe `BankVariantViewModel` (Sprite, Format, Title, Detail, UseCommand, DeleteCommand). `MainViewModel`: `Bank.ShowVariants(slot)` ao clicar num slot do bank; `UseVariantAsync` converte a variante, abre no editor no lugar da cópia anexada (ou num slot vazio) e, ao Aplicar, chama `BankLinks.Relink` (novo parâmetro `applied` em `SelectSlot`).
+- **Falta para fechar essa etapa:**
+  1. Painel na UI do bank (`App.axaml`, DataTemplate `BankPageViewModel`, acima do `ScrollViewer` dos slots): `IsVisible="{Binding HasVariants}"`, título `VariantesTitle`, lista `Variants` com sprite, `Format`, `Title`, `Detail` e botões "Abrir no editor do save" (`UseCommand`) e "🗑" (`DeleteCommand`).
+  2. Teste headless: anexar um Pokémon, sincronizar com um save de outra geração (gera variante), selecionar no bank, usar a variante e excluí-la. Também conferir as formas da Pokédex num save de SWSH/PLA, se houver.
+  3. Ajuda (`HelpContent.cs`, seção Bank: item "Variantes") e `CHANGELOG.md` numa seção "## Próxima versão" (Bank: variantes; Pokédex: formas em Sword/Shield e Legends Arceus). Marcar as etapas 4 no `ROADMAP.md`.
+- Depois: abas de vários saves, Batch Editor, editores por jogo, instalador/assinatura, multiplataforma (ver ROADMAP).
+- Preferências de trabalho: respostas e UI em PT-BR (espécies, golpes, itens e jogos em inglês); não mexer no `PKHeX.Core`; validar com render headless e testes; commit e push só quando pedido; toda função nova entra na Ajuda e no CHANGELOG; saves reais em `saves/` (fora do git) só leitura, copiar antes de testar e nunca usar em screenshots públicos.
 
 ## Testado com
 - **Saves reais de teste:** pasta `saves/` na raiz do repositório (Red, Yellow, Crystal, Ruby, Sapphire, Emerald, FireRed, HeartGold, Black, Y, Omega Ruby, Alpha Sapphire, Moon, Ultra Moon). Ela **não é versionada**: está em `.git/info/exclude` (local). Em outro PC, copie a pasta manualmente e repita `echo /saves/ >> .git/info/exclude`. Nos testes, só leia esses arquivos; para testar "Salvar", use uma cópia em pasta temporária.

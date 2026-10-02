@@ -75,7 +75,7 @@ public static class HelpContent
             new("Living dex e filtros", "Resumo de living dex e shiny dex; filtros por situação (faltando, shiny, alpha...), geração, tipo e fonte. “Formas e gêneros” mostra cada forma como entrada própria."),
             new("Onde está", "Selecione uma espécie para ver onde estão os seus; “Ir” abre o Pokémon no editor."),
             new("Sincronizar", "Marca na Pokédex do save aberto o que foi capturado nos outros saves e o que você tem guardado. “Sincronizar todos os saves” faz o mesmo em cada save da pasta (os fechados são gravados na hora, com backup)."),
-            new("Formas", "Em Gen 4, Gen 5, Gen 6, BDSP, Scarlet/Violet e Legends Z-A a Pokédex guarda cada forma: em “Formas e gêneros”, uma forma só conta como vista/capturada se aquele jogo a registrou. Nos outros jogos vale o dado da espécie."),
+            new("Formas", "Em Gen 4, Gen 5, Gen 6, Sword/Shield, BDSP, Legends Arceus, Scarlet/Violet e Legends Z-A a Pokédex guarda cada forma: em “Formas e gêneros”, uma forma só conta como vista/capturada se aquele jogo a registrou. Nos outros jogos vale o dado da espécie (a Gen 7 e Let's Go guardam só a forma exibida, não as vistas)."),
         ]),
         new("🎒", "Treinador e mochila",
         [

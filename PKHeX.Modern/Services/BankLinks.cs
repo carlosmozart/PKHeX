@@ -21,6 +21,9 @@ public sealed class BankLink
     public List<string> Variants { get; set; } = [];
 }
 
+/// <summary>Uma variante guardada: a versao do Pokemon que veio de um jogo de outra geracao.</summary>
+public sealed record BankVariant(string File, PKM Pk, DateTime Saved);
+
 /// <summary>Resultado de "Atualizar anexados" para um Pokemon.</summary>
 public sealed record BankLinkResult(BankLink Link, string Message, bool Lost);
 
@@ -90,12 +93,14 @@ public static class BankLinks
     {
         var list = Load();
         var id = IdOf(bankPk);
+        var variants = list.FirstOrDefault(l => l.Id == id)?.Variants ?? []; // reanexar nao perde as variantes
         list.RemoveAll(l => l.Id == id);
         list.Add(new BankLink
         {
             Id = id, SavePath = savePath, SaveName = saveName,
             Name = bankPk.IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[bankPk.Species],
             Linked = DateTime.Now,
+            Variants = variants,
         });
         Save();
     }
@@ -126,6 +131,42 @@ public static class BankLinks
     {
         var dir = Path.Combine(VariantRoot, Clean(IdOf(pk)));
         return Directory.Exists(dir) ? Directory.GetFiles(dir) : [];
+    }
+
+    /// <summary>Variantes guardadas deste Pokemon, lidas do disco (as ilegiveis ficam de fora).</summary>
+    public static IReadOnlyList<BankVariant> GetVariants(PKM pk)
+    {
+        var list = new List<BankVariant>();
+        foreach (var file in GetVariantFiles(pk))
+            if (BankStorage.ReadEntity(file) is { } v && !CoreAdapter.IsEmpty(v))
+                list.Add(new BankVariant(file, v, File.GetLastWriteTime(file)));
+        return [.. list.OrderBy(v => v.Pk.Format)];
+    }
+
+    /// <summary>Apaga uma variante (o original do bank nao muda).</summary>
+    public static void DeleteVariant(PKM original, BankVariant variant)
+    {
+        File.Delete(variant.File);
+        if (Find(original) is not { } link)
+            return;
+        var ext = variant.Pk.Extension;
+        if (!GetVariantFiles(original).Any(f => Path.GetExtension(f).Equals("." + ext, StringComparison.OrdinalIgnoreCase)))
+        {
+            link.Variants.Remove(ext);
+            Save();
+        }
+    }
+
+    /// <summary>Liga o anexado a outro save (a variante foi levada para la), mantendo as variantes.</summary>
+    public static void Relink(PKM original, string savePath, string saveName)
+    {
+        if (Find(original) is not { } link)
+            return;
+        link.SavePath = savePath;
+        link.SaveName = saveName;
+        link.Linked = DateTime.Now;
+        link.LastSync = null;
+        Save();
     }
 
     private static string Clean(string id) => PathUtil.CleanFileName(id);

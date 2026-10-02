@@ -257,7 +257,7 @@ public static class BankStorage
     private static string? FindFile(BankBox box, int slot)
         => Directory.Exists(box.Folder) ? Directory.GetFiles(box.Folder).FirstOrDefault(f => GetSlot(Path.GetFileName(f)) == slot) : null;
 
-    private static PKM? ReadEntity(string file)
+    internal static PKM? ReadEntity(string file)
     {
         try
         {

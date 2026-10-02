@@ -55,6 +55,7 @@ public sealed class MainViewModel : ViewModelBase
         Bank.SlotsLoaded = ApplyMarks;
         OtherSave.SlotsLoaded = ApplyMarks;
         Bank.Sorted = ClearMarks;
+        Bank.UseVariant = UseVariantAsync;
         Boxes.Sort = SortBoxes;
         ClearMarksCommand = new RelayCommand(ClearMarks);
         DeleteMarkedCommand = new RelayCommand(() => _ = DeleteMarkedAsync());
@@ -1549,6 +1550,7 @@ public sealed class MainViewModel : ViewModelBase
             _selectedSlot = slot;
             slot.IsSelected = true;
             RaiseSelectionChanged();
+            Bank.ShowVariants(slot);
             return;
         }
         if (slot != _selectedSlot && !await ConfirmDiscardEditAsync())
@@ -1593,10 +1595,71 @@ public sealed class MainViewModel : ViewModelBase
         Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gerado do banco em {slot.Location}. Confira no editor e clique em Aplicar para gravar.";
     }
 
+    /// <summary>
+    /// "Abrir no editor do save" de uma variante do bank: a versao daquele jogo vai para o editor no lugar da copia
+    /// anexada (se ela estiver no save aberto) ou num slot vazio da caixa atual. Ao Aplicar, o anexado passa a
+    /// apontar para este save.
+    /// </summary>
+    private async Task UseVariantAsync(PKM original, BankVariant variant)
+    {
+        if (_sav is null)
+        {
+            Status = "Abra um save para levar a variante.";
+            return;
+        }
+        var pk = CoreAdapter.ConvertForSave(_sav, variant.Pk, out var error);
+        if (pk is null)
+        {
+            Status = $"Esta variante não cabe em {CoreAdapter.GetGameName(_sav)}: {error}";
+            return;
+        }
+        if (!await ConfirmDiscardEditAsync())
+            return;
+
+        // A copia anexada ja esta neste save: a variante entra no lugar dela.
+        var id = BankLinks.IdOf(original);
+        SlotViewModel? target = null;
+        string where;
+        var copy = EntitySearch.ReadAll(_sav).FirstOrDefault(e => !CoreAdapter.IsEmpty(e.Pkm) && BankLinks.IdOf(e.Pkm) == id);
+        if (copy is not null)
+        {
+            if (copy.Box < 0)
+            {
+                CurrentPage = Party;
+                target = copy.Slot < Party.Slots.Count ? Party.Slots[copy.Slot] : null;
+            }
+            else
+            {
+                CurrentPage = Boxes;
+                Boxes.CurrentBox = copy.Box;
+                target = copy.Slot < Boxes.Slots.Count ? Boxes.Slots[copy.Slot] : null;
+            }
+            where = "no lugar da cópia anexada";
+        }
+        else
+        {
+            target = Boxes.Slots.FirstOrDefault(x => x.IsEmpty);
+            if (target is not null)
+                CurrentPage = Boxes;
+            where = "num slot vazio";
+        }
+        if (target is null)
+        {
+            Status = "A caixa atual está cheia. Escolha uma caixa com espaço e tente de novo.";
+            return;
+        }
+        var savePath = CurrentSavePath;
+        var saveName = SaveLabel;
+        SelectSlot(target, pk, _ => BankLinks.Relink(original, savePath, saveName));
+        var converted = variant.Pk.GetType() == _sav.PKMType ? "" : $" (convertida de {variant.Pk.Extension.ToUpperInvariant()})";
+        Status = $"Variante {variant.Pk.Extension.ToUpperInvariant()} de {CoreAdapter.SpeciesNames[pk.Species]}{converted} aberta {where}, em {target.Location}. Confira e clique em Aplicar: o anexado passa a apontar para este save.";
+    }
+
     private void SelectSlot(SlotViewModel slot) => SelectSlot(slot, null);
 
     /// <param name="generated">Pokemon vindo de fora (banco) para abrir no editor no lugar do conteudo do slot.</param>
-    private void SelectSlot(SlotViewModel slot, PKM? generated)
+    /// <param name="applied">Chamado depois de gravar no slot (ex.: religar um anexado).</param>
+    private void SelectSlot(SlotViewModel slot, PKM? generated, Action<PKM>? applied = null)
     {
         if (_selectedSlot is not null)
             _selectedSlot.IsSelected = false;
@@ -1622,6 +1685,7 @@ public sealed class MainViewModel : ViewModelBase
             slot.Write(_sav, pk);
             if (slot.IsParty)
                 Party.Load(_sav);
+            applied?.Invoke(pk);
             RaiseSelectionChanged();
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
         }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab };

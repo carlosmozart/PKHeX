@@ -277,8 +277,9 @@ public static class PokedexService
     }
 
     /// <summary>
-    /// Visto/capturado de cada forma neste save. Nos jogos que guardam a forma (Gen 4, 5 e 6, BDSP, Scarlet/Violet,
-    /// Legends Z-A), a forma so conta se a Pokedex registrou aquela forma; nos outros, vale o dado da especie.
+    /// Visto/capturado de cada forma neste save. Nos jogos que guardam a forma (Gen 4, 5 e 6, Sword/Shield, BDSP, Legends Arceus, Scarlet/Violet,
+    /// Legends Z-A), a forma so conta se a Pokedex registrou aquela forma; nos outros (Gen 7 e Let's Go so guardam a forma
+    /// exibida, nao as vistas), vale o dado da especie.
     /// Onde o jogo so guarda "forma vista", a forma conta como capturada se a especie foi capturada e a forma vista.
     /// </summary>
     private static void AddFormFlags(Dictionary<ushort, List<DexEntry>> formsBySpecies, DexEntry[] entries, SaveFile sav, DexSource source)
@@ -334,6 +335,23 @@ public static class PokedexService
                         return (sv.Zukan.DexPaldea.Get(species).GetIsFormSeen(form), null);
                     var kitakami = sv.Zukan.DexKitakami.Get(species);
                     return (kitakami.GetSeenForm(form), kitakami.GetObtainedForm(form));
+                case SAV8SWSH swsh:
+                {
+                    if (!swsh.Zukan.GetEntry(species, out var index))
+                        return (null, null); // especie fora das Pokedex de Galar
+                    bool seenForm = false;
+                    for (int region = 0; region < 4 && !seenForm; region++)
+                        seenForm = swsh.Zukan.GetSeenRegion(index, form, region);
+                    return (seenForm, null);
+                }
+                case SAV8LA la:
+                {
+                    var dex = la.PokedexSave;
+                    if (!dex.HasFormStorage(species, form))
+                        return (null, null);
+                    bool obtained = dex.HasAnyPokeObtainFlags(species, form);
+                    return (obtained || dex.HasAnyPokeSeenInWildFlags(species, form), obtained);
+                }
                 case SAV9ZA za:
                     var entry = za.Zukan.GetEntry(species);
                     return (entry.GetIsFormSeen(form), entry.GetIsFormCaught(form));

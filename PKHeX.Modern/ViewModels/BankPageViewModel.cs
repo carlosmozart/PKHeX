@@ -238,11 +238,60 @@ public sealed class BankPageViewModel : SlotPageViewModel
     /// ligado ao save, e "Atualizar anexados" traz de volta a versao do jogo.
     /// </summary>
     public bool AttachMode { get => _attachMode; set => Set(ref _attachMode, value); }
+
+    /// <summary>Variantes do anexado selecionado (a versao de cada jogo de outra geracao).</summary>
+    public ObservableCollection<BankVariantViewModel> Variants { get; } = [];
+    public bool HasVariants => Variants.Count > 0;
+    private string _variantsTitle = "";
+    public string VariantsTitle { get => _variantsTitle; private set => Set(ref _variantsTitle, value); }
+    private PKM? _variantOwner;
+
+    /// <summary>"Abrir no editor do save" de uma variante (definido pelo MainViewModel): original do bank e a variante.</summary>
+    public Func<PKM, BankVariant, Task>? UseVariant { get; set; }
+
+    /// <summary>Mostra as variantes do Pokemon selecionado no bank (some se ele nao for anexado ou nao tiver variantes).</summary>
+    public void ShowVariants(SlotViewModel? slot)
+    {
+        Variants.Clear();
+        _variantOwner = null;
+        if (slot is { IsBank: true, IsAttached: true, Pkm: { } pk } && !CoreAdapter.IsEmpty(pk))
+        {
+            _variantOwner = pk;
+            foreach (var v in BankLinks.GetVariants(pk))
+                Variants.Add(new BankVariantViewModel(v,
+                    new RelayCommand(() => { if (UseVariant is { } use) _ = use(pk, v); }),
+                    new RelayCommand(() => _ = DeleteVariantAsync(pk, v))));
+            VariantsTitle = $"VARIANTES DE {(pk.IsEgg ? "OVO" : CoreAdapter.SpeciesNames[pk.Species].ToUpperInvariant())} · ORIGINAL {pk.Extension.ToUpperInvariant()}";
+        }
+        Raise(nameof(HasVariants));
+    }
+
+    private async Task DeleteVariantAsync(PKM original, BankVariant variant)
+    {
+        if (!await _confirm("Excluir variante?",
+                $"A versão {variant.Pk.Extension.ToUpperInvariant()} de {CoreAdapter.SpeciesNames[variant.Pk.Species]} (Nv. {variant.Pk.CurrentLevel}) será apagada. O original do bank não muda.",
+                "Excluir"))
+            return;
+        try
+        {
+            BankLinks.DeleteVariant(original, variant);
+            _status($"Variante {variant.Pk.Extension.ToUpperInvariant()} excluída.");
+        }
+        catch (Exception ex)
+        {
+            _status($"Não deu para excluir a variante: {ex.Message}");
+        }
+        LoadBox();
+        var slot = Slots.FirstOrDefault(s => s.Pkm is { } p && !CoreAdapter.IsEmpty(p) && BankLinks.IdOf(p) == BankLinks.IdOf(original));
+        ShowVariants(slot);
+    }
     public string AttachedText => BankLinks.All.Count == 0 ? "🔗  Atualizar anexados" : $"🔗  Atualizar anexados ({BankLinks.All.Count})";
 
     public void LoadBox()
     {
         Slots.Clear();
+        if (Variants.Count > 0)
+            ShowVariants(null); // a selecao some junto com os slots
         if (CurrentBox is not { } box || _bank is null)
             return;
         var data = BankStorage.ReadBox(box);
@@ -327,4 +376,16 @@ public sealed class BankPageViewModel : SlotPageViewModel
         BankStorage.DeleteBox(box);
         ReloadBoxes();
     }
+}
+
+/// <summary>Uma variante no painel do bank: a versao do Pokemon que voltou de um jogo de outra geracao.</summary>
+public sealed class BankVariantViewModel(BankVariant variant, RelayCommand use, RelayCommand delete)
+{
+    public BankVariant Variant { get; } = variant;
+    public Avalonia.Media.Imaging.Bitmap? Sprite { get; } = SpriteService.GetSprite(variant.Pk);
+    public string Format { get; } = variant.Pk.Extension.ToUpperInvariant();
+    public string Title { get; } = $"{(variant.Pk.IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[variant.Pk.Species])} · Nv. {variant.Pk.CurrentLevel}";
+    public string Detail { get; } = $"Veio de {GameInfo.GetVersionName(variant.Pk.Version)} (formato da Gen {variant.Pk.Format}) · guardada em {variant.Saved:dd/MM/yyyy HH:mm}";
+    public RelayCommand UseCommand { get; } = use;
+    public RelayCommand DeleteCommand { get; } = delete;
 }
