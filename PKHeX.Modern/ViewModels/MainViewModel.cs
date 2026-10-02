@@ -40,7 +40,12 @@ public sealed class MainViewModel : ViewModelBase
         AllPages = [Boxes, Party, Bank, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
-        Boxes.SlotsLoaded = ApplySearchHighlight;
+        Boxes.SlotsLoaded = () => { ApplySearchHighlight(); ApplyMarks(); };
+        Bank.SlotsLoaded = ApplyMarks;
+        Bank.Sorted = ClearMarks;
+        Boxes.Sort = SortBoxes;
+        ClearMarksCommand = new RelayCommand(ClearMarks);
+        DeleteMarkedCommand = new RelayCommand(() => _ = DeleteMarkedAsync());
         Party.SlotsLoaded = ApplySearchHighlight;
         ClearSearchCommand = new RelayCommand(() => SearchText = "");
         GoToSearchHitCommand = new RelayCommand(p => { if (p is SearchHitViewModel h) _ = GoToSearchHitAsync(h); });
@@ -48,7 +53,7 @@ public sealed class MainViewModel : ViewModelBase
         _currentPage = Boxes;
         CheckLegalityCommand = new RelayCommand(() => _ = CheckLegalityAsync(), () => HasSave && !_checkingLegality);
         CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
-        DeleteCommand = new RelayCommand(() => _ = DeleteSelectedAsync(), () => CanExportEntity);
+        DeleteCommand = new RelayCommand(() => _ = DeleteSelectedAsync(), () => CanExportEntity || HasMarks);
         UndoCommand = new RelayCommand(Undo, () => _history?.CanUndo == true);
         ShowPendingCommand = new RelayCommand(() => _ = ShowPendingAsync());
         RedoCommand = new RelayCommand(Redo, () => _history?.CanRedo == true);
@@ -108,6 +113,11 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Esc: fecha o editor; sem editor, volta para Caixas.</summary>
     public async void Back()
     {
+        if (HasMarks)
+        {
+            ClearMarks();
+            return;
+        }
         if (Editor is not null)
         {
             if (!await ConfirmDiscardEditAsync())
@@ -374,6 +384,7 @@ public sealed class MainViewModel : ViewModelBase
         SearchText = "";
         _history = new SlotHistory(sav);
         _historyAtSave = 0;
+        ClearMarks();
         OnHistoryChanged();
         Editor = null;
         foreach (var page in AllPages)
@@ -421,6 +432,11 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_sav is null || src == dst)
             return;
+        if (src.IsMarked && _marks.Count > 1)
+        {
+            await MoveMarkedAsync(dst, mode);
+            return;
+        }
         if (src.IsBank || dst.IsBank)
         {
             await MoveWithBankAsync(src, dst, mode);
@@ -627,6 +643,11 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Excluir (Delete): apaga o Pokemon selecionado. Da para desfazer com Ctrl+Z.</summary>
     public async Task DeleteSelectedAsync()
     {
+        if (HasMarks)
+        {
+            await DeleteMarkedAsync();
+            return;
+        }
         if (_sav is null || _selectedSlot is not { IsEmpty: false } slot)
             return;
         var name = slot.Title;
@@ -731,6 +752,293 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
 
+    // Selecao multipla: Ctrl+clique marca/desmarca, Shift+clique marca um intervalo, Ctrl+A marca a caixa toda.
+    // Vale para caixas do save e do bank (inclusive caixas diferentes); a equipe fica de fora, porque as
+    // posicoes dela mudam quando alguem sai. As marcas sao posicoes: qualquer alteracao nos slots as limpa.
+    public readonly record struct MarkKey(int Box, BankBox? Bank, int Slot);
+    private readonly List<MarkKey> _marks = [];
+    private MarkKey? _markAnchor;
+
+    private static MarkKey KeyOf(SlotViewModel s) => new(s.Box, s.BankBox, s.Slot);
+    private static bool SameBox(MarkKey a, MarkKey b) => a.Box == b.Box && a.Bank == b.Bank;
+
+    public bool HasMarks => _marks.Count > 0;
+    public string MarkedText => _marks.Count == 1 ? "1 selecionado" : $"{_marks.Count} selecionados";
+    public RelayCommand ClearMarksCommand { get; }
+    public RelayCommand DeleteMarkedCommand { get; }
+
+    /// <summary>Ctrl+clique (alterna) ou Shift+clique (marca do ultimo marcado ate este, na mesma caixa).</summary>
+    public void ToggleMark(SlotViewModel slot, bool range)
+    {
+        if (_sav is null || slot.IsParty || slot.IsEmpty)
+            return;
+        var key = KeyOf(slot);
+        if (range && _markAnchor is { } anchor && SameBox(anchor, key))
+        {
+            var slots = slot.IsBank ? Bank.Slots : Boxes.Slots;
+            int from = Math.Min(anchor.Slot, key.Slot), to = Math.Max(anchor.Slot, key.Slot);
+            foreach (var s in slots.Where(s => s.Slot >= from && s.Slot <= to && !s.IsEmpty))
+                if (!_marks.Contains(KeyOf(s)))
+                    _marks.Add(KeyOf(s));
+        }
+        else if (!_marks.Remove(key))
+            _marks.Add(key);
+        _markAnchor = key;
+        // A selecao simples sai de cena para nao confundir (o editor fica para um Pokemon so).
+        if (_selectedSlot is not null && Editor is not { IsModified: true })
+        {
+            _selectedSlot.IsSelected = false;
+            _selectedSlot = null;
+            Editor = null;
+        }
+        OnMarksChanged();
+    }
+
+    /// <summary>Ctrl+A: marca todos os Pokemon da caixa onde esta a selecao (ou da caixa aberta do save).</summary>
+    public void MarkAll()
+    {
+        if (_sav is null)
+            return;
+        var slots = _markAnchor is { Bank: not null } || CurrentPage == Bank && _selectedSlot is { IsBank: true } ? Bank.Slots : Boxes.Slots;
+        foreach (var s in slots.Where(s => !s.IsEmpty))
+            if (!_marks.Contains(KeyOf(s)))
+                _marks.Add(KeyOf(s));
+        if (slots.FirstOrDefault(s => !s.IsEmpty) is { } first)
+            _markAnchor = KeyOf(first);
+        OnMarksChanged();
+    }
+
+    public void ClearMarks()
+    {
+        if (_marks.Count == 0 && _markAnchor is null)
+            return;
+        _marks.Clear();
+        _markAnchor = null;
+        OnMarksChanged();
+    }
+
+    private void OnMarksChanged()
+    {
+        ApplyMarks();
+        Raise(nameof(HasMarks));
+        Raise(nameof(MarkedText));
+        RaiseSelectionChanged();
+    }
+
+    /// <summary>Reaplica o destaque das marcas nos slots visiveis (depois de trocar de caixa).</summary>
+    private void ApplyMarks()
+    {
+        foreach (var s in Boxes.Slots.Concat(Bank.Slots))
+            s.IsMarked = _marks.Contains(KeyOf(s));
+    }
+
+    /// <summary>Le os Pokemon marcados (na ordem: caixas do save, depois bank; dentro da caixa, por slot).</summary>
+    private List<(MarkKey Key, PKM Pkm, string Name)> ResolveMarks()
+    {
+        var list = new List<(MarkKey, PKM, string)>();
+        if (_sav is null)
+            return list;
+        foreach (var k in _marks.OrderBy(k => k.Bank is not null).ThenBy(k => k.Bank?.Folder).ThenBy(k => k.Box).ThenBy(k => k.Slot))
+        {
+            var pk = k.Bank is { } bank ? BankStorage.ReadSlot(bank, k.Slot) : CoreAdapter.GetBoxSlot(_sav, k.Box, k.Slot);
+            if (pk is not null && !CoreAdapter.IsEmpty(pk))
+                list.Add((k, pk, pk.IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[pk.Species]));
+        }
+        return list;
+    }
+
+    private string MarkLocation(MarkKey k) => k.Bank is { } b ? $"bank › {b.Name} · {k.Slot + 1}" : $"{CoreAdapter.GetBoxName(_sav!, k.Box)} · {k.Slot + 1}";
+
+    /// <summary>Excluir os marcados. Os do save entram no desfazer (um passo so); os do bank sao apagados na hora.</summary>
+    private async Task DeleteMarkedAsync()
+    {
+        if (_sav is null)
+            return;
+        var items = ResolveMarks();
+        if (items.Count == 0)
+        {
+            ClearMarks();
+            return;
+        }
+        int inBank = items.Count(i => i.Key.Bank is not null);
+        var message = inBank == 0
+            ? $"{items.Count} Pokémon serão apagados do save. Dá para desfazer com Ctrl+Z."
+            : inBank == items.Count
+                ? $"{items.Count} Pokémon serão apagados do bank. Isso não pode ser desfeito."
+                : $"{items.Count} Pokémon serão apagados ({inBank} do bank, que não volta com Ctrl+Z).";
+        var details = items.Take(30).Select(i => $"{i.Name} ({MarkLocation(i.Key)})").ToList();
+        if (items.Count > 30)
+            details.Add($"… e mais {items.Count - 30}.");
+        if (!await ConfirmAsync($"Excluir {items.Count} Pokémon?", message, "Excluir", isDanger: true, details: details, icon: "🗑"))
+            return;
+
+        var fromSave = items.Where(i => i.Key.Bank is null).ToList();
+        int deleted = 0;
+        if (fromSave.Count > 0)
+        {
+            _history!.Record($"excluir {fromSave.Count} Pokémon", [.. fromSave.Select(i => SlotHistory.KeyOf(i.Key.Box, i.Key.Slot))]);
+            foreach (var i in fromSave)
+                if (CoreAdapter.DeleteSlot(_sav, CoreAdapter.GetSlotInfo(_sav, i.Key.Box, i.Key.Slot)) is null)
+                    deleted++;
+            if (deleted == 0)
+                _history.Discard();
+            else
+                IsDirty = true;
+            OnHistoryChanged();
+        }
+        foreach (var i in items.Where(i => i.Key.Bank is not null))
+        {
+            BankStorage.DeleteSlot(i.Key.Bank!, i.Key.Slot);
+            deleted++;
+        }
+        Bank.LoadBox();
+        RefreshSlots();
+        Status = deleted == items.Count
+            ? $"{deleted} Pokémon excluídos.{(fromSave.Count > 0 ? " Ctrl+Z desfaz (os do save)." : "")}"
+            : $"{deleted} de {items.Count} Pokémon excluídos (os outros estão em slots bloqueados pelo jogo).";
+    }
+
+    /// <summary>
+    /// Arrastar um grupo marcado: os Pokemon vao para os slots livres da caixa de destino (save ou bank), a partir
+    /// do slot onde foram soltos. Ctrl/Shift copia. Do bank para o save, cada um e convertido; quem nao puder
+    /// entrar no jogo fica onde esta.
+    /// </summary>
+    private async Task MoveMarkedAsync(SlotViewModel dst, DropMode mode)
+    {
+        if (_sav is null)
+            return;
+        if (dst.IsParty)
+        {
+            Status = "Vários Pokémon de uma vez só vão para caixas (do save ou do bank). Para a equipe, arraste um por vez.";
+            return;
+        }
+        bool copy = mode == DropMode.Copy;
+        var target = KeyOf(dst);
+        bool InTarget(MarkKey k) => SameBox(k, target);
+
+        // 1) O que vai: do bank para o save precisa converter; slots bloqueados nao saem.
+        var moving = new List<(MarkKey Key, PKM Data, string Name)>();
+        var skipped = new List<string>();
+        foreach (var (key, pk, name) in ResolveMarks())
+        {
+            if (!copy && key.Bank is null && !CoreAdapter.CanWriteBoxSlot(_sav, key.Box, key.Slot))
+            {
+                skipped.Add($"{name} ({MarkLocation(key)}): slot bloqueado pelo jogo");
+                continue;
+            }
+            var data = pk.Clone();
+            if (!dst.IsBank && key.Bank is not null)
+            {
+                if (CoreAdapter.ConvertForSave(_sav, pk, out var err) is not { } converted)
+                {
+                    skipped.Add($"{name} ({MarkLocation(key)}): {err}");
+                    continue;
+                }
+                data = converted;
+            }
+            moving.Add((key, data, name));
+        }
+        if (moving.Count == 0)
+        {
+            await ShowSkippedAsync("Nenhum Pokémon pôde ser movido", skipped);
+            return;
+        }
+
+        // 2) Onde cabe: slots livres da caixa de destino (os que estao saindo dela contam como livres).
+        HashSet<int> freed = copy ? [] : moving.Where(m => InTarget(m.Key)).Select(m => m.Key.Slot).ToHashSet();
+        int size = dst.IsBank ? BankStorage.SlotsPerBox : _sav.BoxSlotCount;
+        bool Free(int i) => freed.Contains(i) || (dst.IsBank
+            ? BankStorage.IsSlotFree(dst.BankBox!, i)
+            : CoreAdapter.CanWriteBoxSlot(_sav, dst.Box, i) && CoreAdapter.IsEmpty(CoreAdapter.GetBoxSlot(_sav, dst.Box, i)));
+        var slots = Enumerable.Range(0, size).Select(i => (dst.Slot + i) % size).Where(Free).Take(moving.Count).ToList();
+        if (slots.Count < moving.Count)
+        {
+            Status = $"Não cabe: a caixa de destino tem {slots.Count} espaço(s) livre(s) para {moving.Count} Pokémon. Escolha outra caixa ou libere espaço.";
+            return;
+        }
+
+        // 3) Desfazer: um passo com todos os slots do save envolvidos.
+        var keys = new List<SlotHistory.Key>();
+        if (!copy)
+            keys.AddRange(moving.Where(m => m.Key.Bank is null).Select(m => SlotHistory.KeyOf(m.Key.Box, m.Key.Slot)));
+        if (!dst.IsBank)
+            keys.AddRange(slots.Select(i => SlotHistory.KeyOf(dst.Box, i)));
+        if (keys.Count > 0)
+            _history!.Record($"{(copy ? "copiar" : "mover")} {moving.Count} Pokémon", [.. keys]);
+
+        try
+        {
+            void Clear(MarkKey k)
+            {
+                if (k.Bank is { } bank)
+                    BankStorage.DeleteSlot(bank, k.Slot);
+                else
+                    CoreAdapter.DeleteSlot(_sav, CoreAdapter.GetSlotInfo(_sav, k.Box, k.Slot));
+            }
+            // Primeiro esvazia as origens que ficam na propria caixa de destino, depois grava, por ultimo tira das outras origens
+            // (assim, se algo falhar no meio, nenhum Pokemon some).
+            if (!copy)
+                foreach (var m in moving.Where(m => InTarget(m.Key)))
+                    Clear(m.Key);
+            for (int i = 0; i < moving.Count; i++)
+            {
+                if (dst.IsBank)
+                    BankStorage.WriteSlot(dst.BankBox!, slots[i], moving[i].Data);
+                else
+                    CoreAdapter.ImportToSlot(_sav, CoreAdapter.GetSlotInfo(_sav, dst.Box, slots[i]), moving[i].Data);
+            }
+            if (!copy)
+                foreach (var m in moving.Where(m => !InTarget(m.Key)))
+                    Clear(m.Key);
+        }
+        catch (Exception ex)
+        {
+            Status = $"Erro ao mover: {ex.Message}";
+        }
+        if (keys.Count > 0)
+        {
+            IsDirty = true;
+            OnHistoryChanged();
+        }
+        Bank.LoadBox();
+        RefreshSlots();
+        var where = dst.IsBank ? $"bank › {dst.BankBox!.Name}" : CoreAdapter.GetBoxName(_sav, dst.Box);
+        Status = $"{moving.Count} Pokémon {(copy ? "copiados" : "movidos")} para {where}."
+                 + (keys.Count > 0 ? " Lembre-se de salvar o save." : "")
+                 + (skipped.Count > 0 ? $" {skipped.Count} ficaram onde estavam." : "");
+        if (skipped.Count > 0)
+            await ShowSkippedAsync($"{skipped.Count} Pokémon ficaram onde estavam", skipped);
+    }
+
+    private Task<bool> ShowSkippedAsync(string title, List<string> skipped)
+        => ConfirmAsync(title, "Estes Pokémon não puderam ir para o destino:", "OK", cancelText: "", details: skipped, icon: "⚠");
+
+    /// <summary>Ordenar caixas do save (a caixa aberta ou todas). Um passo no desfazer.</summary>
+    private void SortBoxes(CoreAdapter.BoxSortOption option, bool all)
+    {
+        if (_sav is null)
+            return;
+        int first = all ? 0 : Boxes.CurrentBox, last = all ? _sav.BoxCount - 1 : Boxes.CurrentBox;
+        var keys = new List<SlotHistory.Key>();
+        for (int b = first; b <= last; b++)
+            for (int i = 0; i < _sav.BoxSlotCount; i++)
+                keys.Add(SlotHistory.KeyOf(b, i));
+        _history!.Record($"ordenar {(all ? "todas as caixas" : CoreAdapter.GetBoxName(_sav, first))} ({option.Name})", [.. keys]);
+        string? error = null;
+        try
+        {
+            CoreAdapter.SortBoxes(_sav, option, first, last);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        IsDirty = true;
+        OnHistoryChanged();
+        RefreshSlots();
+        Status = error is not null ? $"Erro ao ordenar: {error}. Ctrl+Z volta ao estado anterior." : $"{(all ? "Todas as caixas ordenadas" : $"{CoreAdapter.GetBoxName(_sav, first)} ordenada")}: {option.Name}. Ctrl+Z desfaz.";
+    }
+
     /// <summary>Criar PKM: abre o editor em branco no primeiro slot vazio da caixa atual.</summary>
     private async void CreateInFirstEmpty()
     {
@@ -791,12 +1099,14 @@ public sealed class MainViewModel : ViewModelBase
         Party.Load(_sav);
         Editor = null; // o slot editado pode ter mudado de lugar
         _selectedSlot = null;
+        ClearMarks(); // as posicoes marcadas podem ter outro Pokemon agora
         RaiseSelectionChanged();
     }
 
     /// <summary>Selecionar um slot pela interface: pergunta antes de descartar edicoes nao aplicadas.</summary>
     public async Task SelectSlotAsync(SlotViewModel slot)
     {
+        ClearMarks(); // clique simples desfaz a selecao multipla
         if (slot.IsBank)
         {
             // No bank so destaca (o editor fica nas paginas do save); Excluir e Exportar PKM funcionam no selecionado.

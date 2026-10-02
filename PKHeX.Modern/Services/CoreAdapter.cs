@@ -289,6 +289,9 @@ public static class CoreAdapter
         return null;
     }
 
+    /// <summary>O slot de caixa pode ser alterado (o jogo bloqueia alguns, ex.: times de batalha).</summary>
+    public static bool CanWriteBoxSlot(SaveFile sav, int box, int slot) => new SlotInfoBox(box, slot, sav).CanWriteTo(sav);
+
     /// <summary>Apaga o Pokemon do slot (na equipe, os seguintes sobem uma posicao). Retorna erro ou null.</summary>
     public static string? DeleteSlot(SaveFile sav, ISlotInfo slot)
     {
@@ -301,6 +304,37 @@ public static class CoreAdapter
         slot.WriteTo(sav, sav.BlankPKM);
         return null;
     }
+
+    // Ordenar caixas (usa os ordenadores do Core; vazios e ovos vao para o fim, slots bloqueados ficam onde estao)
+    public sealed record BoxSortOption(string Name, Func<IEnumerable<PKM>, IEnumerable<PKM>> Sorter);
+
+    /// <summary>Criterios de ordenacao que se aplicam ao save (ex.: data de captura so a partir da Gen 4). Sem save = bank (todos).</summary>
+    public static IReadOnlyList<BoxSortOption> GetBoxSortOptions(SaveFile? sav)
+    {
+        var list = new List<BoxSortOption>
+        {
+            new("Nº da Pokédex", p => p.OrderBySpecies()),
+            new("Nº da Pokédex (decrescente)", p => p.OrderByDescendingSpecies()),
+            new("Nome da espécie (A–Z)", p => p.OrderBySpeciesName(GameInfo.Strings.Species)),
+            new("Nível (maior primeiro)", p => p.OrderByDescendingLevel()),
+            new("Nível (menor primeiro)", p => p.OrderByLevel()),
+            new("Shiny primeiro", p => p.OrderByCustom(pk => !pk.IsShiny)),
+            new("Tipo", p => p.OrderByCustom(pk => pk.PersonalInfo.Type1, pk => pk.PersonalInfo.Type2)),
+            new("IVs (maior total primeiro)", p => p.OrderByCustom(pk => -pk.IVTotal)),
+        };
+        if (sav is null || sav.Generation >= 4)
+            list.Add(new("Data de captura", p => p.OrderByDateObtained()));
+        list.Add(new("Juntar (tirar espaços vazios)", p => p.OrderBy(pk => pk.Species == 0)));
+        return list;
+    }
+
+    /// <summary>Ordena as caixas <paramref name="first"/>..<paramref name="last"/> do save. Retorna quantos Pokemon foram reposicionados.</summary>
+    public static int SortBoxes(SaveFile sav, BoxSortOption option, int first, int last)
+        => sav.SortBoxes(first, last, (p, _) => option.Sorter(p));
+
+    /// <summary>Ordena uma lista de Pokemon (vazios ficam de fora) com o criterio escolhido.</summary>
+    public static IReadOnlyList<PKM> Sort(IEnumerable<PKM> list, BoxSortOption option)
+        => [.. option.Sorter(list.Where(pk => !IsEmpty(pk)))];
 
     /// <summary>Carrega um arquivo .pk* e converte para o formato do save. Retorna null se nao for compativel.</summary>
     public static PKM? LoadEntityFile(SaveFile sav, string path)

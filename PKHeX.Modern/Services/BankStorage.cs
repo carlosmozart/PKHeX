@@ -144,10 +144,29 @@ public static class BankStorage
         CoreAdapter.ExportEntity(pk, Path.Combine(box.Folder, $"{slot + 1:00} {name}.{pk.Extension}"));
     }
 
+    /// <summary>Nao ha arquivo neste slot (um arquivo ilegivel tambem ocupa o slot).</summary>
+    public static bool IsSlotFree(BankBox box, int slot) => FindFile(box, slot) is null;
+
     public static void DeleteSlot(BankBox box, int slot)
     {
         if (FindFile(box, slot) is { } file)
             File.Delete(file);
+    }
+
+    /// <summary>Ordena a caixa do bank (os Pokemon ficam nos primeiros slots, sem espacos). Retorna quantos ha na caixa.</summary>
+    public static int SortBox(BankBox box, CoreAdapter.BoxSortOption option)
+    {
+        var current = ReadBox(box).OfType<PKM>().ToList();
+        // Um arquivo que nao deu para ler seria apagado ao regravar a caixa: nesse caso nao mexe em nada.
+        var files = Directory.Exists(box.Folder) ? Directory.GetFiles(box.Folder).Count(f => GetSlot(Path.GetFileName(f)) is >= 0 and < SlotsPerBox) : 0;
+        if (files != current.Count)
+            throw new InvalidOperationException("a caixa tem arquivos que não são Pokémon válidos (ou dois arquivos no mesmo slot). Confira a pasta.");
+        var sorted = CoreAdapter.Sort(current, option);
+        for (int i = 0; i < SlotsPerBox; i++)
+            DeleteSlot(box, i);
+        for (int i = 0; i < sorted.Count; i++)
+            WriteSlot(box, i, sorted[i]);
+        return sorted.Count;
     }
 
     /// <summary>Quantos Pokemon ha no banco inteiro (para o resumo).</summary>

@@ -39,6 +39,10 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     /// <summary>Busca ativa e este slot nao combina: fica apagado.</summary>
     public bool IsDimmed { get => _isDimmed; set => Set(ref _isDimmed, value); }
 
+    private bool _isMarked;
+    /// <summary>Marcado na selecao multipla (Ctrl/Shift+clique).</summary>
+    public bool IsMarked { get => _isMarked; set => Set(ref _isMarked, value); }
+
     private bool _isSelected;
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
 

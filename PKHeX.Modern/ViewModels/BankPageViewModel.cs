@@ -40,6 +40,29 @@ public sealed class BankPageViewModel : SlotPageViewModel
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(CurrentBox?.Folder ?? BankStorage.Root) { UseShellExecute = true }); }
             catch { /* sem explorador */ }
         });
+        SortOptions = [.. CoreAdapter.GetBoxSortOptions(null).Select(o => new SortOptionViewModel(o.Name, new RelayCommand(() => SortBox(o))))];
+    }
+
+    /// <summary>Criterios do menu "Ordenar" (so a caixa atual do bank).</summary>
+    public IReadOnlyList<SortOptionViewModel> SortOptions { get; }
+    /// <summary>Chamado depois de ordenar (a selecao multipla aponta para posicoes que mudaram).</summary>
+    public Action? Sorted { get; set; }
+
+    private void SortBox(CoreAdapter.BoxSortOption option)
+    {
+        if (CurrentBox is not { } box)
+            return;
+        try
+        {
+            var count = BankStorage.SortBox(box, option);
+            _status($"Caixa \"{box.Name}\" do bank ordenada: {option.Name} ({count} Pokémon).");
+        }
+        catch (Exception ex)
+        {
+            _status($"Não deu para ordenar: {ex.Message}");
+        }
+        Sorted?.Invoke();
+        LoadBox();
     }
 
     public override string Title => "Bank";

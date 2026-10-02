@@ -19,7 +19,8 @@ namespace PKHeX.Modern.Views;
 /// - slot → slot: move/troca (Ctrl ou Shift = copiar; Alt = sobrescrever, origem fica vazia);
 /// - pairar sobre as setas de caixa troca de caixa durante o arraste;
 /// - arquivo .pk* → slot: importa; arquivo de save em qualquer outro lugar: abre o save;
-/// - slot → fora da janela (Explorer, desktop): exporta como arquivo .pk*.
+/// - slot → fora da janela (Explorer, desktop): exporta como arquivo .pk*;
+/// - Ctrl+clique marca/desmarca, Shift+clique marca um intervalo (selecao multipla); arrastar um marcado leva o grupo.
 /// </summary>
 public sealed class SlotDragController
 {
@@ -35,6 +36,7 @@ public sealed class SlotDragController
     private SlotViewModel? _pressed;
     private bool _released;
     private Point _pressPoint;
+    private KeyModifiers _pressMods;
     private SlotViewModel? _dragging;
     private SlotViewModel? _hoverTarget;
     private Button? _hoverArrow;
@@ -45,7 +47,7 @@ public sealed class SlotDragController
         _vm = vm;
         window.AddHandler(InputElement.PointerPressedEvent, OnPressed, RoutingStrategies.Tunnel);
         window.AddHandler(InputElement.PointerMovedEvent, OnMoved, RoutingStrategies.Tunnel);
-        window.AddHandler(InputElement.PointerReleasedEvent, (_, _) => { _pressed = null; _released = true; }, RoutingStrategies.Tunnel);
+        window.AddHandler(InputElement.PointerReleasedEvent, OnReleased, RoutingStrategies.Tunnel);
         window.AddHandler(DragDrop.DragOverEvent, OnDragOver);
         window.AddHandler(DragDrop.DragLeaveEvent, (_, _) => SetHover(null, null));
         window.AddHandler(DragDrop.DropEvent, OnDrop);
@@ -78,7 +80,23 @@ public sealed class SlotDragController
             _pressed = slot;
             _released = false;
             _pressPoint = e.GetPosition(_window);
+            _pressMods = e.KeyModifiers;
         }
+    }
+
+    /// <summary>Soltou sem arrastar com Ctrl/Shift: marca o slot em vez de abrir no editor.</summary>
+    private void OnReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        var pressed = _pressed;
+        _pressed = null;
+        _released = true;
+        if (pressed is null || _dragging is not null || pressed.IsParty || SlotAt(e.Source) != pressed)
+            return;
+        bool shift = _pressMods.HasFlag(KeyModifiers.Shift), ctrl = _pressMods.HasFlag(KeyModifiers.Control);
+        if (!shift && !ctrl || _pressMods.HasFlag(KeyModifiers.Alt))
+            return;
+        _vm().ToggleMark(pressed, range: shift);
+        e.Handled = true; // o botao nao recebe o clique (nao abre no editor)
     }
 
     private async void OnMoved(object? sender, PointerEventArgs e)

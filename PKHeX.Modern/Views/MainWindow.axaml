@@ -63,7 +63,7 @@
         </StackPanel>
 
         <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding HasSave}" Classes="muted" FontSize="11" Margin="4,0,0,12"
-                   TextWrapping="Wrap" Text="Ctrl+F buscar · Q / E trocar página&#10;Esc voltar · Del excluir&#10;Ctrl+Z desfazer · Ctrl+Y refazer&#10;Ctrl+O abrir · Ctrl+S salvar" />
+                   TextWrapping="Wrap" Text="Ctrl+F buscar · Q / E trocar página&#10;Esc voltar · Del excluir&#10;Ctrl+clique seleciona vários&#10;Ctrl+Z desfazer · Ctrl+Y refazer&#10;Ctrl+O abrir · Ctrl+S salvar" />
 
         <!-- Busca global (Ctrl+F) -->
         <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,10" IsVisible="{Binding HasSave}">
@@ -115,6 +115,17 @@
       <!-- Sem save aberto: o Save Manager e a tela inicial -->
       <ContentControl Content="{Binding SaveManager}" IsVisible="{Binding !HasSave}" />
       <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding HasSave}" />
+      <!-- Selecao multipla (Ctrl/Shift+clique): barra flutuante com o total e as acoes do grupo -->
+      <Border Classes="selectionBar" IsVisible="{Binding HasMarks}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+              ToolTip.Tip="Ctrl+clique marca ou desmarca · Shift+clique marca um intervalo · Ctrl+A marca a caixa toda · Esc desmarca">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="✓" Classes="markCheck" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding MarkedText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <TextBlock Text="Arraste um deles para mover o grupo (Ctrl copia)" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+          <Button Classes="small danger" Content="🗑  Excluir" Command="{Binding DeleteMarkedCommand}" ToolTip.Tip="Apaga os marcados (Delete)" />
+          <Button Classes="small" Content="✕  Limpar" Command="{Binding ClearMarksCommand}" ToolTip.Tip="Desmarca todos (Esc)" />
+        </StackPanel>
+      </Border>
     </Panel>
 
     <!-- Editor -->
@@ -144,7 +155,7 @@
           <Button Classes="small" Content="⭳  Importar" Click="OnImportEntity"
                   ToolTip.Tip="Importa um arquivo .pk* para o slot selecionado (ou o primeiro vazio)" />
           <Button Classes="small danger" Content="🗑  Excluir" Command="{Binding DeleteCommand}"
-                  ToolTip.Tip="Apaga o Pokémon selecionado (Delete). Dá para desfazer com Ctrl+Z" />
+                  ToolTip.Tip="Apaga o Pokémon selecionado ou os marcados com Ctrl+clique (Delete). No save, dá para desfazer com Ctrl+Z" />
           <Button Classes="small" Content="⭱  Exportar PKM" Click="OnExportEntity" IsEnabled="{Binding CanExportEntity}"
                   ToolTip.Tip="Salva o Pokémon selecionado como arquivo .pk* (ou arraste o slot para fora da janela)" />
           <Button Classes="accent small primary" Content="💾  Salvar" Click="OnExport" ToolTip.Tip="Exportar o save (Ctrl+S)" />

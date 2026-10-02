@@ -47,6 +47,11 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
     public PartyPageViewModel? Party { get; init; }
     public bool ShowParty => Party is { Slots.Count: > 0 };
 
+    /// <summary>Ordenar (definido pelo MainViewModel, que guarda o desfazer): criterio e se vale para todas as caixas.</summary>
+    public Action<CoreAdapter.BoxSortOption, bool>? Sort { get; set; }
+    /// <summary>Criterios do menu "Ordenar" (cada um com "esta caixa" e "todas as caixas").</summary>
+    public IReadOnlyList<SortOptionViewModel> SortOptions { get; private set; } = [];
+
     public override string Title => "Caixas";
     public override string Icon => "▦";
     public RelayCommand PreviousBoxCommand { get; }
@@ -81,6 +86,9 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
             int box = i;
             BoxTabs.Add(new BoxTabViewModel(CoreAdapter.GetBoxName(sav, i), new RelayCommand(() => CurrentBox = box)));
         }
+        SortOptions = [.. CoreAdapter.GetBoxSortOptions(sav).Select(o => new SortOptionViewModel(o.Name,
+            new RelayCommand(() => Sort?.Invoke(o, false)), new RelayCommand(() => Sort?.Invoke(o, true))))];
+        Raise(nameof(SortOptions));
         Raise(nameof(CurrentBox));
         LoadBox();
         Raise(nameof(ShowParty));
@@ -257,4 +265,12 @@ public sealed class BoxTabViewModel(string name, RelayCommand go) : ViewModelBas
     public RelayCommand GoCommand { get; } = go;
     private bool _isCurrent;
     public bool IsCurrent { get => _isCurrent; set => Set(ref _isCurrent, value); }
+}
+
+/// <summary>Um criterio do menu "Ordenar".</summary>
+public sealed class SortOptionViewModel(string name, RelayCommand sortCurrent, RelayCommand? sortAll = null)
+{
+    public string Name { get; } = name;
+    public RelayCommand SortCurrentCommand { get; } = sortCurrent;
+    public RelayCommand? SortAllCommand { get; } = sortAll;
 }

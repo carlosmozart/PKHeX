@@ -115,6 +115,28 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
     <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
   </Style>
+  <!-- Selecao multipla -->
+  <Style Selector="Button.slot.marked /template/ ContentPresenter, Button.slot.marked:pointerover /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+  </Style>
+  <Style Selector="TextBlock.markCheck">
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="Background" Value="{DynamicResource Accent}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Padding" Value="5,1" />
+  </Style>
+  <Style Selector="Border.selectionBar">
+    <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="14,8" />
+    <Setter Property="Margin" Value="0,0,0,-12" />
+    <Setter Property="BoxShadow" Value="0 6 24 0 #50000000" />
+  </Style>
   <Style Selector="Button.slot.mini">
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="Height" Value="56" />

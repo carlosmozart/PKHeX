@@ -67,6 +67,7 @@ public sealed partial class MainWindow : Window
                 case Key.O: OnOpen(this, e); e.Handled = true; return;
                 case Key.F when vm.HasSave: this.FindControl<TextBox>("SearchBox")?.Focus(); e.Handled = true; return;
                 case Key.S or Key.E when vm.HasSave: OnExport(this, e); e.Handled = true; return;
+                case Key.A when vm.HasSave && !IsTyping(): vm.MarkAll(); e.Handled = true; return;
                 case >= Key.D1 and <= Key.D9: vm.GoToPage(e.Key - Key.D1); e.Handled = true; return;
                 case >= Key.NumPad1 and <= Key.NumPad9: vm.GoToPage(e.Key - Key.NumPad1); e.Handled = true; return;
             }

@@ -70,9 +70,23 @@
                 <Button Classes="small danger" Content="🗑" Command="{Binding DeleteBoxCommand}" ToolTip.Tip="Excluir caixa" />
               </StackPanel>
             </Grid>
-            <Grid ColumnDefinitions="*,Auto">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
               <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="11" VerticalAlignment="Center" />
-              <Button Grid.Column="1" Classes="ghost small" Content="📁 Pasta" Command="{Binding OpenFolderCommand}"
+              <Button Grid.Column="1" Classes="ghost small" Content="⇅ Ordenar" ToolTip.Tip="Ordena esta caixa do bank (grava na hora, sem desfazer)">
+                <Button.Flyout>
+                  <MenuFlyout Placement="BottomEdgeAlignedRight">
+              <MenuItem Header="Ordenar esta caixa por" ItemsSource="{Binding SortOptions}">
+                <MenuItem.Styles>
+                  <Style Selector="MenuItem MenuItem" x:DataType="vm:SortOptionViewModel">
+                    <Setter Property="Header" Value="{Binding Name}" />
+                    <Setter Property="Command" Value="{Binding SortCurrentCommand}" />
+                  </Style>
+                </MenuItem.Styles>
+              </MenuItem>
+                  </MenuFlyout>
+                </Button.Flyout>
+              </Button>
+              <Button Grid.Column="2" Classes="ghost small" Content="📁 Pasta" Command="{Binding OpenFolderCommand}"
                       ToolTip.Tip="Abre a pasta desta caixa (os Pokémon são arquivos .pk*)" />
             </Grid>
           </StackPanel>
@@ -84,13 +98,16 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:SlotViewModel">
                 <Button Classes="slot compact" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
-                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
+                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}" Classes.marked="{Binding IsMarked}"
                         ToolTip.Tip="{Binding Tooltip}"
                         Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                         CommandParameter="{Binding}">
                   <Grid RowDefinitions="Auto,*,Auto">
                     <Grid ColumnDefinitions="*,Auto">
-                      <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      <StackPanel Orientation="Horizontal" Spacing="3">
+                        <TextBlock Text="✓" Classes="markCheck" FontSize="9" Padding="3,0" IsVisible="{Binding IsMarked}" />
+                        <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      </StackPanel>
                       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
                         <TextBlock Text="★" Classes="shiny" FontSize="11" IsVisible="{Binding IsShiny}" />
                         <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
@@ -142,13 +159,16 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:SlotViewModel">
                 <Button Classes="slot compact" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
-                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
+                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}" Classes.marked="{Binding IsMarked}"
                         ToolTip.Tip="{Binding Tooltip}"
                         Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                         CommandParameter="{Binding}">
                   <Grid RowDefinitions="Auto,*,Auto">
                     <Grid ColumnDefinitions="*,Auto">
-                      <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      <StackPanel Orientation="Horizontal" Spacing="3">
+                        <TextBlock Text="✓" Classes="markCheck" FontSize="9" Padding="3,0" IsVisible="{Binding IsMarked}" />
+                        <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      </StackPanel>
                       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
                         <TextBlock Text="★" Classes="shiny" FontSize="11" IsVisible="{Binding IsShiny}" />
                         <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
@@ -179,13 +199,16 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:SlotViewModel">
                 <Button Classes="slot compact" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
-                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
+                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}" Classes.marked="{Binding IsMarked}"
                         ToolTip.Tip="{Binding Tooltip}"
                         Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                         CommandParameter="{Binding}">
                   <Grid RowDefinitions="Auto,*,Auto">
                     <Grid ColumnDefinitions="*,Auto">
-                      <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      <StackPanel Orientation="Horizontal" Spacing="3">
+                        <TextBlock Text="✓" Classes="markCheck" FontSize="9" Padding="3,0" IsVisible="{Binding IsMarked}" />
+                        <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      </StackPanel>
                       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
                         <TextBlock Text="★" Classes="shiny" FontSize="11" IsVisible="{Binding IsShiny}" />
                         <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
@@ -277,13 +300,16 @@
   <!-- Slot da caixa: cartao com sprite grande, nome, nivel e posicao -->
   <DataTemplate DataType="vm:SlotViewModel">
     <Button Classes="slot" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
-            Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
+            Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}" Classes.marked="{Binding IsMarked}"
             ToolTip.Tip="{Binding Tooltip}"
             Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
             CommandParameter="{Binding}">
       <Grid RowDefinitions="Auto,*,Auto">
         <Grid ColumnDefinitions="*,Auto">
-          <TextBlock Text="{Binding Position}" Classes="slotPos" />
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Text="✓" Classes="markCheck" IsVisible="{Binding IsMarked}" />
+            <TextBlock Text="{Binding Position}" Classes="slotPos" />
+          </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
             <TextBlock Text="★" Classes="shiny" IsVisible="{Binding IsShiny}" />
             <TextBlock Text="✓" Classes="legalOk" IsVisible="{Binding IsLegalOk}" ToolTip.Tip="Legal" />
@@ -311,7 +337,31 @@
   <!-- Caixas -->
   <DataTemplate DataType="vm:BoxesPageViewModel">
     <DockPanel>
-      <ScrollViewer DockPanel.Dock="Top" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,10">
+      <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+        <Button DockPanel.Dock="Right" Classes="small" Content="⇅  Ordenar" Margin="10,0,0,0" VerticalAlignment="Top"
+                ToolTip.Tip="Ordena a caixa aberta ou todas as caixas (Ctrl+Z desfaz)">
+          <Button.Flyout>
+            <MenuFlyout Placement="BottomEdgeAlignedRight">
+              <MenuItem Header="Esta caixa" ItemsSource="{Binding SortOptions}">
+                <MenuItem.Styles>
+                  <Style Selector="MenuItem MenuItem" x:DataType="vm:SortOptionViewModel">
+                    <Setter Property="Header" Value="{Binding Name}" />
+                    <Setter Property="Command" Value="{Binding SortCurrentCommand}" />
+                  </Style>
+                </MenuItem.Styles>
+              </MenuItem>
+              <MenuItem Header="Todas as caixas" ItemsSource="{Binding SortOptions}">
+                <MenuItem.Styles>
+                  <Style Selector="MenuItem MenuItem" x:DataType="vm:SortOptionViewModel">
+                    <Setter Property="Header" Value="{Binding Name}" />
+                    <Setter Property="Command" Value="{Binding SortAllCommand}" />
+                  </Style>
+                </MenuItem.Styles>
+              </MenuItem>
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
         <ItemsControl ItemsSource="{Binding BoxTabs}">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
@@ -324,6 +374,7 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </ScrollViewer>
+      </DockPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,16">
         <Button Classes="boxArrow" Content="‹" FontSize="18" Command="{Binding PreviousBoxCommand}"
                 ToolTip.Tip="Caixa anterior (arraste um Pokémon até aqui para trocar de caixa)" />
@@ -345,7 +396,7 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:SlotViewModel">
                 <Button Classes="slot mini" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
-                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}" ToolTip.Tip="{Binding Tooltip}"
+                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}" Classes.marked="{Binding IsMarked}" ToolTip.Tip="{Binding Tooltip}"
                         Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                         CommandParameter="{Binding}">
                   <Grid ColumnDefinitions="Auto,*">
@@ -394,7 +445,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:SlotViewModel">
-            <Button Classes="partyCard" HorizontalContentAlignment="Stretch" ToolTip.Tip="{Binding Tooltip}" Classes.selected="{Binding IsSelected}" Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
+            <Button Classes="partyCard" HorizontalContentAlignment="Stretch" ToolTip.Tip="{Binding Tooltip}" Classes.selected="{Binding IsSelected}" Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}" Classes.marked="{Binding IsMarked}"
                     Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                     CommandParameter="{Binding}">
               <Grid ColumnDefinitions="Auto,*,Auto">
