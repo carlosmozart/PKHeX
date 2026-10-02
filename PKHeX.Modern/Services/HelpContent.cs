@@ -1,0 +1,91 @@
+using System.Collections.Generic;
+
+namespace PKHeX.Modern.Services;
+
+public sealed record HelpItem(string Title, string Text, string Shortcut = "");
+
+public sealed record HelpSection(string Icon, string Title, IReadOnlyList<HelpItem> Items);
+
+/// <summary>
+/// Conteudo da pagina Ajuda › Funções.
+/// IMPORTANTE: ao adicionar ou mudar uma funcao do app, atualize esta lista (e a secao "Próxima versão" do CHANGELOG.md).
+/// </summary>
+public static class HelpContent
+{
+    public static IReadOnlyList<HelpSection> Sections { get; } =
+    [
+        new("💾", "Saves",
+        [
+            new("Abrir um save", "Clique em “Abrir save...”, arraste o arquivo para a janela ou passe o caminho pela linha de comando. “↺ Último” reabre o save anterior; marque “Abrir último save ao iniciar” para fazer isso sozinho.", "Ctrl+O"),
+            new("Save Manager", "Tela inicial e página Saves: lista os saves da pasta escolhida (subpastas como gba, ds, 3ds e switch viram grupos), com treinador, TID/SID, tempo de jogo, dinheiro, capturados e equipe. Busca por jogo, treinador ou arquivo e filtro por geração. Duplo clique abre.", "Ctrl+9"),
+            new("Selo do jogo", "Cada save mostra o Pokémon da capa nas cores da versão (Ho-Oh no HeartGold, Rayquaza no Emerald...), no Save Manager e no cartão do save aberto na barra lateral."),
+            new("Salvar", "Grava as alterações no arquivo do save. Antes de salvar por cima, o arquivo anterior é copiado para os backups.", "Ctrl+S"),
+            new("Alterações não exportadas", "O aviso na barra lateral mostra quantas alterações ainda não foram salvas; clique nele para ver a lista. O app pergunta antes de abrir outro save ou fechar."),
+            new("Backups", "No Save Manager, o botão “Backups” lista as cópias automáticas. “Restaurar” volta o backup para o arquivo de origem (o arquivo atual ganha um backup antes); “Restaurar como...” grava em outro lugar."),
+        ]),
+        new("📦", "Caixas e equipe",
+        [
+            new("Cartões", "Cada slot mostra sprite, nome, nível, gênero, bola, ★ shiny e ✓/⚠ de legalidade. Passe o mouse para ver o resumo (set, encontro, PID e o primeiro problema de legalidade). As caixas ficam em abas no topo.", "Ctrl+1 / Ctrl+2"),
+            new("Arrastar e soltar", "Arraste para mover (num slot ocupado, troca). Com Ctrl ou Shift copia; com Alt sobrescreve o destino e deixa a origem vazia."),
+            new("Seleção múltipla", "Ctrl+clique marca vários, Shift+clique marca um intervalo e Ctrl+A marca a caixa toda. Arraste o grupo para outra caixa ou para o bank, ou exclua todos com Delete. Esc desmarca.", "Ctrl+A"),
+            new("Ordenar caixas", "Botão “⇅ Ordenar”: por Pokédex, nome, nível, shiny, tipo, IVs ou data de captura, na caixa aberta ou em todas."),
+            new("Desfazer e refazer", "Mover, copiar, importar, ordenar, excluir e aplicar no editor podem ser desfeitos.", "Ctrl+Z / Ctrl+Y"),
+            new("Busca global", "Procura espécie, apelido, golpe ou item em todas as caixas e na equipe. Também aceita “shiny” e “ovo”. Clique num resultado para ir até ele.", "Ctrl+F"),
+            new("Importar, exportar, criar e excluir", "Barra inferior: Importar um arquivo .pk* (ou solte o arquivo num slot), Exportar PKM do slot selecionado, Criar PKM no primeiro slot vazio e Excluir.", "Del"),
+            new("Verificar legalidade", "Confere o save inteiro em segundo plano e mostra a lista de problemas, com atalho para o primeiro."),
+        ]),
+        new("✏️", "Editor de Pokémon",
+        [
+            new("Abas", "Visão geral, Atributos, Golpes, Encontro, Treinador e Extras. A aba aberta continua a mesma ao trocar de slot. As mudanças só vão para o save ao clicar em “Aplicar alterações”."),
+            new("Busca enquanto digita", "Espécie, item e golpes têm sugestões. Os golpes que o Pokémon aprende aparecem em verde, no topo da lista."),
+            new("Legalidade e correções", "O cartão de legalidade lista os problemas e oferece correções de um clique: golpes sugeridos, golpes de reaprender, encontro sugerido e IVs máximos."),
+            new("✨ Legalizar", "Gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny), mantendo natureza, nível, item, apelido e golpes quando possível."),
+            new("Showdown", "“Colar Showdown” importa um set da área de transferência; “Copiar Showdown” exporta o Pokémon."),
+            new("Evoluir por troca", "Para Kadabra, Onix + Metal Coat, Shelmet/Karrablast etc., sem precisar de um segundo jogo. Respeita a Everstone e, da Gen 6 em diante, registra o parceiro de troca para continuar legal."),
+        ]),
+        new("🛡", "Modo legal",
+        [
+            new("O que faz", "Chave na barra lateral, ligada por padrão. O editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo) e desfaz na hora qualquer mudança que deixaria o Pokémon ilegal, explicando o motivo."),
+            new("Aplicar só legal", "Um Pokémon ilegal não pode ser aplicado; use ✨ Legalizar ou as correções sugeridas. Trocar a espécie ou colar um set Showdown legaliza sozinho."),
+            new("Pokémon de fora", "Arquivo .pk*, bank ou outro save: se chegar ilegal ao save aberto, o app oferece “✨ Legalizar” ou “Trazer como está”."),
+            new("Desligado", "Vale qualquer valor, como no PKHeX clássico. Use com cuidado."),
+        ]),
+        new("🏦", "Bank",
+        [
+            new("Bancos e caixas", "Armazenamento próprio, fora dos saves, em bancos → caixas (crie, renomeie, ordene e exclua). Os Pokémon ficam como arquivos .pk* no formato original.", "Ctrl+3"),
+            new("Duas telas", "Bank à esquerda e save aberto à direita: arraste entre os dois. Ao trazer para o save, o Pokémon é convertido para a geração do jogo."),
+            new("Outro save", "Troque o painel esquerdo para “💾 Outro save” e mova Pokémon entre dois jogos (com conversão). Clique em “Salvar este save” para gravar o outro save."),
+            new("Pastas externas", "“📁＋” transforma qualquer pasta com arquivos .pk* (ex.: a do PKHeX) num banco, sem mover os arquivos."),
+        ]),
+        new("📖", "Pokédex",
+        [
+            new("Pokédex centralizada", "Junta a Pokédex de todos os saves da pasta, o save aberto (inclusive alterações não salvas) e o bank. Mostra o que você possui, o que foi capturado ou visto em cada jogo e os shiny.", "Ctrl+4"),
+            new("Living dex e filtros", "Resumo de living dex e shiny dex; filtros por situação (faltando, shiny, alpha...), geração, tipo e fonte. “Formas e gêneros” mostra cada forma como entrada própria."),
+            new("Onde está", "Selecione uma espécie para ver onde estão os seus; “Ir” abre o Pokémon no editor."),
+            new("Sincronizar", "Marca na Pokédex do save aberto o que foi capturado nos outros saves e o que você tem guardado."),
+        ]),
+        new("🎒", "Treinador e mochila",
+        [
+            new("Treinador", "Nome, TID/SID, dinheiro e tempo de jogo do save, com o estado dos checksums."),
+            new("Mochila", "Itens por bolso, com o ícone de cada item. Passe o mouse para ver a descrição em português e onde conseguir (dados do AllGenWiki). Troque o item e a quantidade e clique em “Gravar mochila”."),
+        ]),
+        new("🌿", "Encontros e eventos",
+        [
+            new("Banco de encontros", "Procura onde e como uma espécie aparece neste jogo. “Usar” gera o Pokémon legal e abre no editor."),
+            new("Eventos (Mystery Gift)", "Lista os presentes de evento que valem para o save, inclusive os da Gen 1 a 3. “Usar” leva ao editor."),
+        ]),
+        new("⌨️", "Atalhos",
+        [
+            new("Páginas", "Ctrl+1 a Ctrl+9 vão para cada página; Q e E passam para a anterior/seguinte.", "Ctrl+1–9 · Q/E"),
+            new("Ajuda", "Abre esta página; Esc ou “‹ Voltar” fecha.", "F1"),
+            new("Voltar", "Esc desmarca a seleção, fecha o editor ou volta para Caixas.", "Esc"),
+            new("Perguntas", "Enter confirma e Esc cancela.", "Enter / Esc"),
+        ]),
+        new("⚙️", "Preferências",
+        [
+            new("Tema e cor", "“◐ Alternar tema” troca claro/escuro; as bolinhas mudam a cor de destaque."),
+            new("Atualização automática", "Ao abrir, o app verifica se saiu uma versão nova no GitHub. Se saiu, baixa e instala sozinho (conferindo o arquivo), mostrando o progresso na barra lateral. A versão nova vale ao clicar em “🔄 Reiniciar” ou na próxima vez que abrir; antes de reiniciar, o app pergunta se houver alterações não salvas e reabre o save. Dá para desligar em Ajuda › Sobre."),
+            new("Arquivos do app", "Preferências, backups e bank ficam em %APPDATA%\\PKHeX.Modern. Se algo der errado, os detalhes ficam em crash.log."),
+        ]),
+    ];
+}

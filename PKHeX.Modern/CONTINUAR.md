@@ -26,6 +26,9 @@ No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push n
 - **Branch de trabalho: `modern-ui`.** O `master` acompanha o upstream.
 - **Interface em português (PT-BR).** Os nomes do jogo (espécies, golpes, itens) ficam em inglês, como no PKHeX.
 - **Cor de destaque vermelha**, inspirada na Pokébola. A referência visual usa ciano, o que fica como opção futura (ver ROADMAP).
+- **Toda função nova entra na Ajuda e no changelog.** Ao adicionar ou mudar uma função: atualize `Services/HelpContent.cs` (Ajuda › Funções) e a seção "Próxima versão" do `CHANGELOG.md` (Ajuda › Novidades). Na release, troque "Próxima versão" pelo número e a data, suba o `<Version>` do csproj e use o texto do changelog nas notas da release.
+- **Atualização automática depende do nome do zip.** O app procura o asset `PKHeX.Modern-win-x64.zip` (com o `PKHeX.Modern.exe` na raiz) nas releases `modern-v*`. Não mude esse nome no workflow sem mudar `AutoUpdater.AssetName`. A versão comparada é o `<Version>` do csproj: suba-o a cada release, senão o app acha que está desatualizado.
+- **Dados de itens do AllGenWiki.** `Assets/item-info.json` (descrição em PT e onde conseguir) é gerado do projeto HoennKantoWiki com `python Tools/build_item_info.py <pasta do HoennKantoWiki>`. Rode de novo quando o wiki ganhar itens.
 - **Editor trabalha sobre uma cópia (Clone).** Só grava no save ao clicar em "Aplicar alterações". Mochila e treinador também exigem exportar o save.
 
 ## Aprendizados técnicos (armadilhas já resolvidas)

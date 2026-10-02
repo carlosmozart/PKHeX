@@ -438,6 +438,30 @@
   </Style>
 
   <!-- Chips (tipo, legalidade) -->
+  <!-- Ajuda › Sobre: cartao do AllGenWiki com borda de destaque -->
+  <Style Selector="Border.wikiCard">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <!-- Selo do jogo: Pokemon da capa sobre o degrade da versao -->
+  <Style Selector="Border.gameBadge">
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="Padding" Value="6" />
+    <Setter Property="BoxShadow" Value="0 2 6 0 #40000000" />
+  </Style>
+  <Style Selector="Border.gameBadge > Image">
+    <Setter Property="Stretch" Value="Uniform" />
+  </Style>
+  <!-- Modo legal: aviso acima do Aplicar quando o Pokemon esta ilegal -->
+  <Style Selector="Border.legalBlock">
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Bad}" />
+    <Setter Property="Background" Value="#22E5484D" />
+  </Style>
   <Style Selector="Border.chip">
     <Setter Property="CornerRadius" Value="10" />
     <Setter Property="Padding" Value="9,2" />

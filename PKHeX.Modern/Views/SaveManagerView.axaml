@@ -65,14 +65,19 @@
                       <Border Classes="card saveCard" Classes.current="{Binding IsCurrent}" Width="330"
                               DoubleTapped="OnCardDoubleTapped" ToolTip.Tip="{Binding Path}">
                         <StackPanel Spacing="6">
-                          <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="{Binding Game}" FontWeight="SemiBold" FontSize="16" TextTrimming="CharacterEllipsis" />
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <Border Classes="gameBadge" Width="48" Height="48" Background="{Binding Art.Background}">
+                              <Image Source="{Binding Art.Sprite}" RenderOptions.BitmapInterpolationMode="None" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                              <TextBlock Text="{Binding Game}" FontWeight="SemiBold" FontSize="16" TextTrimming="CharacterEllipsis" />
+                              <TextBlock Text="{Binding Trainer}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Top">
                               <Border Classes="chip" Background="{DynamicResource Good}" IsVisible="{Binding IsCurrent}"><TextBlock Text="Aberto" /></Border>
                               <Border Classes="chip" Background="{DynamicResource CardBorder}"><TextBlock Text="{Binding GenerationBadge}" /></Border>
                             </StackPanel>
                           </Grid>
-                          <TextBlock Text="{Binding Trainer}" />
                           <TextBlock Text="{Binding Details}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
                           <ItemsControl ItemsSource="{Binding PartySprites}" Height="40">
                             <ItemsControl.ItemsPanel>

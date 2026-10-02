@@ -23,9 +23,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     private readonly Action<string> _status;
 
     /// <param name="pendingApply">Pokemon que veio de fora (banco de encontros/eventos): ja conta como edicao nao aplicada.</param>
-    public PokemonEditorViewModel(PKM source, string location, Action<PKM> apply, Action<string> status, bool isNew = false, bool pendingApply = false, SaveFile? sav = null)
+    public PokemonEditorViewModel(PKM source, string location, Action<PKM> apply, Action<string> status, bool isNew = false, bool pendingApply = false, SaveFile? sav = null, bool legalMode = false)
     {
         _sav = sav;
+        _legalMode = legalMode;
         _isNew = isNew;
         _pk = source.Clone();
         _savedData = pendingApply ? [] : _pk.Data.ToArray();
@@ -47,7 +48,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         foreach (var m in Moves)
             m.Changed += Refresh;
         HealPPCommand = new RelayCommand(() => { _pk.HealPP(); foreach (var m in Moves) m.RaiseAll(); _status("PP restaurado."); });
-        ApplyCommand = new RelayCommand(() => { _apply(_pk.Clone()); _savedData = _pk.Data.ToArray(); });
+        ApplyCommand = new RelayCommand(Apply, () => CanApply);
         MaxIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; });
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
         MakeShinyCommand = new RelayCommand(() => { _pk.SetShiny(); RaiseAll(); });
@@ -56,7 +57,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         SuggestRelearnCommand = new RelayCommand(() => Fix("Golpes de reaprender", pk => CoreAdapter.SuggestRelearnMoves(pk)));
         SuggestMetCommand = new RelayCommand(() => Fix("Encontro sugerido", CoreAdapter.SuggestMetData, "nenhum encontro possível para esta espécie neste jogo"));
         FixIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; _status(LegalityStatus("IVs máximos: aplicado")); });
-        BallList = CoreAdapter.GetBalls();
+        _allBalls = CoreAdapter.GetBalls();
         MetLocationList = CoreAdapter.GetMetLocations(_pk);
         Refresh();
     }
@@ -64,8 +65,93 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public IReadOnlyList<string> SpeciesList => CoreAdapter.SpeciesNames;
     public IReadOnlyList<string> MoveList => CoreAdapter.MoveNames;
     /// <summary>Especies que existem neste formato (para o campo com sugestoes).</summary>
-    public IReadOnlyList<string> SpeciesNames => _speciesNames ??= CoreAdapter.GetNames(CoreAdapter.SpeciesNames, _pk.MaxSpeciesID);
+    public IReadOnlyList<string> SpeciesNames => _speciesNames ??= LegalMode && _sav is not null
+        ? [.. CoreAdapter.GetSpeciesInGame().Where(s => s.Value > 0 && s.Value <= _pk.MaxSpeciesID).Select(s => s.Text)]
+        : CoreAdapter.GetNames(CoreAdapter.SpeciesNames, _pk.MaxSpeciesID);
     private IReadOnlyList<string>? _speciesNames;
+
+    // Modo legal
+    private bool _legalMode;
+    /// <summary>
+    /// Modo legal: listas so com opcoes legais (golpes que aprende, bolas do encontro, especies do jogo),
+    /// mudancas que deixariam o Pokemon ilegal sao desfeitas e Aplicar so grava Pokemon legal.
+    /// </summary>
+    public bool LegalMode
+    {
+        get => _legalMode;
+        set
+        {
+            if (!Set(ref _legalMode, value))
+                return;
+            _speciesNames = null;
+            _moveOptions = null;
+            _ballKey = null;
+            Raise(nameof(SpeciesNames));
+            Raise(nameof(MoveOptions));
+            RefreshBalls();
+            foreach (var m in Moves)
+                m.RaiseAll();
+            RaiseLegalMode();
+        }
+    }
+    /// <summary>Ultima versao legal do Pokemon: para onde o modo legal volta quando uma mudanca o deixa ilegal.</summary>
+    private PKM? _lastLegal;
+    /// <summary>Troca de especie/Showdown em andamento: o Legalizar decide o resultado, sem desfazer no meio.</summary>
+    private bool _guardSuspended;
+    private bool _reverting;
+
+    public bool CanApply => !LegalMode || IsLegal;
+    /// <summary>Aviso no editor: modo legal ligado e o Pokemon (ja salvo assim) esta ilegal.</summary>
+    public bool ShowLegalModeBlock => LegalMode && ShowIllegal;
+    public string ApplyTip => CanApply ? "Grava o Pokémon no slot"
+        : "Modo legal: este Pokémon está ilegal. Use ✨ Legalizar ou as correções sugeridas (ou desligue o modo legal na barra lateral).";
+
+    private void RaiseLegalMode()
+    {
+        foreach (var p in (string[])[nameof(CanApply), nameof(ShowLegalModeBlock), nameof(ApplyTip)])
+            Raise(p);
+        ApplyCommand.NotifyCanExecuteChanged();
+    }
+
+    private void Apply()
+    {
+        if (!CanApply)
+        {
+            _status(ApplyTip);
+            return;
+        }
+        _apply(_pk.Clone());
+        _savedData = _pk.Data.ToArray();
+    }
+
+    /// <summary>
+    /// Modo legal: chamado depois de cada mudanca. Se o Pokemon era legal e deixou de ser, volta para a ultima
+    /// versao legal e explica o motivo. Pokemon que ja era ilegal pode ser editado (para corrigir), mas nao aplicado.
+    /// </summary>
+    private void GuardLegality()
+    {
+        if (IsLegal)
+        {
+            _lastLegal = _pk.Clone();
+            return;
+        }
+        if (!LegalMode || _guardSuspended || _reverting || _lastLegal is null || _isNew)
+            return;
+        var why = LegalityIssues.Count > 0 ? LegalityIssues[0] : "o resultado seria ilegal";
+        _reverting = true;
+        try
+        {
+            _pk = _lastLegal.Clone();
+            RaiseAll();
+        }
+        finally
+        {
+            _reverting = false;
+        }
+        // O controle que disparou a mudanca ainda mostra o valor novo: atualiza de novo depois do binding terminar.
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => RaiseAll());
+        _status($"Modo legal: mudança desfeita, deixaria o Pokémon ilegal ({why}).");
+    }
     /// <summary>Golpes que existem neste formato (para os campos com sugestoes).</summary>
     public IReadOnlyList<string> MoveNames => _moveNames ??= CoreAdapter.GetNames(CoreAdapter.MoveNames, _pk.MaxMoveID);
     private IReadOnlyList<string>? _moveNames;
@@ -78,7 +164,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         get
         {
-            var key = (_pk.Species, _pk.Form, _pk.CurrentLevel, _pk.MetLevel, _pk.MetLocation, _pk.Version, _pk.IsEgg, GameInfo.CurrentLanguage);
+            var key = (_pk.Species, _pk.Form, _pk.CurrentLevel, _pk.MetLevel, _pk.MetLocation, _pk.Version, _pk.IsEgg, GameInfo.CurrentLanguage, LegalMode);
             if (_moveOptions is not null && key.Equals(_moveOptionsKey))
                 return _moveOptions;
             _moveOptionsKey = key;
@@ -87,7 +173,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             var list = new List<MoveOption>();
             for (int i = 1; i <= _pk.MaxMoveID && i < names.Count; i++)
             {
-                if (!string.IsNullOrWhiteSpace(names[i]))
+                // Modo legal: so os golpes que o Pokemon aprende de forma legal.
+                if (!string.IsNullOrWhiteSpace(names[i]) && (learn[i] || !LegalMode))
                     list.Add(new MoveOption(i, names[i], learn[i]));
             }
             _moveOptions = [.. list.OrderByDescending(o => o.IsLearnable).ThenBy(o => o.Name, StringComparer.CurrentCultureIgnoreCase)];
@@ -104,7 +191,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         set
         {
             var index = CoreAdapter.FindIndex(CoreAdapter.SpeciesNames, value as string);
-            if (index > 0)
+            if (index > 0 && (!LegalMode || SpeciesNames.Contains(CoreAdapter.SpeciesNames[index])))
                 Species = index;
         }
     }
@@ -129,10 +216,13 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     /// Legalizar: gera de novo a partir de um encontro real do jogo (PID/IV corretos) mantendo natureza, nivel, item,
     /// apelido e golpes quando possivel. Roda em segundo plano (na Gen 3/4 a busca de PID pode levar alguns segundos).
     /// </summary>
-    private async Task LegalizeAsync()
+    /// <param name="restore">Modo legal: versao para voltar se nao der para legalizar (troca de especie, Showdown).</param>
+    private async Task LegalizeAsync(PKM? restore = null)
     {
         if (_sav is null)
         {
+            RestoreAfterFailedLegalize(restore);
+            _guardSuspended = false;
             _status("Legalizar: indisponível.");
             return;
         }
@@ -145,7 +235,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             var (result, message) = await Task.Run(() => (EncounterDatabase.Legalize(sav, current, out var m), m));
             if (result is null)
             {
-                _status($"Legalizar: {message}.");
+                RestoreAfterFailedLegalize(restore);
+                _status(restore is null ? $"Legalizar: {message}." : $"Modo legal: mudança desfeita, não há forma legal ({message}).");
                 return;
             }
             _pk = result;
@@ -155,13 +246,38 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
+            RestoreAfterFailedLegalize(restore);
             _status($"Legalizar: erro ({ex.Message})");
         }
         finally
         {
             IsLegalizing = false;
+            _guardSuspended = false;
         }
     }
+    private void RestoreAfterFailedLegalize(PKM? restore)
+    {
+        if (restore is null)
+            return;
+        _pk = restore;
+        _isNew = CoreAdapter.IsEmpty(restore);
+        RaiseAll();
+    }
+
+    /// <summary>
+    /// Modo legal: uma mudanca grande (outra especie, set Showdown) quase sempre invalida o encontro. Em vez de
+    /// desfazer, gera de novo a partir de um encontro real; se nao houver, volta para <paramref name="before"/>.
+    /// </summary>
+    private void LegalizeOrRestore(PKM before)
+    {
+        if (!LegalMode || IsLegal)
+        {
+            _guardSuspended = false;
+            return;
+        }
+        _ = LegalizeAsync(before);
+    }
+
     // Evoluir por troca
     private (ushort, byte, int) _tradeKey = (ushort.MaxValue, 0, 0);
     private IReadOnlyList<TradeEvolutionOption> _tradeEvolutions = [];
@@ -251,10 +367,28 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public string IVSummary => $"IVs {IVTotal}/{_pk.MaxIV * 6}";
 
     public string Nickname { get => _pk.Nickname; set { _pk.Nickname = value; Refresh(); } }
-    public int Species { get => _pk.Species; set { if (value >= 0 && value != _pk.Species) { CoreAdapter.ChangeSpecies(_pk, (ushort)value); _isNew = false; RaiseAll(); } } }
+    public int Species
+    {
+        get => _pk.Species;
+        set
+        {
+            if (value < 0 || value == _pk.Species)
+                return;
+            var before = _pk.Clone();
+            _guardSuspended = LegalMode;
+            CoreAdapter.ChangeSpecies(_pk, (ushort)value);
+            _isNew = false;
+            RaiseAll();
+            LegalizeOrRestore(before);
+        }
+    }
     public int Level { get => _pk.CurrentLevel; set { _pk.CurrentLevel = (byte)Math.Clamp(value, 1, 100); Refresh(); } }
     public int Nature { get => (int)_pk.StatAlignment; set { if (value >= 0 && value != (int)_pk.StatAlignment) { _pk.SetNature((Nature)value); Refresh(); } } }
-    public int HeldItem { get => _pk.HeldItem; set { if (value >= 0) { _pk.HeldItem = value; Refresh(); Raise(nameof(SelectedItem)); Raise(nameof(HasItem)); } } }
+    public int HeldItem { get => _pk.HeldItem; set { if (value >= 0) { _pk.HeldItem = value; Refresh(); Raise(nameof(SelectedItem)); Raise(nameof(HasItem)); Raise(nameof(HeldItemIcon)); Raise(nameof(HeldItemTip)); } } }
+    /// <summary>Descricao e onde conseguir o item segurado (AllGenWiki), quando houver.</summary>
+    public string? HeldItemTip => _pk.HeldItem > 0 ? ItemInfo.GetTooltip(CoreAdapter.GetHeldItemName(_pk), _pk.Context.Generation) : null;
+    /// <summary>Icone do item segurado (ao lado do campo Item).</summary>
+    public Bitmap? HeldItemIcon => SpriteService.GetItemSprite(_pk.HeldItem, _pk.Context);
 
     /// <summary>Itens que podem ser segurados neste jogo, em ordem alfabetica (numeracao certa por geracao).</summary>
     public IReadOnlyList<ComboItem> ItemOptions => _itemOptions ??= [.. CoreAdapter.GetHeldItemOptions()
@@ -299,9 +433,38 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public bool HasPPUps => _pk is not (PB7 or PA8 or PA9);
 
     // Encontro
-    public IReadOnlyList<ComboItem> BallList { get; }
+    private readonly IReadOnlyList<ComboItem> _allBalls;
+    /// <summary>Bolas do jogo; no modo legal, so as permitidas para o encontro (mais a atual).</summary>
+    public IReadOnlyList<ComboItem> BallList { get; private set; } = [];
+    private object? _ballKey;
+    private bool _ballReselect;
     public IReadOnlyList<ComboItem> MetLocationList { get; }
-    public ComboItem? Ball { get => Find(BallList, _pk.Ball); set { if (value is not null) { _pk.Ball = (byte)value.Value; Refresh(); } } }
+    public ComboItem? Ball
+    {
+        get => _ballReselect ? null : Find(BallList, _pk.Ball);
+        set { if (value is not null && !_ballReselect) { _pk.Ball = (byte)value.Value; Refresh(); } }
+    }
+
+    /// <summary>Recalcula a lista de bolas quando especie/encontro mudam (so no modo legal ela depende do Pokemon).</summary>
+    private void RefreshBalls()
+    {
+        object key = LegalMode ? (_pk.Species, _pk.Form, _pk.Version, _pk.MetLocation, _pk.MetLevel, _pk.IsEgg, _pk.Ball, IsLegal) : "all";
+        if (key.Equals(_ballKey))
+            return;
+        _ballKey = key;
+        if (!LegalMode)
+            BallList = _allBalls;
+        else
+        {
+            var legal = CoreAdapter.GetLegalBalls(_pk);
+            BallList = [.. _allBalls.Where(b => legal.Contains(b.Value) || b.Value == _pk.Ball)];
+        }
+        Raise(nameof(BallList));
+        // A ComboBox perde a selecao quando a lista muda: limpa e seleciona de novo depois do layout.
+        _ballReselect = true;
+        Raise(nameof(Ball));
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ballReselect = false; Raise(nameof(Ball)); }, Avalonia.Threading.DispatcherPriority.Background);
+    }
     public ComboItem? MetLocation { get => Find(MetLocationList, _pk.MetLocation); set { if (value is not null) { _pk.MetLocation = (ushort)value.Value; Refresh(); } } }
     public int MetLevel { get => _pk.MetLevel; set { _pk.MetLevel = (byte)Math.Clamp(value, 0, 100); Refresh(); } }
     public bool HasMetDate => _pk.MetDate is not null;
@@ -362,11 +525,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             _status("Área de transferência vazia.");
             return;
         }
+        var before = _pk.Clone();
+        _guardSuspended = LegalMode;
         var error = CoreAdapter.ApplyShowdown(_pk, text);
         if (error is null)
             _isNew = false;
         RaiseAll(); // atualiza todos os campos
         _status(error ?? "Set Showdown importado. Clique em Aplicar para gravar.");
+        LegalizeOrRestore(before);
     }
 
     private void Refresh()
@@ -390,6 +556,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         LegalityIssues = CoreAdapter.GetLegalityIssues(_pk); // ilegal: problemas; legal: avisos "Fishy"
         foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityIssues), nameof(HasLegalityIssues), nameof(HasWarnings), nameof(ShowLegalize), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
             Raise(p);
+        RaiseLegalMode();
+        GuardLegality();
+        RefreshBalls();
     }
 }
 
@@ -438,14 +607,19 @@ public sealed class MoveSlotViewModel(Func<PKM> pk, int index, Func<IReadOnlyLis
         get
         {
             var move = Move;
-            return move == 0 ? null : options().FirstOrDefault(o => o.Index == move);
+            if (move == 0)
+                return null;
+            // Golpe atual fora da lista (ex.: ilegal no modo legal): continua aparecendo no campo.
+            return options().FirstOrDefault(o => o.Index == move)
+                ?? new MoveOption(move, (uint)move < (uint)CoreAdapter.MoveNames.Count ? CoreAdapter.MoveNames[move] : $"#{move}", false);
         }
         set
         {
+            // Texto digitado so vale se estiver na lista (no modo legal, so golpes que aprende).
             var index = value switch
             {
                 MoveOption o => o.Index,
-                string s => CoreAdapter.FindIndex(CoreAdapter.MoveNames, s),
+                string s => options().FirstOrDefault(o => string.Equals(o.Name, s.Trim(), StringComparison.OrdinalIgnoreCase))?.Index ?? -1,
                 _ => -1,
             };
             if (index > 0)

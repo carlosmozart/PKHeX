@@ -45,6 +45,9 @@ public sealed class MainViewModel : ViewModelBase
             (t, m, ok, details) => ConfirmAsync(t, m, ok, details: details, icon: "📖"), s => Status = s);
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
+        Help = new HelpPageViewModel(Settings);
+        OpenHelpCommand = new RelayCommand(OpenHelp);
+        CloseHelpCommand = new RelayCommand(() => IsHelpOpen = false);
         AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
@@ -90,6 +93,33 @@ public sealed class MainViewModel : ViewModelBase
     public PokedexPageViewModel Pokedex { get; }
     public EncounterDbViewModel Encounters { get; }
     public GiftDbViewModel Gifts { get; }
+    /// <summary>Ajuda (F1): funcoes, novidades, Sobre e verificacao de atualizacoes.</summary>
+    public HelpPageViewModel Help { get; }
+    public RelayCommand OpenHelpCommand { get; }
+    public RelayCommand CloseHelpCommand { get; }
+
+    private bool _isHelpOpen;
+    /// <summary>Ajuda aberta: ocupa a area de conteudo (no lugar da pagina ou do Save Manager) ate Voltar/Esc ou trocar de pagina.</summary>
+    public bool IsHelpOpen
+    {
+        get => _isHelpOpen;
+        set
+        {
+            if (Set(ref _isHelpOpen, value))
+                RaiseHome();
+        }
+    }
+    public bool ShowHomeSaves => !HasSave && !IsHelpOpen;
+    public bool ShowPage => HasSave && !IsHelpOpen;
+    private void RaiseHome()
+    {
+        Raise(nameof(ShowHomeSaves));
+        Raise(nameof(ShowPage));
+        Raise(nameof(ShowEditorPanel));
+    }
+
+    /// <summary>F1 / botao "Ajuda e novidades".</summary>
+    public void OpenHelp() => IsHelpOpen = true;
     public PartyPageViewModel Party { get; }
     private IReadOnlyList<PageViewModel> AllPages { get; }
     public IReadOnlyList<PageViewModel> Pages
@@ -125,6 +155,11 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Esc: fecha o editor; sem editor, volta para Caixas.</summary>
     public async void Back()
     {
+        if (IsHelpOpen)
+        {
+            IsHelpOpen = false;
+            return;
+        }
         if (HasMarks)
         {
             ClearMarks();
@@ -151,7 +186,10 @@ public sealed class MainViewModel : ViewModelBase
         get => _currentPage;
         set
         {
-            if (value is null || !Set(ref _currentPage, value))
+            if (value is null)
+                return;
+            IsHelpOpen = false;
+            if (!Set(ref _currentPage, value))
                 return;
             Raise(nameof(ShowEditorPanel));
             if (value == SaveManager)
@@ -188,10 +226,31 @@ public sealed class MainViewModel : ViewModelBase
         set { Settings.OpenLastSaveOnStartup = value; Settings.Save(); Raise(); }
     }
 
+    /// <summary>Modo legal (padrao ligado): o editor so oferece opcoes legais e nao aplica Pokemon ilegal.</summary>
+    public bool LegalMode
+    {
+        get => Settings.LegalMode;
+        set
+        {
+            if (value == Settings.LegalMode)
+                return;
+            Settings.LegalMode = value;
+            Settings.Save();
+            Raise();
+            if (Editor is not null)
+                Editor.LegalMode = value;
+            Status = value
+                ? "Modo legal ligado: o editor só mostra opções legais e não aplica Pokémon ilegal."
+                : "Modo legal desligado: o editor permite qualquer valor (use com cuidado).";
+        }
+    }
+
     public bool HasSave => _sav is not null;
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
-    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex;
+    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && !IsHelpOpen;
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
+    /// <summary>Selo do jogo aberto (Pokemon da capa nas cores da versao), no cartao da barra lateral.</summary>
+    public GameArt? GameArt => _sav is null ? null : GameArt.Get(_sav.Version);
     public string TrainerInfo => _sav is null ? "Arraste um arquivo ou clique em Abrir" : $"{_sav.OT} · TID {_sav.DisplayTID}";
 
     private string _status = "Pronto";
@@ -432,8 +491,10 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var page in AllPages)
             page.Load(sav);
         CurrentPage = Boxes;
-        foreach (var p in (string[])[nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(TrainerInfo), nameof(Pages)])
+        foreach (var p in (string[])[nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages)])
             Raise(p);
+        IsHelpOpen = false;
+        RaiseHome();
         RaiseSelectionChanged();
         CheckLegalityCommand.NotifyCanExecuteChanged();
         CreateCommand.NotifyCanExecuteChanged();
@@ -513,6 +574,7 @@ public sealed class MainViewModel : ViewModelBase
                 $"{dst.Title} ({dst.Location}) será substituído por {(mode == DropMode.Copy ? "uma cópia de " : "")}{name}.", "Substituir"))
             return;
 
+        var legalNote = "";
         try
         {
             if (src.IsBank && dst.IsBank)
@@ -563,6 +625,7 @@ public sealed class MainViewModel : ViewModelBase
                     Status = $"{name} não pode ir para {CoreAdapter.GetGameName(_sav)}: {err}";
                     return;
                 }
+                (converted, legalNote) = await OfferLegalizeAsync(converted, "do bank");
                 var dstInfo = CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot);
                 _history!.Record($"trazer {name} do bank", SlotHistory.KeyOf(dst.Box, dst.Slot));
                 if (CoreAdapter.ImportToSlot(_sav, dstInfo, converted) is { } error)
@@ -577,7 +640,7 @@ public sealed class MainViewModel : ViewModelBase
                 else if (mode != DropMode.Copy)
                     BankStorage.DeleteSlot(src.BankBox!, src.Slot);
                 IsDirty = true;
-                var legal = CoreAdapter.IsLegal(converted) == false ? " Atenção: ficou ilegal depois da conversão; veja o cartão de legalidade." : "";
+                var legal = legalNote != "" ? " " + legalNote : CoreAdapter.IsLegal(converted) == false ? " Atenção: ficou ilegal depois da conversão; veja o cartão de legalidade." : "";
                 Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "trazido")} do bank para {dst.Location}.{legal} Lembre-se de salvar o save.";
             }
         }
@@ -640,6 +703,9 @@ public sealed class MainViewModel : ViewModelBase
             Status = $"Não dá para trocar: {dst.Title} não pode ir para {CoreAdapter.GetGameName(srcSav)} ({err2}). Solte num slot vazio.";
             return;
         }
+        var legalNote = "";
+        if (dstSav == _sav)
+            (converted, legalNote) = await OfferLegalizeAsync(converted, "do outro save");
         if (mode != DropMode.Copy && back is null && src.IsParty && srcSav.IsPartyAllEggs(src.Slot))
         {
             Status = "A equipe precisa ter pelo menos um Pokémon (que não seja ovo).";
@@ -676,7 +742,7 @@ public sealed class MainViewModel : ViewModelBase
             OtherSave.MarkDirty();
         OtherSave.LoadBox();
         RefreshSlots();
-        var legal = CoreAdapter.IsLegal(converted) == false ? " Atenção: ficou ilegal depois da conversão." : "";
+        var legal = legalNote != "" ? " " + legalNote : CoreAdapter.IsLegal(converted) == false ? " Atenção: ficou ilegal depois da conversão." : "";
         Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "movido")} para {dst.Location}.{legal} Salve os dois saves para gravar (Ctrl+Z desfaz só o lado do save aberto).";
     }
 
@@ -711,6 +777,44 @@ public sealed class MainViewModel : ViewModelBase
         };
     }
 
+    /// <summary>
+    /// Pokemon vindo de fora (arquivo, bank, outro save) que chega ilegal ao save aberto: com o modo legal ligado,
+    /// oferece o Legalizar antes de gravar. Retorna o Pokemon a gravar (legalizado ou o original) e uma nota para o status.
+    /// </summary>
+    private async Task<(PKM Pk, string Note)> OfferLegalizeAsync(PKM pk, string origin)
+    {
+        if (_sav is null || CoreAdapter.IsLegal(pk) != false)
+            return (pk, "");
+        var name = CoreAdapter.SpeciesNames[pk.Species];
+        if (!LegalMode)
+            return (pk, $"Atenção: {name} está ilegal (dá para usar ✨ Legalizar no editor).");
+        var legalize = await ConfirmAsync($"{name} está ilegal",
+            $"{name} ({origin}) não é legal neste save. Legalizar gera de novo a partir de um encontro real de {CoreAdapter.GetGameName(_sav)}, mantendo natureza, nível, item, apelido e golpes quando possível.",
+            "✨ Legalizar", "Trazer como está", details: [.. CoreAdapter.GetLegalityIssues(pk)], icon: "🛡");
+        if (!legalize)
+            return (pk, $"Atenção: {name} entrou ilegal.");
+        return await LegalizeOutsideAsync(pk);
+    }
+
+    private async Task<(PKM Pk, string Note)> LegalizeOutsideAsync(PKM pk)
+    {
+        var name = CoreAdapter.SpeciesNames[pk.Species];
+        var sav = _sav!;
+        Status = $"Legalizando {name}...";
+        try
+        {
+            var current = pk.Clone();
+            var (result, message) = await Task.Run(() => (EncounterDatabase.Legalize(sav, current, out var m), m));
+            return result is null
+                ? (pk, $"Não deu para legalizar {name} ({message}); entrou como estava.")
+                : (result, $"{name} legalizado a partir de: {message}.");
+        }
+        catch (Exception ex)
+        {
+            return (pk, $"Erro ao legalizar {name} ({ex.Message}); entrou como estava.");
+        }
+    }
+
     /// <summary>Soltar um arquivo .pk* sobre um slot (pergunta antes de substituir um Pokemon).</summary>
     public async Task ImportFileAsync(SlotViewModel dst, string path)
     {
@@ -741,7 +845,10 @@ public sealed class MainViewModel : ViewModelBase
                 $"{dst.Title} ({dst.Location}) será substituído por {CoreAdapter.SpeciesNames[pk.Species]} do arquivo. Dá para desfazer com Ctrl+Z.",
                 "Substituir"))
             return;
+        (pk, var note) = await OfferLegalizeAsync(pk, "arquivo " + System.IO.Path.GetFileName(path));
         ImportEntity(dst, pk);
+        if (note != "")
+            Status += " " + note;
     }
 
     private void ImportEntity(SlotViewModel dst, PKM pk)
@@ -1100,6 +1207,26 @@ public sealed class MainViewModel : ViewModelBase
             return;
         }
 
+        // Do bank para o save: oferece o Legalizar para os que chegam ilegais (uma pergunta para o grupo).
+        var legalNote = "";
+        var illegal = dst.IsBank ? [] : moving.Select((m, i) => (m, i)).Where(x => x.m.Key.Bank is not null && CoreAdapter.IsLegal(x.m.Data) == false).ToList();
+        if (illegal.Count > 0 && LegalMode && await ConfirmAsync($"{illegal.Count} Pokémon ilegais",
+                $"Estes Pokémon do bank não são legais em {CoreAdapter.GetGameName(_sav)}. Legalizar gera cada um de novo a partir de um encontro real do jogo, mantendo natureza, nível, item, apelido e golpes quando possível.",
+                "✨ Legalizar", "Trazer como estão", details: [.. illegal.Select(x => x.m.Name)], icon: "🛡"))
+        {
+            int ok = 0;
+            foreach (var (m, i) in illegal)
+            {
+                var (pk, _) = await LegalizeOutsideAsync(m.Data);
+                if (CoreAdapter.IsLegal(pk) == true)
+                    ok++;
+                moving[i] = (m.Key, pk, m.Name);
+            }
+            legalNote = $" {ok} de {illegal.Count} legalizados.";
+        }
+        else if (illegal.Count > 0)
+            legalNote = $" Atenção: {illegal.Count} entraram ilegais.";
+
         // 2) Onde cabe: slots livres da caixa de destino (os que estao saindo dela contam como livres).
         HashSet<int> freed = copy ? [] : moving.Where(m => InTarget(m.Key)).Select(m => m.Key.Slot).ToHashSet();
         int size = dst.IsBank ? BankStorage.SlotsPerBox : _sav.BoxSlotCount;
@@ -1161,6 +1288,7 @@ public sealed class MainViewModel : ViewModelBase
         RefreshSlots();
         var where = dst.IsBank ? $"bank › {dst.BankBox!.Name}" : CoreAdapter.GetBoxName(_sav, dst.Box);
         Status = $"{moving.Count} Pokémon {(copy ? "copiados" : "movidos")} para {where}."
+                 + legalNote
                  + (keys.Count > 0 ? " Lembre-se de salvar o save." : "")
                  + (skipped.Count > 0 ? $" {skipped.Count} ficaram onde estavam." : "");
         if (skipped.Count > 0)
@@ -1347,7 +1475,7 @@ public sealed class MainViewModel : ViewModelBase
                 Party.Load(_sav);
             RaiseSelectionChanged();
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
-        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav) { SelectedTab = tab };
+        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab };
     }
 }
 

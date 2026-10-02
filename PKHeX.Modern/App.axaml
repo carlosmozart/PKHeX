@@ -3,6 +3,7 @@
              xmlns:vm="using:PKHeX.Modern.ViewModels"
              xmlns:v="using:PKHeX.Modern.Views"
              xmlns:c="using:PKHeX.Modern.Controls"
+             xmlns:svc="using:PKHeX.Modern.Services"
              x:Class="PKHeX.Modern.App"
              RequestedThemeVariant="Dark">
   <!-- Cada pagina/ViewModel ganha sua View aqui (um DataTemplate por feature). -->
@@ -753,6 +754,154 @@
     </StackPanel>
   </DataTemplate>
 
+  <!-- Ajuda: funcoes, novidades e sobre -->
+  <DataTemplate DataType="vm:HelpPageViewModel">
+    <DockPanel>
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Ajuda" Classes="title" />
+          <TextBlock Text="{Binding VersionText, StringFormat='PKHeX Modern · {0}'}" Classes="muted" FontSize="12" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+          <Button Classes="accent small" Content="{Binding RestartText}" Command="{Binding RestartCommand}" IsVisible="{Binding IsReadyToRestart}" />
+          <Button Classes="small" Content="‹  Voltar" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).CloseHelpCommand}"
+                  ToolTip.Tip="Volta para onde você estava (Esc)" />
+        </StackPanel>
+      </Grid>
+      <TabControl Classes="editorTabs" SelectedIndex="{Binding SelectedTab}">
+        <TabItem Header="Funções">
+          <DockPanel Margin="0,12,0,0">
+            <TextBox DockPanel.Dock="Top" Text="{Binding Filter}" Watermark="🔍  Procurar uma função (ex.: bank, shiny, legalizar)"
+                     MaxWidth="920" HorizontalAlignment="Left" Width="920" Margin="0,0,0,12" />
+            <TextBlock DockPanel.Dock="Top" Text="Nenhuma função encontrada." Classes="muted" IsVisible="{Binding HasNoResults}" />
+            <ScrollViewer>
+              <ItemsControl ItemsSource="{Binding Sections}" MaxWidth="920" HorizontalAlignment="Left">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="svc:HelpSection">
+                    <Border Classes="card" Margin="0,0,0,12">
+                      <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                          <TextBlock Text="{Binding Icon}" FontSize="20" VerticalAlignment="Center" />
+                          <TextBlock Text="{Binding Title}" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding Items}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="svc:HelpItem">
+                              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="0,0,0,10">
+                                <StackPanel Spacing="2">
+                                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                  <TextBlock Text="{Binding Text}" Classes="muted" FontSize="13" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Border Grid.Column="1" Classes="chip" Background="{DynamicResource CardBorder}" VerticalAlignment="Top"
+                                        IsVisible="{Binding Shortcut, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                  <TextBlock Text="{Binding Shortcut}" />
+                                </Border>
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </DockPanel>
+        </TabItem>
+        <TabItem Header="Novidades">
+          <ScrollViewer Margin="0,12,0,0">
+            <ItemsControl ItemsSource="{Binding Changelog}" MaxWidth="920" HorizontalAlignment="Left">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="svc:ChangelogVersion">
+                  <Border Classes="card" Margin="0,0,0,12">
+                    <StackPanel Spacing="8">
+                      <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Accent}" />
+                        <TextBlock Text="{Binding Date}" Classes="muted" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                      </StackPanel>
+                      <TextBlock Text="{Binding Intro}" TextWrapping="Wrap" IsVisible="{Binding Intro, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      <ItemsControl ItemsSource="{Binding Sections}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="svc:ChangelogSection">
+                            <StackPanel Spacing="4" Margin="0,4,0,6">
+                              <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                              <ItemsControl ItemsSource="{Binding Items}">
+                                <ItemsControl.ItemTemplate>
+                                  <DataTemplate x:DataType="x:String">
+                                    <Grid ColumnDefinitions="16,*" Margin="4,1">
+                                      <TextBlock Text="•" Classes="muted" />
+                                      <TextBlock Grid.Column="1" Text="{Binding}" TextWrapping="Wrap" FontSize="13" />
+                                    </Grid>
+                                  </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                            </StackPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </TabItem>
+        <TabItem Header="Sobre">
+          <ScrollViewer Margin="0,12,0,0">
+            <StackPanel Spacing="12" MaxWidth="920" HorizontalAlignment="Left">
+              <Border Classes="card">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="PKHeX Modern" FontSize="18" FontWeight="Bold" />
+                  <TextBlock Text="{Binding VersionText}" Classes="muted" />
+                  <TextBlock TextWrapping="Wrap" Text="Interface em português para o PKHeX, feita por Carlos Mozart. Por baixo é o mesmo PKHeX.Core (de Kaphotics e colaboradores), com as mesmas regras de save, legalidade e encontros." />
+                  <WrapPanel ItemSpacing="6" LineSpacing="6">
+                    <Button Classes="small" Content="🔗  Código no GitHub" Command="{Binding OpenRepoCommand}" />
+                    <Button Classes="small" Content="📦  Todas as versões" Command="{Binding OpenReleasesCommand}" />
+                  </WrapPanel>
+                </StackPanel>
+              </Border>
+              <Border Classes="card">
+                <StackPanel Spacing="8">
+                  <TextBlock Text="ATUALIZAÇÕES" Classes="section" Margin="0" />
+                  <TextBlock Text="{Binding UpdateText}" TextWrapping="Wrap" />
+                  <StackPanel Spacing="4" IsVisible="{Binding IsDownloading}">
+                    <TextBlock Text="{Binding DownloadText}" Classes="muted" FontSize="12" />
+                    <ProgressBar Value="{Binding DownloadProgress}" Maximum="100" Height="6" />
+                  </StackPanel>
+                  <WrapPanel ItemSpacing="6" LineSpacing="6">
+                    <Button Classes="small" Content="⟳  Verificar agora" Command="{Binding CheckUpdatesCommand}" />
+                    <Button Classes="accent small" Content="⬇  Atualizar agora" Command="{Binding InstallUpdateCommand}" IsVisible="{Binding ShowInstallButton}" />
+                    <Button Classes="accent small" Content="{Binding RestartText}" Command="{Binding RestartCommand}" IsVisible="{Binding IsReadyToRestart}" />
+                    <Button Classes="small" Content="{Binding LatestButtonText}" Command="{Binding OpenLatestCommand}" IsVisible="{Binding HasUpdate}"
+                            ToolTip.Tip="Abre a página da release no navegador" />
+                  </WrapPanel>
+                  <CheckBox Content="Verificar se saiu uma versão nova ao abrir o app" FontSize="12" IsChecked="{Binding CheckOnStartup}" />
+                  <CheckBox Content="Baixar e instalar sozinho (a versão nova vale ao reiniciar)" FontSize="12" IsChecked="{Binding AutoUpdate}"
+                            IsEnabled="{Binding CheckOnStartup}" />
+                  <TextBlock Text="Rodando pelo código-fonte: a atualização automática só funciona no PKHeX.Modern.exe baixado da release."
+                             Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding !CanSelfUpdate}" />
+                </StackPanel>
+              </Border>
+              <Border Classes="card wikiCard">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                  <TextBlock Text="📚" FontSize="34" VerticalAlignment="Top" />
+                  <StackPanel Grid.Column="1" Spacing="8">
+                    <TextBlock Text="CONHEÇA TAMBÉM" Classes="section" Margin="0" />
+                    <TextBlock Text="AllGenWiki" FontSize="18" FontWeight="Bold" />
+                    <TextBlock TextWrapping="Wrap" Text="Meu outro projeto: uma enciclopédia Pokémon em português das nove gerações, de Red/Blue a Scarlet/Violet, Legends: Z-A e Pokémon Champions. Pokédex por jogo, movesets, TMs, treinadores, mapas, encontros, roteiros e guias, montador de equipes com análise de fraquezas e compatibilidade do Pokémon HOME. Funciona offline e pode ser instalada como app." />
+                    <WrapPanel ItemSpacing="6" LineSpacing="6">
+                      <Button Classes="accent small" Content="🌐  Abrir o AllGenWiki" Command="{Binding OpenWikiCommand}" ToolTip.Tip="{Binding WikiUrl}" />
+                    </WrapPanel>
+                  </StackPanel>
+                </Grid>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+      </TabControl>
+    </DockPanel>
+  </DataTemplate>
+
   <!-- Mochila -->
   <DataTemplate DataType="vm:BagPageViewModel">
     <DockPanel>
@@ -775,9 +924,18 @@
         <ListBox Classes="rows" ItemsSource="{Binding SelectedPouch.Items}" Background="Transparent">
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:BagItemViewModel">
-              <Grid ColumnDefinitions="*,140" ColumnSpacing="8">
-                <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Options}"
-                          SelectedItem="{Binding Selected}" IsEnabled="{Binding IsEditable}" />
+              <Grid ColumnDefinitions="*,140" ColumnSpacing="8" Background="Transparent" ToolTip.Tip="{Binding Tip}">
+                <ComboBox Grid.Column="0" HorizontalAlignment="Stretch" ItemsSource="{Binding Options}"
+                          SelectedItem="{Binding Selected}" IsEnabled="{Binding IsEditable}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ItemOption">
+                      <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent" ToolTip.Tip="{Binding Tip}" ToolTip.Placement="Right">
+                        <Image Source="{Binding Icon}" Width="22" Height="22" RenderOptions.BitmapInterpolationMode="None" />
+                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
                 <NumericUpDown Grid.Column="1" Minimum="0" FormatString="0" Value="{Binding Count}" />
               </Grid>
             </DataTemplate>

@@ -16,6 +16,12 @@ public sealed class AppSettings
     public string? SavesFolder { get; set; }
     /// <summary>Pastas de arquivos .pk* usadas como bancos externos (pagina Bank).</summary>
     public System.Collections.Generic.List<string> ExternalBankFolders { get; set; } = [];
+    /// <summary>Modo legal: o editor so oferece opcoes legais e nao deixa aplicar um Pokemon ilegal.</summary>
+    public bool LegalMode { get; set; } = true;
+    /// <summary>Verificar ao iniciar se saiu uma release nova no GitHub.</summary>
+    public bool CheckForUpdates { get; set; } = true;
+    /// <summary>Ao achar uma versao nova, baixar e instalar sozinho (vale ao reiniciar o app).</summary>
+    public bool AutoUpdate { get; set; } = true;
 
     /// <summary>So grava em disco instancias carregadas via <see cref="Load"/> (testes usam instancias em memoria).</summary>
     [System.Text.Json.Serialization.JsonIgnore]

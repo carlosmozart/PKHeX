@@ -20,7 +20,8 @@ public sealed record SaveEntry(
     uint Money,
     int Caught,
     DateTime LastWrite,
-    IReadOnlyList<PKM> Party);
+    IReadOnlyList<PKM> Party,
+    GameVersion Version = GameVersion.Any);
 
 /// <summary>
 /// Varre a pasta de saves (e subpastas) e le um resumo de cada arquivo reconhecido pelo Core.
@@ -95,7 +96,8 @@ public static class SaveLibrary
                 sav.Money,
                 caught,
                 info.LastWriteTime,
-                party);
+                party,
+                sav.Version);
         }
         catch
         {

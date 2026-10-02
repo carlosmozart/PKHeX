@@ -55,6 +55,39 @@ public static class SpriteService
         return bmp;
     }
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(int, EntityContext), AvaloniaBitmap?> Items = new();
+
+    /// <summary>
+    /// Icone de um item (mochila, item segurado). <paramref name="item"/> na numeracao do save: Gen 1-3 tem numeracao
+    /// propria e sao convertidas para a numeracao dos sprites. Cacheado.
+    /// </summary>
+    public static AvaloniaBitmap? GetItemSprite(int item, EntityContext context)
+    {
+        if (item <= 0)
+            return null;
+        return Items.GetOrAdd((item, context), key =>
+        {
+            try
+            {
+                var display = ItemConverter.GetItemDisplay(key.Item1, key.Item2);
+                if (display <= 0)
+                    return null;
+                lock (SpeciesLock)
+                {
+                    var gdi = SpriteUtil.Spriter.GetItemSprite(display, key.Item2); // recurso compartilhado: nao descartar
+                    using var ms = new MemoryStream();
+                    gdi.Save(ms, ImageFormat.Png);
+                    ms.Position = 0;
+                    return new AvaloniaBitmap(ms);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        });
+    }
+
     /// <summary>Sprite de um encontro ou Mystery Gift (banco de encontros/eventos).</summary>
     public static AvaloniaBitmap? GetSprite(IEncounterTemplate enc)
     {

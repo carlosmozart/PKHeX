@@ -36,6 +36,27 @@ public static class CoreAdapter
     /// <summary>Bolas disponiveis no save carregado (Text/Value).</summary>
     public static IReadOnlyList<ComboItem> GetBalls() => GameInfo.FilteredSources.Balls;
 
+    /// <summary>Especies que existem no jogo aberto (lista filtrada do Core).</summary>
+    public static IReadOnlyList<ComboItem> GetSpeciesInGame() => GameInfo.FilteredSources.Species;
+
+    /// <summary>Bolas legais para o encontro atual do Pokemon (vazio se o encontro nao for reconhecido).</summary>
+    public static HashSet<int> GetLegalBalls(PKM pk)
+    {
+        var result = new HashSet<int>();
+        try
+        {
+            Span<Ball> balls = stackalloc Ball[BallApplicator.MaxBallSpanAlloc];
+            var count = BallApplicator.GetLegalBalls(balls, pk);
+            foreach (var b in balls[..count])
+                result.Add((int)b);
+        }
+        catch
+        {
+            // sem analise: nenhuma bola
+        }
+        return result;
+    }
+
     /// <summary>Locais de encontro validos para a versao/contexto do Pokemon.</summary>
     public static IReadOnlyList<ComboItem> GetMetLocations(PKM pk) => GameInfo.GetLocationList(pk.Version, pk.Context);
 

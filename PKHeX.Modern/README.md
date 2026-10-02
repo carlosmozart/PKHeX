@@ -25,6 +25,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 **Saves**
 - Abrir pelo botão, arrastando o arquivo para a janela ou pela linha de comando; salvar com **Ctrl+S**.
 - **Save Manager**: tela inicial que lista os saves da pasta `saves` (ao lado do exe, ou outra à sua escolha), agrupados por console, com treinador, tempo de jogo, dinheiro e equipe. Duplo clique abre.
+- **Selo do jogo**: cada save mostra o Pokémon da capa nas cores da versão (Ho-Oh no HeartGold, Rayquaza no Emerald...), no Save Manager e no cartão do save aberto na barra lateral.
 - Aviso de **alterações não exportadas**: o app pergunta antes de abrir outro save ou fechar.
 - **Backup automático**: antes de salvar por cima de um save, o arquivo anterior é copiado para `%APPDATA%\PKHeX.Modern\backups` (botão "Backups" no Save Manager lista as cópias, com **Restaurar** e **Restaurar como...**; o arquivo atual ganha um backup antes de ser substituído).
 
@@ -58,6 +59,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 - Bola, local, nível e data de encontro; treinador original; felicidade, PID/EC e "Tornar shiny".
 - **Verificar legalidade** (barra inferior): confere o save inteiro e mostra o resultado numa janela.
 - **Legalidade** no editor: lista os problemas e avisos e oferece correções de um clique, inclusive **Legalizar**, que gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny) mantendo natureza, nível, item, apelido e golpes.
+- **Modo legal** (chave na barra lateral, ligado por padrão): o editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo), desfaz na hora qualquer mudança que deixaria o Pokémon ilegal (explicando o motivo) e só deixa **Aplicar** um Pokémon legal. Trocar a espécie ou colar um set Showdown legaliza automaticamente. Pokémon **de fora** (arquivo `.pk*`, bank ou outro save) que chega ilegal ao save aberto ganha a opção **✨ Legalizar** ou **Trazer como está**. Desligado, vale qualquer valor.
 - **Evoluir por troca** (Kadabra, Onix + Metal Coat, Shelmet/Karrablast...), sem precisar de um segundo jogo; da Gen 6 em diante registra o parceiro de troca para o Pokémon continuar legal.
 - Colar e copiar no formato **Showdown**.
 
@@ -66,10 +68,17 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 - **Eventos**: banco de Mystery Gift do PKHeX, com busca, inclusive os eventos da Gen 1-3.
 - "Usar" gera o Pokémon no editor, pronto para gravar.
 
+**Ajuda e atualizações**
+- Página **Ajuda** (F1 ou "❔ Ajuda e novidades"): todas as funções explicadas, com busca; **Novidades** com o changelog de cada versão; **Sobre** com a versão instalada.
+- **Atualização automática**: ao abrir, o app verifica se saiu uma versão nova no GitHub, baixa o zip da release, confere o SHA-256 informado pelo GitHub e troca o exe (o antigo vira `.old` e é apagado na abertura seguinte). A versão nova vale ao reiniciar pelo botão 🔄 da barra lateral, que pergunta antes se houver alterações não salvas e reabre o save. Dá para desligar em Ajuda › Sobre. Só vale para o `PKHeX.Modern.exe` da release (rodando pelo código, mostra o link).
+
 **Outros**
-- Treinador (nome, TID/SID, dinheiro, tempo de jogo) e Mochila.
+- Treinador (nome, TID/SID, dinheiro, tempo de jogo) e **Mochila com o ícone de cada item**; ao passar o mouse, a descrição em português e onde conseguir o item (dados do AllGenWiki).
 - Tema claro/escuro e **cor de destaque** configurável.
 - Atalhos: Q/E trocam de página, Ctrl+1–9 vão direto, Esc volta, Ctrl+O abre.
+
+### Conheça também: AllGenWiki
+[AllGenWiki](https://allgenwiki.carlosmozartbna.workers.dev/) é meu outro projeto: uma enciclopédia Pokémon em português das nove gerações, com Pokédex por jogo, movesets, TMs, treinadores, mapas, encontros, roteiros e guias, montador de equipes e compatibilidade do Pokémon HOME. Funciona offline. As descrições dos itens da mochila vêm de lá.
 
 As preferências ficam em `%APPDATA%\PKHeX.Modern\settings.json`. Se algo der errado, os detalhes ficam em `%APPDATA%\PKHeX.Modern\crash.log`.
 
@@ -105,6 +114,12 @@ Services/SaveLibrary.cs        ← Save Manager
 Services/EntitySearch.cs       ← busca global
 Services/SpriteService.cs      ← sprites System.Drawing → Avalonia
 Services/SaveBackup.cs         ← backup antes de sobrescrever um save
+Services/GameArt.cs           ← selo do jogo (Pokémon da capa + cores da versão)
+Services/HelpContent.cs        ← texto da Ajuda (atualize a cada função nova)
+Services/Changelog.cs          ← lê o CHANGELOG.md embutido (Ajuda › Novidades)
+Services/UpdateChecker.cs      ← versão do app e releases novas no GitHub
+Services/AutoUpdater.cs        ← baixa, confere e troca o exe (atualização automática)
+Services/ItemInfo.cs           ← descrição/onde conseguir itens (Assets/item-info.json, do AllGenWiki)
 Services/AppSettings.cs, CrashLog.cs
         │
 ViewModels/                    ← estado e lógica (Pages.cs = páginas da barra lateral)

@@ -259,6 +259,8 @@ public sealed class SaveEntryViewModel(SaveEntry entry) : ViewModelBase
     public string FileName => System.IO.Path.GetFileName(Entry.Path);
     public string Game => Entry.Game;
     public string GenerationBadge => $"Gen {Entry.Generation}";
+    /// <summary>Selo do jogo (Pokemon da capa nas cores da versao).</summary>
+    public GameArt Art => GameArt.Get(Entry.Version);
     public string Trainer => Entry.Trainer + (Entry.TrainerIsFemale ? "  ♀" : "  ♂");
     public string Details => $"{Entry.Ids} · {Entry.PlayTime} · ${Entry.Money:N0}" + (Entry.Caught > 0 ? $" · {Entry.Caught} capturados" : "");
     public string LastWrite => $"Salvo em {Entry.LastWrite:dd/MM/yyyy HH:mm}";

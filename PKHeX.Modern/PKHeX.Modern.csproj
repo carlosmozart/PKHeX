@@ -33,4 +33,10 @@
     <ProjectReference Include="..\PKHeX.Drawing.PokeSprite\PKHeX.Drawing.PokeSprite.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Changelog mostrado em Ajuda › Novidades -->
+    <EmbeddedResource Include="CHANGELOG.md" LogicalName="CHANGELOG.md" />
+    <!-- Descricoes e locais dos itens, do AllGenWiki (gerado por Tools/build_item_info.py) -->
+    <EmbeddedResource Include="Assets\item-info.json" LogicalName="item-info.json" />
+  </ItemGroup>
 </Project>

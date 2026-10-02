@@ -35,8 +35,16 @@
           </Button>
           <Border Classes="card" Padding="12" Margin="0,10,0,6" IsVisible="{Binding HasSave}">
             <StackPanel Spacing="2">
-              <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextWrapping="Wrap" />
-              <TextBlock Text="{Binding TrainerInfo}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,0,2">
+                <Border Classes="gameBadge" Width="52" Height="52" Background="{Binding GameArt.Background}"
+                        ToolTip.Tip="{Binding GameName}">
+                  <Image Source="{Binding GameArt.Sprite}" RenderOptions.BitmapInterpolationMode="None" />
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                  <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding TrainerInfo}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                </StackPanel>
+              </Grid>
               <Button Classes="ghost unsavedLink" Margin="-8,2,0,-4" IsVisible="{Binding IsDirty}" Command="{Binding ShowPendingCommand}"
                       ToolTip.Tip="Ver a lista e salvar (Ctrl+S grava o arquivo do save)">
                 <TextBlock Text="{Binding PendingText}" Classes="unsaved" FontSize="11" TextDecorations="Underline" />
@@ -46,6 +54,24 @@
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Bottom" Spacing="2">
+          <!-- Atualizacao: aviso → baixando → reiniciar -->
+          <Button Classes="accent small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,0,6"
+                  IsVisible="{Binding Help.ShowInstallButton}" Content="{Binding Help.UpdateBanner}" Command="{Binding Help.InstallUpdateCommand}"
+                  ToolTip.Tip="Baixa e instala a versão nova (vale ao reiniciar)" />
+          <Button Classes="accent small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,0,6"
+                  IsVisible="{Binding Help.ShowLinkBanner}" Content="{Binding Help.UpdateBanner}" Command="{Binding Help.OpenLatestCommand}"
+                  ToolTip.Tip="{Binding Help.UpdateText}" />
+          <StackPanel Spacing="4" Margin="0,0,0,6" IsVisible="{Binding Help.IsDownloading}">
+            <TextBlock Text="{Binding Help.DownloadText}" Classes="muted" FontSize="11" />
+            <ProgressBar Value="{Binding Help.DownloadProgress}" Maximum="100" Height="4" MinHeight="4" />
+          </StackPanel>
+          <Button Classes="accent small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,0,6"
+                  IsVisible="{Binding Help.IsReadyToRestart}" Content="{Binding Help.RestartText}" Command="{Binding Help.RestartCommand}"
+                  ToolTip.Tip="A versão nova já está instalada. Reinicia o app (pergunta antes se houver alterações não salvas)" />
+          <Button Classes="ghost" Content="❔  Ajuda e novidades" Command="{Binding OpenHelpCommand}" ToolTip.Tip="Todas as funções explicadas, o que mudou em cada versão e Sobre (F1)" />
+          <ToggleSwitch Classes="legalMode" IsChecked="{Binding LegalMode}" OnContent="🛡  Modo legal" OffContent="Modo legal desligado"
+                        FontSize="12" Margin="4,0,0,2"
+                        ToolTip.Tip="Ligado: o editor só mostra opções legais (golpes que o Pokémon aprende, bolas do encontro, espécies do jogo), desfaz mudanças que o deixariam ilegal e só aplica Pokémon legal." />
           <CheckBox Content="Abrir último save ao iniciar" FontSize="12" IsChecked="{Binding OpenLastSaveOnStartup}" />
           <Button Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
           <ItemsControl ItemsSource="{Binding AccentOptions}" Margin="8,4,0,4" ClipToBounds="False">
@@ -113,8 +139,9 @@
     <!-- Conteudo -->
     <Panel Grid.Column="1" Margin="24">
       <!-- Sem save aberto: o Save Manager e a tela inicial -->
-      <ContentControl Content="{Binding SaveManager}" IsVisible="{Binding !HasSave}" />
-      <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding HasSave}" />
+      <ContentControl Content="{Binding SaveManager}" IsVisible="{Binding ShowHomeSaves}" />
+      <ContentControl Content="{Binding Help}" IsVisible="{Binding IsHelpOpen}" />
+      <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding ShowPage}" />
       <!-- Selecao multipla (Ctrl/Shift+clique): barra flutuante com o total e as acoes do grupo -->
       <Border Classes="selectionBar" IsVisible="{Binding HasMarks}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
               ToolTip.Tip="Ctrl+clique marca ou desmarca · Shift+clique marca um intervalo · Ctrl+A marca a caixa toda · Esc desmarca">

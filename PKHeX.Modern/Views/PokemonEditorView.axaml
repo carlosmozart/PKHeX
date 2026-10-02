@@ -38,6 +38,10 @@
             <Border Classes="chip" Background="{DynamicResource Bad}" IsVisible="{Binding ShowIllegal}">
               <TextBlock Text="✕ Ilegal" />
             </Border>
+            <Border Classes="chip" Background="{DynamicResource CardBorder}" IsVisible="{Binding LegalMode}"
+                    ToolTip.Tip="Modo legal ligado: só opções legais; mudanças que deixariam o Pokémon ilegal são desfeitas">
+              <TextBlock Text="🛡" />
+            </Border>
             <TextBlock Text="{Binding Location}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
           </StackPanel>
         </StackPanel>
@@ -73,8 +77,11 @@
                 <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding NatureList}" SelectedIndex="{Binding Nature}" />
                 <TextBlock Grid.Row="4" Text="Item" VerticalAlignment="Center" />
-                <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="6">
-                  <AutoCompleteBox HorizontalAlignment="Stretch" ItemsSource="{Binding ItemOptions}" SelectedItem="{Binding SelectedItem}"
+                <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+                  <Image Source="{Binding HeldItemIcon}" Width="24" Height="24" IsVisible="{Binding HasItem}" VerticalAlignment="Center"
+                         ToolTip.Tip="{Binding HeldItemTip}"
+                         RenderOptions.BitmapInterpolationMode="None" />
+                  <AutoCompleteBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding ItemOptions}" SelectedItem="{Binding SelectedItem}"
                                    ValueMemberBinding="{Binding Text, x:DataType=core:ComboItem}" FilterMode="ContainsOrdinal"
                                    MinimumPrefixLength="1" MaxDropDownHeight="320" Watermark="Nenhum (digite para buscar)">
                     <AutoCompleteBox.ItemTemplate>
@@ -83,7 +90,7 @@
                       </DataTemplate>
                     </AutoCompleteBox.ItemTemplate>
                   </AutoCompleteBox>
-                  <Button Grid.Column="1" Classes="ghost small" Content="✕" Command="{Binding ClearItemCommand}"
+                  <Button Grid.Column="2" Classes="ghost small" Content="✕" Command="{Binding ClearItemCommand}"
                           IsVisible="{Binding HasItem}" ToolTip.Tip="Remover item" />
                 </Grid>
                 <TextBlock Grid.Row="5" Text="Habilidade" VerticalAlignment="Center" />
@@ -329,7 +336,12 @@
       </TabItem>
     </TabControl>
 
+    <Border Classes="legalBlock" IsVisible="{Binding ShowLegalModeBlock}">
+      <TextBlock TextWrapping="Wrap" FontSize="12"
+                 Text="🛡 Modo legal: este Pokémon está ilegal e não pode ser aplicado. Use ✨ Legalizar ou as correções sugeridas na aba Visão geral." />
+    </Border>
     <Button Classes="accent" Content="Aplicar alterações" HorizontalAlignment="Stretch" Height="40"
-            HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Command="{Binding ApplyCommand}" />
+            HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Command="{Binding ApplyCommand}"
+            ToolTip.Tip="{Binding ApplyTip}" ToolTip.ShowOnDisabled="True" />
   </StackPanel>
 </UserControl>
