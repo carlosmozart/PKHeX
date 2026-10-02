@@ -35,9 +35,10 @@ public sealed class MainViewModel : ViewModelBase
         SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p), (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s);
         Bank = new BankPageViewModel(s => _ = SelectSlotAsync(s), PromptAsync,
             (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s);
+        Pokedex = new PokedexPageViewModel(Settings, (box, slot) => _ = GoToSlotAsync(box, slot));
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
-        AllPages = [Boxes, Party, Bank, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
+        AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
         Boxes.SlotsLoaded = () => { ApplySearchHighlight(); ApplyMarks(); };
@@ -76,6 +77,8 @@ public sealed class MainViewModel : ViewModelBase
     public SaveManagerViewModel SaveManager { get; }
     /// <summary>Bank local (pagina com duas telas: bank | save).</summary>
     public BankPageViewModel Bank { get; }
+    /// <summary>Pokedex centralizada (saves da pasta + save aberto + bank).</summary>
+    public PokedexPageViewModel Pokedex { get; }
     public EncounterDbViewModel Encounters { get; }
     public GiftDbViewModel Gifts { get; }
     public PartyPageViewModel Party { get; }
@@ -146,6 +149,8 @@ public sealed class MainViewModel : ViewModelBase
                 _ = SaveManager.RefreshAsync();
             else if (value == Gifts)
                 _ = Gifts.EnsureLoadedAsync();
+            else if (value == Pokedex)
+                _ = Pokedex.RefreshAsync(); // rele sempre: o save aberto e o bank podem ter mudado
         }
     }
 
@@ -176,7 +181,7 @@ public sealed class MainViewModel : ViewModelBase
 
     public bool HasSave => _sav is not null;
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
-    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank;
+    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex;
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
     public string TrainerInfo => _sav is null ? "Arraste um arquivo ou clique em Abrir" : $"{_sav.OT} · TID {_sav.DisplayTID}";
 
@@ -261,6 +266,24 @@ public sealed class MainViewModel : ViewModelBase
             _searchTimer.Stop();
             _searchTimer.Start();
         }
+    }
+
+    /// <summary>Vai ate um slot do save aberto (caixa -1 = equipe) e abre no editor.</summary>
+    private async Task GoToSlotAsync(int box, int slot)
+    {
+        if (_sav is null)
+            return;
+        if (box < 0)
+        {
+            CurrentPage = Party;
+            if (slot < Party.Slots.Count)
+                await SelectSlotAsync(Party.Slots[slot]);
+            return;
+        }
+        CurrentPage = Boxes;
+        Boxes.CurrentBox = box;
+        if (slot < Boxes.Slots.Count)
+            await SelectSlotAsync(Boxes.Slots[slot]);
     }
 
     private async Task GoToSearchHitAsync(SearchHitViewModel hit)

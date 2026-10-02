@@ -12,12 +12,18 @@ namespace PKHeX.Modern.Services;
 /// <summary>Reaproveita o gerador de sprites do PKHeX e converte para bitmaps do Avalonia.</summary>
 public static class SpriteService
 {
+    /// <summary>Uma geracao de sprite por vez: o gerador do PKHeX (GDI) e chamado tambem fora da thread da interface.</summary>
+    private static readonly object SpeciesLock = new();
+
     public static AvaloniaBitmap? GetSprite(PKM pk, SaveFile sav, int box, int slot)
     {
         if (CoreAdapter.IsEmpty(pk))
             return null;
-        using var gdi = pk.Sprite(sav, box, slot);
-        return Convert(gdi);
+        lock (SpeciesLock)
+        {
+            using var gdi = pk.Sprite(sav, box, slot);
+            return Convert(gdi);
+        }
     }
 
     private static readonly System.Collections.Generic.Dictionary<byte, AvaloniaBitmap?> Balls = [];
@@ -32,11 +38,14 @@ public static class SpriteService
         AvaloniaBitmap? bmp;
         try
         {
-            using var gdi = SpriteUtil.GetBallSprite(ball);
-            using var ms = new MemoryStream();
-            gdi.Save(ms, ImageFormat.Png); // sem recorte: a bola ja ocupa a imagem
-            ms.Position = 0;
-            bmp = new AvaloniaBitmap(ms);
+            lock (SpeciesLock)
+            {
+                using var gdi = SpriteUtil.GetBallSprite(ball);
+                using var ms = new MemoryStream();
+                gdi.Save(ms, ImageFormat.Png); // sem recorte: a bola ja ocupa a imagem
+                ms.Position = 0;
+                bmp = new AvaloniaBitmap(ms);
+            }
         }
         catch
         {
@@ -51,16 +60,55 @@ public static class SpriteService
     {
         // Sem o icone da bola que o Core desenha no canto: assim o recorte deixa o Pokemon grande no cartao.
         var shiny = enc.IsShiny ? Shiny.Always : Shiny.Never;
-        using var gdi = SpriteUtil.GetSprite(enc.Species, enc.Form, 0, 0, 0, enc.IsEgg, shiny, enc.Context);
-        return Convert(gdi);
+        lock (SpeciesLock)
+        {
+            using var gdi = SpriteUtil.GetSprite(enc.Species, enc.Form, 0, 0, 0, enc.IsEgg, shiny, enc.Context);
+            return Convert(gdi);
+        }
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(ushort, bool), AvaloniaBitmap?> Species = new();
+
+    /// <summary>Sprite da especie ja gerado (ou null se ainda nao foi). Nao gera nada.</summary>
+    public static bool TryGetCachedSpeciesSprite(ushort species, bool shiny, out AvaloniaBitmap? sprite)
+        => Species.TryGetValue((species, shiny), out sprite);
+
+    /// <summary>
+    /// Sprite da especie (forma base), normal ou shiny, sem bola nem item. Cacheado (usado na Pokedex).
+    /// Pode ser chamado fora da thread da interface (a Pokedex gera os 1025 em segundo plano).
+    /// </summary>
+    public static AvaloniaBitmap? GetSpeciesSprite(ushort species, bool shiny)
+    {
+        if (Species.TryGetValue((species, shiny), out var cached))
+            return cached;
+        AvaloniaBitmap? bmp;
+        lock (SpeciesLock)
+        {
+            if (Species.TryGetValue((species, shiny), out cached))
+                return cached;
+            try
+            {
+                using var gdi = SpriteUtil.GetSprite(species, 0, 0, 0, 0, false, shiny ? Shiny.Always : Shiny.Never);
+                bmp = Convert(gdi);
+            }
+            catch
+            {
+                bmp = null;
+            }
+            Species[(species, shiny)] = bmp;
+        }
+        return bmp;
     }
 
     public static AvaloniaBitmap? GetSprite(PKM pk)
     {
         if (CoreAdapter.IsEmpty(pk))
             return null;
-        using var gdi = pk.Sprite();
-        return Convert(gdi);
+        lock (SpeciesLock)
+        {
+            using var gdi = pk.Sprite();
+            return Convert(gdi);
+        }
     }
 
     /// <summary>

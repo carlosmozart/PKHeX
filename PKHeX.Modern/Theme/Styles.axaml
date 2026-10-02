@@ -115,6 +115,35 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
     <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
   </Style>
+  <!-- Pokedex -->
+  <Style Selector="Button.dexCard">
+    <Setter Property="Width" Value="104" />
+    <Setter Property="Height" Value="104" />
+    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="10" />
+  </Style>
+  <Style Selector="Button.dexCard.owned /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource TintGoodForeground}" />
+  </Style>
+  <Style Selector="Button.dexCard.missing">
+    <Setter Property="Opacity" Value="0.35" />
+  </Style>
+  <Style Selector="Button.dexCard.selected /template/ ContentPresenter, Button.dexCard.selected:pointerover /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="2" />
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+  </Style>
+  <Style Selector="TextBlock.dexOwned">
+    <Setter Property="Foreground" Value="{DynamicResource TintGoodForeground}" />
+  </Style>
+  <Style Selector="Border.dexStats">
+    <Setter Property="Padding" Value="12,8" />
+  </Style>
   <!-- Selecao multipla -->
   <Style Selector="Button.slot.marked /template/ ContentPresenter, Button.slot.marked:pointerover /template/ ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />

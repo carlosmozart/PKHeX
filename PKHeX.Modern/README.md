@@ -31,6 +31,11 @@ Baixe o `PKHeX.Modern-win-x64.zip` na página de [Releases](https://github.com/c
 - Página **Bank** com duas telas lado a lado: bank à esquerda e o save aberto à direita. Arraste para guardar ou trazer (Ctrl/Shift copia, Alt sobrescreve).
 - Ao trazer para o save, o Pokémon é **convertido para a geração do jogo** (ex.: um Pokémon da Gen 4 vai para Black como Gen 5); se não der, o app avisa e nada muda.
 
+**Pokédex centralizada**
+- Página **Pokédex** com as 1025 espécies, juntando a Pokédex de todos os saves da pasta, o save aberto e o bank.
+- Mostra o que você **possui** (caixas, equipe e bank), o que foi **capturado** ou **visto** em cada jogo e os **shiny**.
+- Filtros por situação (faltando para a living dex ou shiny dex...), geração, tipo e fonte; detalhes de onde está cada Pokémon, com **Ir** para abrir no editor.
+
 **Caixas e equipe**
 - Cartões grandes com sprite, nome, nível, gênero, bola, ★ shiny e ✓/⚠ de legalidade; caixas em abas no topo.
 - **Resumo ao passar o mouse**, igual ao do PKHeX: set (item, habilidade, IVs/EVs, natureza, golpes) e encontro (local, PID, Origin Seed).
@@ -58,7 +63,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` na página de [Releases](https://github.com/c
 **Outros**
 - Treinador (nome, TID/SID, dinheiro, tempo de jogo) e Mochila.
 - Tema claro/escuro e **cor de destaque** configurável.
-- Atalhos: Q/E trocam de página, Ctrl+1–7 vão direto, Esc volta, Ctrl+O abre.
+- Atalhos: Q/E trocam de página, Ctrl+1–9 vão direto, Esc volta, Ctrl+O abre.
 
 As preferências ficam em `%APPDATA%\PKHeX.Modern\settings.json`. Se algo der errado, os detalhes ficam em `%APPDATA%\PKHeX.Modern\crash.log`.
 
