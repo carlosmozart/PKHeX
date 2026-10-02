@@ -44,7 +44,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         ];
         foreach (var s in Stats)
             s.Changed += Refresh;
-        Moves = [.. Enumerable.Range(0, 4).Select(i => new MoveSlotViewModel(() => _pk, i, () => MoveOptions))];
+        Moves = [.. Enumerable.Range(0, 4).Select(i => new MoveSlotViewModel(() => _pk, i, () => MoveOptions, () => TipVersion))];
         foreach (var m in Moves)
             m.Changed += Refresh;
         HealPPCommand = new RelayCommand(() => { _pk.HealPP(); foreach (var m in Moves) m.RaiseAll(); _status("PP restaurado."); });
@@ -56,6 +56,13 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         HyperTraining = _pk is IHyperTrain
             ? [.. Enumerable.Range(0, 6).Select(i => new HyperTrainViewModel(() => _pk, i, StatLabelsShort[i], Refresh))]
             : [];
+        ContestStats = _pk is IContestStats
+            ? [.. Enumerable.Range(0, 6).Select(i => new ContestStatViewModel(() => _pk, i, Refresh))]
+            : [];
+        OTMemory = _pk is IMemoryOT ? new MemoryViewModel(() => _pk, true, Refresh) : null;
+        HTMemory = _pk is IMemoryHT ? new MemoryViewModel(() => _pk, false, Refresh) : null;
+        AddAllRibbonsCommand = new RelayCommand(() => { CoreAdapter.SetAllValidRibbons(_pk); RaiseAll(); _status(LegalityStatus("Fitas legais adicionadas")); });
+        RemoveAllRibbonsCommand = new RelayCommand(() => { CoreAdapter.RemoveAllRibbons(_pk); RaiseAll(); _status(LegalityStatus("Fitas removidas")); });
         LegalizeCommand = new RelayCommand(() => _ = LegalizeAsync(), () => !IsLegalizing);
         SuggestMovesCommand = new RelayCommand(() => Fix("Golpes sugeridos", pk => CoreAdapter.SuggestMoves(pk)));
         SuggestRelearnCommand = new RelayCommand(() => Fix("Golpes de reaprender", pk => CoreAdapter.SuggestRelearnMoves(pk)));
@@ -180,7 +187,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             {
                 // Modo legal: so os golpes que o Pokemon aprende de forma legal.
                 if (!string.IsNullOrWhiteSpace(names[i]) && (learn[i] || !LegalMode))
-                    list.Add(new MoveOption(i, names[i], learn[i], _pk.Format));
+                    list.Add(new MoveOption(i, names[i], learn[i], _pk.Format, TipVersion));
             }
             _moveOptions = [.. list.OrderByDescending(o => o.IsLearnable).ThenBy(o => o.Name, StringComparer.CurrentCultureIgnoreCase)];
             return _moveOptions;
@@ -392,7 +399,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public int Nature { get => (int)_pk.StatAlignment; set { if (value >= 0 && value != (int)_pk.StatAlignment) { _pk.SetNature((Nature)value); Refresh(); } } }
     public int HeldItem { get => _pk.HeldItem; set { if (value >= 0) { _pk.HeldItem = value; Refresh(); Raise(nameof(SelectedItem)); Raise(nameof(HasItem)); Raise(nameof(HeldItemIcon)); Raise(nameof(HeldItemTip)); } } }
     /// <summary>Descricao e onde conseguir o item segurado (AllGenWiki), quando houver.</summary>
-    public string? HeldItemTip => _pk.HeldItem > 0 ? ItemInfo.GetTooltip(CoreAdapter.GetHeldItemName(_pk), _pk.Context.Generation) : null;
+    public string? HeldItemTip => _pk.HeldItem > 0 ? ItemInfo.GetTooltip(CoreAdapter.GetHeldItemName(_pk), _pk.Context.Generation, TipVersion) : null;
+    /// <summary>Jogo usado nas dicas "onde conseguir/aprender" (o do save aberto).</summary>
+    private GameVersion TipVersion => _sav?.Version ?? _pk.Version;
     /// <summary>Icone do item segurado (ao lado do campo Item).</summary>
     public Bitmap? HeldItemIcon => SpriteService.GetItemSprite(_pk.HeldItem, _pk.Context);
 
@@ -659,6 +668,63 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
     }
 
+    // Fitas
+    public RelayCommand AddAllRibbonsCommand { get; }
+    public RelayCommand RemoveAllRibbonsCommand { get; }
+    private IReadOnlyList<RibbonViewModel>? _ribbons;
+    /// <summary>Todas as fitas do formato (lista refeita quando o Pokemon muda por inteiro).</summary>
+    private IReadOnlyList<RibbonViewModel> AllRibbons => _ribbons ??= [.. CoreAdapter.GetRibbons(_pk)
+        .OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase)
+        .Select(r => new RibbonViewModel(() => _pk, r, OnRibbonChanged))];
+    public bool HasRibbons => AllRibbons.Count > 0;
+    private string _ribbonFilter = "";
+    public string RibbonFilter { get => _ribbonFilter; set { if (Set(ref _ribbonFilter, value ?? "")) Raise(nameof(Ribbons)); } }
+    private bool _onlyOwnedRibbons;
+    public bool OnlyOwnedRibbons { get => _onlyOwnedRibbons; set { if (Set(ref _onlyOwnedRibbons, value)) Raise(nameof(Ribbons)); } }
+    public IReadOnlyList<RibbonViewModel> Ribbons => [.. AllRibbons.Where(r =>
+        (!_onlyOwnedRibbons || r.Has) && (_ribbonFilter.Length == 0 || r.Name.Contains(_ribbonFilter, StringComparison.CurrentCultureIgnoreCase)))];
+    public string RibbonSummary => $"{AllRibbons.Count(r => r.Has)} de {AllRibbons.Count} fitas";
+
+    private void OnRibbonChanged()
+    {
+        Refresh();
+        Raise(nameof(RibbonSummary));
+    }
+
+    // Memorias (Gen 6+)
+    public MemoryViewModel? OTMemory { get; }
+    public MemoryViewModel? HTMemory { get; }
+    public bool HasMemories => OTMemory is not null || HTMemory is not null;
+
+    // Contest stats, Dynamax/Gigantamax, alpha e nobre
+    public IReadOnlyList<ContestStatViewModel> ContestStats { get; }
+    public bool HasContestStats => ContestStats.Count > 0;
+    public bool HasDynamax => _pk is IDynamaxLevel;
+    public int DynamaxLevel
+    {
+        get => _pk is IDynamaxLevel d ? d.DynamaxLevel : 0;
+        set { if (_pk is IDynamaxLevel d) { d.DynamaxLevel = (byte)Math.Clamp(value, 0, 10); Refresh(); } }
+    }
+    public bool HasGigantamax => _pk is IGigantamax;
+    public bool CanGigantamax
+    {
+        get => _pk is IGigantamax g && g.CanGigantamax;
+        set { if (_pk is IGigantamax g) { g.CanGigantamax = value; Refresh(); } }
+    }
+    public bool HasAlpha => _pk is IAlpha;
+    public bool IsAlpha
+    {
+        get => _pk is IAlpha a && a.IsAlpha;
+        set { if (_pk is IAlpha a) { a.IsAlpha = value; Refresh(); } }
+    }
+    public bool HasNoble => _pk is INoble;
+    public bool IsNoble
+    {
+        get => _pk is INoble n && n.IsNoble;
+        set { if (_pk is INoble n) { n.IsNoble = value; Refresh(); } }
+    }
+    public bool HasSpecialFlags => HasDynamax || HasGigantamax || HasAlpha || HasNoble;
+
     // Marcacoes e Hyper Training
     public IReadOnlyList<MarkingViewModel> Markings { get; }
     public bool HasMarkings => Markings.Count > 0;
@@ -738,6 +804,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             h.RaiseAll();
         foreach (var mk in Markings)
             mk.RaiseAll();
+        foreach (var c in ContestStats)
+            c.RaiseAll();
+        OTMemory?.RaiseAll();
+        HTMemory?.RaiseAll();
+        _ribbons = null; // a lista de fitas depende do Pokemon inteiro (troca de especie, Legalizar...)
+        Raise(nameof(Ribbons));
+        Raise(nameof(RibbonSummary));
+        Raise(nameof(HasRibbons));
     }
 
     public string AbilityName => (uint)_pk.Ability < CoreAdapter.AbilityNames.Count ? CoreAdapter.AbilityNames[_pk.Ability] : "?";
@@ -805,10 +879,10 @@ public sealed record TypeChip(string Name, uint Argb)
 
 /// <summary>Um golpe no editor: escolha do golpe, chip do tipo, barra de PP e PP Ups.</summary>
 /// <summary>Uma opcao da lista de golpes. <see cref="IsLearnable"/> = aprende oficialmente (fundo verde, no topo).</summary>
-public sealed record MoveOption(int Index, string Name, bool IsLearnable, int Generation = 9)
+public sealed record MoveOption(int Index, string Name, bool IsLearnable, int Generation = 9, GameVersion Version = GameVersion.Any)
 {
-    /// <summary>Descricao em portugues (AllGenWiki), na lista de golpes.</summary>
-    public string? Tip => GameText.GetMove(Name, Generation);
+    /// <summary>Descricao em portugues e onde aprender por TM/tutor neste jogo (AllGenWiki), na lista de golpes.</summary>
+    public string? Tip => MoveSlotViewModel.CombineTip(GameText.GetMove(Name, Generation), GameText.GetMoveWhere(Name, Generation, Version));
     public override string ToString() => Name;
 }
 
@@ -835,6 +909,172 @@ public sealed class MarkingViewModel(Func<PKM> pk, int index, Action changed) : 
     });
 }
 
+/// <summary>Uma fita: liga/desliga ou contagem (fitas de concurso da Gen 3/4, memoria de batalha/concurso).</summary>
+public sealed class RibbonViewModel(Func<PKM> pk, CoreAdapter.RibbonEntry ribbon, Action changed) : ViewModelBase
+{
+    private int _value = ribbon.Value;
+    public string Name => ribbon.Name;
+    public bool IsCount => ribbon.IsCount;
+    public bool IsFlag => !ribbon.IsCount;
+    public int Max => ribbon.Max;
+    public bool Has => _value > 0;
+    public bool IsOn
+    {
+        get => _value > 0;
+        set => Count = value ? 1 : 0;
+    }
+    public int Count
+    {
+        get => _value;
+        set
+        {
+            value = Math.Clamp(value, 0, ribbon.Max);
+            if (value == _value)
+                return;
+            CoreAdapter.SetRibbon(pk(), ribbon, value);
+            _value = value;
+            Raise(); Raise(nameof(IsOn)); Raise(nameof(Has));
+            changed();
+        }
+    }
+}
+
+/// <summary>Memoria do treinador original ou do atual (Gen 6+): memoria, intensidade, sentimento e o argumento.</summary>
+public sealed class MemoryViewModel : ViewModelBase
+{
+    private readonly Func<PKM> _pk;
+    private readonly bool _ot;
+    private readonly Action _changed;
+
+    public MemoryViewModel(Func<PKM> pk, bool originalTrainer, Action changed)
+    {
+        _pk = pk;
+        _ot = originalTrainer;
+        _changed = changed;
+        // Os textos do jogo tem marcadores ({0} = Pokemon, {1} = treinador, {2} = detalhe...): troca por palavras.
+        Memories = [.. CoreAdapter.MemoryTexts.Memory.Select(m => new ComboItem(CleanMemory(m.Text), m.Value))];
+        Intensities = [.. CoreAdapter.MemoryTexts.GetMemoryQualities().ToArray()];
+    }
+
+    public string Title => _ot ? "Treinador original" : "Treinador atual";
+
+    private static string CleanMemory(string text) => text
+        .Replace("{0}", "the Pokémon").Replace("{1}", "the Trainer").Replace("{2}", "[detalhe]")
+        .Replace("{3}", "[sentimento]").Replace("{4}", "[intensidade]");
+    public IReadOnlyList<ComboItem> Memories { get; }
+    public IReadOnlyList<string> Intensities { get; }
+    public IReadOnlyList<string> Feelings => [.. CoreAdapter.MemoryTexts.GetMemoryFeelings(Gen).ToArray()];
+    public IReadOnlyList<ComboItem> Arguments => CoreAdapter.GetMemoryArguments(MemoryId, Gen);
+    public bool HasArgument => Arguments.Count > 1;
+    private int Gen => CoreAdapter.GetMemoryGen(_pk(), _ot);
+
+    private byte MemoryId
+    {
+        get => _pk() switch { IMemoryOT o when _ot => o.OriginalTrainerMemory, IMemoryHT h when !_ot => h.HandlingTrainerMemory, _ => 0 };
+        set
+        {
+            if (_ot && _pk() is IMemoryOT o) o.OriginalTrainerMemory = value;
+            else if (!_ot && _pk() is IMemoryHT h) h.HandlingTrainerMemory = value;
+        }
+    }
+
+    public ComboItem? Memory
+    {
+        get => Memories.FirstOrDefault(m => m.Value == MemoryId);
+        set
+        {
+            if (value is null || value.Value == MemoryId)
+                return;
+            MemoryId = (byte)value.Value;
+            Argument = null;
+            Raise(); Raise(nameof(Arguments)); Raise(nameof(HasArgument)); Raise(nameof(Argument));
+            _changed();
+        }
+    }
+
+    public int Intensity
+    {
+        get => _pk() switch { IMemoryOT o when _ot => o.OriginalTrainerMemoryIntensity, IMemoryHT h when !_ot => h.HandlingTrainerMemoryIntensity, _ => 0 };
+        set
+        {
+            if (value < 0) return;
+            if (_ot && _pk() is IMemoryOT o) o.OriginalTrainerMemoryIntensity = (byte)value;
+            else if (!_ot && _pk() is IMemoryHT h) h.HandlingTrainerMemoryIntensity = (byte)value;
+            Raise(); _changed();
+        }
+    }
+
+    public int Feeling
+    {
+        get => _pk() switch { IMemoryOT o when _ot => o.OriginalTrainerMemoryFeeling, IMemoryHT h when !_ot => h.HandlingTrainerMemoryFeeling, _ => 0 };
+        set
+        {
+            if (value < 0) return;
+            if (_ot && _pk() is IMemoryOT o) o.OriginalTrainerMemoryFeeling = (byte)value;
+            else if (!_ot && _pk() is IMemoryHT h) h.HandlingTrainerMemoryFeeling = (byte)value;
+            Raise(); _changed();
+        }
+    }
+
+    private ushort Variable
+    {
+        get => _pk() switch { IMemoryOT o when _ot => o.OriginalTrainerMemoryVariable, IMemoryHT h when !_ot => h.HandlingTrainerMemoryVariable, _ => 0 };
+        set
+        {
+            if (_ot && _pk() is IMemoryOT o) o.OriginalTrainerMemoryVariable = value;
+            else if (!_ot && _pk() is IMemoryHT h) h.HandlingTrainerMemoryVariable = value;
+        }
+    }
+
+    public ComboItem? Argument
+    {
+        get => Arguments.FirstOrDefault(a => a.Value == Variable);
+        set
+        {
+            var v = (ushort)(value?.Value ?? 0);
+            if (v == Variable)
+                return;
+            Variable = v;
+            Raise();
+            _changed();
+        }
+    }
+
+    public void RaiseAll() => Raise(string.Empty);
+}
+
+/// <summary>Contest stat (Gen 3+): Cool, Beauty, Cute, Smart, Tough e Sheen.</summary>
+public sealed class ContestStatViewModel(Func<PKM> pk, int index, Action changed) : ViewModelBase
+{
+    private static readonly string[] Labels = ["Cool", "Beauty", "Cute", "Smart", "Tough", "Sheen"];
+    public string Label => Labels[index];
+    public int Value
+    {
+        get => pk() is IContestStats c ? index switch
+        {
+            0 => c.ContestCool, 1 => c.ContestBeauty, 2 => c.ContestCute, 3 => c.ContestSmart, 4 => c.ContestTough, _ => c.ContestSheen,
+        } : 0;
+        set
+        {
+            if (pk() is not IContestStats c)
+                return;
+            var v = (byte)Math.Clamp(value, 0, 255);
+            switch (index)
+            {
+                case 0: c.ContestCool = v; break;
+                case 1: c.ContestBeauty = v; break;
+                case 2: c.ContestCute = v; break;
+                case 3: c.ContestSmart = v; break;
+                case 4: c.ContestTough = v; break;
+                default: c.ContestSheen = v; break;
+            }
+            Raise();
+            changed();
+        }
+    }
+    public void RaiseAll() => Raise(string.Empty);
+}
+
 /// <summary>Hyper Training de um atributo (Gen 7+): conta como IV 31 nos atributos.</summary>
 public sealed class HyperTrainViewModel(Func<PKM> pk, int index, string label, Action changed) : ViewModelBase
 {
@@ -854,8 +1094,12 @@ public sealed class HyperTrainViewModel(Func<PKM> pk, int index, string label, A
     public void RaiseAll() => Raise(string.Empty);
 }
 
-public sealed class MoveSlotViewModel(Func<PKM> pk, int index, Func<IReadOnlyList<MoveOption>> options) : ViewModelBase
+public sealed class MoveSlotViewModel(Func<PKM> pk, int index, Func<IReadOnlyList<MoveOption>> options, Func<GameVersion>? version = null) : ViewModelBase
 {
+    /// <summary>Descricao + "Onde aprender" (TM/tutor), para tooltips.</summary>
+    public static string? CombineTip(string? desc, string? where)
+        => where is null ? desc : (desc is null ? "" : desc + "\n\n") + "Onde aprender:\n" + where;
+
     public event Action? Changed;
     public void RaiseAll() => Raise(string.Empty);
 
@@ -911,6 +1155,10 @@ public sealed class MoveSlotViewModel(Func<PKM> pk, int index, Func<IReadOnlyLis
     public bool IsLearnable => MoveName is MoveOption { IsLearnable: true };
     /// <summary>Descricao do golpe em portugues (AllGenWiki), quando houver.</summary>
     public string? Tip => HasMove ? GameText.GetMove(CoreAdapter.MoveNames[Move], pk().Format) : null;
+    /// <summary>Descricao e onde aprender por TM/tutor no jogo do save (tooltip do campo).</summary>
+    public string? FullTip => HasMove
+        ? CombineTip(Tip, GameText.GetMoveWhere(CoreAdapter.MoveNames[Move], pk().Format, version?.Invoke() ?? pk().Version))
+        : "Golpes em verde: aprende oficialmente (nível, TM, tutor, ovo ou encontro)";
     public RelayCommand ClearCommand => new(() => Move = 0);
     private (string Name, uint Argb)? Type => CoreAdapter.GetMoveType((ushort)Move, pk().Context);
     public string TypeName => Type?.Name ?? "";

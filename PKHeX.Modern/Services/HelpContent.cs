@@ -43,6 +43,9 @@ public static class HelpContent
             new("Habilidade, forma e Tera Type", "Escolhidos em listas na Visão geral. A habilidade oculta aparece marcada; a forma só lista as que existem no jogo; o Tera Type (Scarlet/Violet) funciona como as Tera Shards."),
             new("Extras", "PID e EC editáveis em hexadecimal (valem ao sair do campo), marcações ●▲■♥★◆ (na Gen 7+ cada clique alterna azul → rosa → nenhuma) e Tornar shiny."),
             new("Hyper Training", "Na aba Atributos (Gen 7+): marca o atributo como treinado, contando como IV 31. Exige nível 100 (50 em Scarlet/Violet)."),
+            new("Fitas e memórias", "Aba própria: todas as fitas do formato, com busca, “Só as que tem”, “Todas as legais” (as que o Pokémon pode ter pela história dele) e “Remover todas”; memórias do treinador original e do atual (Gen 6+), com detalhe, intensidade e sentimento."),
+            new("Contest stats e especiais", "Na aba Extras: Cool, Beauty, Cute, Smart, Tough e Sheen; Dynamax Level e Gigantamax (Sword/Shield); alpha e nobre (Legends)."),
+            new("Onde aprender", "Passe o mouse num golpe (no campo ou na lista) para ver onde aprendê-lo neste jogo: o local da TM e o tutor, quando houver (AllGenWiki)."),
             new("Legalidade e correções", "O cartão de legalidade lista os problemas e oferece correções de um clique: golpes sugeridos, golpes de reaprender, encontro sugerido e IVs máximos."),
             new("✨ Legalizar", "Gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny), mantendo natureza, nível, item, apelido e golpes quando possível."),
             new("Showdown", "“Colar Showdown” importa um set da área de transferência; “Copiar Showdown” exporta o Pokémon."),
@@ -75,7 +78,7 @@ public static class HelpContent
         new("🎒", "Treinador e mochila",
         [
             new("Treinador", "Nome, TID/SID, dinheiro e tempo de jogo do save, com o estado dos checksums."),
-            new("Mochila", "Itens por bolso, com o ícone de cada item. Passe o mouse para ver a descrição em português e onde conseguir (dados do AllGenWiki). Troque o item e a quantidade e clique em “Gravar mochila”."),
+            new("Mochila", "Itens por bolso, com o ícone de cada item. Passe o mouse para ver a descrição em português e onde conseguir (dados do AllGenWiki); nas TMs/TRs/HMs, o golpe que ensinam e onde pegar a máquina. Troque o item e a quantidade e clique em “Gravar mochila”."),
         ]),
         new("🌿", "Encontros e eventos",
         [

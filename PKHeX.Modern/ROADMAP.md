@@ -16,7 +16,8 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Atualização automática**: baixa o zip da release, confere o SHA-256 do GitHub, troca o exe (o antigo vira `.old`) e oferece reiniciar; reabre o save. Desligável em Ajuda › Sobre.
 - [x] **Mochila com ícones** (e no item segurado do editor), com descrição em PT e onde conseguir vindas do AllGenWiki (`Tools/build_item_info.py`).
 - [x] **Descrição de golpes e habilidades** em PT (AllGenWiki, `Assets/text-info.json`).
-- [ ] Usar mais dados do AllGenWiki: locais de encontro em PT, onde conseguir TMs.
+- [x] **Onde aprender/conseguir TMs e tutores** (AllGenWiki): nos golpes do editor e nas TMs/TRs/HMs da mochila.
+- Locais de encontro em PT: o AllGenWiki usa os mesmos nomes em inglês dos jogos, então não há tradução a aproveitar.
 - [x] **Modo legal, etapa 2**: habilidade, forma e Tera Type só com opções legais; "Trocar encontro" no lugar de local/nível; "Tornar shiny" bloqueado com shiny lock e, nos outros, legaliza já shiny.
 - [x] **Mensagens dentro do app**: pergunta sobreposta na janela (Enter confirma, Esc cancela) ao copiar/importar por cima de um Pokémon, trocar de slot com edição não aplicada, abrir outro save ou fechar o app com alterações não exportadas. Aviso "● Alterações não exportadas" na barra lateral.
 - [x] **Bancos de encontros e Mystery Gift em cartões** (páginas "Encontros" e "Eventos"): busca por espécie ou texto, filtro "Só deste jogo", detalhes no tooltip, "Usar" gera o Pokémon no editor (slot vazio).
@@ -61,7 +62,7 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [x] **Cor de destaque configurável**: bolinhas na barra lateral (vermelho, ciano, azul, roxo, verde, laranja), salva nas preferências e aplicada nos temas claro e escuro.
 - [x] **Legalizar também com avisos** ("Fishy"): o cartão de legalidade lista os avisos e oferece o Legalizar.
 - [x] **Editor, parte 1**: habilidade em lista, formas, Tera Type, PID/EC editáveis, marcações e Hyper Training.
-- [ ] **Editor, parte 2**: fitas, memórias, contest stats, Dynamax/Gigantamax, alpha/nobre.
+- [x] **Editor, parte 2**: fitas (com "todas as legais"), memórias, contest stats, Dynamax/Gigantamax, alpha/nobre.
 - [ ] **Batch Editor**, **banco de dados / pesquisa** (dos Pokémon salvos), **editores específicos de cada jogo** (eventos, flags, records).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [x] **Backup automático**: antes de salvar por cima de um save, o arquivo anterior vai para `%APPDATA%\PKHeX.Modern\backups` (20 mais recentes por save; botão "Backups" no Save Manager).

@@ -190,7 +190,7 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
             _bag = CoreAdapter.GetBag(sav);
             bool editable = CoreAdapter.IsBagItemIdEditable(sav);
             foreach (var p in _bag.Pouches)
-                Pouches.Add(new PouchViewModel(_bag, p, editable, CoreAdapter.GetItemNames(sav), sav.Context));
+                Pouches.Add(new PouchViewModel(_bag, p, editable, CoreAdapter.GetItemNames(sav), sav.Context, sav.Version));
         }
         catch (Exception ex)
         {
@@ -213,11 +213,11 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
 public sealed class PouchViewModel : ViewModelBase
 {
     /// <param name="names">Nomes na numeracao do save (Gen 1-3 tem numeracao propria).</param>
-    public PouchViewModel(PlayerBag bag, InventoryPouch pouch, bool editable, IReadOnlyList<string> names, EntityContext context)
+    public PouchViewModel(PlayerBag bag, InventoryPouch pouch, bool editable, IReadOnlyList<string> names, EntityContext context, GameVersion version = GameVersion.Any)
     {
         Name = pouch.Type.ToString();
         Options = [.. pouch.GetAllItems().ToArray().Prepend((ushort)0).Distinct()
-            .Select(id => new ItemOption(id, id == 0 ? "(nenhum)" : id < names.Count && names[id].Length > 0 ? names[id] : $"Item #{id}", context))];
+            .Select(id => new ItemOption(id, id == 0 ? "(nenhum)" : id < names.Count && names[id].Length > 0 ? names[id] : $"Item #{id}", context, version))];
         Items = [.. pouch.Items.Select(it => new BagItemViewModel(bag, pouch.Type, it, Options, editable))];
     }
 
@@ -227,11 +227,11 @@ public sealed class PouchViewModel : ViewModelBase
 }
 
 /// <summary>Um item da lista da mochila; o icone e gerado so quando aparece na tela.</summary>
-public sealed record ItemOption(int Id, string Name, EntityContext Context = EntityContext.None)
+public sealed record ItemOption(int Id, string Name, EntityContext Context = EntityContext.None, GameVersion Version = GameVersion.Any)
 {
     public Avalonia.Media.Imaging.Bitmap? Icon => SpriteService.GetItemSprite(Id, Context);
     /// <summary>Descricao e onde conseguir (AllGenWiki), quando houver.</summary>
-    public string? Tip => Id == 0 ? null : ItemInfo.GetTooltip(Name, Context.Generation);
+    public string? Tip => Id == 0 ? null : ItemInfo.GetTooltip(Name, Context.Generation, Version);
     public override string ToString() => Name;
 }
 

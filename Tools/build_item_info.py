@@ -106,3 +106,37 @@ out2 = os.path.join(os.path.dirname(out), 'text-info.json')
 with open(out2, 'w', encoding='utf-8') as f:
     json.dump({k: dict(sorted(v.items())) for k, v in texts.items()}, f, ensure_ascii=False, separators=(',', ':'))
 print(f"{len(texts['moves'])} golpes, {len(texts['abilities'])} habilidades -> {os.path.normpath(out2)} ({os.path.getsize(out2) // 1024} KB)")
+
+# TMs e tutores (onde aprender cada golpe, por grupo de versoes) e a tabela TM/TR/HM -> golpe.
+# text-info.json ganha:
+#   "tm"/"tutor": {geracao: {chave do golpe: {grupo: texto}}}
+#   "machines":   {geracao: {"TM01": {grupo ou "*": chave do golpe}}}
+for kind in ('tm', 'tutor', 'machines'):
+    texts[kind] = {}
+for folder in folders:
+    m = re.search(r'gen(\d+)$', folder)
+    if not m:
+        continue
+    gen = m.group(1)
+    path = os.path.join(folder, 'i18n', 'pt.json')
+    if os.path.exists(path):
+        pt = load(path)
+        for kind, src in (('tm', 'tm_locations'), ('tutor', 'tutor_locations')):
+            for slug, byGroup in (pt.get(src) or {}).items():
+                if not isinstance(byGroup, dict):
+                    continue
+                clean = {g: t.strip() for g, t in byGroup.items() if isinstance(t, str) and t.strip() and not t.startswith('Not in')}
+                if clean:
+                    texts[kind].setdefault(gen, {})[key(slug)] = clean
+    path = os.path.join(folder, 'machines.json')
+    if os.path.exists(path):
+        for mach in load(path):
+            if not isinstance(mach, dict) or not mach.get('id') or not mach.get('move'):
+                continue
+            for group in mach.get('grupos') or ['*']:
+                texts['machines'].setdefault(gen, {}).setdefault(mach['id'].upper(), {})[group] = key(mach['move'])
+
+with open(out2, 'w', encoding='utf-8') as f:
+    json.dump(texts, f, ensure_ascii=False, separators=(',', ':'))
+print(f"TMs/tutores: {sum(len(v) for v in texts['tm'].values())} golpes com TM, {sum(len(v) for v in texts['tutor'].values())} com tutor, "
+      f"{sum(len(v) for v in texts['machines'].values())} máquinas -> {os.path.normpath(out2)} ({os.path.getsize(out2) // 1024} KB)")

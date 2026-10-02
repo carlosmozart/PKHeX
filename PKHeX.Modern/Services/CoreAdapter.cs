@@ -552,6 +552,48 @@ public static class CoreAdapter
             pk.ResetPartyStats();
     }
 
+    // Fitas
+    /// <summary>Uma fita do formato do Pokemon: propriedade, nome traduzido, valor (0/1 ou contagem) e maximo.</summary>
+    public sealed record RibbonEntry(string Property, string Name, bool IsCount, int Value, int Max);
+
+    [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "O app nao e publicado com trimming.")]
+    public static IReadOnlyList<RibbonEntry> GetRibbons(PKM pk)
+    {
+        var list = new List<RibbonEntry>();
+        foreach (var r in RibbonInfo.GetRibbonInfo(pk))
+        {
+            var name = GameInfo.Strings.Ribbons.GetNameSafe(r.Name, out var n) ? n : r.Name.Replace(RibbonInfo.PropertyPrefix, "");
+            list.Add(r.Type == RibbonValueType.Boolean
+                ? new RibbonEntry(r.Name, name, false, r.HasRibbon ? 1 : 0, 1)
+                : new RibbonEntry(r.Name, name, true, r.RibbonCount, r.MaxCount));
+        }
+        return list;
+    }
+
+    public static void SetRibbon(PKM pk, RibbonEntry ribbon, int value)
+    {
+        object v = ribbon.IsCount ? (byte)Math.Clamp(value, 0, ribbon.Max) : value > 0;
+        ReflectUtil.SetValue(pk, ribbon.Property, v);
+    }
+
+    /// <summary>Todas as fitas que o Pokemon pode ter legalmente (pela historia dele).</summary>
+    public static void SetAllValidRibbons(PKM pk) => RibbonApplicator.SetAllValidRibbons(pk);
+    public static void RemoveAllRibbons(PKM pk) => RibbonApplicator.RemoveAllValidRibbons(pk);
+
+    // Memorias (Gen 6+)
+    private static MemoryStrings? _memoryStrings;
+    public static MemoryStrings MemoryTexts => _memoryStrings ??= new MemoryStrings(GameInfo.Strings);
+
+    /// <summary>Geracao das regras de memoria: 8 a partir de Sword/Shield, senao 6.</summary>
+    public static int GetMemoryGen(PKM pk, bool originalTrainer)
+    {
+        var gen = originalTrainer && pk.Generation > 0 ? pk.Generation : pk.Format;
+        return gen >= 8 ? 8 : 6;
+    }
+
+    public static IReadOnlyList<ComboItem> GetMemoryArguments(byte memory, int memoryGen)
+        => MemoryTexts.GetArgumentStrings(Memories.GetMemoryArgType(memory, memoryGen), memoryGen);
+
     /// <summary>A mudanca deixa o Pokemon legal? Testa numa copia (filtros do modo legal).</summary>
     public static bool IsLegalWith(PKM pk, Action<PKM> change)
     {

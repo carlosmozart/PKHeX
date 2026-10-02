@@ -12,6 +12,25 @@
       <TextBlock Text="{Binding Text}" />
     </DataTemplate>
   </UserControl.Resources>
+  <UserControl.DataTemplates>
+    <DataTemplate DataType="vm:MemoryViewModel">
+      <StackPanel Spacing="6">
+        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+        <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
+          <TextBlock Text="Memória" Classes="muted" VerticalAlignment="Center" />
+          <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" MaxDropDownHeight="360" ItemsSource="{Binding Memories}" SelectedItem="{Binding Memory}"
+                    ItemTemplate="{StaticResource ComboItemTemplate}" />
+          <TextBlock Grid.Row="1" Text="Detalhe" Classes="muted" VerticalAlignment="Center" IsVisible="{Binding HasArgument}" />
+          <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" MaxDropDownHeight="360" ItemsSource="{Binding Arguments}"
+                    SelectedItem="{Binding Argument}" ItemTemplate="{StaticResource ComboItemTemplate}" IsVisible="{Binding HasArgument}" />
+          <TextBlock Grid.Row="2" Text="Intensidade" Classes="muted" VerticalAlignment="Center" />
+          <ComboBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Intensities}" SelectedIndex="{Binding Intensity}" />
+          <TextBlock Grid.Row="3" Text="Sentimento" Classes="muted" VerticalAlignment="Center" />
+          <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Feelings}" SelectedIndex="{Binding Feeling}" />
+        </Grid>
+      </StackPanel>
+    </DataTemplate>
+  </UserControl.DataTemplates>
   <StackPanel Spacing="12">
 
     <!-- Cabecalho -->
@@ -266,7 +285,7 @@
                                            ValueMemberBinding="{Binding Name, x:DataType=vm:MoveOption}"
                                            FilterMode="ContainsOrdinal" MinimumPrefixLength="0" MaxDropDownHeight="360"
                                            Watermark="Digite para buscar o golpe"
-                                           ToolTip.Tip="Golpes em verde: aprende oficialmente (nível, TM, tutor, ovo ou encontro)">
+                                           ToolTip.Tip="{Binding FullTip}">
                             <AutoCompleteBox.ItemTemplate>
                               <DataTemplate x:DataType="vm:MoveOption">
                                 <Border Classes="moveOption" Classes.learnable="{Binding IsLearnable}" ToolTip.Tip="{Binding Tip}" ToolTip.Placement="Right">
@@ -391,7 +410,84 @@
                 <Button Grid.Row="4" Grid.Column="1" Classes="small" Content="★  Tornar shiny" Command="{Binding MakeShinyCommand}"
                         ToolTip.Tip="{Binding ShinyTip}" ToolTip.ShowOnDisabled="True" />
               </Grid>
-              <TextBlock Text="Fitas e memórias: em breve." Classes="muted" FontSize="12" Margin="0,12,0,0" />
+            </StackPanel>
+          </Border>
+
+          <!-- Dynamax/Gigantamax, alpha e nobre -->
+          <Border Classes="card" IsVisible="{Binding HasSpecialFlags}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="ESPECIAIS" Classes="section" Margin="0" />
+              <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasDynamax}">
+                <TextBlock Text="Dynamax Level" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="1" Width="110" HorizontalAlignment="Left" Minimum="0" Maximum="10" FormatString="0" Value="{Binding DynamaxLevel}" />
+              </Grid>
+              <CheckBox Content="Pode Gigantamax" IsChecked="{Binding CanGigantamax}" IsVisible="{Binding HasGigantamax}" />
+              <CheckBox Content="Alpha" IsChecked="{Binding IsAlpha}" IsVisible="{Binding HasAlpha}" />
+              <CheckBox Content="Nobre" IsChecked="{Binding IsNoble}" IsVisible="{Binding HasNoble}" />
+            </StackPanel>
+          </Border>
+
+          <!-- Contest stats -->
+          <Border Classes="card" IsVisible="{Binding HasContestStats}">
+            <StackPanel Spacing="6">
+              <TextBlock Text="CONTEST STATS" Classes="section" Margin="0" />
+              <ItemsControl ItemsSource="{Binding ContestStats}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ContestStatViewModel">
+                    <StackPanel Margin="0,0,8,6" Spacing="2">
+                      <TextBlock Text="{Binding Label}" Classes="muted" FontSize="11" />
+                      <NumericUpDown Minimum="0" Maximum="255" FormatString="0" Value="{Binding Value}" />
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Fitas e memórias">
+        <StackPanel Spacing="12" Margin="0,12,0,0">
+          <!-- Fitas -->
+          <Border Classes="card" IsVisible="{Binding HasRibbons}">
+            <StackPanel Spacing="8">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="FITAS" Classes="section" Margin="0" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding RibbonSummary}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+              </Grid>
+              <WrapPanel ItemSpacing="6" LineSpacing="6">
+                <Button Classes="small" Content="✓ Todas as legais" Command="{Binding AddAllRibbonsCommand}"
+                        ToolTip.Tip="Adiciona todas as fitas que este Pokémon pode ter pela história dele" />
+                <Button Classes="small" Content="✕ Remover todas" Command="{Binding RemoveAllRibbonsCommand}" />
+                <CheckBox Content="Só as que tem" IsChecked="{Binding OnlyOwnedRibbons}" FontSize="12" />
+              </WrapPanel>
+              <TextBox Text="{Binding RibbonFilter}" Watermark="Procurar fita..." />
+              <ScrollViewer MaxHeight="420">
+                <ItemsControl ItemsSource="{Binding Ribbons}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RibbonViewModel">
+                      <Grid ColumnDefinitions="*,Auto" Margin="0,1">
+                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsOn}" IsVisible="{Binding IsFlag}" FontSize="12" />
+                        <TextBlock Text="{Binding Name}" IsVisible="{Binding IsCount}" FontSize="12" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" Width="110" Minimum="0" Maximum="{Binding Max}" FormatString="0" Value="{Binding Count}"
+                                       IsVisible="{Binding IsCount}" />
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="Este formato não tem fitas." Classes="muted" IsVisible="{Binding !HasRibbons}" />
+
+          <!-- Memorias (Gen 6+) -->
+          <Border Classes="card" IsVisible="{Binding HasMemories}">
+            <StackPanel Spacing="10">
+              <TextBlock Text="MEMÓRIAS" Classes="section" Margin="0" />
+              <ContentControl Content="{Binding OTMemory}" />
+              <ContentControl Content="{Binding HTMemory}" />
             </StackPanel>
           </Border>
         </StackPanel>
