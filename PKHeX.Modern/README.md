@@ -10,10 +10,12 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | ![Golpes](docs/moves.png) | ![Encontros](docs/encounters.png) |
 | **Busca global (Ctrl+F)** | **Equipe** |
 | ![Busca](docs/search.png) | ![Equipe](docs/party.png) |
+| **Pokédex centralizada** | **Bank com seleção múltipla** |
+| ![Pokédex](docs/pokedex.png) | ![Bank](docs/bank.png) |
 
 ## Download
 
-Baixe o `PKHeX.Modern-win-x64.zip` na página de [Releases](https://github.com/carlosmozart/PKHeX/releases), extraia e abra o `PKHeX.Modern.exe`.
+Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/carlosmozart/PKHeX/releases/latest) (as novidades de cada versão estão na página de [Releases](https://github.com/carlosmozart/PKHeX/releases)), extraia e abra o `PKHeX.Modern.exe`.
 É um único executável para Windows 10/11 (64 bits) e **não precisa do .NET instalado**. Na primeira execução ele demora alguns segundos a mais, porque extrai as bibliotecas nativas.
 
 > O Windows pode mostrar o aviso do SmartScreen, porque o executável não é assinado. Clique em "Mais informações" e "Executar assim mesmo".

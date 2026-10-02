@@ -143,9 +143,10 @@ public sealed class BankPageViewModel : SlotPageViewModel
     public IReadOnlyList<string> BoxNames { get; private set; } = [];
 
     private string? _bank;
+    private bool _reselectBank;
     public string? SelectedBank
     {
-        get => _bank;
+        get => _reselectBank ? null : _bank;
         set
         {
             if (value is null || !Set(ref _bank, value))
@@ -186,6 +187,14 @@ public sealed class BankPageViewModel : SlotPageViewModel
         if (_bank is null || !banks.Contains(_bank))
             _bank = banks[0];
         Raise(nameof(SelectedBank));
+        // A lista foi refeita e a ComboBox perde a selecao: passa por "nenhum" e volta (igual a lista de caixas).
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            _reselectBank = true;
+            Raise(nameof(SelectedBank));
+            _reselectBank = false;
+            Raise(nameof(SelectedBank));
+        }, Avalonia.Threading.DispatcherPriority.Background);
         RaiseBankKind();
         ReloadBoxes();
     }
