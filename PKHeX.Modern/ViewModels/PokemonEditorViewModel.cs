@@ -64,6 +64,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         _allBalls = CoreAdapter.GetBalls();
         MetLocationList = CoreAdapter.GetMetLocations(_pk);
         Refresh();
+        _viewReady = true;
     }
 
     public IReadOnlyList<string> SpeciesList => CoreAdapter.SpeciesNames;
@@ -489,8 +490,11 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         if (!SameItems(AbilityOptions, abilities)) { AbilityOptions = abilities; changed.Add(nameof(AbilityOptions)); }
         if (!SameItems(FormOptions, forms)) { FormOptions = forms; changed.AddRange([nameof(FormOptions), nameof(HasForms)]); }
         if (!SameItems(TeraOptions, teras)) { TeraOptions = teras; changed.AddRange([nameof(TeraOptions), nameof(HasTera)]); }
-        if (changed.Count == 0)
+        if (changed.Count == 0 || !_viewReady)
         {
+            // Ainda no construtor (nenhuma tela ligada): lista e selecao vao juntas, sem o "limpa e seleciona de novo".
+            foreach (var p in changed)
+                Raise(p);
             RaiseSelections();
             return;
         }
@@ -513,6 +517,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
         return true;
     }
+
+    /// <summary>Falso so durante o construtor: a tela ainda nao esta ligada as listas.</summary>
+    private bool _viewReady;
 
     private void RaiseSelections()
     {

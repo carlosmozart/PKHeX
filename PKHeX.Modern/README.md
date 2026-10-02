@@ -12,6 +12,10 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | ![Busca](docs/search.png) | ![Equipe](docs/party.png) |
 | **Pokédex centralizada** | **Bank com seleção múltipla** |
 | ![Pokédex](docs/pokedex.png) | ![Bank](docs/bank.png) |
+| **Save Manager (selo do jogo e saves em .zip)** | **Modo legal no editor** |
+| ![Save Manager](docs/savemanager.png) | ![Modo legal](docs/legalmode.png) |
+| **Detalhes do encontro** | **Ajuda (F1)** |
+| ![Detalhes do encontro](docs/encounter_detail.png) | ![Ajuda](docs/help.png) |
 
 ## Download
 

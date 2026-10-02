@@ -152,8 +152,9 @@ public static class CoreAdapter
     public static string GetGameName(SaveFile sav) => GameInfo.GetVersionName(sav.Version);
     public static string GetVersionName(GameVersion version) => GameInfo.GetVersionName(version);
 
+    /// <summary>Nome da caixa; saves sem nome gravado (ex.: recem-criados) mostram "Box N".</summary>
     public static string GetBoxName(SaveFile sav, int box)
-        => sav is IBoxDetailNameRead n ? n.GetBoxName(box) : $"Box {box + 1}";
+        => sav is IBoxDetailNameRead n && n.GetBoxName(box) is { Length: > 0 } name && !string.IsNullOrWhiteSpace(name) ? name : $"Box {box + 1}";
 
     public static bool IsEmpty(PKM pk) => pk.Species == 0;
 

@@ -5,6 +5,13 @@
              xmlns:core="using:PKHeX.Core"
              x:Class="PKHeX.Modern.Views.PokemonEditorView"
              x:DataType="vm:PokemonEditorViewModel">
+  <!-- Opcoes das listas (bola, local, habilidade, forma, Tera Type). Um modelo de item, e nao DisplayMemberBinding:
+       com DisplayMemberBinding a caixa fechada reaproveita o texto da lista aberta e fica em branco quando a lista muda. -->
+  <UserControl.Resources>
+    <DataTemplate x:Key="ComboItemTemplate" DataType="core:ComboItem">
+      <TextBlock Text="{Binding Text}" />
+    </DataTemplate>
+  </UserControl.Resources>
   <StackPanel Spacing="12">
 
     <!-- Cabecalho -->
@@ -95,15 +102,15 @@
                 </Grid>
                 <TextBlock Grid.Row="5" Text="Habilidade" VerticalAlignment="Center" />
                 <ComboBox Grid.Row="5" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding AbilityOptions}"
-                          SelectedItem="{Binding SelectedAbility}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}"
+                          SelectedItem="{Binding SelectedAbility}" ItemTemplate="{StaticResource ComboItemTemplate}"
                           ToolTip.Tip="{Binding AbilityTip}" />
                 <TextBlock Grid.Row="6" Text="Forma" VerticalAlignment="Center" IsVisible="{Binding HasForms}" />
                 <ComboBox Grid.Row="6" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding FormOptions}" IsVisible="{Binding HasForms}"
-                          SelectedItem="{Binding SelectedForm}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}"
+                          SelectedItem="{Binding SelectedForm}" ItemTemplate="{StaticResource ComboItemTemplate}"
                           ToolTip.Tip="Formas que existem neste jogo. No modo legal, trocar a forma gera o Pokémon de novo a partir de um encontro dela." />
                 <TextBlock Grid.Row="7" Text="Tera Type" VerticalAlignment="Center" IsVisible="{Binding HasTera}" />
                 <ComboBox Grid.Row="7" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding TeraOptions}" IsVisible="{Binding HasTera}"
-                          SelectedItem="{Binding SelectedTera}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}"
+                          SelectedItem="{Binding SelectedTera}" ItemTemplate="{StaticResource ComboItemTemplate}"
                           ToolTip.Tip="Como as Tera Shards: muda o Tera Type (voltar ao original desfaz a troca)" />
               </Grid>
             </StackPanel>
@@ -313,10 +320,10 @@
                           ToolTip.Tip="Modo legal: em vez de mudar local e nível à mão, escolha um encontro real; o Pokémon é gerado de novo a partir dele, mantendo natureza, nível, item, apelido e golpes quando possível." />
                 <TextBlock Grid.Row="1" Text="Bola" VerticalAlignment="Center" />
                 <ComboBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding BallList}"
-                          SelectedItem="{Binding Ball}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}" />
+                          SelectedItem="{Binding Ball}" ItemTemplate="{StaticResource ComboItemTemplate}" />
                 <TextBlock Grid.Row="2" Text="Local" VerticalAlignment="Center" />
                 <ComboBox Grid.Row="2" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding MetLocationList}"
-                          SelectedItem="{Binding MetLocation}" DisplayMemberBinding="{Binding Text, x:DataType=core:ComboItem}"
+                          SelectedItem="{Binding MetLocation}" ItemTemplate="{StaticResource ComboItemTemplate}"
                           IsEnabled="{Binding !LegalMode}" ToolTip.ShowOnDisabled="True"
                           ToolTip.Tip="No modo legal, local e nível vêm do encontro: use “Trocar encontro” abaixo" />
                 <TextBlock Grid.Row="3" Text="Nível" VerticalAlignment="Center" />

@@ -12,7 +12,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <RootNamespace>PKHeX.Modern</RootNamespace>
     <!-- Versao do PKHeX Modern (a do PKHeX.Core vem do Directory.Build.props). Atualize junto com a tag modern-vX.Y.Z. -->
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <AssemblyName>PKHeX.Modern</AssemblyName>
     <ApplicationIcon>..\PKHeX.WinForms\Resources\Icon.ico</ApplicationIcon>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
