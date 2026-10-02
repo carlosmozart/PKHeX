@@ -16,6 +16,8 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | ![Save Manager](docs/savemanager.png) | ![Modo legal](docs/legalmode.png) |
 | **Detalhes do encontro** | **Ajuda (F1)** |
 | ![Detalhes do encontro](docs/encounter_detail.png) | ![Ajuda](docs/help.png) |
+| **Fitas e memórias** | |
+| ![Fitas e memórias](docs/ribbons.png) | |
 
 ## Download
 
