@@ -103,7 +103,7 @@
   <!-- Slot da caixa: cartao com sprite grande, nome, nivel e posicao -->
   <DataTemplate DataType="vm:SlotViewModel">
     <Button Classes="slot" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
-            Classes.dropTarget="{Binding IsDropTarget}"
+            Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
             ToolTip.Tip="{Binding Tooltip}"
             Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
             CommandParameter="{Binding}">
@@ -154,7 +154,7 @@
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:SlotViewModel">
                 <Button Classes="slot mini" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
-                        Classes.dropTarget="{Binding IsDropTarget}" ToolTip.Tip="{Binding Tooltip}"
+                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}" ToolTip.Tip="{Binding Tooltip}"
                         Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                         CommandParameter="{Binding}">
                   <Grid ColumnDefinitions="Auto,*">
@@ -203,7 +203,7 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:SlotViewModel">
-            <Button Classes="partyCard" HorizontalContentAlignment="Stretch" Classes.selected="{Binding IsSelected}" Classes.dropTarget="{Binding IsDropTarget}"
+            <Button Classes="partyCard" HorizontalContentAlignment="Stretch" Classes.selected="{Binding IsSelected}" Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
                     Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
                     CommandParameter="{Binding}">
               <Grid ColumnDefinitions="Auto,*,Auto">

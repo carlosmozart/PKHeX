@@ -94,6 +94,18 @@
     <Setter Property="Opacity" Value="1" />
   </Style>
 
+  <!-- Busca global -->
+  <Style Selector="Button.slot.match /template/ ContentPresenter, Button.partyCard.match /template/ ContentPresenter">
+    <Setter Property="BorderBrush" Value="#F5B83D" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="Button.slot.dimmed, Button.partyCard.dimmed">
+    <Setter Property="Opacity" Value="0.3" />
+  </Style>
+  <Style Selector="Button.searchHit">
+    <Setter Property="Padding" Value="6,3" />
+  </Style>
+
   <Style Selector="TextBlock.slotPos">
     <Setter Property="FontSize" Value="11" />
     <Setter Property="FontWeight" Value="SemiBold" />

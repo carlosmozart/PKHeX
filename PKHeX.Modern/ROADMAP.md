@@ -22,7 +22,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] Arrastar um slot **para fora** da janela para exportar como arquivo .pk\*.
 - [x] **Barra de ações inferior** (como na referência visual): Verificar legalidade, Criar PKM, Importar, Exportar e Salvar.
 - [x] **Exportar arquivo .pk\*** de um slot (botão "Exportar PKM"). A importação por arrastar já funciona.
-- [ ] **Busca global** no topo da janela (por espécie, apelido ou golpe), destacando os slots encontrados.
+- [x] **Busca global** (barra lateral, Ctrl+F): espécie, apelido, golpe ou item em todas as caixas e na equipe, mais "shiny" e "ovo". Lista os resultados (clique leva ao slot) e destaca os encontrados na caixa aberta.
 - [ ] **Golpes com tipo e PP**: chip colorido do tipo e barra de PP em cada golpe.
 - [x] **Gênero no cartão do slot** (♂/♀ ao lado do nível).
 - [x] **Indicador de legalidade nos slots** (ícone ✓/⚠ no canto do cartão).

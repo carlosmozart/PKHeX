@@ -23,6 +23,14 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     /// <summary>Destaque enquanto um Pokemon e arrastado por cima.</summary>
     public bool IsDropTarget { get => _isDropTarget; set => Set(ref _isDropTarget, value); }
 
+    private bool _isMatch;
+    /// <summary>Resultado da busca global (borda dourada).</summary>
+    public bool IsMatch { get => _isMatch; set => Set(ref _isMatch, value); }
+
+    private bool _isDimmed;
+    /// <summary>Busca ativa e este slot nao combina: fica apagado.</summary>
+    public bool IsDimmed { get => _isDimmed; set => Set(ref _isDimmed, value); }
+
     private bool _isSelected;
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
 

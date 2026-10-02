@@ -49,7 +49,37 @@
         </StackPanel>
 
         <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding HasSave}" Classes="muted" FontSize="11" Margin="4,0,0,12"
-                   TextWrapping="Wrap" Text="Q / E trocar página · Esc voltar&#10;Del excluir · Ctrl+Z desfazer&#10;Ctrl+Y refazer · Ctrl+O abrir&#10;Ctrl+S salvar" />
+                   TextWrapping="Wrap" Text="Ctrl+F buscar · Q / E trocar página&#10;Esc voltar · Del excluir&#10;Ctrl+Z desfazer · Ctrl+Y refazer&#10;Ctrl+O abrir · Ctrl+S salvar" />
+
+        <!-- Busca global (Ctrl+F) -->
+        <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,10" IsVisible="{Binding HasSave}">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox x:Name="SearchBox" Text="{Binding SearchText}" Watermark="🔍  Buscar (Ctrl+F)"
+                     ToolTip.Tip="Espécie, apelido, golpe ou item em todas as caixas e na equipe. Também: shiny, ovo" />
+            <Button Grid.Column="1" Classes="ghost small" Content="✕" Margin="4,0,0,0" Command="{Binding ClearSearchCommand}"
+                    IsVisible="{Binding HasSearch}" ToolTip.Tip="Limpar busca" />
+          </Grid>
+          <TextBlock Text="{Binding SearchSummary}" Classes="muted" FontSize="11" IsVisible="{Binding HasSearch}" />
+          <ScrollViewer MaxHeight="260" IsVisible="{Binding HasSearch}">
+            <ItemsControl ItemsSource="{Binding SearchResults}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SearchHitViewModel">
+                  <Button Classes="ghost searchHit" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                          Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).GoToSearchHitCommand}"
+                          CommandParameter="{Binding}" ToolTip.Tip="{Binding Reason}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                      <Image Source="{Binding Sprite}" Width="28" Height="28" RenderOptions.BitmapInterpolationMode="None" />
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Location}" Classes="muted" FontSize="10" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
 
         <ListBox Classes="nav" IsVisible="{Binding HasSave}" ItemsSource="{Binding Pages}"
                  SelectedItem="{Binding CurrentPage}" Background="Transparent">

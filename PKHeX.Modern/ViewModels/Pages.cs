@@ -28,6 +28,8 @@ public abstract class PageViewModel : ViewModelBase
 public abstract class SlotPageViewModel(Action<SlotViewModel> select) : PageViewModel
 {
     public ObservableCollection<SlotViewModel> Slots { get; } = [];
+    /// <summary>Chamado depois que os slots sao recarregados (a busca global reaplica o destaque).</summary>
+    public Action? SlotsLoaded { get; set; }
     public RelayCommand SelectSlotCommand { get; } = new(p => { if (p is SlotViewModel s) select(s); });
 }
 
@@ -90,6 +92,7 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
         }
         Raise(nameof(BoxName));
         Raise(nameof(BoxLabel));
+        SlotsLoaded?.Invoke();
         PreviousBoxCommand.NotifyCanExecuteChanged();
         NextBoxCommand.NotifyCanExecuteChanged();
     }
@@ -112,6 +115,7 @@ public sealed class PartyPageViewModel(Action<SlotViewModel> select) : SlotPageV
             s.Load(sav);
             Slots.Add(s);
         }
+        SlotsLoaded?.Invoke();
         Raise(nameof(IsAvailable));
     }
 }

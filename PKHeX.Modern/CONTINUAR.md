@@ -51,6 +51,7 @@ dotnet run --project PKHeX.Modern
 - **Erros inesperados:** `Services/CrashLog.cs` (instalado em `App.axaml.cs`) grava em `%APPDATA%\PKHeX.Modern\crash.log` e mostra a mensagem na barra de status em vez de fechar o app. Ao investigar um travamento, leia esse arquivo primeiro.
 - **Legalizar:** `EncounterDatabase.Legalize` busca os encontros da espécie neste jogo (selvagem/estático antes de troca/evento), gera com `EncounterCriteria` (natureza, gênero, shiny) e reaplica nível, item, apelido e golpes; só aceita se `LegalityAnalysis.Valid`. As "correções sugeridas" sozinhas não resolvem Gen 3/4, porque o PID precisa ser correlacionado com os IVs (método do jogo).
 - **Excluir:** `CoreAdapter.DeleteSlot` grava `BlankPKM` pelo `ISlotInfo`; na equipe o Core chama `DeletePartySlot` (os seguintes sobem). Não deixa a equipe sem Pokémon (que não seja ovo).
+- **Busca global:** `Services/EntitySearch.cs` (leitura de todos os slots e a regra de combinação). O `MainViewModel` guarda uma cópia de todos os Pokémon (`_searchIndex`) e só relê quando algo muda (`IsDirty = true` chama `InvalidateSearch`). As páginas de slots avisam com `SlotsLoaded` quando recarregam, para reaplicar o destaque (`IsMatch`/`IsDimmed`). A busca espera 180 ms depois da digitação; nos testes, `RunSearch()` roda na hora.
 
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.

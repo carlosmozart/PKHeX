@@ -34,6 +34,11 @@ public sealed class MainViewModel : ViewModelBase
         AllPages = [Boxes, Party, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
+        Boxes.SlotsLoaded = ApplySearchHighlight;
+        Party.SlotsLoaded = ApplySearchHighlight;
+        ClearSearchCommand = new RelayCommand(() => SearchText = "");
+        GoToSearchHitCommand = new RelayCommand(p => { if (p is SearchHitViewModel h) _ = GoToSearchHitAsync(h); });
+        _searchTimer.Tick += (_, _) => { _searchTimer.Stop(); RunSearch(); };
         _currentPage = Boxes;
         CheckLegalityCommand = new RelayCommand(CheckLegality, () => HasSave);
         CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
@@ -150,6 +155,99 @@ public sealed class MainViewModel : ViewModelBase
     public PokemonEditorViewModel? Editor { get => _editor; private set { Set(ref _editor, value); Raise(nameof(HasEditor)); } }
     public bool HasEditor => Editor is not null;
 
+    // Busca global
+    private List<StoredEntity>? _searchIndex; // copia de todos os Pokemon do save; null = reler
+    private readonly Avalonia.Threading.DispatcherTimer _searchTimer = new() { Interval = TimeSpan.FromMilliseconds(180) };
+
+    public RelayCommand ClearSearchCommand { get; }
+    public RelayCommand GoToSearchHitCommand { get; }
+
+    private string _searchText = "";
+    /// <summary>Texto da busca global (especie, apelido, golpe, item, "shiny", "ovo").</summary>
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (!Set(ref _searchText, value ?? ""))
+                return;
+            Raise(nameof(HasSearch));
+            _searchTimer.Stop();
+            _searchTimer.Start(); // espera a digitacao parar um pouco
+        }
+    }
+
+    public bool HasSearch => SearchText.Trim().Length > 0;
+    public IReadOnlyList<SearchHitViewModel> SearchResults { get; private set; } = [];
+    public string SearchSummary { get; private set; } = "";
+
+    /// <summary>Roda a busca agora (o timer chama depois que a digitacao para).</summary>
+    public void RunSearch()
+    {
+        _searchTimer.Stop();
+        var query = SearchText.Trim();
+        if (_sav is null || query.Length == 0)
+        {
+            SearchResults = [];
+            SearchSummary = "";
+        }
+        else
+        {
+            _searchIndex ??= EntitySearch.ReadAll(_sav);
+            var hits = new List<SearchHitViewModel>();
+            foreach (var e in _searchIndex)
+            {
+                if (EntitySearch.Match(e.Pkm, query) is { } reason)
+                    hits.Add(new SearchHitViewModel(e, reason, e.Box < 0 ? "Equipe" : CoreAdapter.GetBoxName(_sav, e.Box)));
+            }
+            SearchResults = hits;
+            SearchSummary = hits.Count == 0 ? "Nada encontrado." : $"{hits.Count} encontrado(s)";
+        }
+        Raise(nameof(SearchResults));
+        Raise(nameof(SearchSummary));
+        ApplySearchHighlight();
+    }
+
+    /// <summary>Destaca na caixa/equipe abertas os slots que combinam com a busca e apaga os demais.</summary>
+    private void ApplySearchHighlight()
+    {
+        var query = SearchText.Trim();
+        foreach (var s in Boxes.Slots.Concat(Party.Slots))
+        {
+            bool match = query.Length > 0 && s is { IsEmpty: false, Pkm: { } pk } && EntitySearch.Match(pk, query) is not null;
+            s.IsMatch = match;
+            s.IsDimmed = query.Length > 0 && !match;
+        }
+    }
+
+    /// <summary>Os dados mudaram: a proxima busca rele o save.</summary>
+    private void InvalidateSearch()
+    {
+        _searchIndex = null;
+        if (HasSearch)
+        {
+            _searchTimer.Stop();
+            _searchTimer.Start();
+        }
+    }
+
+    private async Task GoToSearchHitAsync(SearchHitViewModel hit)
+    {
+        if (_sav is null)
+            return;
+        if (hit.Entity.Box < 0)
+        {
+            CurrentPage = Party;
+            if (hit.Entity.Slot < Party.Slots.Count)
+                await SelectSlotAsync(Party.Slots[hit.Entity.Slot]);
+            return;
+        }
+        CurrentPage = Boxes;
+        Boxes.CurrentBox = hit.Entity.Box;
+        if (hit.Entity.Slot < Boxes.Slots.Count)
+            await SelectSlotAsync(Boxes.Slots[hit.Entity.Slot]);
+    }
+
     // Mensagens dentro do app
     private ConfirmDialogViewModel? _dialog;
     /// <summary>Pergunta aberta no momento (sobreposicao na janela), ou null.</summary>
@@ -168,7 +266,16 @@ public sealed class MainViewModel : ViewModelBase
 
     private bool _isDirty;
     /// <summary>Ha alteracoes no save que ainda nao foram exportadas.</summary>
-    public bool IsDirty { get => _isDirty; private set => Set(ref _isDirty, value); }
+    public bool IsDirty
+    {
+        get => _isDirty;
+        private set
+        {
+            Set(ref _isDirty, value);
+            if (value)
+                InvalidateSearch(); // algo no save mudou
+        }
+    }
 
     /// <summary>Confirma o descarte das alteracoes nao exportadas (true = pode seguir).</summary>
     public async Task<bool> ConfirmDiscardChangesAsync(string action)
@@ -197,6 +304,8 @@ public sealed class MainViewModel : ViewModelBase
         }
         _sav = sav;
         IsDirty = false;
+        _searchIndex = null;
+        SearchText = "";
         _history = new SlotHistory(sav);
         OnHistoryChanged();
         Editor = null;
@@ -507,4 +616,18 @@ public sealed class MainViewModel : ViewModelBase
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
         }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav) { SelectedTab = tab };
     }
+}
+
+/// <summary>Um resultado da busca global.</summary>
+public sealed class SearchHitViewModel(StoredEntity entity, string reason, string boxName)
+{
+    public StoredEntity Entity { get; } = entity;
+    public string Title => Entity.Pkm.IsEgg ? "Ovo" : CoreAdapter.SpeciesNames[Entity.Pkm.Species]
+        + (Entity.Pkm.IsNicknamed ? $" ({Entity.Pkm.Nickname})" : "");
+    public string Location => Entity.Box < 0 ? $"Equipe · {Entity.Slot + 1}" : $"{boxName} · {Entity.Slot + 1}";
+    public string Reason { get; } = reason;
+    public bool IsShiny => Entity.Pkm.IsShiny;
+
+    private Avalonia.Media.Imaging.Bitmap? _sprite;
+    public Avalonia.Media.Imaging.Bitmap? Sprite => _sprite ??= SpriteService.GetSprite(Entity.Pkm);
 }
