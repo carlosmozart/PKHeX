@@ -161,6 +161,7 @@
             <TextBlock Text="{Binding Title}" Classes="title" FontSize="18" VerticalAlignment="Center" TextWrapping="Wrap" />
           </StackPanel>
           <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+          <TextBox x:Name="DialogInput" Text="{Binding Input}" IsVisible="{Binding HasInput}" />
           <Border Classes="dialogDetails" IsVisible="{Binding HasDetails}">
             <ScrollViewer MaxHeight="300">
               <ItemsControl ItemsSource="{Binding Details}">

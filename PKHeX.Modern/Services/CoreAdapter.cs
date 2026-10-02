@@ -312,6 +312,40 @@ public static class CoreAdapter
         return EntityConverter.ConvertToType(pk, sav.PKMType, out _);
     }
 
+    /// <summary>
+    /// Converte um Pokemon (de qualquer geracao) para o formato do save, como o PKHeX faz ao importar.
+    /// Retorna null e o motivo se nao der (ex.: especie que nao existe naquele jogo).
+    /// </summary>
+    public static PKM? ConvertForSave(SaveFile sav, PKM pk, out string? error)
+    {
+        error = null;
+        try
+        {
+            var clone = pk.Clone();
+            if (clone.GetType() == sav.PKMType)
+                return clone;
+            var converted = EntityConverter.ConvertToType(clone, sav.PKMType, out var result);
+            if (converted is null)
+            {
+                error = string.Join(" ", result.GetDisplayString(clone, sav.PKMType).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+                return null;
+            }
+            if (converted.Species > sav.MaxSpeciesID || converted.Species == 0)
+            {
+                error = $"{SpeciesNames[pk.Species]} não existe em {GetGameName(sav)}.";
+                return null;
+            }
+            sav.AdaptToSaveFile(converted);
+            converted.RefreshChecksum();
+            return converted;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return null;
+        }
+    }
+
     /// <summary>Grava um Pokemon vindo de arquivo num slot. Retorna erro ou null.</summary>
     public static string? ImportToSlot(SaveFile sav, ISlotInfo dst, PKM pk)
     {

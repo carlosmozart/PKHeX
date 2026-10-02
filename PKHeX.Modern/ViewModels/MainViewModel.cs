@@ -33,9 +33,11 @@ public sealed class MainViewModel : ViewModelBase
         Boxes = new BoxesPageViewModel(s => _ = SelectSlotAsync(s)) { Party = Party };
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
         SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p));
+        Bank = new BankPageViewModel(s => _ = SelectSlotAsync(s), PromptAsync,
+            (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s);
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
-        AllPages = [Boxes, Party, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
+        AllPages = [Boxes, Party, Bank, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
         Boxes.SlotsLoaded = ApplySearchHighlight;
@@ -66,6 +68,8 @@ public sealed class MainViewModel : ViewModelBase
 
     public BoxesPageViewModel Boxes { get; }
     public SaveManagerViewModel SaveManager { get; }
+    /// <summary>Bank local (pagina com duas telas: bank | save).</summary>
+    public BankPageViewModel Bank { get; }
     public EncounterDbViewModel Encounters { get; }
     public GiftDbViewModel Gifts { get; }
     public PartyPageViewModel Party { get; }
@@ -161,7 +165,7 @@ public sealed class MainViewModel : ViewModelBase
 
     public bool HasSave => _sav is not null;
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
-    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts;
+    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank;
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
     public string TrainerInfo => _sav is null ? "Arraste um arquivo ou clique em Abrir" : $"{_sav.OT} · TID {_sav.DisplayTID}";
 
@@ -282,6 +286,20 @@ public sealed class MainViewModel : ViewModelBase
         finally { if (Dialog == dialog) Dialog = null; }
     }
 
+    /// <summary>Pergunta com campo de texto; retorna o texto (sem espacos nas pontas) ou null se cancelar/vazio.</summary>
+    public async Task<string?> PromptAsync(string title, string message, string initial)
+    {
+        Dialog?.Complete(false);
+        var dialog = new ConfirmDialogViewModel(title, message, "OK", "Cancelar", false) { HasInput = true, Input = initial };
+        Dialog = dialog;
+        try
+        {
+            var ok = await dialog.Result;
+            return ok && !string.IsNullOrWhiteSpace(dialog.Input) ? dialog.Input.Trim() : null;
+        }
+        finally { if (Dialog == dialog) Dialog = null; }
+    }
+
     private bool _isDirty;
     /// <summary>Ha alteracoes no save que ainda nao foram exportadas.</summary>
     public bool IsDirty
@@ -372,6 +390,11 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_sav is null || src == dst)
             return;
+        if (src.IsBank || dst.IsBank)
+        {
+            await MoveWithBankAsync(src, dst, mode);
+            return;
+        }
         if (mode != DropMode.Move && !dst.IsEmpty && !src.IsEmpty && !await ConfirmAsync("Substituir Pokémon?",
                 mode == DropMode.Copy
                     ? $"{dst.Title} ({dst.Location}) será substituído por uma cópia de {src.Title}. Dá para desfazer com Ctrl+Z."
@@ -379,6 +402,97 @@ public sealed class MainViewModel : ViewModelBase
                 "Substituir"))
             return;
         MoveSlot(src, dst, mode);
+    }
+
+    /// <summary>
+    /// Mover/copiar/sobrescrever envolvendo o bank. Bank ↔ bank: arquivos. Save → bank: o Pokemon vai no formato do save.
+    /// Bank → save: e convertido para a geracao do save (se nao der, avisa e nada muda). O lado do save entra no
+    /// desfazer e precisa ser salvo; o lado do bank e gravado na hora.
+    /// </summary>
+    private async Task MoveWithBankAsync(SlotViewModel src, SlotViewModel dst, DropMode mode)
+    {
+        if (_sav is null || src.Pkm is not { } a || src.IsEmpty)
+            return;
+        var b = dst.IsEmpty ? null : dst.Pkm;
+        var name = src.Title;
+        if (mode != DropMode.Move && b is not null && !await ConfirmAsync("Substituir Pokémon?",
+                $"{dst.Title} ({dst.Location}) será substituído por {(mode == DropMode.Copy ? "uma cópia de " : "")}{name}.", "Substituir"))
+            return;
+
+        try
+        {
+            if (src.IsBank && dst.IsBank)
+            {
+                BankStorage.WriteSlot(dst.BankBox!, dst.Slot, a);
+                if (mode == DropMode.Move && b is not null)
+                    BankStorage.WriteSlot(src.BankBox!, src.Slot, b);
+                else if (mode != DropMode.Copy)
+                    BankStorage.DeleteSlot(src.BankBox!, src.Slot);
+                Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "movido")} para {dst.Location}.";
+            }
+            else if (dst.IsBank)
+            {
+                // save → bank. Se for troca, o Pokemon do bank precisa caber no save.
+                PKM? back = null;
+                if (mode == DropMode.Move && b is not null && (back = CoreAdapter.ConvertForSave(_sav, b, out var err)) is null)
+                {
+                    Status = $"Não dá para trocar: {dst.Title} não pode ir para o save ({err}). Solte num slot vazio do bank.";
+                    return;
+                }
+                var srcInfo = CoreAdapter.GetSlotInfo(_sav, src.Box, src.Slot);
+                if (mode != DropMode.Copy && back is null && src.IsParty && _sav.IsPartyAllEggs(src.Slot))
+                {
+                    Status = "A equipe precisa ter pelo menos um Pokémon (que não seja ovo).";
+                    return;
+                }
+                if (mode != DropMode.Copy)
+                {
+                    _history!.Record($"guardar {name} no bank", SlotHistory.KeyOf(src.Box, src.Slot));
+                    OnHistoryChanged();
+                }
+                BankStorage.WriteSlot(dst.BankBox!, dst.Slot, a.Clone());
+                if (back is not null)
+                    CoreAdapter.ImportToSlot(_sav, srcInfo, back);
+                else if (mode != DropMode.Copy)
+                    CoreAdapter.DeleteSlot(_sav, srcInfo);
+                if (mode != DropMode.Copy)
+                    IsDirty = true;
+                Status = mode == DropMode.Copy
+                    ? $"{name} copiado para o bank ({dst.Location})."
+                    : $"{name} guardado no bank ({dst.Location}). Salve o save para tirá-lo do jogo.";
+            }
+            else
+            {
+                // bank → save: converte para a geracao do save.
+                if (CoreAdapter.ConvertForSave(_sav, a, out var err) is not { } converted)
+                {
+                    Status = $"{name} não pode ir para {CoreAdapter.GetGameName(_sav)}: {err}";
+                    return;
+                }
+                var dstInfo = CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot);
+                _history!.Record($"trazer {name} do bank", SlotHistory.KeyOf(dst.Box, dst.Slot));
+                if (CoreAdapter.ImportToSlot(_sav, dstInfo, converted) is { } error)
+                {
+                    _history.Discard();
+                    Status = error;
+                    return;
+                }
+                OnHistoryChanged();
+                if (mode == DropMode.Move && b is not null)
+                    BankStorage.WriteSlot(src.BankBox!, src.Slot, b.Clone());
+                else if (mode != DropMode.Copy)
+                    BankStorage.DeleteSlot(src.BankBox!, src.Slot);
+                IsDirty = true;
+                var legal = CoreAdapter.IsLegal(converted) == false ? " Atenção: ficou ilegal depois da conversão; veja o cartão de legalidade." : "";
+                Status = $"{name} {(mode == DropMode.Copy ? "copiado" : "trazido")} do bank para {dst.Location}.{legal} Lembre-se de salvar o save.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Status = $"Erro no bank: {ex.Message}";
+        }
+        Bank.LoadBox();
+        RefreshSlots();
     }
 
     public void MoveSlot(SlotViewModel src, SlotViewModel dst, bool copy) => MoveSlot(src, dst, copy ? DropMode.Copy : DropMode.Move);
@@ -417,6 +531,21 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_sav is null)
             return;
+        if (dst is { IsBank: true, BankBox: { } bankBox })
+        {
+            // No bank o arquivo entra como esta (sem conversao).
+            if (PKHeX.Core.FileUtil.GetSupportedFile(path) is not PKM raw)
+            {
+                Status = "Arquivo não reconhecido como Pokémon.";
+                return;
+            }
+            if (!dst.IsEmpty && !await ConfirmAsync("Substituir Pokémon?", $"{dst.Title} ({dst.Location}) será substituído pelo arquivo.", "Substituir"))
+                return;
+            BankStorage.WriteSlot(bankBox, dst.Slot, raw);
+            Bank.LoadBox();
+            Status = $"{CoreAdapter.SpeciesNames[raw.Species]} importado para o bank ({dst.Location}).";
+            return;
+        }
         var pk = CoreAdapter.LoadEntityFile(_sav, path);
         if (pk is null)
         {
@@ -470,6 +599,17 @@ public sealed class MainViewModel : ViewModelBase
         if (_sav is null || _selectedSlot is not { IsEmpty: false } slot)
             return;
         var name = slot.Title;
+        if (slot is { IsBank: true, BankBox: { } bankBox })
+        {
+            if (!await ConfirmAsync("Excluir do bank?", $"{name} ({slot.Location}) será apagado do bank. Isso não pode ser desfeito.", "Excluir", isDanger: true))
+                return;
+            BankStorage.DeleteSlot(bankBox, slot.Slot);
+            _selectedSlot = null;
+            Bank.LoadBox();
+            RaiseSelectionChanged();
+            Status = $"{name} excluído do bank.";
+            return;
+        }
         if (!await ConfirmAsync("Excluir Pokémon?", $"{name} ({slot.Location}) será apagado. Dá para desfazer com Ctrl+Z.",
                 "Excluir", isDanger: true))
             return;
@@ -622,6 +762,16 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Selecionar um slot pela interface: pergunta antes de descartar edicoes nao aplicadas.</summary>
     public async Task SelectSlotAsync(SlotViewModel slot)
     {
+        if (slot.IsBank)
+        {
+            // No bank so destaca (o editor fica nas paginas do save); Excluir e Exportar PKM funcionam no selecionado.
+            if (_selectedSlot is not null)
+                _selectedSlot.IsSelected = false;
+            _selectedSlot = slot;
+            slot.IsSelected = true;
+            RaiseSelectionChanged();
+            return;
+        }
         if (slot != _selectedSlot && !await ConfirmDiscardEditAsync())
             return;
         SelectSlot(slot);

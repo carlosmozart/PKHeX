@@ -83,6 +83,9 @@ No GitHub, o workflow `.github/workflows/modern-build.yml` publica a cada push n
 - **Rastreador do HOME:** na Gen 8+, Pokémon vindos de outra geração ou presentes do HOME (card 9000+) precisam de `IHomeTrack.Tracker` ≠ 0; o `ToEntity` sorteia um quando falta.
 - **Janelas de aviso:** `ConfirmAsync(..., cancelText: "", details: linhas, icon: "✓")` mostra um aviso com um botão só e uma lista rolável (usado no Verificar legalidade).
 
+- **Bank local:** `Services/BankStorage.cs` (pastas: banco → "NN Nome" da caixa → "NN Espécie.pkX", formato original, sem conversão). `SlotViewModel.ForBank(...)` cria slots do bank (`IsBank`, `BankBox`); o arrastar usa o mesmo `SlotDragController` e o `MainViewModel.MoveWithBankAsync` decide o caminho: bank↔bank (arquivos), save→bank (grava no formato do save; troca só se o do bank couber no save), bank→save (`CoreAdapter.ConvertForSave`, que recusa conversões impossíveis, ex.: PK5 → PK4). O lado do save entra no desfazer e precisa ser salvo; o lado do bank é gravado na hora (desfazer um "guardar no bank" devolve ao save, mas a cópia continua no bank). Nos testes, use `BankStorage.Root = <pasta temporária>`.
+- **Pergunta com texto:** `MainViewModel.PromptAsync(título, mensagem, inicial)` (usado para nomes de banco/caixa).
+
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
 - Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".

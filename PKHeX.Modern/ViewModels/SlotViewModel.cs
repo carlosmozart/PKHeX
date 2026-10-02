@@ -4,10 +4,18 @@ using PKHeX.Modern.Services;
 
 namespace PKHeX.Modern.ViewModels;
 
-/// <summary>Um slot de caixa ou da equipe. <see cref="Box"/> = -1 indica equipe.</summary>
+/// <summary>Um slot de caixa, da equipe (<see cref="Box"/> = -1) ou do bank local (<see cref="BankBox"/> definido).</summary>
 public sealed class SlotViewModel(int box, int slot) : ViewModelBase
 {
     public const int Party = -1;
+
+    /// <summary>Slot do bank local: cria um slot ligado a uma caixa do bank (nao a um save).</summary>
+    public static SlotViewModel ForBank(BankBox box, string bankName, int slot) => new(-2, slot) { BankBox = box, BankName = bankName };
+
+    /// <summary>Caixa do bank deste slot (null = slot de save).</summary>
+    public BankBox? BankBox { get; private init; }
+    public string BankName { get; private init; } = "";
+    public bool IsBank => BankBox is not null;
 
     public int Box { get; } = box;
     public int Slot { get; } = slot;
@@ -54,7 +62,8 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
     public bool IsEgg => !IsEmpty && Pkm!.IsEgg;
     public string Nickname => IsEmpty ? "" : Pkm!.IsNicknamed ? Pkm.Nickname : "";
     public bool HasNickname => Nickname.Length > 0;
-    public string Location => IsParty ? $"equipe, posição {Slot + 1}" : $"caixa {Box + 1}, slot {Slot + 1}";
+    public string Location => IsBank ? $"bank {BankName} › {BankBox!.Name}, slot {Slot + 1}"
+        : IsParty ? $"equipe, posição {Slot + 1}" : $"caixa {Box + 1}, slot {Slot + 1}";
 
     public void Load(SaveFile sav)
     {
@@ -62,6 +71,16 @@ public sealed class SlotViewModel(int box, int slot) : ViewModelBase
         Pkm = pk;
         (IsLegal, _summary) = CoreAdapter.IsEmpty(pk) ? (null, "") : CoreAdapter.AnalyzeSlot(pk);
         Sprite = IsParty ? SpriteService.GetSprite(pk) : SpriteService.GetSprite(pk, sav, Box, Slot);
+        foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname), nameof(Gender), nameof(IsMale), nameof(IsFemale)])
+            Raise(p);
+    }
+
+    /// <summary>Carrega um Pokemon do bank (no formato original dele) neste slot.</summary>
+    public void LoadEntity(PKM? pk)
+    {
+        Pkm = pk;
+        (IsLegal, _summary) = pk is null || CoreAdapter.IsEmpty(pk) ? (null, "") : CoreAdapter.AnalyzeSlot(pk);
+        Sprite = pk is null ? null : SpriteService.GetSprite(pk);
         foreach (var p in (string[])[nameof(IsEmpty), nameof(Title), nameof(Subtitle), nameof(Tooltip), nameof(IsShiny), nameof(IsEgg), nameof(Nickname), nameof(HasNickname), nameof(Gender), nameof(IsMale), nameof(IsFemale)])
             Raise(p);
     }

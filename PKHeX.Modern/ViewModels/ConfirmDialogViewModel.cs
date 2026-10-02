@@ -37,6 +37,11 @@ public sealed class ConfirmDialogViewModel : ViewModelBase
     /// <summary>Simbolo grande ao lado do titulo (✓, ⚠...).</summary>
     public string Icon { get; }
     public bool HasIcon => Icon.Length > 0;
+    private string? _input;
+    /// <summary>Campo de texto (null = sem campo). Usado para dar nome a bancos e caixas.</summary>
+    public string? Input { get => _input; set => Set(ref _input, value); }
+    public bool HasInput { get; init; }
+
     /// <summary>Sem texto de cancelar = aviso com um botao so.</summary>
     public bool HasCancel => CancelText.Length > 0;
 

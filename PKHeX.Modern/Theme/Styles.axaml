@@ -291,6 +291,19 @@
   <Style Selector="Border.moveOption.learnable TextBlock">
     <Setter Property="Foreground" Value="{DynamicResource Good}" />
   </Style>
+  <!-- Bank: cartoes compactos para caber duas telas lado a lado -->
+  <Style Selector="Border.bankPane">
+    <Setter Property="Padding" Value="12" />
+  </Style>
+  <Style Selector="Button.slot.compact">
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Height" Value="104" />
+    <Setter Property="Margin" Value="3" />
+    <Setter Property="Padding" Value="5,4" />
+  </Style>
+  <Style Selector="Button.slot.compact:pointerover">
+    <Setter Property="RenderTransform" Value="scale(1.03)" />
+  </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />

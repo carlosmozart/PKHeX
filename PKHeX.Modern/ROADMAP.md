@@ -14,6 +14,15 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [ ] Bancos: painel de detalhes ao lado (golpes, IVs garantidos, bola, shiny lock), filtros por golpe/versão e rótulo de gifts do HOME.
 - Fora de escopo: modo clássico, plugins do PKHeX (dependem do WinForms). Fundo animado só com opção de reduzir movimento.
 
+## Inspirado no PKVault (https://github.com/Chnapy/PKVault)
+Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o código dele (web + .NET) não é reaproveitado, só as ideias.
+- [x] **Bank local** (etapa 1): armazenamento próprio fora dos saves, em bancos → caixas; página "Bank" com duas telas (bank | save aberto) só quando ela está selecionada; arrastar entre bank e save com conversão de geração (`EntityConverter`).
+- [ ] Bank (etapa 2): variantes por geração e Pokémon "anexado" (sincroniza bank ↔ save), mover entre dois saves, pasta externa de `.pk*` como banco.
+- [ ] **Interface**: caixas e saves em abas; ícones de item, bola e alpha nos cartões; barra de "ações pendentes" com o Salvar.
+- [ ] **Ações**: evoluir por troca (com item quando exigido), seleção múltipla (mover/excluir vários), ordenar caixas pela Pokédex.
+- [ ] **Pokédex centralizada**: todos os saves + bank, formas/gêneros/shiny, filtros (visto, capturado, possuído, shiny, alpha, tipo, geração), living dex e shiny dex, sincronizar Pokédex entre saves.
+- [ ] **Backups**: lista dos backups com restaurar dentro do app.
+
 ## Próximos passos sugeridos
 - [x] **Excluir Pokémon** (botão na barra inferior ou tecla Delete), com confirmação e Ctrl+Z.
 - [x] **Legalizar** (cartão de legalidade): gera de novo a partir de um encontro real do jogo, com PID/IV corretos, mantendo natureza, nível, item, apelido e golpes quando possível.

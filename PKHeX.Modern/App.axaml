@@ -39,6 +39,168 @@
     </Border>
   </DataTemplate>
 
+  <!-- Pagina Bank: duas telas lado a lado (bank local | save aberto). Arraste entre elas para guardar ou trazer Pokemon. -->
+  <DataTemplate DataType="vm:BankPageViewModel">
+    <UserControl>
+    <Grid ColumnDefinitions="*,16,*">
+
+      <!-- Esquerda: bank local -->
+      <Border Classes="card bankPane">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+              <TextBlock Text="🏦 BANK" Classes="section" Margin="0" VerticalAlignment="Center" />
+              <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Banks}" SelectedItem="{Binding SelectedBank}"
+                        ToolTip.Tip="Banco (cada banco tem as suas caixas)" />
+              <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                <Button Classes="small" Content="＋" Command="{Binding NewBankCommand}" ToolTip.Tip="Novo banco" />
+                <Button Classes="small" Content="✎" Command="{Binding RenameBankCommand}" ToolTip.Tip="Renomear banco" />
+                <Button Classes="small danger" Content="🗑" Command="{Binding DeleteBankCommand}" ToolTip.Tip="Excluir banco (e todas as caixas dele)" />
+              </StackPanel>
+            </Grid>
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+              <Button Classes="boxArrow" Content="‹" FontSize="16" Command="{Binding PreviousBoxCommand}"
+                      ToolTip.Tip="Caixa anterior (arraste um Pokémon até aqui para trocar de caixa)" />
+              <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding BoxNames}" SelectedIndex="{Binding BoxIndex}" />
+              <Button Grid.Column="2" Classes="boxArrow" Content="›" FontSize="16" Command="{Binding NextBoxCommand}"
+                      ToolTip.Tip="Próxima caixa (arraste um Pokémon até aqui para trocar de caixa)" />
+              <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4">
+                <Button Classes="small" Content="＋ Caixa" Command="{Binding NewBoxCommand}" ToolTip.Tip="Nova caixa neste banco" />
+                <Button Classes="small" Content="✎" Command="{Binding RenameBoxCommand}" ToolTip.Tip="Renomear caixa" />
+                <Button Classes="small danger" Content="🗑" Command="{Binding DeleteBoxCommand}" ToolTip.Tip="Excluir caixa" />
+              </StackPanel>
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="11" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Classes="ghost small" Content="📁 Pasta" Command="{Binding OpenFolderCommand}"
+                      ToolTip.Tip="Abre a pasta desta caixa (os Pokémon são arquivos .pk*)" />
+            </Grid>
+          </StackPanel>
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl ItemsSource="{Binding Slots}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><UniformGrid Columns="6" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SlotViewModel">
+                <Button Classes="slot compact" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
+                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
+                        ToolTip.Tip="{Binding Tooltip}"
+                        Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
+                        CommandParameter="{Binding}">
+                  <Grid RowDefinitions="Auto,*,Auto">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                        <TextBlock Text="★" Classes="shiny" FontSize="11" IsVisible="{Binding IsShiny}" />
+                        <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
+                      </StackPanel>
+                    </Grid>
+                    <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
+                           RenderOptions.BitmapInterpolationMode="None" />
+                    <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
+                      <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="10" HorizontalAlignment="Center" />
+                    </StackPanel>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+
+      <!-- Direita: save aberto (mesma caixa da pagina Caixas) -->
+      <Border Grid.Column="2" Classes="card bankPane" DataContext="{Binding $parent[Window].((vm:MainViewModel)DataContext)}" x:DataType="vm:MainViewModel">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+              <TextBlock Text="💾 SAVE" Classes="section" Margin="0" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="1" Text="{Binding GameName}" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            </Grid>
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" DataContext="{Binding Boxes}" x:DataType="vm:BoxesPageViewModel">
+              <Button Classes="boxArrow" Content="‹" FontSize="16" Command="{Binding PreviousBoxCommand}"
+                      ToolTip.Tip="Caixa anterior (arraste um Pokémon até aqui para trocar de caixa)" />
+              <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding BoxName}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding BoxLabel}" Classes="muted" FontSize="11" HorizontalAlignment="Center" />
+              </StackPanel>
+              <Button Grid.Column="2" Classes="boxArrow" Content="›" FontSize="16" Command="{Binding NextBoxCommand}"
+                      ToolTip.Tip="Próxima caixa (arraste um Pokémon até aqui para trocar de caixa)" />
+            </Grid>
+            <StackPanel Spacing="4" IsVisible="{Binding Boxes.ShowParty}">
+              <TextBlock Text="EQUIPE" Classes="section" Margin="0" FontSize="10" />
+              <ItemsControl DataContext="{Binding Party}" ItemsSource="{Binding Slots}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><UniformGrid Columns="6" Rows="1" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SlotViewModel">
+                <Button Classes="slot compact" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
+                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
+                        ToolTip.Tip="{Binding Tooltip}"
+                        Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
+                        CommandParameter="{Binding}">
+                  <Grid RowDefinitions="Auto,*,Auto">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                        <TextBlock Text="★" Classes="shiny" FontSize="11" IsVisible="{Binding IsShiny}" />
+                        <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
+                      </StackPanel>
+                    </Grid>
+                    <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
+                           RenderOptions.BitmapInterpolationMode="None" />
+                    <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
+                      <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="10" HorizontalAlignment="Center" />
+                    </StackPanel>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+            </StackPanel>
+          </StackPanel>
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <ItemsControl DataContext="{Binding Boxes}" ItemsSource="{Binding Slots}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><UniformGrid Columns="6" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SlotViewModel">
+                <Button Classes="slot compact" Classes.selected="{Binding IsSelected}" Classes.empty="{Binding IsEmpty}"
+                        Classes.dropTarget="{Binding IsDropTarget}" Classes.match="{Binding IsMatch}" Classes.dimmed="{Binding IsDimmed}"
+                        ToolTip.Tip="{Binding Tooltip}"
+                        Command="{Binding $parent[ItemsControl].((vm:SlotPageViewModel)DataContext).SelectSlotCommand}"
+                        CommandParameter="{Binding}">
+                  <Grid RowDefinitions="Auto,*,Auto">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Text="{Binding Position}" Classes="slotPos" FontSize="10" />
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                        <TextBlock Text="★" Classes="shiny" FontSize="11" IsVisible="{Binding IsShiny}" />
+                        <TextBlock Text="⚠" Classes="legalBad" FontSize="11" IsVisible="{Binding IsLegalBad}" />
+                      </StackPanel>
+                    </Grid>
+                    <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
+                           RenderOptions.BitmapInterpolationMode="None" />
+                    <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
+                      <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="10" HorizontalAlignment="Center" />
+                    </StackPanel>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+    </Grid>
+    </UserControl>
+  </DataTemplate>
+
   <!-- Pagina Encontros -->
   <DataTemplate DataType="vm:EncounterDbViewModel">
     <UserControl>
