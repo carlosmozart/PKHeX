@@ -53,6 +53,10 @@ dotnet run --project PKHeX.Modern
 - **Excluir:** `CoreAdapter.DeleteSlot` grava `BlankPKM` pelo `ISlotInfo`; na equipe o Core chama `DeletePartySlot` (os seguintes sobem). Não deixa a equipe sem Pokémon (que não seja ovo).
 - **Busca global:** `Services/EntitySearch.cs` (leitura de todos os slots e a regra de combinação). O `MainViewModel` guarda uma cópia de todos os Pokémon (`_searchIndex`) e só relê quando algo muda (`IsDirty = true` chama `InvalidateSearch`). As páginas de slots avisam com `SlotsLoaded` quando recarregam, para reaplicar o destaque (`IsMatch`/`IsDimmed`). A busca espera 180 ms depois da digitação; nos testes, `RunSearch()` roda na hora.
 
+- **Golpes no editor:** `MoveSlotViewModel` (um por golpe, como o `StatViewModel`) lê o PKM por índice com `CoreAdapter.GetMove/SetMove/GetPP/SetPP/GetPPUps/SetPPUps/GetMaxPP` (o PKM só tem `Move1..Move4`). `Move1..Move4` no editor continuam como atalhos. Em `ProgressBar` dentro de `Grid`, defina `MinWidth="0"`: o padrão do Fluent (200) empurra as outras colunas.
+
+- **Shiny selvagem da Gen 3 (Legalizar):** o `GenerateMethodH.SetRandom` do Core rerola o PID até ficar shiny mesmo quando a natureza já bateu, o que o jogo nunca faz; a análise marca "Fishy: Unable to match encounter conditions to a possible RNG frame" e "(❌)" no Origin Seed. `Services/ShinyMethodH.cs` segue a regra do jogo (primeiro PID com a natureza fica; só aceita se já for shiny). O `Legalize` prefere resultados com `la.Info.FrameMatches` e só devolve um suspeito como último recurso, avisando. Gen 4 (Method J/K) ainda não tem esse tratamento.
+
 ## Estado atual e próximo passo (2026-10-01)
 - Último trabalho: barra de ações inferior, exportar .pk\* (botão e arrastar para fora), gênero e legalidade nos slots, selo oculto em Pokémon novo. Tudo commitado e enviado no `modern-ui`.
 - Analisamos o TidalHeX como referência de UX. As ideias escolhidas estão no ROADMAP, na seção "Inspirado no TidalHeX".

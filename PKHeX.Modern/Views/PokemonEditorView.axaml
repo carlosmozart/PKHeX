@@ -173,11 +173,33 @@
           <!-- Golpes -->
           <Border Classes="card">
             <StackPanel Spacing="6">
-              <TextBlock Text="GOLPES" Classes="section" Margin="0,0,0,2" />
-              <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move1}" />
-              <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move2}" />
-              <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move3}" />
-              <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding MoveList}" SelectedIndex="{Binding Move4}" />
+              <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,2">
+                <TextBlock Text="GOLPES" Classes="section" Margin="0" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Classes="small" Content="PP cheio" Command="{Binding HealPPCommand}"
+                        ToolTip.Tip="Restaura o PP de todos os golpes" />
+              </Grid>
+              <ItemsControl ItemsSource="{Binding Moves}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:MoveSlotViewModel">
+                    <Border Classes="moveRow">
+                      <StackPanel Spacing="6">
+                        <ComboBox HorizontalAlignment="Stretch" SelectedIndex="{Binding Move}"
+                                  ItemsSource="{Binding $parent[UserControl].((vm:PokemonEditorViewModel)DataContext).MoveList}" />
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8" IsVisible="{Binding HasMove}">
+                          <Border Classes="chip" Background="{Binding TypeBrush}" MinWidth="64" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding TypeName}" HorizontalAlignment="Center" />
+                          </Border>
+                          <ProgressBar Grid.Column="1" Classes="pp" Minimum="0" Maximum="1" Value="{Binding PPRatio}" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="2" Text="{Binding PPText}" FontSize="12" VerticalAlignment="Center" MinWidth="58" />
+                          <ComboBox Grid.Column="3" ItemsSource="{Binding PPUpOptions}" SelectedIndex="{Binding PPUps}" MinWidth="64"
+                                    IsVisible="{Binding $parent[UserControl].((vm:PokemonEditorViewModel)DataContext).HasPPUps}"
+                                    ToolTip.Tip="PP Ups" />
+                        </Grid>
+                      </StackPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
             </StackPanel>
           </Border>
 

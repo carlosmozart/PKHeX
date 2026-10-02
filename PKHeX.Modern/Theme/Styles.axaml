@@ -186,6 +186,18 @@
   <Style Selector="Border.encCard">
     <Setter Property="Padding" Value="12" />
   </Style>
+  <Style Selector="Border.moveRow">
+    <Setter Property="Padding" Value="0,4,0,8" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+  <Style Selector="ProgressBar.pp">
+    <Setter Property="Height" Value="6" />
+    <Setter Property="MinHeight" Value="6" />
+    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="Foreground" Value="#4FA3F7" />
+    <Setter Property="MinWidth" Value="0" />
+  </Style>
   <Style Selector="Border.spriteWell">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />

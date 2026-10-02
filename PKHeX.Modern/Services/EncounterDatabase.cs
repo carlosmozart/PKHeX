@@ -126,6 +126,7 @@ public static class EncounterDatabase
         ];
 
         string? lastProblem = null;
+        (PKM Pk, IEncounterInfo Enc)? fallback = null; // legal, mas com a sequencia RNG marcada como suspeita
         foreach (var enc in encounters)
         {
             foreach (var criteria in attempts)
@@ -133,15 +134,29 @@ public static class EncounterDatabase
                 token.ThrowIfCancellationRequested();
                 if (ToEntity(sav, enc, criteria, out _) is not { } pk)
                     continue;
+                // Shiny selvagem da Gen 3: o gerador do Core quebra a sequencia do jogo; refazemos do jeito do jogo.
+                if (criteria.Shiny == Shiny.Always && enc is IEncounterSlot3 slot3 && pk is PK3 pk3
+                    && !ShinyMethodH.TrySetShiny(pk3, slot3, criteria.Nature, criteria.Gender, TimeSpan.FromSeconds(3)))
+                    continue;
                 CarryOver(current, pk, enc);
                 var la = new LegalityAnalysis(pk);
                 if (la.Valid)
                 {
-                    message = Describe(enc, current, pk);
-                    return pk;
+                    if (la.Info.FrameMatches)
+                    {
+                        message = Describe(enc, current, pk);
+                        return pk;
+                    }
+                    fallback ??= (pk, enc);
+                    continue;
                 }
                 lastProblem ??= CoreAdapter.GetLegalityIssues(pk, 1).FirstOrDefault();
             }
+        }
+        if (fallback is { } f)
+        {
+            message = Describe(f.Enc, current, f.Pk) + " (aviso: a sequência RNG do jogo não confere, marcado como suspeito)";
+            return f.Pk;
         }
         message = "nenhum encontro gerou um Pokémon legal" + (lastProblem is null ? "" : $" ({lastProblem})");
         return null;

@@ -43,6 +43,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         ];
         foreach (var s in Stats)
             s.Changed += Refresh;
+        Moves = [.. Enumerable.Range(0, 4).Select(i => new MoveSlotViewModel(() => _pk, i))];
+        foreach (var m in Moves)
+            m.Changed += Refresh;
+        HealPPCommand = new RelayCommand(() => { _pk.HealPP(); foreach (var m in Moves) m.RaiseAll(); _status("PP restaurado."); });
         ApplyCommand = new RelayCommand(() => { _apply(_pk.Clone()); _savedData = _pk.Data.ToArray(); });
         MaxIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; });
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
@@ -163,10 +167,16 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public int Level { get => _pk.CurrentLevel; set { _pk.CurrentLevel = (byte)Math.Clamp(value, 1, 100); Refresh(); } }
     public int Nature { get => (int)_pk.StatAlignment; set { if (value >= 0 && value != (int)_pk.StatAlignment) { _pk.SetNature((Nature)value); Refresh(); } } }
     public int HeldItem { get => _pk.HeldItem; set { if (value >= 0) { _pk.HeldItem = value; Refresh(); } } }
-    public int Move1 { get => _pk.Move1; set { if (value >= 0) { _pk.Move1 = (ushort)value; Refresh(); } } }
-    public int Move2 { get => _pk.Move2; set { if (value >= 0) { _pk.Move2 = (ushort)value; Refresh(); } } }
-    public int Move3 { get => _pk.Move3; set { if (value >= 0) { _pk.Move3 = (ushort)value; Refresh(); } } }
-    public int Move4 { get => _pk.Move4; set { if (value >= 0) { _pk.Move4 = (ushort)value; Refresh(); } } }
+    /// <summary>Os 4 golpes (tipo, PP e PP Ups). Use Moves[i].Move para trocar um golpe.</summary>
+    public IReadOnlyList<MoveSlotViewModel> Moves { get; }
+    // Atalhos mantidos para codigo existente (testes, Showdown).
+    public int Move1 { get => Moves[0].Move; set => Moves[0].Move = value; }
+    public int Move2 { get => Moves[1].Move; set => Moves[1].Move = value; }
+    public int Move3 { get => Moves[2].Move; set => Moves[2].Move = value; }
+    public int Move4 { get => Moves[3].Move; set => Moves[3].Move = value; }
+    public RelayCommand HealPPCommand { get; }
+    /// <summary>PP Ups so existem a partir da Gen 1 em formato com PP; em Let's Go/Legends nao ha.</summary>
+    public bool HasPPUps => _pk is not (PB7 or PA8 or PA9);
 
     // Encontro
     public IReadOnlyList<ComboItem> BallList { get; }
@@ -207,6 +217,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         Raise(string.Empty);
         foreach (var st in Stats)
             st.RaiseAll();
+        foreach (var m in Moves)
+            m.RaiseAll();
     }
 
     public string AbilityName => (uint)_pk.Ability < CoreAdapter.AbilityNames.Count ? CoreAdapter.AbilityNames[_pk.Ability] : "?";
@@ -264,6 +276,69 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 public sealed record TypeChip(string Name, uint Argb)
 {
     public Avalonia.Media.IBrush Brush { get; } = new Avalonia.Media.SolidColorBrush(Argb);
+}
+
+/// <summary>Um golpe no editor: escolha do golpe, chip do tipo, barra de PP e PP Ups.</summary>
+public sealed class MoveSlotViewModel(Func<PKM> pk, int index) : ViewModelBase
+{
+    public event Action? Changed;
+    public void RaiseAll() => Raise(string.Empty);
+
+    public int Index { get; } = index;
+
+    /// <summary>Indice na lista de golpes. Trocar o golpe enche o PP.</summary>
+    public int Move
+    {
+        get => CoreAdapter.GetMove(pk(), Index);
+        set
+        {
+            if (value < 0 || value == Move)
+                return;
+            var p = pk();
+            CoreAdapter.SetMove(p, Index, (ushort)value);
+            if (value == 0)
+                CoreAdapter.SetPPUps(p, Index, 0);
+            CoreAdapter.SetPP(p, Index, CoreAdapter.GetMaxPP(p, Index));
+            RaiseAll();
+            Changed?.Invoke();
+        }
+    }
+
+    public bool HasMove => Move > 0;
+    private (string Name, uint Argb)? Type => CoreAdapter.GetMoveType((ushort)Move, pk().Context);
+    public string TypeName => Type?.Name ?? "";
+    public Avalonia.Media.IBrush TypeBrush => new Avalonia.Media.SolidColorBrush(Type?.Argb ?? 0x00000000);
+
+    public int MaxPP => CoreAdapter.GetMaxPP(pk(), Index);
+    public int PP
+    {
+        get => CoreAdapter.GetPP(pk(), Index);
+        set
+        {
+            CoreAdapter.SetPP(pk(), Index, Math.Clamp(value, 0, MaxPP));
+            Raise(); Raise(nameof(PPText)); Raise(nameof(PPRatio));
+            Changed?.Invoke();
+        }
+    }
+    public string PPText => HasMove ? $"PP {PP}/{MaxPP}" : "";
+    public double PPRatio => MaxPP == 0 ? 0 : (double)PP / MaxPP;
+
+    public IReadOnlyList<string> PPUpOptions { get; } = ["+0", "+1", "+2", "+3"];
+    /// <summary>PP Ups (0-3). Ao mudar, o PP vai para o novo maximo.</summary>
+    public int PPUps
+    {
+        get => CoreAdapter.GetPPUps(pk(), Index);
+        set
+        {
+            if (value is < 0 or > 3 || !HasMove)
+                return;
+            var p = pk();
+            CoreAdapter.SetPPUps(p, Index, value);
+            CoreAdapter.SetPP(p, Index, CoreAdapter.GetMaxPP(p, Index));
+            RaiseAll();
+            Changed?.Invoke();
+        }
+    }
 }
 
 public sealed class StatViewModel(string name, string color, Func<int> getIV, Action<int> setIV, Func<int> getEV, Action<int> setEV, int maxIV, int maxEV) : ViewModelBase

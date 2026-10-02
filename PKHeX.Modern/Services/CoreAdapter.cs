@@ -118,6 +118,36 @@ public static class CoreAdapter
         return list;
     }
 
+    /// <summary>Tipo do golpe neste formato (nome e cor), ou null para "nenhum golpe".</summary>
+    public static (string Name, uint Argb)? GetMoveType(ushort move, EntityContext context)
+    {
+        if (move == 0)
+            return null;
+        var type = MoveInfo.GetType(move, context);
+        var names = GameInfo.Strings.types;
+        var name = type < names.Length ? names[type] : "?";
+        return (name, (uint)Drawing.PokeSprite.TypeColor.GetTypeSpriteColor(type).ToArgb());
+    }
+
+    // Golpes por indice (0-3): o PKM so expoe Move1..Move4 e seus PP.
+    public static ushort GetMove(PKM pk, int i) => i switch { 0 => pk.Move1, 1 => pk.Move2, 2 => pk.Move3, _ => pk.Move4 };
+    public static void SetMove(PKM pk, int i, ushort move)
+    {
+        switch (i) { case 0: pk.Move1 = move; break; case 1: pk.Move2 = move; break; case 2: pk.Move3 = move; break; default: pk.Move4 = move; break; }
+    }
+    public static int GetPP(PKM pk, int i) => i switch { 0 => pk.Move1_PP, 1 => pk.Move2_PP, 2 => pk.Move3_PP, _ => pk.Move4_PP };
+    public static void SetPP(PKM pk, int i, int pp)
+    {
+        switch (i) { case 0: pk.Move1_PP = pp; break; case 1: pk.Move2_PP = pp; break; case 2: pk.Move3_PP = pp; break; default: pk.Move4_PP = pp; break; }
+    }
+    public static int GetPPUps(PKM pk, int i) => i switch { 0 => pk.Move1_PPUps, 1 => pk.Move2_PPUps, 2 => pk.Move3_PPUps, _ => pk.Move4_PPUps };
+    public static void SetPPUps(PKM pk, int i, int ups)
+    {
+        switch (i) { case 0: pk.Move1_PPUps = ups; break; case 1: pk.Move2_PPUps = ups; break; case 2: pk.Move3_PPUps = ups; break; default: pk.Move4_PPUps = ups; break; }
+    }
+    /// <summary>PP maximo do golpe com os PP Ups atuais.</summary>
+    public static int GetMaxPP(PKM pk, int i) => GetMove(pk, i) is var m and > 0 ? pk.GetMovePP(m, GetPPUps(pk, i)) : 0;
+
     public static string GetGenderSymbol(PKM pk) => pk.Gender switch { 0 => "♂", 1 => "♀", _ => "" };
 
     // Mover / trocar / copiar slots (usa as regras do Core: slots bloqueados, equipe so de ovos, etc.)
