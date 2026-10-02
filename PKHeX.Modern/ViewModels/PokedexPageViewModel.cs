@@ -22,11 +22,19 @@ public sealed class PokedexPageViewModel : PageViewModel
     // Saves da pasta ja lidos (caminho → data de gravacao + save), para nao reler arquivos que nao mudaram.
     private readonly Dictionary<string, (DateTime Write, SaveFile Sav)> _cache = new(StringComparer.OrdinalIgnoreCase);
 
+    private readonly Func<string, string, string, IReadOnlyList<string>?, Task<bool>> _confirm;
+    private readonly Action<string> _report;
+
     /// <param name="goTo">Ir ate um Pokemon do save aberto (caixa, slot; caixa -1 = equipe).</param>
-    public PokedexPageViewModel(AppSettings settings, Action<int, int> goTo)
+    /// <param name="confirm">Confirmacao (titulo, mensagem, botao, detalhes) → true/false.</param>
+    public PokedexPageViewModel(AppSettings settings, Action<int, int> goTo,
+        Func<string, string, string, IReadOnlyList<string>?, Task<bool>>? confirm = null, Action<string>? status = null)
     {
         _settings = settings;
         _goTo = goTo;
+        _confirm = confirm ?? ((_, _, _, _) => Task.FromResult(true));
+        _report = status ?? (_ => { });
+        SyncCommand = new RelayCommand(() => _ = SyncAsync(), () => _sav is { HasPokeDex: true } && !IsBusy);
         RefreshCommand = new RelayCommand(() => _ = RefreshAsync());
         SelectCommand = new RelayCommand(p => { if (p is DexCardViewModel c) Selected = c; });
         SetGenerationCommand = new RelayCommand(p => GenerationFilter = p is int g && g != GenerationFilter ? g : null);
@@ -37,19 +45,45 @@ public sealed class PokedexPageViewModel : PageViewModel
     public override string Title => "Pokédex";
     public override string Icon => "📖";
 
-    public override void Load(SaveFile sav) => _sav = sav;
+    public override void Load(SaveFile sav)
+    {
+        _sav = sav;
+        SyncCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Sincronizar: registra na Pokedex do save aberto o que foi capturado/visto nos outros saves e o que voce tem guardado.</summary>
+    public RelayCommand SyncCommand { get; }
 
     public RelayCommand RefreshCommand { get; }
     public RelayCommand SelectCommand { get; }
     public RelayCommand SetGenerationCommand { get; }
 
-    /// <summary>Todos os cartoes (fixos, um por especie).</summary>
-    public IReadOnlyList<DexCardViewModel> Cards { get; private set; } = [];
+    private IReadOnlyList<DexCardViewModel> _speciesCards = [];
+    private IReadOnlyList<DexCardViewModel> _formCards = [];
+    private IReadOnlyList<DexEntry> _species = [];
+    /// <summary>Todos os cartoes da lista atual (especies ou formas/generos).</summary>
+    public IReadOnlyList<DexCardViewModel> Cards => ShowForms ? _formCards : _speciesCards;
+
+    private bool _showForms;
+    /// <summary>Lista com cada forma e genero como entrada propria (Vulpix de Alola, Unown A–?, Pyroar ♀...).</summary>
+    public bool ShowForms
+    {
+        get => _showForms;
+        set
+        {
+            if (!Set(ref _showForms, value))
+                return;
+            var species = Selected?.Entry.Species;
+            Raise(nameof(Cards));
+            Selected = species is { } sp ? Cards.FirstOrDefault(c => c.Entry.Species == sp) : null;
+            ApplyFilter();
+        }
+    }
     /// <summary>Cartoes que passam nos filtros (a grade e virtualizada: so os da tela sao montados).</summary>
     public IReadOnlyList<DexCardViewModel> VisibleCards { get; private set; } = [];
 
     private bool _isBusy;
-    public bool IsBusy { get => _isBusy; private set => Set(ref _isBusy, value); }
+    public bool IsBusy { get => _isBusy; private set { Set(ref _isBusy, value); SyncCommand.NotifyCanExecuteChanged(); } }
     public string Summary { get; private set; } = "";
     public string Stats { get; private set; } = "";
 
@@ -57,7 +91,7 @@ public sealed class PokedexPageViewModel : PageViewModel
     public IReadOnlyList<string> StatusOptions { get; } =
     [
         "Todas as espécies", "Possuídas", "Faltando (living dex)", "Shiny possuídas", "Shiny faltando (shiny dex)",
-        "Capturadas na Pokédex", "Vistas, não capturadas", "Nunca vistas",
+        "Capturadas na Pokédex", "Vistas, não capturadas", "Nunca vistas", "Alpha possuídas",
     ];
     private int _status;
     public int StatusIndex { get => _status; set { if (Set(ref _status, value)) ApplyFilter(); } }
@@ -127,7 +161,9 @@ public sealed class PokedexPageViewModel : PageViewModel
             var sav = _sav;
             var openPath = sav?.Metadata.FilePath;
             var folder = _settings.SavesFolder ?? SaveLibrary.DefaultFolder;
-            var (entries, sources) = await Task.Run(() => PokedexService.Build(GetSaves(sav, openPath, folder), includeBank: true));
+            var data = await Task.Run(() => PokedexService.Build(GetSaves(sav, openPath, folder), includeBank: true));
+            var sources = data.Sources;
+            _species = data.Species;
 
             var keep = Source?.Id;
             var selected = Selected?.Entry.Species;
@@ -137,20 +173,12 @@ public sealed class PokedexPageViewModel : PageViewModel
             _source = keep is null ? 0 : Math.Max(0, sources.ToList().FindIndex(s => s.Id == keep) + 1);
             Raise(nameof(SourceIndex));
 
-            if (Cards.Count == entries.Count)
-            {
-                // Mesmos cartoes, dados novos: a grade nao e recriada (1025 cartoes custam caro para montar).
-                for (int i = 0; i < entries.Count; i++)
-                    Cards[i].Entry = entries[i];
-            }
-            else
-            {
-                Cards = [.. entries.Select(e => new DexCardViewModel(e))];
-                Raise(nameof(Cards));
-            }
+            _speciesCards = Reuse(_speciesCards, data.Species);
+            _formCards = Reuse(_formCards, data.Forms);
+            Raise(nameof(Cards));
             Selected = selected is { } sp ? Cards.FirstOrDefault(c => c.Entry.Species == sp) : null;
             int saves = sources.Count(s => !s.IsBank);
-            Summary = $"{saves} save(s) + bank · {PokedexService.MaxSpecies} espécies";
+            Summary = $"{saves} save(s) + bank · {PokedexService.MaxSpecies} espécies · {data.Forms.Count} formas e gêneros";
             Raise(nameof(Summary));
             ApplyFilter();
         }
@@ -163,6 +191,65 @@ public sealed class PokedexPageViewModel : PageViewModel
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>Mesmos cartoes com dados novos (a grade nao e recriada); cria se a quantidade mudou.</summary>
+    private static IReadOnlyList<DexCardViewModel> Reuse(IReadOnlyList<DexCardViewModel> cards, IReadOnlyList<DexEntry> entries)
+    {
+        if (cards.Count != entries.Count)
+            return [.. entries.Select(e => new DexCardViewModel(e))];
+        for (int i = 0; i < entries.Count; i++)
+            cards[i].Entry = entries[i];
+        return cards;
+    }
+
+    /// <summary>
+    /// Sincroniza a Pokedex do save aberto: especies capturadas em outros saves ou guardadas em qualquer lugar (caixas,
+    /// equipe, bank) passam a capturadas; as so vistas em outros saves passam a vistas (quando o jogo permite).
+    /// </summary>
+    private async Task SyncAsync()
+    {
+        if (_sav is not { HasPokeDex: true } sav || _species.Count == 0)
+            return;
+        var max = Math.Min(sav.MaxSpeciesID, PokedexService.MaxSpecies);
+        bool Caught(ushort s) { try { return sav.GetCaught(s); } catch { return true; } }
+        bool Seen(ushort s) { try { return sav.GetSeen(s); } catch { return true; } }
+        var toCaught = _species.Where(e => e.Species <= max && !Caught(e.Species)
+            && (e.CaughtIn.Any(x => !x.IsOpenSave) || e.Owned.Count > 0)).ToList();
+        var toSeen = _species.Where(e => e.Species <= max && !Seen(e.Species) && !toCaught.Contains(e)
+            && e.SeenIn.Any(x => !x.IsOpenSave)).ToList();
+        var game = CoreAdapter.GetGameName(sav);
+        if (toCaught.Count == 0 && toSeen.Count == 0)
+        {
+            _report($"A Pokédex de {game} já tem tudo o que os outros saves e o bank têm.");
+            return;
+        }
+        var details = toCaught.Take(25).Select(e => $"✓ #{e.Species:000} {e.Name} → capturada")
+            .Concat(toSeen.Take(10).Select(e => $"👁 #{e.Species:000} {e.Name} → vista")).ToList();
+        if (toCaught.Count > 25 || toSeen.Count > 10)
+            details.Add($"… {toCaught.Count + toSeen.Count} no total.");
+        if (!await _confirm("Sincronizar a Pokédex?",
+                $"Na Pokédex de {game}: {toCaught.Count} espécie(s) passam a capturadas (capturadas em outro save ou guardadas nas caixas/bank) e {toSeen.Count} a vistas. "
+                + "Não entra no Ctrl+Z; o arquivo só muda ao salvar (e o anterior vai para os backups).",
+                "Sincronizar", details))
+            return;
+        int caught = 0, seen = 0, skipped = 0;
+        foreach (var e in toCaught)
+        {
+            if (PokedexService.RegisterCaught(sav, e.Species)) caught++;
+            else skipped++;
+        }
+        foreach (var e in toSeen)
+        {
+            if (PokedexService.RegisterSeen(sav, e.Species)) seen++;
+            else skipped++;
+        }
+        if (caught + seen > 0)
+            Changed?.Invoke();
+        _report($"Pokédex de {game}: {caught} capturada(s) e {seen} vista(s) registradas."
+                + (skipped > 0 ? $" {skipped} ficaram de fora (não existem na Pokédex deste jogo ou o jogo não permite marcar só como vista)." : "")
+                + " Salve o save para gravar.");
+        await RefreshAsync();
     }
 
     private IEnumerable<(string, SaveFile, bool)> GetSaves(SaveFile? open, string? openPath, string folder)
@@ -193,7 +280,7 @@ public sealed class PokedexPageViewModel : PageViewModel
     {
         var source = Source;
         var query = _search.Trim();
-        int scope = 0, owned = 0, shiny = 0, caught = 0, seen = 0;
+        int scope = 0, owned = 0, shiny = 0, caught = 0, seen = 0, alpha = 0;
         foreach (var c in Cards)
         {
             c.Update(source);
@@ -208,6 +295,7 @@ public sealed class PokedexPageViewModel : PageViewModel
                 if (c.IsShinyOwned) shiny++;
                 if (c.IsCaught) caught++;
                 if (c.IsSeen) seen++;
+                if (c.IsAlphaOwned) alpha++;
             }
             bool status = _status switch
             {
@@ -218,14 +306,18 @@ public sealed class PokedexPageViewModel : PageViewModel
                 5 => c.IsCaught,
                 6 => c.IsSeen && !c.IsCaught,
                 7 => !c.IsSeen,
+                8 => c.IsAlphaOwned,
                 _ => true,
             };
             bool text = query.Length == 0 || e.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                        || e.FormName.Contains(query, StringComparison.OrdinalIgnoreCase)
                         || (ushort.TryParse(query.TrimStart('#'), out var n) && n == e.Species);
             c.IsVisible = inScope && status && text;
         }
         string Pct(int n) => scope == 0 ? "0%" : $"{100.0 * n / scope:0.#}%";
-        Stats = $"Living dex {owned}/{scope} ({Pct(owned)}) · Shiny dex {shiny}/{scope} ({Pct(shiny)}) · Capturadas na Pokédex {caught}/{scope} · Vistas {seen}/{scope}";
+        var what = ShowForms ? "formas" : "espécies";
+        Stats = $"Living dex {owned}/{scope} {what} ({Pct(owned)}) · Shiny dex {shiny}/{scope} ({Pct(shiny)}) · Capturadas na Pokédex {caught}/{scope} · Vistas {seen}/{scope}"
+                + (alpha > 0 ? $" · Alpha {alpha}" : "");
         Raise(nameof(Stats));
         VisibleCards = [.. Cards.Where(c => c.IsVisible)];
         Raise(nameof(VisibleCards));
@@ -234,16 +326,33 @@ public sealed class PokedexPageViewModel : PageViewModel
         Raise(nameof(VisibleCount));
     }
 
-    public string VisibleCount => $"{VisibleCards.Count} espécie(s) na lista";
+    public string VisibleCount => $"{VisibleCards.Count} {(ShowForms ? "forma(s)" : "espécie(s)")} na lista";
 }
 
 /// <summary>Cartao de uma especie na Pokedex (estado conforme a fonte escolhida).</summary>
 public sealed class DexCardViewModel(DexEntry entry) : ViewModelBase
 {
+    private DexEntry _entry = entry;
     /// <summary>Dados da especie (trocados a cada leitura; o cartao continua o mesmo).</summary>
-    public DexEntry Entry { get; set; } = entry;
+    public DexEntry Entry
+    {
+        get => _entry;
+        set
+        {
+            if (value.Species != _entry.Species || value.Form != _entry.Form || value.Gender != _entry.Gender)
+            {
+                _spriteRequested = false;
+                _sprite = null;
+                Raise(nameof(Sprite));
+            }
+            _entry = value;
+        }
+    }
     public string Number => $"#{Entry.Species:000}";
     public string Name => Entry.Name;
+    /// <summary>Nome da forma/genero (vazio na lista por especie ou na forma unica).</summary>
+    public string FormName => Entry.FormName;
+    public bool HasFormName => Entry.FormName.Length > 0;
 
     private Bitmap? _sprite;
     private bool _spriteRequested;
@@ -255,10 +364,10 @@ public sealed class DexCardViewModel(DexEntry entry) : ViewModelBase
             if (_spriteRequested)
                 return _sprite;
             _spriteRequested = true;
-            if (SpriteService.TryGetCachedSpeciesSprite(Entry.Species, false, out var cached))
+            var (species, form, gender, context) = (Entry.Species, Entry.Form, Math.Max(0, (int)Entry.Gender), Entry.Context);
+            if (SpriteService.TryGetCachedSpeciesSprite(species, false, out var cached, form, gender))
                 return _sprite = cached;
-            var species = Entry.Species;
-            _ = Task.Run(() => SpriteService.GetSpeciesSprite(species, false)).ContinueWith(t =>
+            _ = Task.Run(() => SpriteService.GetSpeciesSprite(species, false, form, gender, context)).ContinueWith(t =>
             {
                 _sprite = t.Result;
                 Raise(nameof(Sprite));
@@ -266,7 +375,7 @@ public sealed class DexCardViewModel(DexEntry entry) : ViewModelBase
             return null;
         }
     }
-    public Bitmap? ShinySprite => SpriteService.GetSpeciesSprite(Entry.Species, true);
+    public Bitmap? ShinySprite => SpriteService.GetSpeciesSprite(Entry.Species, true, Entry.Form, Math.Max(0, (int)Entry.Gender), Entry.Context);
 
     public IReadOnlyList<TypeChip> Types
     {
@@ -282,6 +391,8 @@ public sealed class DexCardViewModel(DexEntry entry) : ViewModelBase
     public int OwnedCount { get; private set; }
     public bool IsOwned => OwnedCount > 0;
     public bool IsShinyOwned { get; private set; }
+    /// <summary>Tem um Alpha (Legends) desta especie/forma.</summary>
+    public bool IsAlphaOwned { get; private set; }
     public bool IsCaught { get; private set; }
     public bool IsSeen { get; private set; }
     public bool IsMissing => !IsOwned;
@@ -289,7 +400,7 @@ public sealed class DexCardViewModel(DexEntry entry) : ViewModelBase
     public string CaughtText { get; private set; } = "";
     public string SeenText { get; private set; } = "";
     public string StatusText => IsOwned ? $"Possuída ({OwnedCount})" : IsCaught ? "Capturada na Pokédex, mas nenhuma guardada" : IsSeen ? "Vista" : "Nunca vista";
-    public string Tooltip => $"{Number} {Name} · {StatusText}{(IsShinyOwned ? " · ✨ shiny" : "")}";
+    public string Tooltip => $"{Number} {Name}{(HasFormName ? $" ({FormName})" : "")} · {StatusText}{(IsShinyOwned ? " · ✨ shiny" : "")}{(IsAlphaOwned ? " · alpha" : "")}";
 
     private bool _isVisible = true;
     public bool IsVisible { get => _isVisible; set => Set(ref _isVisible, value); }
@@ -305,11 +416,12 @@ public sealed class DexCardViewModel(DexEntry entry) : ViewModelBase
         var seenIn = Entry.SeenIn.Where(In).ToList();
         OwnedCount = owned.Count;
         IsShinyOwned = owned.Any(l => l.IsShiny);
+        IsAlphaOwned = owned.Any(l => l.IsAlpha);
         IsCaught = caughtIn.Count > 0 || owned.Count > 0;
         IsSeen = IsCaught || seenIn.Count > 0;
         CaughtText = caughtIn.Count == 0 ? "nenhum save" : string.Join(", ", caughtIn.Select(s => s.Name));
         SeenText = seenIn.Count == 0 ? "nenhum save" : string.Join(", ", seenIn.Select(s => s.Name));
-        foreach (var p in (string[])[nameof(OwnedCount), nameof(IsOwned), nameof(IsShinyOwned), nameof(IsCaught), nameof(IsSeen), nameof(IsMissing),
+        foreach (var p in (string[])[nameof(OwnedCount), nameof(IsOwned), nameof(IsShinyOwned), nameof(IsAlphaOwned), nameof(FormName), nameof(HasFormName), nameof(Number), nameof(Name), nameof(IsCaught), nameof(IsSeen), nameof(IsMissing),
                      nameof(OwnedText), nameof(CaughtText), nameof(SeenText), nameof(StatusText), nameof(Tooltip)])
             Raise(p);
     }
@@ -319,7 +431,7 @@ public sealed class DexCardViewModel(DexEntry entry) : ViewModelBase
 public sealed class DexLocationViewModel(DexLocation location, RelayCommand? goCommand)
 {
     public string Source => location.Source.Name;
-    public string Where => location.Where + (location.FormName.Length > 0 ? $" · {location.FormName}" : "");
+    public string Where => location.Where + (location.FormName.Length > 0 ? $" · {location.FormName}" : "") + (location.IsAlpha ? " · alpha" : "");
     public bool IsShiny => location.IsShiny;
     public RelayCommand? GoCommand { get; } = goCommand;
     public bool CanGo => GoCommand is not null;

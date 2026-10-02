@@ -332,8 +332,12 @@
             <TextBlock Text="Pokédex" Classes="title" />
             <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="12" />
           </StackPanel>
-          <Button Grid.Column="1" Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}" VerticalAlignment="Top"
-                  ToolTip.Tip="Relê os saves da pasta, o save aberto e o bank" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+            <Button Classes="small info" Content="⇄  Sincronizar com o save aberto" Command="{Binding SyncCommand}"
+                    ToolTip.Tip="Marca na Pokédex do save aberto o que foi capturado/visto nos outros saves e o que você tem guardado (caixas e bank)" />
+            <Button Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}"
+                    ToolTip.Tip="Relê os saves da pasta, o save aberto e o bank" />
+          </StackPanel>
         </Grid>
         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" Margin="0,0,0,8">
           <TextBox Text="{Binding Search}" Watermark="Buscar por nome ou número (ex.: pika, 25)" />
@@ -357,7 +361,11 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
-          <TextBlock Grid.Column="1" Text="{Binding VisibleCount}" Classes="muted" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Right" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <CheckBox Content="Formas e gêneros" IsChecked="{Binding ShowForms}"
+                      ToolTip.Tip="Cada forma (Alola, Galar, Unown A–?...) e cada gênero com sprite próprio vira uma entrada; formas só de batalha (Mega, Gigantamax) ficam de fora" />
+            <TextBlock Text="{Binding VisibleCount}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+          </StackPanel>
         </Grid>
         <Border DockPanel.Dock="Top" Classes="card dexStats" Margin="0,0,0,10">
           <TextBlock Text="{Binding Stats}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap" />
@@ -380,13 +388,18 @@
                         <TextBlock Text="{Binding Number}" Classes="slotPos" FontSize="10" />
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
                           <TextBlock Text="★" Classes="shiny" FontSize="11" IsVisible="{Binding IsShinyOwned}" />
+                          <TextBlock Text="α" Classes="alpha" FontSize="11" FontWeight="Bold" IsVisible="{Binding IsAlphaOwned}" ToolTip.Tip="Alpha" />
                           <TextBlock Text="{Binding OwnedText}" Classes="muted" FontSize="10" />
                           <TextBlock Text="●" Classes="dexOwned" FontSize="10" IsVisible="{Binding IsOwned}" />
                         </StackPanel>
                       </Grid>
                       <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2"
                              RenderOptions.BitmapInterpolationMode="None" />
-                      <TextBlock Grid.Row="2" Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      <StackPanel Grid.Row="2" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding FormName}" Classes="muted" FontSize="9" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                   IsVisible="{Binding HasFormName}" />
+                      </StackPanel>
                     </Grid>
                   </Button>
                 </DataTemplate>
@@ -411,6 +424,7 @@
                 <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
                   <TextBlock Text="{Binding Number}" Classes="muted" />
                   <TextBlock Text="{Binding Name}" Classes="title" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding FormName}" Classes="muted" IsVisible="{Binding HasFormName}" TextWrapping="Wrap" />
                   <ItemsControl ItemsSource="{Binding Types}">
                     <ItemsControl.ItemsPanel>
                       <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>

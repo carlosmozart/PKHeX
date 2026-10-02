@@ -67,35 +67,35 @@ public static class SpriteService
         }
     }
 
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(ushort, bool), AvaloniaBitmap?> Species = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(ushort, byte, int, bool), AvaloniaBitmap?> Species = new();
 
     /// <summary>Sprite da especie ja gerado (ou null se ainda nao foi). Nao gera nada.</summary>
-    public static bool TryGetCachedSpeciesSprite(ushort species, bool shiny, out AvaloniaBitmap? sprite)
-        => Species.TryGetValue((species, shiny), out sprite);
+    public static bool TryGetCachedSpeciesSprite(ushort species, bool shiny, out AvaloniaBitmap? sprite, byte form = 0, int gender = 0)
+        => Species.TryGetValue((species, form, gender, shiny), out sprite);
 
     /// <summary>
     /// Sprite da especie (forma base), normal ou shiny, sem bola nem item. Cacheado (usado na Pokedex).
     /// Pode ser chamado fora da thread da interface (a Pokedex gera os 1025 em segundo plano).
     /// </summary>
-    public static AvaloniaBitmap? GetSpeciesSprite(ushort species, bool shiny)
+    public static AvaloniaBitmap? GetSpeciesSprite(ushort species, bool shiny, byte form = 0, int gender = 0, EntityContext context = EntityContext.None)
     {
-        if (Species.TryGetValue((species, shiny), out var cached))
+        if (Species.TryGetValue((species, form, gender, shiny), out var cached))
             return cached;
         AvaloniaBitmap? bmp;
         lock (SpeciesLock)
         {
-            if (Species.TryGetValue((species, shiny), out cached))
+            if (Species.TryGetValue((species, form, gender, shiny), out cached))
                 return cached;
             try
             {
-                using var gdi = SpriteUtil.GetSprite(species, 0, 0, 0, 0, false, shiny ? Shiny.Always : Shiny.Never);
+                using var gdi = SpriteUtil.GetSprite(species, form, (byte)gender, 0, 0, false, shiny ? Shiny.Always : Shiny.Never, context);
                 bmp = Convert(gdi);
             }
             catch
             {
                 bmp = null;
             }
-            Species[(species, shiny)] = bmp;
+            Species[(species, form, gender, shiny)] = bmp;
         }
         return bmp;
     }

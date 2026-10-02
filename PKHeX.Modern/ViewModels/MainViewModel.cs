@@ -41,7 +41,8 @@ public sealed class MainViewModel : ViewModelBase
             (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s);
         Bank = new BankPageViewModel(s => _ = SelectSlotAsync(s), PromptAsync,
             (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s, Settings, OtherSave);
-        Pokedex = new PokedexPageViewModel(Settings, (box, slot) => _ = GoToSlotAsync(box, slot));
+        Pokedex = new PokedexPageViewModel(Settings, (box, slot) => _ = GoToSlotAsync(box, slot),
+            (t, m, ok, details) => ConfirmAsync(t, m, ok, details: details, icon: "📖"), s => Status = s);
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
         AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];

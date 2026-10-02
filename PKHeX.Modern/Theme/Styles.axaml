@@ -138,6 +138,9 @@
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
   </Style>
+  <Style Selector="TextBlock.alpha">
+    <Setter Property="Foreground" Value="#E5484D" />
+  </Style>
   <Style Selector="TextBlock.dexOwned">
     <Setter Property="Foreground" Value="{DynamicResource TintGoodForeground}" />
   </Style>

@@ -10,20 +10,37 @@ namespace PKHeX.Modern.Services;
 public sealed record DexSource(string Id, string Name, bool IsOpenSave, bool IsBank, ushort MaxSpecies);
 
 /// <summary>Um Pokemon possuido: fonte, local legivel e dados para "ir ate ele" (so no save aberto).</summary>
-public sealed record DexLocation(DexSource Source, string Where, string FormName, bool IsShiny, int Box, int Slot);
+public sealed record DexLocation(DexSource Source, string Where, string FormName, bool IsShiny, bool IsAlpha, int Box, int Slot);
 
-/// <summary>Uma especie na Pokedex centralizada.</summary>
-public sealed class DexEntry(ushort species, string name, int generation, byte type1, byte type2)
+/// <summary>
+/// Uma entrada da Pokedex: a especie inteira (<see cref="IsFormEntry"/> falso: qualquer forma conta)
+/// ou uma forma/genero especifico (lista "Formas e generos").
+/// </summary>
+public sealed class DexEntry(ushort species, byte form, sbyte gender, string name, string formName, int generation, byte type1, byte type2, EntityContext context, bool isFormEntry)
 {
     public ushort Species { get; } = species;
+    public byte Form { get; } = form;
+    /// <summary>-1 = qualquer genero; 0/1 = macho/femea (so especies com sprite diferente por genero).</summary>
+    public sbyte Gender { get; } = gender;
     public string Name { get; } = name;
+    public string FormName { get; } = formName;
     public int Generation { get; } = generation;
     public byte Type1 { get; } = type1;
     public byte Type2 { get; } = type2;
-    /// <summary>Fontes cuja Pokedex marca a especie como vista / capturada.</summary>
-    public List<DexSource> SeenIn { get; } = [];
-    public List<DexSource> CaughtIn { get; } = [];
+    /// <summary>Jogo de referencia da forma (para o sprite e o nome da forma).</summary>
+    public EntityContext Context { get; } = context;
+    public bool IsFormEntry { get; } = isFormEntry;
+    /// <summary>Fontes cuja Pokedex marca a especie como vista / capturada (a Pokedex dos jogos e por especie).</summary>
+    public List<DexSource> SeenIn { get; private set; } = [];
+    public List<DexSource> CaughtIn { get; private set; } = [];
     public List<DexLocation> Owned { get; } = [];
+
+    /// <summary>Formas compartilham as listas de visto/capturado da especie.</summary>
+    internal void ShareFlags(DexEntry species)
+    {
+        SeenIn = species.SeenIn;
+        CaughtIn = species.CaughtIn;
+    }
 }
 
 /// <summary>
@@ -46,19 +63,66 @@ public static class PokedexService
         return GenerationEnd.Length;
     }
 
-    /// <summary>Tipos da especie (forma base), pela tabela mais recente que tem a especie.</summary>
-    public static (byte Type1, byte Type2) GetTypes(ushort species)
+    // Tabelas de dados (da mais nova para a mais antiga) e o jogo de cada uma: tipos e formas vem da primeira que tem a especie.
+    private static readonly (IPersonalTable Table, EntityContext Context)[] Tables =
+    [
+        (PersonalTable.SV, EntityContext.Gen9), (PersonalTable.ZA, EntityContext.Gen9a), (PersonalTable.LA, EntityContext.Gen8a),
+        (PersonalTable.BDSP, EntityContext.Gen8b), (PersonalTable.SWSH, EntityContext.Gen8), (PersonalTable.GG, EntityContext.Gen7b),
+        (PersonalTable.USUM, EntityContext.Gen7), (PersonalTable.AO, EntityContext.Gen6), (PersonalTable.B2W2, EntityContext.Gen5),
+        (PersonalTable.HGSS, EntityContext.Gen4), (PersonalTable.E, EntityContext.Gen3),
+    ];
+
+    /// <summary>Especies cujo sprite muda com o genero (as mesmas do gerador de sprites do PKHeX).</summary>
+    private static readonly HashSet<ushort> GenderedSprite =
+    [
+        (ushort)Species.Hippopotas, (ushort)Species.Hippowdon, (ushort)Species.Unfezant,
+        (ushort)Species.Frillish, (ushort)Species.Jellicent, (ushort)Species.Pyroar,
+    ];
+
+    /// <summary>Tipos da especie/forma, pela tabela mais recente que a tem.</summary>
+    public static (byte Type1, byte Type2) GetTypes(ushort species, byte form = 0)
     {
-        IPersonalTable[] tables = [PersonalTable.SV, PersonalTable.SWSH, PersonalTable.LA, PersonalTable.BDSP, PersonalTable.USUM];
-        foreach (var t in tables)
+        foreach (var (t, _) in Tables)
         {
-            if (species > t.MaxSpeciesID || !t.IsPresentInGame(species, 0))
+            if (species > t.MaxSpeciesID || !t.IsPresentInGame(species, form))
                 continue;
-            var p = t.GetFormEntry(species, 0);
+            var p = t.GetFormEntry(species, form);
             return (p.Type1, p.Type2);
         }
         var any = PersonalTable.SV.GetFormEntry(species, 0);
         return (any.Type1, any.Type2);
+    }
+
+    /// <summary>
+    /// Formas "colecionaveis" da especie (juntando todos os jogos), sem as que so existem em batalha (Mega, Gigantamax...),
+    /// as de Totem e as dos nobres de Legends. Cada uma com o jogo de referencia.
+    /// </summary>
+    public static IReadOnlyList<(byte Form, EntityContext Context)> GetForms(ushort species)
+    {
+        var forms = new SortedDictionary<byte, EntityContext>();
+        foreach (var (t, context) in Tables)
+        {
+            if (species > t.MaxSpeciesID)
+                continue;
+            var count = t.GetFormEntry(species, 0).FormCount;
+            for (byte f = 0; f < count; f++)
+            {
+                if (forms.ContainsKey(f) || !t.IsPresentInGame(species, f))
+                    continue;
+                if (f > 0 && (FormInfo.IsBattleOnlyForm(species, f, context.Generation) || FormInfo.IsTotemForm(species, f) || FormInfo.IsLordForm(species, f, context)))
+                    continue;
+                forms[f] = context;
+            }
+        }
+        if (forms.Count == 0)
+            forms[0] = EntityContext.Gen9;
+        return [.. forms.Select(kv => (kv.Key, kv.Value))];
+    }
+
+    private static string FormName(ushort species, byte form, EntityContext context)
+    {
+        try { return FormConverter.GetStringFromForm(species, form, GameInfo.Strings, context); }
+        catch { return form == 0 ? "" : $"Forma {form}"; }
     }
 
     /// <summary>Saves da pasta (e subpastas), lidos sem alterar o estado do app. Caminhos iguais ao do save aberto sao pulados.</summary>
@@ -91,27 +155,76 @@ public static class PokedexService
         return null;
     }
 
-    /// <summary>Monta a Pokedex: uma entrada por especie (1..<see cref="MaxSpecies"/>), com o que cada fonte tem.</summary>
+    /// <summary>Resultado: uma entrada por especie, outra lista com cada forma/genero, e as fontes lidas.</summary>
+    public sealed record DexData(IReadOnlyList<DexEntry> Species, IReadOnlyList<DexEntry> Forms, IReadOnlyList<DexSource> Sources);
+
+    /// <summary>Monta a Pokedex com o que cada fonte tem.</summary>
     /// <param name="saves">Saves (o aberto primeiro, marcado com isOpen).</param>
-    /// <param name="includeBank">Inclui os Pokemon de todos os bancos do bank.</param>
-    public static (IReadOnlyList<DexEntry> Entries, IReadOnlyList<DexSource> Sources) Build(
-        IEnumerable<(string Path, SaveFile Sav, bool IsOpen)> saves, bool includeBank)
+    /// <param name="includeBank">Inclui os Pokemon de todos os bancos do bank (e das pastas externas).</param>
+    public static DexData Build(IEnumerable<(string Path, SaveFile Sav, bool IsOpen)> saves, bool includeBank)
     {
         var names = CoreAdapter.SpeciesNames;
         var entries = new DexEntry[MaxSpecies + 1];
+        var forms = new List<DexEntry>();
+        var formIndex = new Dictionary<(ushort, byte, sbyte), DexEntry>();
         for (ushort s = 1; s <= MaxSpecies; s++)
         {
+            var name = s < names.Count ? names[s] : $"#{s}";
+            var gen = GetGeneration(s);
             var (t1, t2) = GetTypes(s);
-            entries[s] = new DexEntry(s, s < names.Count ? names[s] : $"#{s}", GetGeneration(s), t1, t2);
+            var species = entries[s] = new DexEntry(s, 0, -1, name, "", gen, t1, t2, EntityContext.Gen9, false);
+
+            var list = GetForms(s);
+            foreach (var (form, context) in list)
+            {
+                var (f1, f2) = GetTypes(s, form);
+                var formName = list.Count > 1 ? FormName(s, form, context) : "";
+                sbyte[] genders = form == 0 && GenderedSprite.Contains(s) ? [0, 1] : [-1];
+                foreach (var g in genders)
+                {
+                    var label = g < 0 ? formName : $"{formName} {(g == 0 ? "♂" : "♀")}".Trim();
+                    var entry = new DexEntry(s, form, g, name, label, gen, f1, f2, context, true);
+                    entry.ShareFlags(species);
+                    forms.Add(entry);
+                    formIndex[(s, form, g)] = entry;
+                }
+            }
         }
 
         var sources = new List<DexSource>();
+        void Add(DexSource source, PKM pk, string where, int box, int slot)
+        {
+            if (pk.Species == 0 || pk.Species > MaxSpecies || pk.IsEgg)
+                return;
+            var formName = pk.Form == 0 ? "" : EncounterDatabase.GetSpeciesFormName(pk.Species, pk.Form, pk.Context);
+            var location = new DexLocation(source, where, formName, pk.IsShiny, pk is IAlpha { IsAlpha: true }, box, slot);
+            entries[pk.Species].Owned.Add(location);
+            sbyte gender = pk.Form == 0 && GenderedSprite.Contains(pk.Species) ? (sbyte)(pk.Gender == 1 ? 1 : 0) : (sbyte)-1;
+            if (formIndex.TryGetValue((pk.Species, pk.Form, gender), out var formEntry))
+                formEntry.Owned.Add(location);
+        }
+
         foreach (var (path, sav, isOpen) in saves)
         {
             var source = new DexSource(path, $"{GameInfo.GetVersionName(sav.Version)} · {sav.OT}" + (isOpen ? " (aberto)" : ""), isOpen, false, sav.MaxSpeciesID);
             sources.Add(source);
             AddPokedexFlags(entries, sav, source);
-            AddOwned(entries, sav, source);
+            try
+            {
+                for (int b = 0; b < sav.BoxCount; b++)
+                {
+                    var boxName = CoreAdapter.GetBoxName(sav, b);
+                    for (int i = 0; i < sav.BoxSlotCount; i++)
+                        Add(source, sav.GetBoxSlotAtIndex(b, i), $"{boxName} · {i + 1}", b, i);
+                }
+                if (sav.HasParty)
+                    for (int i = 0; i < sav.PartyCount; i++)
+                        Add(source, sav.GetPartySlotAtIndex(i), $"Equipe · {i + 1}", -1, i);
+            }
+            catch
+            {
+                // save com caixas ilegiveis: fica so com a Pokedex
+            }
         }
         if (includeBank)
         {
@@ -124,11 +237,11 @@ public static class PokedexService
                     var data = BankStorage.ReadBox(box);
                     for (int i = 0; i < data.Length; i++)
                         if (data[i] is { } pk)
-                            Add(entries, bank, pk, $"{name} › {box.Name} · {i + 1}", -1, i);
+                            Add(bank, pk, $"{name} › {box.Name} · {i + 1}", -1, i);
                 }
             }
         }
-        return ([.. entries.Skip(1)], sources);
+        return new DexData([.. entries.Skip(1)], forms, sources);
     }
 
     private static void AddPokedexFlags(DexEntry[] entries, SaveFile sav, DexSource source)
@@ -157,31 +270,64 @@ public static class PokedexService
         }
     }
 
-    private static void AddOwned(DexEntry[] entries, SaveFile sav, DexSource source)
+    /// <summary>
+    /// Registra a especie como capturada na Pokedex do save, do jeito que o proprio jogo faz ao receber um Pokemon:
+    /// grava um Pokemon temporario num slot livre (o Core atualiza a Pokedex daquele jogo) e devolve o slot como estava.
+    /// Retorna true se a especie ficou capturada.
+    /// </summary>
+    public static bool RegisterCaught(SaveFile sav, ushort species)
     {
+        if (species == 0 || species > sav.MaxSpeciesID || !sav.HasPokeDex)
+            return false;
+        if (FindScratchSlot(sav) is not var (box, slot))
+            return false;
+        var original = sav.GetBoxSlotAtIndex(box, slot);
         try
         {
-            for (int b = 0; b < sav.BoxCount; b++)
-            {
-                var boxName = CoreAdapter.GetBoxName(sav, b);
-                for (int i = 0; i < sav.BoxSlotCount; i++)
-                    Add(entries, source, sav.GetBoxSlotAtIndex(b, i), $"{boxName} · {i + 1}", b, i);
-            }
-            if (sav.HasParty)
-                for (int i = 0; i < sav.PartyCount; i++)
-                    Add(entries, source, sav.GetPartySlotAtIndex(i), $"Equipe · {i + 1}", -1, i);
+            var pk = sav.BlankPKM;
+            pk.Species = species;
+            pk.Form = 0;
+            pk.Gender = pk.GetSaneGender();
+            pk.Language = sav.Language;
+            pk.CurrentLevel = 5;
+            pk.ClearNickname();
+            pk.RefreshChecksum();
+            var dexOnly = new EntityImportSettings(EntityImportOption.Disable, EntityImportOption.Enable, EntityImportOption.Disable);
+            sav.SetBoxSlotAtIndex(pk, box, slot, dexOnly);
         }
         catch
         {
-            // save com caixas ilegiveis: fica so com a Pokedex
+            // especie que este jogo nao aceita
+        }
+        finally
+        {
+            sav.SetBoxSlotAtIndex(original, box, slot, EntityImportSettings.None);
+        }
+        try { return sav.GetCaught(species); } catch { return false; }
+    }
+
+    /// <summary>Marca a especie como vista (so nos jogos em que o Core permite marcar visto direto). True se ficou vista.</summary>
+    public static bool RegisterSeen(SaveFile sav, ushort species)
+    {
+        if (species == 0 || species > sav.MaxSpeciesID || !sav.HasPokeDex)
+            return false;
+        try
+        {
+            sav.SetSeen(species, true);
+            return sav.GetSeen(species);
+        }
+        catch
+        {
+            return false;
         }
     }
 
-    private static void Add(DexEntry[] entries, DexSource source, PKM pk, string where, int box, int slot)
+    private static (int Box, int Slot)? FindScratchSlot(SaveFile sav)
     {
-        if (pk.Species == 0 || pk.Species > MaxSpecies || pk.IsEgg)
-            return;
-        var form = pk.Form == 0 ? "" : EncounterDatabase.GetSpeciesFormName(pk.Species, pk.Form, pk.Context);
-        entries[pk.Species].Owned.Add(new DexLocation(source, where, form, pk.IsShiny, box, slot));
+        for (int b = 0; b < sav.BoxCount; b++)
+            for (int i = 0; i < sav.BoxSlotCount; i++)
+                if (new SlotInfoBox(b, i, sav).CanWriteTo(sav))
+                    return (b, i);
+        return null;
     }
 }

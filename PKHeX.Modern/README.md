@@ -36,7 +36,9 @@ Baixe o `PKHeX.Modern-win-x64.zip` na página de [Releases](https://github.com/c
 **Pokédex centralizada**
 - Página **Pokédex** com as 1025 espécies, juntando a Pokédex de todos os saves da pasta, o save aberto e o bank.
 - Mostra o que você **possui** (caixas, equipe e bank), o que foi **capturado** ou **visto** em cada jogo e os **shiny**.
-- Filtros por situação (faltando para a living dex ou shiny dex...), geração, tipo e fonte; detalhes de onde está cada Pokémon, com **Ir** para abrir no editor.
+- Filtros por situação (faltando para a living dex ou shiny dex, alpha...), geração, tipo e fonte; detalhes de onde está cada Pokémon, com **Ir** para abrir no editor.
+- **Formas e gêneros** como entradas próprias (Vulpix de Alola, Unown A–?, Pyroar ♀...), para living dex completa.
+- **Sincronizar com o save aberto**: registra na Pokédex do jogo aberto o que foi capturado nos outros saves e o que você tem guardado.
 
 **Caixas e equipe**
 - Cartões grandes com sprite, nome, nível, gênero, bola, ★ shiny e ✓/⚠ de legalidade; caixas em abas no topo.
