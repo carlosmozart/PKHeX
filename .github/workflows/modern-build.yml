@@ -39,6 +39,8 @@ jobs:
         with:
           name: PKHeX.Modern-win-x64
           path: PKHeX.Modern-win-x64.zip
+          # O zip das releases fica na propria Release; o artefato e so para testar builds e expira logo.
+          retention-days: 1
 
       - name: Criar Release (somente tags modern-v*)
         if: startsWith(github.ref, 'refs/tags/modern-v')

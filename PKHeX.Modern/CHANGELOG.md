@@ -6,7 +6,7 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.3.8 — 2026-10-03
 
 ### 🌐 Interface
 - **Menu de idiomas**: “🌐 Idioma” na barra lateral troca a interface entre **Português (Brasil)** (padrão) e **English**. A escolha fica salva e o app oferece reiniciar para aplicar. Nomes do jogo e textos de legalidade continuam em inglês; as notas de versão e as descrições do AllGenWiki só existem em português (em inglês, as descrições ficam ocultas).
