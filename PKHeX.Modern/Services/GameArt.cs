@@ -7,8 +7,14 @@ using AvaloniaBitmap = Avalonia.Media.Imaging.Bitmap;
 namespace PKHeX.Modern.Services;
 
 /// <summary>Arte de identificacao de um jogo: Pokemon da capa, cores da versao e sigla.</summary>
-public sealed record GameArt(ushort Species, byte Form, uint Color1, uint Color2, string Short)
+public sealed record GameArt(ushort Species, byte Form, uint Color1, uint Color2, string Short, ushort Species2 = 0)
 {
+    /// <summary>Selo duplo: save de um par que nao deu para separar (ex.: Ruby/Sapphire), com os dois mascotes.</summary>
+    public bool IsDual => Species2 != 0;
+
+    /// <summary>Segundo mascote do selo duplo.</summary>
+    public AvaloniaBitmap? Sprite2 => Species2 == 0 ? null : SpriteService.GetSpeciesSprite(Species2, false, 0);
+
     /// <summary>Fundo do selo: degrade diagonal entre as duas cores da versao.</summary>
     public IBrush Background { get; } = new LinearGradientBrush
     {
@@ -32,18 +38,21 @@ public sealed record GameArt(ushort Species, byte Form, uint Color1, uint Color2
         GN => new(3, 0, 0xFF43A047, 0xFF1B5E20, "Green"),
         BU => new(9, 0, 0xFF1E88E5, 0xFF0D3C78, "Blue"),
         YW => new(25, 0, 0xFFFDD835, 0xFFC08A00, "Yellow"),
-        RB or RBY or Gen1 => new(25, 0, 0xFFE53935, 0xFF1E88E5, "RBY"),
+        RB => new(6, 0, 0xFFE53935, 0xFF1E88E5, "Red/Blue", 9),
+        RBY or Gen1 => new(25, 0, 0xFFE53935, 0xFF1E88E5, "RBY"),
         GD => new(250, 0, 0xFFE0B23A, 0xFF8A5A10, "Gold"),
         SI => new(249, 0, 0xFFB8C2CC, 0xFF56606C, "Silver"),
         C => new(245, 0, 0xFF4FC3F7, 0xFF7E57C2, "Crystal"),
-        GS or GSC or Gen2 => new(250, 0, 0xFFE0B23A, 0xFF56606C, "GSC"),
+        GS => new(250, 0, 0xFFE0B23A, 0xFF56606C, "Gold/Silver", 249),
+        GSC or Gen2 => new(250, 0, 0xFFE0B23A, 0xFF56606C, "GSC"),
         R => new(383, 0, 0xFFD32F2F, 0xFF6D1010, "Ruby"),
         S => new(382, 0, 0xFF1E63C9, 0xFF0B2E6B, "Sapphire"),
         E => new(384, 0, 0xFF2E9E5B, 0xFF0F4D2A, "Emerald"),
-        RS or RSE or Gen3 => new(383, 0, 0xFFD32F2F, 0xFF1E63C9, "RSE"),
+        RS => new(383, 0, 0xFFD32F2F, 0xFF1E63C9, "Ruby/Sapphire", 382),
+        RSE or Gen3 => new(383, 0, 0xFFD32F2F, 0xFF1E63C9, "RSE"),
         FR => new(6, 0, 0xFFF4511E, 0xFF8C1F05, "FireRed"),
         LG => new(3, 0, 0xFF7CB342, 0xFF2F5E12, "LeafGreen"),
-        FRLG => new(6, 0, 0xFFF4511E, 0xFF7CB342, "FRLG"),
+        FRLG => new(6, 0, 0xFFF4511E, 0xFF7CB342, "FireRed/LeafGreen", 3),
         CXD or COLO => new(196, 0, 0xFF8E5BB5, 0xFF2B1840, "Colosseum"),
         XD => new(249, 0, 0xFF5E4B8B, 0xFF1A1230, "XD"),
         D => new(483, 0, 0xFF5C8DC9, 0xFF233A63, "Diamond"),

@@ -95,6 +95,7 @@ public static class SaveLibrary
                 return null;
             if (!SaveUtil.TryGetSaveFile(path, out var sav))
                 return null;
+            SaveNameHint.Apply(sav, path);
             return Summarize(folder, path, sav, info.LastWriteTime);
         }
         catch
@@ -115,7 +116,7 @@ public static class SaveLibrary
 
             return new SaveEntry(
                 path, group, order,
-                GameInfo.GetVersionName(sav.Version),
+                CoreAdapter.GetGameName(sav),
                 sav.Generation,
                 sav.OT,
                 sav.Gender == 1,

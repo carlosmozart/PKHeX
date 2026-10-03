@@ -6,6 +6,12 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 💾 Saves antigos
+- **Versão e idioma da Gen 1–3 pelo nome**: o app descobre qual jogo do par é (Red/Blue, Gold/Silver, Ruby/Sapphire, FireRed/LeafGreen) e o idioma pelo nome do arquivo e agora também pela **entrada do zip, pelo nome do zip e pela pasta** (ex.: `Pokemon Sapphire/jogo.sav`, `Rouge/save.sav`). Antes, saves dentro de zip não eram identificados (um FireRed/LeafGreen zipado aparecia sempre como FireRed).
+- **Selo duplo**: quando não dá para saber, o save aparece como o par (“Ruby / Sapphire”) com os dois mascotes no selo.
+
 ## 0.3.9 — 2026-10-03
 
 ### ⌂ Início

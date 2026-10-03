@@ -126,6 +126,8 @@ public static class CoreAdapter
     {
         // "arquivo.zip|entrada": save dentro de um zip (backups do JKSV)
         var sav = ZipSaves.IsZipPath(path, out _, out _) ? ZipSaves.Load(path) : SaveUtil.TryGetSaveFile(path, out var s) ? s : null;
+        if (sav is not null)
+            SaveNameHint.Apply(sav, path);
         return sav;
     }
 
@@ -153,7 +155,17 @@ public static class CoreAdapter
         File.WriteAllBytes(path, data.Span);
     }
 
-    public static string GetGameName(SaveFile sav) => GameInfo.GetVersionName(sav.Version);
+    public static string GetGameName(SaveFile sav) => GetPairName(sav.Version) ?? GameInfo.GetVersionName(sav.Version);
+
+    /// <summary>Saves de par que o nome do arquivo nao separou (selo duplo): "Ruby / Sapphire" em vez de "RS".</summary>
+    private static string? GetPairName(GameVersion version) => version switch
+    {
+        GameVersion.RB => "Red / Blue",
+        GameVersion.GS => "Gold / Silver",
+        GameVersion.RS => "Ruby / Sapphire",
+        GameVersion.FRLG => "FireRed / LeafGreen",
+        _ => null,
+    };
     public static string GetVersionName(GameVersion version) => GameInfo.GetVersionName(version);
 
     /// <summary>Nome da caixa; saves sem nome gravado (ex.: recem-criados) mostram "Box N".</summary>

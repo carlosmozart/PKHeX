@@ -123,7 +123,13 @@
         <Border Classes="card">
           <Grid ColumnDefinitions="Auto,*" ColumnSpacing="18">
             <Border Classes="gameBadge" Width="72" Height="72" CornerRadius="{DynamicResource Radius16}" Background="{Binding Art.Background}">
-              <Image Source="{Binding Art.Sprite}" Margin="4" />
+              <Viewbox Margin="4">
+                <Panel Width="100" Height="100">
+                  <Image Source="{Binding Art.Sprite}" IsVisible="{Binding !Art.IsDual}" />
+                  <Image Source="{Binding Art.Sprite}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                  <Image Source="{Binding Art.Sprite2}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                </Panel>
+              </Viewbox>
             </Border>
             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
               <TextBlock Text="{Binding GameName}" FontSize="24" FontWeight="SemiBold" />
@@ -190,7 +196,13 @@
                 <Button Classes="homeRecent" Command="{Binding OpenCommand}" ToolTip.Tip="Abrir numa aba nova">
                   <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                     <Border Classes="gameBadge" Width="40" Height="40" CornerRadius="{DynamicResource Radius8}" Background="{Binding Art.Background}">
-                      <Image Source="{Binding Art.Sprite}" Margin="2" />
+                      <Viewbox Margin="2">
+                        <Panel Width="100" Height="100">
+                          <Image Source="{Binding Art.Sprite}" IsVisible="{Binding !Art.IsDual}" />
+                          <Image Source="{Binding Art.Sprite}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                          <Image Source="{Binding Art.Sprite2}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                        </Panel>
+                      </Viewbox>
                     </Border>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                       <TextBlock Text="{Binding Game}" FontWeight="SemiBold" />

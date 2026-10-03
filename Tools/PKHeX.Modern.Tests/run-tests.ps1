@@ -8,6 +8,7 @@ $saves = Join-Path $root 'saves'
 # nome usado pelo teste -> arquivo em saves/
 $suites = [ordered]@{
     'SaveFocus' = @{}
+    'NameHint' = @{ 'r.sav' = 'Ruby.sav'; 'red.sav' = 'POKEMON RED-0.sav'; 'fr.sav' = 'fire red.sav'; 'cr.sav' = 'Pokemon Crystal Version.sav' }
     'Home' = @{}
     'Language' = @{}
     'Friendship' = @{}

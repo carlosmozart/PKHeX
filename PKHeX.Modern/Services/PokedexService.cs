@@ -170,7 +170,10 @@ public static class PokedexService
                 return ZipSaves.Load(path);
             var info = new FileInfo(path);
             if (info.Length is > 0 and < 64 * 1024 * 1024 && SaveUtil.TryGetSaveFile(path, out var sav))
+            {
+                SaveNameHint.Apply(sav, path);
                 return sav;
+            }
         }
         catch
         {
@@ -237,7 +240,7 @@ public static class PokedexService
 
         foreach (var (path, sav, isOpen) in saves)
         {
-            var source = new DexSource(path, $"{GameInfo.GetVersionName(sav.Version)} · {sav.OT}" + (isOpen ? " (aberto)" : ""), isOpen, false, sav.MaxSpeciesID);
+            var source = new DexSource(path, $"{CoreAdapter.GetGameName(sav)} · {sav.OT}" + (isOpen ? " (aberto)" : ""), isOpen, false, sav.MaxSpeciesID);
             sources.Add(source);
             AddPokedexFlags(entries, sav, source);
             AddFormFlags(formsBySpecies, entries, sav, source);

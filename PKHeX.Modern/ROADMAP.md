@@ -4,7 +4,7 @@
 - [x] **Feebas por Beauty**: requisito separado da felicidade, método por jogo e validação do resultado; troca opcional sem item.
 - [x] **Salvar a edição pendente** com clique ou Ctrl+S, com explicação quando o modo legal ou uma falha de gravação impedir salvar.
 
-Versão **0.3.7**: itens concluídos abaixo estão documentados e cobertos pelos testes de regressão. A identificação de versões antigas e o selo duplo foram adiados pelo usuário; continuam pendentes.
+Versão **0.3.7**: itens concluídos abaixo estão documentados e cobertos pelos testes de regressão. A identificação de versões antigas e o selo duplo foram feitos depois (Próxima versão).
 
 ## Inspirado no TidalHeX (https://github.com/HydrosPlays/TidalHeX)
 Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinForms + WebView2, então o código dele não serve aqui.
@@ -35,8 +35,8 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Seletor de forma com sprite** de cada forma; formas de gênero (Meowstic, Indeedee...) acompanham o gênero; aviso de que o Deoxys da Gen 3 tem a forma definida pelo jogo.
 - [x] **Temas completos** além da cor de destaque (fundo, painéis e tipografia): por exemplo um tema "PSS" (X/Y), um "Pixel" (GBA) e um "Z-A".
 - [x] **Save Manager**: data de início da aventura quando disponível, selo de idioma, navegação por teclado (setas + Enter), aviso de quantos arquivos foram ignorados e opção de esconder o SID.
-- [ ] **Selo duplo para saves de par** (Ruby/Sapphire), junto da identificação de versão dos saves antigos.
-- [ ] **Versão e idioma de saves da Gen 1-3 pelo nome** do arquivo, do zip ou da pasta (`red`/`blue`, `rouge`, `rot`, `azul`, `aka`...), como o PKHeX faz; esses saves não guardam qual jogo do par são.
+- [x] **Selo duplo para saves de par**: sem pista no nome, o save aparece como o par (“Ruby / Sapphire”) com os dois mascotes.
+- [x] **Versão e idioma de saves da Gen 1-3 pelo nome** do arquivo, da entrada do zip, do zip ou da pasta (`red`/`blue`, `rouge`, `rot`, `azul`, `aka`...), com as regras do PKHeX; esses saves não guardam qual jogo do par são.
 - [x] **Layout das caixas**: renomear caixas e trocar o papel de parede.
 - [x] **Notas da versão antes de atualizar**: mostrar o que mudou na janela de atualização, com "Atualizar agora".
 - [x] **Tela inicial (home)** com a equipe no topo, atalhos grandes (Caixas, Encontros, Eventos, Mochila...) e os saves recentes.

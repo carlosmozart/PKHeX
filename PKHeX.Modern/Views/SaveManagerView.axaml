@@ -70,7 +70,13 @@
                         <StackPanel Spacing="6">
                           <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                             <Border Classes="gameBadge" Width="48" Height="48" Background="{Binding Art.Background}">
-                              <Image Source="{Binding Art.Sprite}" />
+                              <Viewbox>
+                                <Panel Width="100" Height="100">
+                                  <Image Source="{Binding Art.Sprite}" IsVisible="{Binding !Art.IsDual}" />
+                                  <Image Source="{Binding Art.Sprite}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                                  <Image Source="{Binding Art.Sprite2}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                                </Panel>
+                              </Viewbox>
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                               <TextBlock Text="{Binding Game}" FontWeight="SemiBold" FontSize="16" TextTrimming="CharacterEllipsis" />

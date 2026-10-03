@@ -96,6 +96,7 @@ public static class ZipSaves
         if (!SaveUtil.TryGetSaveFile(data, out var sav))
             return null;
         sav.Metadata.SetExtraInfo(path);
+        SaveNameHint.Apply(sav, path);
         return sav;
     }
 

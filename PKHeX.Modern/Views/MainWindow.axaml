@@ -38,7 +38,13 @@
               <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,0,2">
                 <Border Classes="gameBadge" Width="52" Height="52" Background="{Binding GameArt.Background}"
                         ToolTip.Tip="{Binding GameName}">
-                  <Image Source="{Binding GameArt.Sprite}" />
+                  <Viewbox>
+                    <Panel Width="100" Height="100">
+                      <Image Source="{Binding GameArt.Sprite}" IsVisible="{Binding !GameArt.IsDual}" />
+                      <Image Source="{Binding GameArt.Sprite}" IsVisible="{Binding GameArt.IsDual}" Width="70" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                      <Image Source="{Binding GameArt.Sprite2}" IsVisible="{Binding GameArt.IsDual}" Width="70" Height="70" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                    </Panel>
+                  </Viewbox>
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                   <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextWrapping="Wrap" />
@@ -204,7 +210,13 @@
                   <Button Classes="saveTab" Classes.active="{Binding IsActive}" Command="{Binding SelectCommand}" ToolTip.Tip="{Binding Tooltip}">
                     <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
                       <Border Classes="gameBadge" Width="26" Height="26" CornerRadius="6" Background="{Binding Art.Background}">
-                        <Image Source="{Binding Art.Sprite}" Margin="1" />
+                        <Viewbox Margin="1">
+                          <Panel Width="100" Height="100">
+                            <Image Source="{Binding Art.Sprite}" IsVisible="{Binding !Art.IsDual}" />
+                            <Image Source="{Binding Art.Sprite}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                            <Image Source="{Binding Art.Sprite2}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                          </Panel>
+                        </Viewbox>
                       </Border>
                       <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="12" MaxWidth="170" TextTrimming="CharacterEllipsis" />
