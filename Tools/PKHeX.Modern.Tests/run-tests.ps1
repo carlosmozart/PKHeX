@@ -36,6 +36,10 @@ $suites = [ordered]@{
 $failed = @()
 foreach ($name in $suites.Keys) {
     if ($Only -and $Only -notcontains $name) { continue }
+    if ($name -eq 'SpriteParity' -and [Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
+        Write-Host '[SpriteParity] pulado: requer Windows (System.Drawing)' -ForegroundColor Yellow
+        continue
+    }
     $work = Join-Path ([IO.Path]::GetTempPath()) ("pkhex-modern-tests\" + $name + '-' + [guid]::NewGuid())
     New-Item -ItemType Directory -Force $work | Out-Null
     $missing = $false

@@ -3,54 +3,72 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace PKHeX.Modern.Services;
 
-/// <summary>
-/// Atualizacao automatica do exe publicado: baixa o zip da release, confere o SHA-256 informado pelo GitHub,
-/// renomeia o exe em uso para ".old" (o Windows deixa renomear um exe aberto, mas nao sobrescrever) e poe o novo
-/// no lugar. A versao nova vale ao reiniciar; o ".old" e apagado na proxima abertura.
-/// </summary>
+/// <summary>Baixa o pacote da plataforma, confere o SHA-256 e troca a instalacao publicada.</summary>
 public static class AutoUpdater
 {
-    public const string AssetName = "PKHeX.Modern-win-x64.zip";
-    private const string ExeName = "PKHeX.Modern.exe";
+    private const string ExecutableName = "PKHeX.Modern";
+    private const string BundleName = "PKHeX Modern.app";
     private const string DownloadPrefix = "https://github.com/" + UpdateChecker.Repo + "/releases/download/";
+    private static readonly string? ProcessExecutable = Environment.ProcessPath;
+    private static OSPlatform CurrentPlatform => OperatingSystem.IsWindows() ? OSPlatform.Windows
+        : OperatingSystem.IsLinux() ? OSPlatform.Linux : OperatingSystem.IsMacOS() ? OSPlatform.OSX : OSPlatform.Create("Unsupported");
 
-    public static string? ExePath => Environment.ProcessPath;
-    private static string? OldPath => ExePath is { } p ? p + ".old" : null;
+    public static string? AssetName => GetAssetName(CurrentPlatform, RuntimeInformation.OSArchitecture);
+    public static string? ExePath => ProcessExecutable;
 
-    /// <summary>
-    /// So o exe publicado (arquivo unico) se atualiza: rodando pelo dotnet run/build a assembly tem caminho
-    /// proprio e o processo e o host do .NET, entao nada e trocado.
-    /// </summary>
-    public static bool CanSelfUpdate =>
-        string.IsNullOrEmpty(typeof(AutoUpdater).Assembly.Location)
-        && ExePath is { } p
-        && p.EndsWith(".exe", StringComparison.OrdinalIgnoreCase);
+    /// <summary>So ha pacotes para as arquiteturas publicadas; outras usam o link da release.</summary>
+    public static string? GetAssetName(OSPlatform platform, Architecture architecture) => (platform, architecture) switch
+    {
+        (var os, Architecture.X64) when os == OSPlatform.Windows => "PKHeX.Modern-win-x64.zip",
+        (var os, Architecture.X64) when os == OSPlatform.Linux => "PKHeX.Modern-linux-x64.zip",
+        (var os, Architecture.Arm64) when os == OSPlatform.OSX => "PKHeX.Modern-osx-arm64.zip",
+        (var os, Architecture.X64) when os == OSPlatform.OSX => "PKHeX.Modern-osx-x64.zip",
+        _ => null,
+    };
 
-    /// <summary>Apaga o exe antigo deixado pela ultima atualizacao. True se havia um (o app acabou de ser atualizado).</summary>
+    public static bool CanSelfUpdate => CanUpdateExecutable(typeof(AutoUpdater).Assembly.Location, ExePath,
+        CurrentPlatform, RuntimeInformation.OSArchitecture);
+
+    /// <summary>Assembly sem caminho identifica arquivo unico; valida tambem o nome e o bundle.</summary>
+    public static bool CanUpdateExecutable(string? assemblyLocation, string? exe, OSPlatform platform, Architecture architecture)
+        => assemblyLocation == "" && exe is not null && GetAssetName(platform, architecture) is not null
+            && Path.GetFileName(exe) == (platform == OSPlatform.Windows ? ExecutableName + ".exe" : ExecutableName)
+            && (platform != OSPlatform.OSX || GetBundlePath(exe) is not null);
+
+    /// <summary>Apaga a copia antiga deixada pela atualizacao, quando ela ja nao esta em uso.</summary>
     public static bool CleanupOld()
     {
         try
         {
-            if (OldPath is { } old && File.Exists(old))
+            if (ExePath is not { } exe)
+                return false;
+            if (OperatingSystem.IsMacOS() && GetBundlePath(exe) is { } bundle)
             {
-                File.Delete(old);
+                var oldBundle = bundle + ".old";
+                if (!Directory.Exists(oldBundle)) return false;
+                Directory.Delete(oldBundle, recursive: true);
+                return true;
+            }
+            if (File.Exists(exe + ".old"))
+            {
+                File.Delete(exe + ".old");
                 return true;
             }
         }
         catch
         {
-            // ainda em uso (a versao anterior esta fechando): fica para a proxima
+            // Ainda em uso: fica para a proxima abertura.
         }
         return false;
     }
 
-    /// <summary>Baixa e instala a release. Lanca excecao com mensagem em portugues se algo der errado (nada e trocado).</summary>
     public static Task InstallAsync(ReleaseInfo release, IProgress<double>? progress = null, CancellationToken ct = default)
     {
         if (!CanSelfUpdate || ExePath is not { } exe)
@@ -58,61 +76,170 @@ public static class AutoUpdater
         return InstallToAsync(release, exe, progress, ct);
     }
 
-    /// <summary>Instala a release no lugar de <paramref name="exe"/> (separado para testar sem trocar o exe em uso).</summary>
+    /// <summary>Instala no destino indicado; o download continua restrito as releases deste repositorio.</summary>
     public static async Task InstallToAsync(ReleaseInfo release, string exe, IProgress<double>? progress = null, CancellationToken ct = default)
     {
-        PreloadForRestart();
-        var old = exe + ".old";
         if (release.AssetUrl is not { } url || !url.StartsWith(DownloadPrefix, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"a release não tem o arquivo {AssetName}");
-
-        var dir = Path.GetDirectoryName(exe)!;
-        var zip = Path.Combine(Path.GetTempPath(), $"PKHeX.Modern-{UpdateChecker.Format(release.Version)}.zip");
-        var fresh = exe + ".new"; // na mesma pasta: a troca e so renomear
+        // Nome unico: duas instancias nao compartilham um download temporario.
+        var zip = Path.Combine(Path.GetTempPath(), $"PKHeX.Modern-{Guid.NewGuid():N}.zip");
         try
         {
             await DownloadAsync(url, zip, progress, ct).ConfigureAwait(false);
-            if (release.AssetDigest is { } digest)
-                VerifySha256(zip, digest);
+            InstallPackage(zip, exe, CurrentPlatform, release.AssetDigest, ct);
+        }
+        finally { TryDelete(zip); }
+    }
 
-            using (var archive = ZipFile.OpenRead(zip))
-            {
-                var entry = archive.GetEntry(ExeName) ?? throw new InvalidDataException($"o zip não tem o {ExeName}");
-                entry.ExtractToFile(fresh, overwrite: true);
-            }
-            if (new FileInfo(fresh).Length < 1_000_000)
-                throw new InvalidDataException("o executável baixado parece incompleto");
-
-            if (File.Exists(old))
-                File.Delete(old);
-            File.Move(exe, old);
-            try
-            {
-                File.Move(fresh, exe);
-            }
-            catch
-            {
-                File.Move(old, exe); // devolve o original
-                throw;
-            }
+    /// <summary>Instala um ZIP local (tambem usado pelos testes, sem download nem alterar o app em uso).</summary>
+    public static void InstallPackage(string zip, string exe, OSPlatform platform, string? digest = null, CancellationToken ct = default)
+    {
+        if (platform != OSPlatform.Windows && platform != OSPlatform.Linux && platform != OSPlatform.OSX)
+            throw new PlatformNotSupportedException("sistema sem pacote de atualização");
+        exe = Path.GetFullPath(exe);
+        if (digest is not null) VerifySha256(zip, digest);
+        PreloadForRestart();
+        try
+        {
+            if (platform == OSPlatform.OSX)
+                InstallBundle(zip, exe, ct);
+            else
+                InstallExecutable(zip, exe, platform, ct);
         }
         catch (UnauthorizedAccessException)
         {
-            throw new InvalidOperationException($"sem permissão para gravar em {dir}. Baixe pelo link da release");
-        }
-        finally
-        {
-            TryDelete(zip);
-            TryDelete(fresh);
+            throw new InvalidOperationException($"sem permissão para gravar em {Path.GetDirectoryName(exe)}. Baixe pelo link da release");
         }
     }
 
-    /// <summary>
-    /// O exe publicado e um arquivo unico: as bibliotecas do .NET ficam dentro dele e so sao carregadas quando usadas.
-    /// Depois da troca, o arquivo no caminho original ja e o exe novo, e o processo antigo nao consegue mais carregar
-    /// nada dele (o Reiniciar falhava com FileNotFoundException de System.Diagnostics.Process). Por isso o que o
-    /// reinicio usa e carregado antes de trocar o exe.
-    /// </summary>
+    private static void InstallExecutable(string zip, string exe, OSPlatform platform, CancellationToken ct)
+    {
+        var fresh = exe + $".new-{Guid.NewGuid():N}";
+        var old = exe + ".old";
+        try
+        {
+            using (var archive = ZipFile.OpenRead(zip))
+            {
+                var name = platform == OSPlatform.Windows ? ExecutableName + ".exe" : ExecutableName;
+                var entry = archive.GetEntry(name) ?? throw new InvalidDataException($"o zip não tem o {name}");
+                RejectSymlink(entry);
+                entry.ExtractToFile(fresh, overwrite: false);
+            }
+            ValidateExecutable(fresh);
+            if (platform == OSPlatform.Linux) MakeExecutable(fresh);
+            ct.ThrowIfCancellationRequested();
+            if (platform == OSPlatform.Linux)
+            {
+                // Copia de recuperacao primeiro; rename substitui o destino sem janela de ausencia.
+                File.Copy(exe, old, overwrite: true);
+                File.Move(fresh, exe, overwrite: true);
+            }
+            else
+            {
+                // Windows permite renomear o exe aberto, mas nao sobrescreve-lo.
+                if (File.Exists(old)) File.Delete(old);
+                File.Move(exe, old);
+                try { File.Move(fresh, exe); }
+                catch { File.Move(old, exe); throw; }
+            }
+        }
+        finally { TryDelete(fresh); }
+    }
+
+    private static void InstallBundle(string zip, string exe, CancellationToken ct)
+    {
+        var bundle = GetBundlePath(exe) ?? throw new InvalidDataException("o executável não está dentro de um bundle .app");
+        var old = bundle + ".old";
+        // Staging unico ao lado do bundle: rename permanece no mesmo volume.
+        var fresh = bundle + $".new-{Guid.NewGuid():N}";
+        try
+        {
+            CopyBundle(bundle, fresh);
+            using (var archive = ZipFile.OpenRead(zip))
+            {
+                const string prefix = BundleName + "/";
+                if (archive.GetEntry(prefix + "Contents/Info.plist") is null
+                    || archive.GetEntry(prefix + "Contents/MacOS/" + ExecutableName) is null)
+                    throw new InvalidDataException("o pacote não contém o executável e Info.plist do bundle");
+                foreach (var entry in archive.Entries)
+                {
+                    if (!entry.FullName.StartsWith(prefix, StringComparison.Ordinal))
+                        throw new InvalidDataException("entrada fora do bundle no pacote");
+                    RejectSymlink(entry);
+                    var relative = entry.FullName[prefix.Length..];
+                    if (relative.Length == 0 && entry.FullName.EndsWith('/')) continue;
+                    if (relative.Contains('\\')) throw new InvalidDataException("caminho inválido no pacote");
+                    var target = Path.GetFullPath(Path.Combine(fresh, relative));
+                    if (!target.StartsWith(fresh + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                        throw new InvalidDataException("caminho fora do bundle no pacote");
+                    if (entry.FullName.EndsWith('/')) { Directory.CreateDirectory(target); continue; }
+                    Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                    entry.ExtractToFile(target, overwrite: true);
+                }
+            }
+            var newExe = Path.Combine(fresh, "Contents", "MacOS", ExecutableName);
+            ValidateExecutable(newExe);
+            if (!File.Exists(Path.Combine(fresh, "Contents", "Info.plist")))
+                throw new InvalidDataException("o bundle baixado não tem Info.plist");
+            MakeExecutable(newExe);
+            ct.ThrowIfCancellationRequested();
+            if (Directory.Exists(old)) Directory.Delete(old, recursive: true);
+            Directory.Move(bundle, old);
+            try { Directory.Move(fresh, bundle); }
+            catch { Directory.Move(old, bundle); throw; }
+        }
+        finally
+        {
+            if (Directory.Exists(fresh)) Directory.Delete(fresh, recursive: true);
+        }
+    }
+
+    // Saves ao lado do executavel podem estar dentro do bundle. Preserva arquivos locais
+    // que nao aparecem na release; os arquivos publicados sao sobrepostos no staging.
+    private static void CopyBundle(string source, string destination)
+    {
+        if ((File.GetAttributes(source) & FileAttributes.ReparsePoint) != 0)
+            throw new InvalidDataException("a instalação contém um link simbólico; atualize pelo download manual");
+        Directory.CreateDirectory(destination);
+        foreach (var file in Directory.EnumerateFiles(source))
+        {
+            if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidDataException("a instalação contém um link simbólico; atualize pelo download manual");
+            File.Copy(file, Path.Combine(destination, Path.GetFileName(file)));
+        }
+        foreach (var directory in Directory.EnumerateDirectories(source))
+            CopyBundle(directory, Path.Combine(destination, Path.GetFileName(directory)));
+    }
+    private static string? GetBundlePath(string exe)
+    {
+        var macos = Path.GetDirectoryName(Path.GetFullPath(exe));
+        var contents = macos is null ? null : Path.GetDirectoryName(macos);
+        var bundle = contents is null ? null : Path.GetDirectoryName(contents);
+        return Path.GetFileName(macos) == "MacOS" && Path.GetFileName(contents) == "Contents"
+            && bundle is not null && bundle.EndsWith(".app", StringComparison.Ordinal) ? bundle : null;
+    }
+
+    private static void ValidateExecutable(string path)
+    {
+        if (!File.Exists(path) || new FileInfo(path).Length < 1_000_000)
+            throw new InvalidDataException("o executável baixado parece incompleto");
+    }
+
+    private static void RejectSymlink(ZipArchiveEntry entry)
+    {
+        if (((entry.ExternalAttributes >> 16) & 0xF000) == 0xA000)
+            throw new InvalidDataException("o pacote contém um link simbólico");
+    }
+
+    private static void MakeExecutable(string path)
+    {
+        // Os testes de estrutura podem simular os pacotes Unix no Windows.
+        if (!OperatingSystem.IsWindows())
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute
+                | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+    }
+
+    /// <summary>Carrega antes da troca os tipos que o reinicio do arquivo unico vai usar.</summary>
     public static void PreloadForRestart()
     {
         using var current = Process.GetCurrentProcess();
@@ -121,23 +248,18 @@ public static class AutoUpdater
         _ = info.WorkingDirectory;
     }
 
-    /// <summary>Abre o exe (ja atualizado) de novo, reabrindo <paramref name="savePath"/> se houver.</summary>
+    /// <summary>Reabre o executavel na localizacao original (o bundle novo no macOS).</summary>
     public static bool Restart(string? savePath)
     {
-        if (ExePath is not { } exe)
-            return false;
+        if (ExePath is not { } exe) return false;
         try
         {
             var info = new ProcessStartInfo(exe) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe)! };
-            if (savePath is not null && File.Exists(savePath))
-                info.ArgumentList.Add(savePath);
+            if (savePath is not null && File.Exists(savePath)) info.ArgumentList.Add(savePath);
             Process.Start(info);
             return true;
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
     }
 
     private static async Task DownloadAsync(string url, string path, IProgress<double>? progress, CancellationToken ct)
@@ -156,17 +278,14 @@ public static class AutoUpdater
         {
             await output.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
             done += read;
-            if (total > 0)
-                progress?.Report((double)done / total);
+            if (total > 0) progress?.Report((double)done / total);
         }
     }
 
-    /// <summary>Confere o hash do arquivo com o "digest" da API do GitHub ("sha256:...").</summary>
     private static void VerifySha256(string path, string digest)
     {
         const string prefix = "sha256:";
-        if (!digest.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            return;
+        if (!digest.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return;
         using var stream = File.OpenRead(path);
         var hash = Convert.ToHexStringLower(SHA256.HashData(stream));
         if (!hash.Equals(digest[prefix.Length..], StringComparison.OrdinalIgnoreCase))
