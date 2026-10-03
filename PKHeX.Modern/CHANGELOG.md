@@ -6,7 +6,7 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.0 — 2026-10-03
 
 ### ⚙ Edição em lote
 - **Batch Editor** (nova página): altera vários Pokémon do save aberto de uma vez. Escolha o grupo (caixa atual, todas as caixas, equipe, caixas e equipe, Pokémon selecionados com Ctrl+clique ou os **resultados da Pesquisa** deste save) e o que fazer: ações rápidas (nível 100, IVs máximos, zerar EVs, felicidade máxima, curar PS e PP, tornar shiny, golpes sugeridos, bola legal) e/ou o **script do Batch Editor do PKHeX** (`=Species=Pikachu` filtra, `.CurrentLevel=100` altera), com lista de propriedades para inserir.
