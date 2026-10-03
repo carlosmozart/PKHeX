@@ -6,6 +6,28 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.3.5 — 03/10/2026
+
+### 💾 Saves
+- **Salvar silencioso**: o botão **💾 Salvar** (e Ctrl+S) grava direto por cima do arquivo do save, sem abrir a janela do Windows; o arquivo anterior vai para os backups antes. Para escolher outro lugar, use **Salvar como...** (Ctrl+E). Saves dentro de .zip são gravados de volta no zip.
+
+### ✏️ Editor
+- **Evolução por item**: na aba Visão geral, as espécies que evoluem com pedras e afins mostram o botão (ex.: Nidorino + Moon Stone → Nidoking, Eevee + Fire Stone → Flareon), respeitando as que dependem do gênero.
+- **IVs máximos na Gen 3/4**: nos encontros selvagens desses jogos os IVs são gerados junto com o PID, então IVs 31 em tudo é ilegal. Com o modo legal, se a espécie nasce de ovo, o app pergunta se pode **converter em nascido de ovo** (de preferência um ovo do próprio jogo), mantendo natureza, gênero, shiny, nível, item, apelido e golpes, e com todos os IVs no máximo.
+
+### 🎒 Mochila
+- **Itens em colunas**: cada slot vira um cartão com o ícone grande, o item e a quantidade, em 2 a 4 colunas conforme a largura. A página usa a largura toda (sem o painel do editor), e bolsos grandes (260 slots no Scarlet) abrem na hora.
+
+### ✏️ Editor
+- **Concursos no modo legal**: ao subir um atributo de concurso (Cool, Beauty...), o Sheen é ajustado sozinho para o mínimo legal, como acontece no jogo com Pokéblocks/Poffins; antes a mudança era desfeita. Em Omega Ruby/Alpha Sapphire o Sheen fica 0, e nos jogos sem concursos (ex.: Scarlet/Violet) a seção não aparece.
+- **Felicidade** some nos jogos da Gen 1, que não guardam esse valor.
+
+### Correções
+- **Legalizar com apelido barrado**: um apelido que o jogo não aceita (ex.: "KILLER", barrado pelo filtro de palavras) impedia qualquer legalização. Agora ele é trocado pelo nome da espécie e o app avisa.
+- **Legalizar prefere o próprio jogo**: encontros e ovos da versão do save vêm antes dos de outra versão (num save de Sapphire, não usa mais um encontro de LeafGreen).
+- **Editor nos saves da Gen 1 e 2**: abrir muitos Pokémon de Red/Blue/Yellow/Gold/Silver/Crystal dava erro e o editor parecia travado, e os tipos apareciam errados (Gengar como Aço). Os jogos do Game Boy numeram os tipos de outro jeito; agora são convertidos.
+- **Reiniciar depois de atualizar**: o botão não fazia nada (o app não conseguia carregar parte de si mesmo depois de trocar o exe). Agora isso é preparado antes da troca e, se mesmo assim falhar, o app avisa para reabrir manualmente. Vale a partir da próxima atualização: quem está na 0.3.4 ou anterior ainda precisa fechar e abrir o app depois de atualizar.
+
 ## 0.3.4 — 03/10/2026
 
 ### 💾 Saves

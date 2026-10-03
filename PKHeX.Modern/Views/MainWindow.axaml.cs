@@ -42,7 +42,7 @@ public sealed partial class MainWindow : Window
         {
             if (DataContext is not MainViewModel vm)
                 return;
-            vm.SaveRequested += () => OnExport(this, new RoutedEventArgs());
+            vm.SaveRequested += () => OnQuickSave(this, new RoutedEventArgs());
             vm.Help.RestartRequested = () => _ = RestartForUpdateAsync(vm);
             // Seletores de arquivo/pasta usados pela pagina Bank (pasta externa e outro save).
             vm.Bank.PickFolder = async () => (await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
@@ -66,9 +66,21 @@ public sealed partial class MainWindow : Window
     {
         if ((vm.IsDirty || vm.OtherSave.IsDirty) && !await vm.ConfirmCloseAsync())
             return;
-        if (!AutoUpdater.Restart(vm.HasSave ? vm.Settings.LastSavePath : null))
+        bool restarted;
+        try
         {
-            vm.Status = "Não foi possível reiniciar sozinho. Feche e abra o PKHeX Modern para usar a versão nova.";
+            restarted = AutoUpdater.Restart(vm.HasSave ? vm.Settings.LastSavePath : null);
+        }
+        catch (System.Exception ex)
+        {
+            Services.CrashLog.Write(ex);
+            restarted = false;
+        }
+        if (!restarted)
+        {
+            await vm.ConfirmAsync("Reinicie manualmente",
+                "A versão nova já está instalada, mas o PKHeX Modern não conseguiu se abrir de novo sozinho. Feche o app e abra o PKHeX.Modern.exe outra vez para usar a versão nova.",
+                "OK", cancelText: "", icon: "🔄");
             return;
         }
         _closeConfirmed = true;
@@ -126,7 +138,8 @@ public sealed partial class MainWindow : Window
                 case Key.O: OnOpen(this, e); e.Handled = true; return;
                 case Key.W when vm.ActiveTab is { } tab: _ = vm.CloseTabAsync(tab); e.Handled = true; return;
                 case Key.F when vm.HasSave: this.FindControl<TextBox>("SearchBox")?.Focus(); e.Handled = true; return;
-                case Key.S or Key.E when vm.HasSave: OnExport(this, e); e.Handled = true; return;
+                case Key.S when vm.HasSave: OnQuickSave(this, e); e.Handled = true; return;
+                case Key.E when vm.HasSave: OnExport(this, e); e.Handled = true; return;
                 case Key.A when vm.HasSave && !IsTyping(): vm.MarkAll(); e.Handled = true; return;
                 case >= Key.D1 and <= Key.D9: vm.GoToPage(e.Key - Key.D1); e.Handled = true; return;
                 case >= Key.NumPad1 and <= Key.NumPad9: vm.GoToPage(e.Key - Key.NumPad1); e.Handled = true; return;
@@ -155,6 +168,13 @@ public sealed partial class MainWindow : Window
         });
         if (files.FirstOrDefault()?.TryGetLocalPath() is { } path)
             await VM.OpenAsync(path);
+    }
+
+    /// <summary>Salvar: grava por cima do arquivo do save sem abrir janela; sem arquivo de origem, cai no Salvar como.</summary>
+    private void OnQuickSave(object? sender, RoutedEventArgs e)
+    {
+        if (!VM.QuickSave())
+            OnExport(sender, e);
     }
 
     private async void OnExport(object? sender, RoutedEventArgs e)

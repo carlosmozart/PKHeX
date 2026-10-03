@@ -304,7 +304,7 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
-    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && !IsHelpOpen;
+    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage is not (BagPageViewModel or TrainerPageViewModel) && !IsHelpOpen;
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
     /// <summary>Selo do jogo aberto (Pokemon da capa nas cores da versao), no cartao da barra lateral.</summary>
     public GameArt? GameArt => _sav is null ? null : GameArt.Get(_sav.Version);
@@ -769,6 +769,22 @@ public sealed class MainViewModel : ViewModelBase
         {
             Status = $"Erro ao salvar: {ex.Message}";
         }
+    }
+
+    /// <summary>Arquivo de onde o save ativo foi aberto (ou "zip|entrada"), se ainda existir.</summary>
+    public string? QuickSavePath => _sav?.Metadata.FilePath is { } p && System.IO.File.Exists(ZipSaves.FileOf(p)) ? p : null;
+    public bool CanQuickSave => QuickSavePath is not null;
+
+    /// <summary>
+    /// Salvar silencioso (botao Salvar / Ctrl+S): grava por cima do arquivo de onde o save foi aberto, sem janela.
+    /// O Export ja faz backup do arquivo anterior. Retorna false se nao ha arquivo de origem (use Salvar como).
+    /// </summary>
+    public bool QuickSave()
+    {
+        if (QuickSavePath is not { } path)
+            return false;
+        Export(path);
+        return true;
     }
 
     public string? SuggestedFileName => ZipSaves.EntryFileName(_sav?.Metadata.FilePath) ?? _sav?.Metadata.FileName;
@@ -1867,7 +1883,7 @@ public sealed class MainViewModel : ViewModelBase
             applied?.Invoke(pk);
             RaiseSelectionChanged();
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
-        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab };
+        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab, Confirm = (t, m, ok) => ConfirmAsync(t, m, ok) };
     }
 }
 

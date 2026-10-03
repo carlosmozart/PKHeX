@@ -658,4 +658,35 @@
     <Setter Property="VerticalAlignment" Value="Stretch" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
+
+  <!-- Mochila em colunas -->
+  <Style Selector="Border.bagItem">
+    <Setter Property="Margin" Value="4" />
+    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Border.bagItem.empty">
+    <Setter Property="Opacity" Value="0.5" />
+  </Style>
+  <Style Selector="Border.bagItem:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+  </Style>
+  <Style Selector="Border.bagIcon">
+    <Setter Property="Width" Value="40" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
+  </Style>
+
+  <!-- Lista de linhas sem cara de lista (sem selecao nem destaque): usada para grades virtualizadas -->
+  <Style Selector="ListBox.plainRows ListBoxItem">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.plainRows ListBoxItem:pointerover /template/ ContentPresenter, ListBox.plainRows ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
 </Styles>

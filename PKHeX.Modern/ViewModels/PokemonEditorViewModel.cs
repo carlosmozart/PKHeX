@@ -49,7 +49,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             m.Changed += Refresh;
         HealPPCommand = new RelayCommand(() => { _pk.HealPP(); foreach (var m in Moves) m.RaiseAll(); _status("PP restaurado."); });
         ApplyCommand = new RelayCommand(Apply, () => CanApply);
-        MaxIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; });
+        MaxIVsCommand = new RelayCommand(() => _ = MaxIVsAsync());
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
         MakeShinyCommand = new RelayCommand(MakeShiny, () => CanMakeShiny);
         Markings = [.. Enumerable.Range(0, CoreAdapter.GetMarkingCount(_pk)).Select(i => new MarkingViewModel(() => _pk, i, Refresh))];
@@ -57,7 +57,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             ? [.. Enumerable.Range(0, 6).Select(i => new HyperTrainViewModel(() => _pk, i, StatLabelsShort[i], Refresh))]
             : [];
         ContestStats = _pk is IContestStats
-            ? [.. Enumerable.Range(0, 6).Select(i => new ContestStatViewModel(() => _pk, i, Refresh))]
+            ? [.. Enumerable.Range(0, 6).Select(i => new ContestStatViewModel(() => _pk, i, () => OnContestChanged(i)))]
             : [];
         OTMemory = _pk is IMemoryOT ? new MemoryViewModel(() => _pk, true, Refresh) : null;
         HTMemory = _pk is IMemoryHT ? new MemoryViewModel(() => _pk, false, Refresh) : null;
@@ -120,7 +120,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     private void RaiseLegalMode()
     {
-        foreach (var p in (string[])[nameof(CanApply), nameof(ShowLegalModeBlock), nameof(ApplyTip)])
+        foreach (var p in (string[])[nameof(CanApply), nameof(ShowLegalModeBlock), nameof(ApplyTip), nameof(HasContestStats), nameof(ContestNote)])
             Raise(p);
         ApplyCommand.NotifyCanExecuteChanged();
     }
@@ -289,6 +289,103 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             return;
         }
         _ = LegalizeAsync(before);
+    }
+
+    /// <summary>Perguntas ao usuario (titulo, mensagem, botao de confirmar), definida pelo MainViewModel.</summary>
+    public Func<string, string, string, Task<bool>>? Confirm { get; init; }
+
+    /// <summary>
+    /// IVs maximos. Com o modo legal, se IVs 31 deixariam o Pokemon ilegal (Gen 3/4: IVs ligados ao PID nos encontros
+    /// selvagens) e a especie nasce de ovo neste jogo, pergunta se pode converter em nascido de ovo, onde os IVs sao livres.
+    /// </summary>
+    private async Task MaxIVsAsync()
+    {
+        var test = _pk.Clone();
+        Span<int> max = stackalloc int[6];
+        max.Fill(_pk.MaxIV);
+        test.SetIVs(max);
+        if (!LegalMode || !IsLegal || _sav is null || new LegalityAnalysis(test).Valid)
+        {
+            foreach (var s in Stats)
+                s.IV = _pk.MaxIV;
+            return;
+        }
+        var name = SpeciesName;
+        var sav = _sav;
+        if (!EncounterDatabase.CanHatch(sav, _pk.Species))
+        {
+            _status($"Modo legal: {name} não pode ter todos os IVs no máximo (os IVs deste encontro são ligados ao PID) e não nasce de ovo neste jogo.");
+            return;
+        }
+        if (Confirm is null || !await Confirm("Converter em nascido de ovo?",
+                $"{name} veio de um encontro em que o jogo gera os IVs junto com o PID, então IVs 31 em tudo seria ilegal. "
+                + $"Pokémon nascidos de ovo podem ter qualquer IV. Converter {name} em nascido de ovo (deste jogo) com todos os IVs no máximo? "
+                + "Natureza, gênero, shiny, nível, item, apelido e golpes são mantidos quando possível; o local e a data de encontro mudam.",
+                "Converter em ovo"))
+            return;
+        IsLegalizing = true;
+        _status($"Convertendo {name} em nascido de ovo...");
+        try
+        {
+            var current = _pk.Clone();
+            var (result, message) = await Task.Run(() => (EncounterDatabase.ConvertToEggHatched(sav, current, out var m), m));
+            if (result is null)
+            {
+                _status($"Não deu para converter: {message}.");
+                return;
+            }
+            _pk = result;
+            _isNew = false;
+            RaiseAll();
+            _status($"{name} agora é nascido de ovo, com IVs máximos ({message}). Confira e clique em Aplicar para gravar.");
+        }
+        catch (Exception ex)
+        {
+            _status($"Converter em ovo: erro ({ex.Message})");
+        }
+        finally
+        {
+            IsLegalizing = false;
+        }
+    }
+
+    // Evoluir por item (pedras e afins)
+    private (ushort, byte, byte) _itemEvoKey = (ushort.MaxValue, 0, 0);
+    private IReadOnlyList<ItemEvolutionOption> _itemEvolutions = [];
+    /// <summary>Evolucoes por item da especie atual (ex.: Pikachu + Thunder Stone → Raichu).</summary>
+    public IReadOnlyList<ItemEvolutionOption> ItemEvolutions
+    {
+        get
+        {
+            var key = (_pk.Species, _pk.Form, _pk.Gender);
+            if (key != _itemEvoKey)
+            {
+                _itemEvoKey = key;
+                _itemEvolutions = [.. CoreAdapter.GetItemEvolutions(_pk).Select(e => new ItemEvolutionOption(e, new RelayCommand(() => EvolveByItem(e))))];
+            }
+            return _itemEvolutions;
+        }
+    }
+    public bool HasItemEvolutions => ItemEvolutions.Count > 0;
+
+    private void EvolveByItem(CoreAdapter.ItemEvolution evo)
+    {
+        if (evo.Blocked is { } why)
+        {
+            _status($"Não evolui: {why}.");
+            return;
+        }
+        try
+        {
+            var done = CoreAdapter.EvolveByItem(_pk, evo);
+            _isNew = false;
+            RaiseAll();
+            _status(LegalityStatus(done));
+        }
+        catch (Exception ex)
+        {
+            _status($"Evoluir por item: erro ({ex.Message})");
+        }
     }
 
     // Evoluir por troca
@@ -698,7 +795,41 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     // Contest stats, Dynamax/Gigantamax, alpha e nobre
     public IReadOnlyList<ContestStatViewModel> ContestStats { get; }
-    public bool HasContestStats => ContestStats.Count > 0;
+    /// <summary>Modo legal: a secao some quando nenhum jogo da historia do Pokemon tem concursos (ex.: Scarlet/Violet).</summary>
+    public bool HasContestStats => ContestStats.Count > 0 && (!LegalMode || ContestRule != CoreAdapter.ContestRule.None);
+    private CoreAdapter.ContestRule ContestRule => CoreAdapter.GetContestRule(_pk).Rule;
+    public string ContestNote => !LegalMode ? "Modo legal desligado: qualquer valor."
+        : CoreAdapter.GetContestRule(_pk).Rule switch
+        {
+            CoreAdapter.ContestRule.Correlate => "O Sheen acompanha os atributos (Pokéblocks/Poffins): ao subir um atributo, ele é ajustado sozinho para o mínimo legal.",
+            CoreAdapter.ContestRule.NoSheen => "Omega Ruby/Alpha Sapphire: atributos livres, Sheen sempre 0.",
+            _ => "Qualquer valor de Sheen é legal para este Pokémon.",
+        };
+
+    /// <summary>
+    /// Modo legal: ao mudar um atributo de concurso, o Sheen vai para a faixa legal (como no jogo, os Pokeblocks/Poffins
+    /// sobem os dois juntos). Sem isso, subir so o Cool deixava o Pokemon ilegal e a mudanca era desfeita.
+    /// </summary>
+    private void OnContestChanged(int index)
+    {
+        if (LegalMode && index < 5 && _pk is IContestStats c)
+        {
+            var (rule, min, max) = CoreAdapter.GetContestRule(_pk);
+            byte sheen = rule switch
+            {
+                CoreAdapter.ContestRule.NoSheen => 0,
+                CoreAdapter.ContestRule.Correlate when min <= max => Math.Clamp(c.ContestSheen, min, max),
+                _ => c.ContestSheen,
+            };
+            if (sheen != c.ContestSheen)
+            {
+                c.ContestSheen = sheen;
+                ContestStats[5].RaiseAll();
+            }
+        }
+        Refresh();
+        Raise(nameof(ContestNote));
+    }
     public bool HasDynamax => _pk is IDynamaxLevel;
     public int DynamaxLevel
     {
@@ -780,6 +911,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public bool TrainerIsFemale { get => _pk.OriginalTrainerGender == 1; set { _pk.OriginalTrainerGender = (byte)(value ? 1 : 0); Refresh(); } }
 
     // Extras
+    /// <summary>A Gen 1 nao guarda felicidade nos Pokemon.</summary>
+    public bool HasFriendship => _pk.Format >= 2;
     public int Friendship { get => _pk.CurrentFriendship; set { _pk.CurrentFriendship = (byte)Math.Clamp(value, 0, 255); Refresh(); } }
     public string PID => $"{_pk.PID:X8}";
     public string EncryptionConstant => $"{_pk.EncryptionConstant:X8}";
@@ -1225,6 +1358,15 @@ public sealed class StatViewModel(string name, string color, Func<int> getIV, Ac
 }
 
 /// <summary>Botao "Evoluir por troca" de um destino.</summary>
+public sealed class ItemEvolutionOption(CoreAdapter.ItemEvolution evo, RelayCommand command)
+{
+    public string Label => $"Evoluir para {evo.Name}";
+    public string Requirement => evo.Requirement;
+    public bool IsBlocked => evo.Blocked is not null;
+    public string Tooltip => evo.Blocked is { } why ? $"Não dá: {why}." : $"Simula o uso do item ({evo.Requirement}). Clique em Aplicar para gravar.";
+    public RelayCommand Command { get; } = command;
+}
+
 public sealed class TradeEvolutionOption(CoreAdapter.TradeEvolution evo, RelayCommand command)
 {
     public string Label => $"Evoluir para {evo.Name}";

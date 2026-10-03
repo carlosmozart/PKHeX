@@ -61,6 +61,7 @@ public static class AutoUpdater
     /// <summary>Instala a release no lugar de <paramref name="exe"/> (separado para testar sem trocar o exe em uso).</summary>
     public static async Task InstallToAsync(ReleaseInfo release, string exe, IProgress<double>? progress = null, CancellationToken ct = default)
     {
+        PreloadForRestart();
         var old = exe + ".old";
         if (release.AssetUrl is not { } url || !url.StartsWith(DownloadPrefix, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"a release não tem o arquivo {AssetName}");
@@ -104,6 +105,20 @@ public static class AutoUpdater
             TryDelete(zip);
             TryDelete(fresh);
         }
+    }
+
+    /// <summary>
+    /// O exe publicado e um arquivo unico: as bibliotecas do .NET ficam dentro dele e so sao carregadas quando usadas.
+    /// Depois da troca, o arquivo no caminho original ja e o exe novo, e o processo antigo nao consegue mais carregar
+    /// nada dele (o Reiniciar falhava com FileNotFoundException de System.Diagnostics.Process). Por isso o que o
+    /// reinicio usa e carregado antes de trocar o exe.
+    /// </summary>
+    public static void PreloadForRestart()
+    {
+        using var current = Process.GetCurrentProcess();
+        var info = new ProcessStartInfo(current.MainModule?.FileName ?? "x") { UseShellExecute = false };
+        info.ArgumentList.Add("x");
+        _ = info.WorkingDirectory;
     }
 
     /// <summary>Abre o exe (ja atualizado) de novo, reabrindo <paramref name="savePath"/> se houver.</summary>

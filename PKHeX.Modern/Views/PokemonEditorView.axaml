@@ -134,6 +134,28 @@
             </StackPanel>
           </Border>
 
+          <!-- Evoluir por item: so aparece para especies que evoluem com pedras e afins -->
+          <Border Classes="card" IsVisible="{Binding HasItemEvolutions}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="EVOLUÇÃO POR ITEM" Classes="section" Margin="0" />
+              <ItemsControl ItemsSource="{Binding ItemEvolutions}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ItemEvolutionOption">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                      <Button Classes="small info" Content="{Binding Label, StringFormat='💎  {0}'}" Command="{Binding Command}"
+                              IsEnabled="{Binding !IsBlocked}" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" />
+                      <TextBlock Grid.Column="1" Text="{Binding Requirement}" Classes="muted" FontSize="12"
+                                 VerticalAlignment="Center" TextWrapping="Wrap" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
           <!-- Evoluir por troca: so aparece para especies que evoluem assim -->
           <Border Classes="card" IsVisible="{Binding HasTradeEvolutions}">
             <StackPanel Spacing="8">
@@ -381,8 +403,8 @@
             <StackPanel>
               <TextBlock Text="EXTRAS" Classes="section" Margin="0,0,0,8" />
               <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
-                <TextBlock Text="Felicidade" VerticalAlignment="Center" />
-                <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <TextBlock Text="Felicidade" VerticalAlignment="Center" IsVisible="{Binding HasFriendship}" />
+                <Grid Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasFriendship}">
                   <Slider Minimum="0" Maximum="255" Value="{Binding Friendship}" IsSnapToTickEnabled="True" TickFrequency="1" />
                   <NumericUpDown Grid.Column="1" Width="110" Minimum="0" Maximum="255" FormatString="0" Value="{Binding Friendship}" />
                 </Grid>
@@ -430,6 +452,7 @@
           <Border Classes="card" IsVisible="{Binding HasContestStats}">
             <StackPanel Spacing="6">
               <TextBlock Text="CONTEST STATS" Classes="section" Margin="0" />
+              <TextBlock Text="{Binding ContestNote}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
               <ItemsControl ItemsSource="{Binding ContestStats}">
                 <ItemsControl.ItemsPanel>
                   <ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate>

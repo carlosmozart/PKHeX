@@ -23,3 +23,37 @@ public sealed class WidthToColumnsConverter : IValueConverter
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+
+/// <summary>Uma linha de uma grade virtualizada: os itens dela e quantas colunas a linha tem.</summary>
+public sealed record GridRow(System.Collections.Generic.IReadOnlyList<object> Items, int Columns);
+
+/// <summary>
+/// Agrupa uma lista em linhas de N colunas (N pela largura: "larguraMinima,maximoDeColunas"). Com um ListBox de linhas,
+/// so as linhas visiveis sao criadas: grades grandes (mochila com 260 slots) abrem na hora em vez de montar tudo.
+/// Valores: [lista, largura].
+/// </summary>
+public sealed class ChunkRowsConverter : IMultiValueConverter
+{
+    public static readonly ChunkRowsConverter Instance = new();
+
+    public object? Convert(System.Collections.Generic.IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (values.Count < 2 || values[0] is not System.Collections.IEnumerable list)
+            return null;
+        var columns = (int)WidthToColumnsConverter.Instance.Convert(values[1], typeof(int), parameter, culture);
+        var rows = new System.Collections.Generic.List<GridRow>();
+        var current = new System.Collections.Generic.List<object>(columns);
+        foreach (var item in list)
+        {
+            current.Add(item!);
+            if (current.Count == columns)
+            {
+                rows.Add(new GridRow(current, columns));
+                current = new System.Collections.Generic.List<object>(columns);
+            }
+        }
+        if (current.Count > 0)
+            rows.Add(new GridRow(current, columns));
+        return rows;
+    }
+}

@@ -1042,28 +1042,55 @@
           </DataTemplate>
         </ListBox.ItemTemplate>
       </ListBox>
-      <Border Classes="card" Padding="8">
-        <ListBox Classes="rows" ItemsSource="{Binding SelectedPouch.Items}" Background="Transparent">
+      <!-- Itens em colunas, em linhas virtualizadas: so as linhas visiveis sao criadas (bolsos de ate ~260 slots) -->
+      <Panel x:Name="BagArea">
+        <ListBox Classes="plainRows" Background="Transparent">
+          <ListBox.ItemsSource>
+            <MultiBinding Converter="{x:Static c:ChunkRowsConverter.Instance}" ConverterParameter="330,4">
+              <Binding Path="SelectedPouch.Items" />
+              <Binding ElementName="BagArea" Path="Bounds.Width" />
+            </MultiBinding>
+          </ListBox.ItemsSource>
           <ListBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:BagItemViewModel">
-              <Grid ColumnDefinitions="*,140" ColumnSpacing="8" Background="Transparent" ToolTip.Tip="{Binding Tip}">
-                <ComboBox Grid.Column="0" HorizontalAlignment="Stretch" ItemsSource="{Binding Options}"
-                          SelectedItem="{Binding Selected}" IsEnabled="{Binding IsEditable}">
-                  <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ItemOption">
-                      <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent" ToolTip.Tip="{Binding Tip}" ToolTip.Placement="Right">
-                        <Image Source="{Binding Icon}" Width="22" Height="22" />
-                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                      </StackPanel>
+            <DataTemplate x:DataType="c:GridRow">
+              <ItemsControl ItemsSource="{Binding Items}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><UniformGrid Rows="1" Columns="{Binding $parent[ItemsControl].((c:GridRow)DataContext).Columns}" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:BagItemViewModel">
+                      <Border Classes="bagItem" Classes.empty="{Binding IsEmptySlot}" ToolTip.Tip="{Binding Tip}">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                          <Border Classes="bagIcon">
+                            <Image Source="{Binding Icon}" Width="32" Height="32" />
+                          </Border>
+                          <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" ItemsSource="{Binding Options}"
+                                    SelectedItem="{Binding Selected}" IsEnabled="{Binding IsEditable}">
+                            <ComboBox.SelectionBoxItemTemplate>
+                              <DataTemplate x:DataType="vm:ItemOption">
+                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                              </DataTemplate>
+                            </ComboBox.SelectionBoxItemTemplate>
+                            <ComboBox.ItemTemplate>
+                              <DataTemplate x:DataType="vm:ItemOption">
+                                <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent" ToolTip.Tip="{Binding Tip}" ToolTip.Placement="Right">
+                                  <Image Source="{Binding Icon}" Width="22" Height="22" />
+                                  <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                </StackPanel>
+                              </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                          </ComboBox>
+                          <NumericUpDown Grid.Column="2" Width="112" Minimum="0" FormatString="0" Value="{Binding Count}"
+                                         VerticalAlignment="Center" ToolTip.Tip="Quantidade" />
+                        </Grid>
+                      </Border>
                     </DataTemplate>
-                  </ComboBox.ItemTemplate>
-                </ComboBox>
-                <NumericUpDown Grid.Column="1" Minimum="0" FormatString="0" Value="{Binding Count}" />
-              </Grid>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
             </DataTemplate>
           </ListBox.ItemTemplate>
         </ListBox>
-      </Border>
+      </Panel>
     </DockPanel>
   </DataTemplate>
   </Application.DataTemplates>

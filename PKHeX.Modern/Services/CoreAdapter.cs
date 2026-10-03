@@ -218,13 +218,84 @@ public static class CoreAdapter
 
     public static IReadOnlyList<(string Name, uint Argb)> GetTypes(PKM pk)
     {
-        var p = pk.PersonalInfo;
-        var names = GameInfo.Strings.types;
-        var list = new List<(string, uint)> { (names[p.Type1], (uint)Drawing.PokeSprite.TypeColor.GetTypeSpriteColor(p.Type1).ToArgb()) };
-        if (p.Type2 != p.Type1)
-            list.Add((names[p.Type2], (uint)Drawing.PokeSprite.TypeColor.GetTypeSpriteColor(p.Type2).ToArgb()));
+        var (t1, t2) = GetSpeciesTypes(pk.PersonalInfo);
+        var list = new List<(string, uint)> { TypeChip(t1) };
+        if (t2 != t1)
+            list.Add(TypeChip(t2));
         return list;
+
+        static (string, uint) TypeChip(byte type)
+        {
+            var names = GameInfo.Strings.types;
+            if (type >= names.Length)
+                return ("?", 0xFF6B7280);
+            return (names[type], (uint)Drawing.PokeSprite.TypeColor.GetTypeSpriteColor(type).ToArgb());
+        }
     }
+
+    /// <summary>Como os concursos funcionam para este Pokemon (regras do verificador do PKHeX).</summary>
+    public enum ContestRule
+    {
+        /// <summary>Nenhum jogo da historia dele tem concursos: tudo precisa ser 0.</summary>
+        None,
+        /// <summary>Gen 3/4 e BD/SP: atributos vem de Pokeblocks/Poffins e o Sheen acompanha (faixa minima/maxima).</summary>
+        Correlate,
+        /// <summary>Omega Ruby/Alpha Sapphire: atributos livres, Sheen sempre 0.</summary>
+        NoSheen,
+        /// <summary>Passou por jogos com regras diferentes: qualquer Sheen.</summary>
+        Free,
+    }
+
+    /// <summary>Regra de concursos e a faixa legal de Sheen para os atributos atuais.</summary>
+    public static (ContestRule Rule, byte MinSheen, byte MaxSheen) GetContestRule(PKM pk)
+    {
+        if (pk is not IContestStats s)
+            return (ContestRule.None, 0, 0);
+        try
+        {
+            var info = new LegalityAnalysis(pk).Info;
+            var h = info.EvoChainsAllGens;
+            switch (ContestStatInfo.GetContestStatRestriction(pk, info.Generation, h))
+            {
+                case ContestStatGranting.None: return (ContestRule.None, 0, 0);
+                case ContestStatGranting.NoSheen: return (ContestRule.NoSheen, 0, 0);
+                case ContestStatGranting.Mixed: return (ContestRule.Free, 0, 255);
+            }
+            bool gen3 = info.Generation == 3;
+            var method = gen3 ? ContestStatGrantingSheen.Gen3 : h.HasVisitedBDSP ? ContestStatGrantingSheen.Gen8b : ContestStatGrantingSheen.Gen4;
+            var initial = ContestStatInfo.GetReferenceTemplate(info.EncounterMatch);
+            var min = ContestStatInfo.CalculateMinimumSheen(s, initial, pk, method);
+            var max = ContestStatInfo.CalculateMaximumSheen(s, pk.Nature, initial, gen3);
+            return (ContestRule.Correlate, min, max);
+        }
+        catch
+        {
+            return (ContestRule.Free, 0, 255);
+        }
+    }
+
+    /// <summary>
+    /// Tipos da especie na numeracao moderna. Os dados pessoais da Gen 1 e 2 usam a numeracao interna do Game Boy
+    /// (Inseto = 7, Fantasma = 8, Aco = 9, Fogo..Dragao = 20..26, Sombrio = 27); sem converter, o editor quebrava
+    /// (indice fora da lista de nomes) ou mostrava o tipo errado (Gengar como Aco).
+    /// </summary>
+    public static (byte Type1, byte Type2) GetSpeciesTypes(IPersonalType p)
+    {
+        if (p is not (PersonalInfo1 or PersonalInfo2))
+            return (p.Type1, p.Type2);
+        return (FromGameBoyType(p.Type1), FromGameBoyType(p.Type2));
+    }
+
+    private static byte FromGameBoyType(byte type) => type switch
+    {
+        <= 5 => type,           // Normal, Lutador, Voador, Venenoso, Terrestre, Pedra
+        7 => 6,                 // Inseto
+        8 => 7,                 // Fantasma
+        9 => 8,                 // Aco (Gen 2)
+        >= 20 and <= 26 => (byte)(type - 11), // Fogo, Agua, Grama, Eletrico, Psiquico, Gelo, Dragao
+        27 => 16,               // Sombrio (Gen 2)
+        _ => type,
+    };
 
     /// <summary>Tipo do golpe neste formato (nome e cor), ou null para "nenhum golpe".</summary>
     public static (string Name, uint Argb)? GetMoveType(ushort move, EntityContext context)
@@ -352,7 +423,7 @@ public static class CoreAdapter
             new("Nível (maior primeiro)", p => p.OrderByDescendingLevel()),
             new("Nível (menor primeiro)", p => p.OrderByLevel()),
             new("Shiny primeiro", p => p.OrderByCustom(pk => !pk.IsShiny)),
-            new("Tipo", p => p.OrderByCustom(pk => pk.PersonalInfo.Type1, pk => pk.PersonalInfo.Type2)),
+            new("Tipo", p => p.OrderByCustom(pk => GetSpeciesTypes(pk.PersonalInfo).Type1, pk => GetSpeciesTypes(pk.PersonalInfo).Type2)),
             new("IVs (maior total primeiro)", p => p.OrderByCustom(pk => -pk.IVTotal)),
         };
         if (sav is null || sav.Generation >= 4)
@@ -793,6 +864,61 @@ public static class CoreAdapter
     /// A partir da Gen 6 o jogo registra quem o recebeu (HT); sem isso a evolucao por troca fica ilegal, entao, se ele
     /// nunca saiu do dono, fica registrado um parceiro de troca generico ("PKHeX"). Retorna o texto do que foi feito.
     /// </summary>
+    /// <summary>Evolucao por item (pedras e afins): destino, item usado e o motivo se nao der agora.</summary>
+    public sealed record ItemEvolution(ushort Species, byte Form, string Name, string Requirement, int ItemId, string? Blocked);
+
+    /// <summary>Evolucoes por item da especie atual (ex.: Pikachu + Thunder Stone → Raichu, Nidorino + Moon Stone → Nidoking).</summary>
+    public static IReadOnlyList<ItemEvolution> GetItemEvolutions(PKM pk)
+    {
+        if (IsEmpty(pk) || pk.IsEgg)
+            return [];
+        EvolutionTree tree;
+        try { tree = EvolutionTree.GetEvolutionTree(pk.Context); }
+        catch (ArgumentOutOfRangeException) { return []; }
+        var items = GetItemNames(pk);
+        var list = new List<ItemEvolution>();
+        foreach (var m in tree.Forward.GetForward(pk.Species, pk.Form).Span)
+        {
+            if (m.Method is not (EvolutionType.UseItem or EvolutionType.UseItemMale or EvolutionType.UseItemFemale
+                    or EvolutionType.UseItemWormhole or EvolutionType.UseItemFullMoon) || m.Species > pk.MaxSpeciesID)
+                continue;
+            int item = m.Argument;
+            var itemName = item > 0 && item < items.Count && items[item].Length > 0 ? items[item] : $"item #{item}";
+            var requirement = m.Method switch
+            {
+                EvolutionType.UseItemMale => $"usar {itemName} (só macho)",
+                EvolutionType.UseItemFemale => $"usar {itemName} (só fêmea)",
+                EvolutionType.UseItemWormhole => $"usar {itemName} no Ultra Espaço",
+                EvolutionType.UseItemFullMoon => $"usar {itemName} na lua cheia",
+                _ => $"usar {itemName}",
+            };
+            string? blocked = m.Method switch
+            {
+                EvolutionType.UseItemMale when pk.Gender != 0 => "só machos evoluem assim",
+                EvolutionType.UseItemFemale when pk.Gender != 1 => "só fêmeas evoluem assim",
+                _ => null,
+            };
+            list.Add(new ItemEvolution(m.Species, m.GetDestinationForm(pk.Form), SpeciesNames[m.Species], requirement, item, blocked));
+        }
+        return list;
+    }
+
+    /// <summary>Evolui usando o item (como no jogo, o item da mochila e gasto; o item segurado nao muda).</summary>
+    public static string EvolveByItem(PKM pk, ItemEvolution evo)
+    {
+        bool nicknamed = pk.IsNicknamed;
+        int abilitySlot = pk.AbilityNumber switch { 2 => 1, 4 => 2, _ => 0 };
+        var from = SpeciesNames[pk.Species];
+        pk.Species = evo.Species;
+        pk.Form = evo.Form;
+        if (!nicknamed)
+            pk.ClearNickname();
+        pk.RefreshAbility(abilitySlot);
+        pk.ResetPartyStats();
+        pk.RefreshChecksum();
+        return $"{from} evoluiu para {evo.Name} ({evo.Requirement})";
+    }
+
     public static string EvolveByTrade(PKM pk, TradeEvolution evo, ITrainerInfo? owner)
     {
         var handler = pk as IHandlerUpdate;

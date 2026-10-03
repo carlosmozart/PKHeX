@@ -28,7 +28,7 @@
           <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                   Content="Abrir save..." Click="OnOpen" ToolTip.Tip="Ctrl+O" />
           <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                  Content="Exportar save..." Click="OnExport" IsEnabled="{Binding HasSave}" ToolTip.Tip="Ctrl+S ou Ctrl+E" />
+                  Content="Salvar como..." Click="OnExport" IsEnabled="{Binding HasSave}" ToolTip.Tip="Escolhe onde gravar o save (Ctrl+E)" />
           <Button Classes="ghost small" Command="{Binding OpenLastCommand}" IsVisible="{Binding HasLastSave}"
                   ToolTip.Tip="{Binding Settings.LastSavePath}">
             <TextBlock Text="{Binding LastSaveName, StringFormat='↺  Último: {0}'}" TextTrimming="CharacterEllipsis" />
@@ -237,7 +237,8 @@
                   ToolTip.Tip="Apaga o Pokémon selecionado ou os marcados com Ctrl+clique (Delete). No save, dá para desfazer com Ctrl+Z" />
           <Button Classes="small" Content="⭱  Exportar PKM" Click="OnExportEntity" IsEnabled="{Binding CanExportEntity}"
                   ToolTip.Tip="Salva o Pokémon selecionado como arquivo .pk* (ou arraste o slot para fora da janela)" />
-          <Button Classes="accent small primary" Content="💾  Salvar" Click="OnExport" ToolTip.Tip="Exportar o save (Ctrl+S)" />
+          <Button Classes="accent small primary" Content="💾  Salvar" Click="OnQuickSave"
+                  ToolTip.Tip="Grava por cima do arquivo do save, sem abrir janela (Ctrl+S). O arquivo anterior vai para os backups antes. Para escolher outro lugar, use “Salvar como...” (Ctrl+E)." />
         </StackPanel>
       </Grid>
     </Border>

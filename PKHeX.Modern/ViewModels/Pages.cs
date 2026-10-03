@@ -253,11 +253,14 @@ public sealed class BagItemViewModel(PlayerBag bag, InventoryType type, Inventor
             Raise();
             Raise(nameof(Count));
             Raise(nameof(Icon));
+            Raise(nameof(IsEmptySlot));
             Raise(nameof(Tip));
         }
     }
 
     public Avalonia.Media.Imaging.Bitmap? Icon => Selected?.Icon;
+    /// <summary>Slot sem item (cartao apagado na grade da mochila).</summary>
+    public bool IsEmptySlot => Selected is null or { Id: 0 };
     public string? Tip => Selected?.Tip;
 
     public decimal Count

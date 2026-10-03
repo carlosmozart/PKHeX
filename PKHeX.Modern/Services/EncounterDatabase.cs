@@ -158,6 +158,61 @@ public static class EncounterDatabase
     /// <param name="only">Encontro escolhido pelo usuario (modo legal, "Trocar encontro"); null = procura o melhor.</param>
     public static PKM? Legalize(SaveFile sav, PKM current, out string message, CancellationToken token = default, IEncounterInfo? only = null)
     {
+        var result = LegalizeCore(sav, current, out message, token, only);
+        if (result is not null || !current.IsNicknamed)
+            return result;
+        // O apelido pode ser o problema (ex.: barrado pelo filtro de palavras): tenta de novo com o nome da especie.
+        var plain = current.Clone();
+        plain.ClearNickname();
+        var retry = LegalizeCore(sav, plain, out var retryMessage, token, only);
+        if (retry is null)
+            return null;
+        message = $"{retryMessage}; o apelido “{current.Nickname}” foi trocado pelo nome da espécie, {retry.Nickname} (não é aceito neste jogo, ex.: filtro de palavras)";
+        return retry;
+    }
+
+    /// <summary>
+    /// Converte em nascido de ovo, com todos os IVs no maximo. Na Gen 3/4 os IVs de encontros selvagens dependem do
+    /// PID (gerados juntos pelo jogo), entao IVs 31 em tudo e impossivel; nos ovos eles sao livres.
+    /// Retorna null (com o motivo) se a especie nao nasce de ovo neste jogo ou se nao der legal.
+    /// </summary>
+    public static PKM? ConvertToEggHatched(SaveFile sav, PKM current, out string message, CancellationToken token = default)
+    {
+        // Ovo do proprio jogo primeiro (num save de Sapphire, um ovo de Sapphire e nao de FireRed/LeafGreen).
+        var eggs = SearchEncounters(sav, current.Species, onlyThisGame: true, token).Where(e => e.IsEgg)
+            .OrderBy(e => e.Version == sav.Version || e.Version.Contains(sav.Version) ? 0 : 1)
+            .ThenBy(e => GetPreference(e, current)).ToList();
+        if (eggs.Count == 0)
+        {
+            message = "esta espécie não nasce de ovo neste jogo";
+            return null;
+        }
+        Span<int> max = stackalloc int[6];
+        foreach (var egg in eggs)
+        {
+            var pk = Legalize(sav, current, out var m, token, egg);
+            if (pk is null)
+                continue;
+            max.Fill(pk.MaxIV);
+            pk.SetIVs(max);
+            pk.ResetPartyStats();
+            pk.RefreshChecksum();
+            if (new LegalityAnalysis(pk).Valid)
+            {
+                message = m;
+                return pk;
+            }
+        }
+        message = "nenhum ovo deste jogo gerou um Pokémon legal com IVs máximos";
+        return null;
+    }
+
+    /// <summary>A especie (ou uma pre-evolucao) nasce de ovo neste jogo?</summary>
+    public static bool CanHatch(SaveFile sav, ushort species) =>
+        SearchEncounters(sav, species, onlyThisGame: true).Any(e => e.IsEgg);
+
+    private static PKM? LegalizeCore(SaveFile sav, PKM current, out string message, CancellationToken token, IEncounterInfo? only)
+    {
         var encounters = only is not null ? [only] : SearchEncounters(sav, current.Species, onlyThisGame: true, token)
             .Where(e => e.Form == current.Form || e is MysteryGift)
             .OrderBy(e => GetPreference(e, current))
@@ -234,7 +289,7 @@ public static class EncounterDatabase
         if (enc.Generation != current.Format)
             score += 60; // outra geracao (ex.: Gold num save de Yellow, via tradeback): legal, mas inesperado; pesa mais que o nivel
         if (enc.Version != current.Version)
-            score += 5;
+            score += 15; // outra versao (ex.: LeafGreen num save de Sapphire): pesa mais que vir de ovo
         return score;
     }
 
