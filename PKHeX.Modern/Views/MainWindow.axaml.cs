@@ -135,6 +135,12 @@ public sealed partial class MainWindow : Window
             e.Handled = true;
             return;
         }
+        if (mods == (KeyModifiers.Control | KeyModifiers.Shift) && e.Key == Key.F && vm.HasSave)
+        {
+            vm.CurrentPage = vm.Search;
+            e.Handled = true;
+            return;
+        }
         if (mods == KeyModifiers.Control)
         {
             switch (e.Key)

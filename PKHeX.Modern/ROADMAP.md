@@ -84,7 +84,8 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [x] **Legalizar também com avisos** ("Fishy"): o cartão de legalidade lista os avisos e oferece o Legalizar.
 - [x] **Editor, parte 1**: habilidade em lista, formas, Tera Type, PID/EC editáveis, marcações e Hyper Training.
 - [x] **Editor, parte 2**: fitas (com "todas as legais"), memórias, contest stats, Dynamax/Gigantamax, alpha/nobre.
-- [ ] **Batch Editor**, **banco de dados / pesquisa** (dos Pokémon salvos), **editores específicos de cada jogo** (eventos, flags, records).
+- [x] **Banco de dados / pesquisa**: página 🔎 Pesquisa com todos os Pokémon dos saves abertos, da pasta (inclusive zip) e do bank, com filtros e abrir o resultado.
+- [ ] **Batch Editor** e **editores específicos de cada jogo** (eventos, flags, records).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [x] **Backup automático**: antes de salvar por cima de um save, o arquivo anterior vai para `%APPDATA%\PKHeX.Modern\backups` (20 mais recentes por save; botão "Backups" no Save Manager).
 - [x] **Publicação**: perfil `win-x64` (um único `PKHeX.Modern.exe`, sem precisar do .NET) e GitHub Action `.github/workflows/modern-build.yml` (artefato a cada push no `modern-ui`; Release com o zip em tags `modern-v*`).

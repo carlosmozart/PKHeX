@@ -98,6 +98,7 @@ public sealed class HomePageViewModel(Action<PageViewModel> navigate, Action<int
         EncounterDbViewModel => "Onde e como obter",
         GiftDbViewModel => "Mystery Gift",
         SaveManagerViewModel => "Todos os saves da pasta",
+        SearchPageViewModel => "Pokémon de todos os saves e do bank",
         _ => "",
     };
 

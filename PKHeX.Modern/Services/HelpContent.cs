@@ -85,6 +85,7 @@ public static class HelpContent
         ]),
         new("📖", "Pokédex",
         [
+            new("Pesquisa em todos os saves", "A página 🔎 Pesquisa (Ctrl+Shift+F) junta numa lista os Pokémon de todos os saves abertos (com as alterações ainda não salvas), dos saves da pasta do Save Manager (inclusive dentro de .zip) e do bank. Busque por espécie, apelido, golpe, item, habilidade, natureza, bola, treinador ou jogo; todas as palavras precisam bater (ex.: “garchomp earthquake shiny”; “#25” busca pelo número). Filtre por origem (um save ou banco), shiny, IVs perfeitos, natureza, bola, nível, geração de origem e ovos, e ordene por Pokédex, nível, IVs, nome ou lugar. Clique num resultado: no save aberto, vai até o slot; num save fechado, abre o save numa aba e vai até ele; no bank, abre a caixa.", "Ctrl+Shift+F"),
             new("Pokédex centralizada", "Junta a Pokédex de todos os saves da pasta, o save aberto (inclusive alterações não salvas) e o bank. Mostra o que você possui, o que foi capturado ou visto em cada jogo e os shiny.", "Ctrl+4"),
             new("Living dex e filtros", "Resumo de living dex e shiny dex; filtros por situação (faltando, shiny, alpha...), geração, tipo e fonte. “Formas e gêneros” mostra cada forma como entrada própria."),
             new("Onde está", "Selecione uma espécie para ver onde estão os seus; “Ir” abre o Pokémon no editor."),

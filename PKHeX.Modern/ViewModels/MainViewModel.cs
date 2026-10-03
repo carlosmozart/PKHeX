@@ -51,6 +51,8 @@ public sealed class MainViewModel : ViewModelBase
             (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s, Settings, OtherSave);
         Pokedex = new PokedexPageViewModel(Settings, (box, slot) => _ = GoToSlotAsync(box, slot),
             (t, m, ok, details) => ConfirmAsync(t, m, ok, details: details, icon: "📖"), s => Status = s);
+        Search = new SearchPageViewModel(Settings,
+            () => [.. OpenSaves.Select(t => (t.Path, t == _activeTab && _sav is not null ? _sav : t.Sav))], OpenSearchResultAsync);
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
         Help = new HelpPageViewModel(Settings);
@@ -68,7 +70,7 @@ public sealed class MainViewModel : ViewModelBase
         Home = new HomePageViewModel(page => CurrentPage = page,
             i => { CurrentPage = Party; if (i < Party.Slots.Count) _ = SelectSlotAsync(Party.Slots[i]); },
             p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
-        AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
+        AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager, Search];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
         Boxes.SlotsLoaded = () => { ApplySearchHighlight(); ApplyMarks(); };
@@ -115,6 +117,8 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Pokedex centralizada (saves da pasta + save aberto + bank).</summary>
     public PokedexPageViewModel Pokedex { get; }
     public EncounterDbViewModel Encounters { get; }
+    /// <summary>Pesquisa: todos os Pokemon dos saves abertos, da pasta e do bank, com filtros.</summary>
+    public SearchPageViewModel Search { get; }
     public GiftDbViewModel Gifts { get; }
     /// <summary>Ajuda (F1): funcoes, novidades, Sobre e verificacao de atualizacoes.</summary>
     public HelpPageViewModel Help { get; }
@@ -158,6 +162,7 @@ public sealed class MainViewModel : ViewModelBase
             var pages = AllPages.Where(p => p.IsAvailable).ToList();
             for (int i = 0; i < pages.Count; i++)
                 pages[i].Shortcut = i < 9 ? $"Ctrl+{i + 1}" : "";
+            Search.Shortcut = "Ctrl+Shift+F";
             return pages;
         }
     }
@@ -236,6 +241,8 @@ public sealed class MainViewModel : ViewModelBase
                 _ = Gifts.EnsureLoadedAsync();
             else if (value == Pokedex)
                 _ = Pokedex.RefreshAsync(); // rele sempre: o save aberto e o bank podem ter mudado
+            else if (value == Search)
+                _ = Search.RefreshAsync();
         }
     }
 
@@ -381,7 +388,7 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
-    public bool ShowEditorPanel => HasSave && CurrentPage != Home && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage is not (BagPageViewModel or TrainerPageViewModel) && !IsHelpOpen;
+    public bool ShowEditorPanel => HasSave && CurrentPage != Home && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage != Search && CurrentPage is not (BagPageViewModel or TrainerPageViewModel) && !IsHelpOpen;
     public bool ShowSlotActions => HasSave && !IsHelpOpen && (CurrentPage == Boxes || CurrentPage == Party);
     public bool ShowSaveActions => HasSave && !IsHelpOpen;
     public bool ShowSaveManagerActions => !IsHelpOpen && (!HasSave || CurrentPage == SaveManager);
@@ -498,6 +505,27 @@ public sealed class MainViewModel : ViewModelBase
         Boxes.CurrentBox = box;
         if (slot < Boxes.Slots.Count)
             await SelectSlotAsync(Boxes.Slots[slot]);
+    }
+
+    /// <summary>Resultado da Pesquisa: no bank, abre a caixa; num save, abre (ou ativa) a aba e vai ate o slot.</summary>
+    private async Task OpenSearchResultAsync(DbEntry entry)
+    {
+        if (entry.Source.Bank is { } bank)
+        {
+            CurrentPage = Bank;
+            Bank.SelectedBank = bank;
+            Bank.BoxIndex = entry.Box;
+            Status = $"{entry.Source.Name} · {entry.Where}";
+            return;
+        }
+        if (!ZipSaves.Exists(entry.Source.Id) && FindTab(entry.Source.Id) is null)
+        {
+            Status = $"O save {ZipSaves.DisplayName(entry.Source.Id)} não existe mais. Atualize a pesquisa.";
+            return;
+        }
+        await OpenAsync(entry.Source.Id);
+        if (_activeTab is { } tab && string.Equals(FullPath(tab.Path), FullPath(entry.Source.Id), StringComparison.OrdinalIgnoreCase))
+            await GoToSlotAsync(entry.Box, entry.Slot);
     }
 
     private async Task GoToSearchHitAsync(SearchHitViewModel hit)

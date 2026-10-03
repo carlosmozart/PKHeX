@@ -8,6 +8,9 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+### 🔎 Pesquisa
+- **Banco de dados / pesquisa** (nova página, **Ctrl+Shift+F**): todos os Pokémon dos saves abertos (com as alterações não salvas), dos saves da pasta (inclusive dentro de .zip) e do bank numa lista só. Busca por espécie, apelido, golpe, item, habilidade, natureza, bola, treinador ou jogo (todas as palavras precisam bater; `#25` busca pelo número), filtros de origem, shiny, IVs perfeitos, natureza, bola, nível, geração de origem e ovos, e cinco ordens. Clicar num resultado vai até o slot, abrindo o save numa aba se preciso, ou abre a caixa do bank.
+
 ### 💾 Saves antigos
 - **Versão e idioma da Gen 1–3 pelo nome**: o app descobre qual jogo do par é (Red/Blue, Gold/Silver, Ruby/Sapphire, FireRed/LeafGreen) e o idioma pelo nome do arquivo e agora também pela **entrada do zip, pelo nome do zip e pela pasta** (ex.: `Pokemon Sapphire/jogo.sav`, `Rouge/save.sav`). Antes, saves dentro de zip não eram identificados (um FireRed/LeafGreen zipado aparecia sempre como FireRed).
 - **Selo duplo**: quando não dá para saber, o save aparece como o par (“Ruby / Sapphire”) com os dois mascotes no selo.

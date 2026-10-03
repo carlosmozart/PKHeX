@@ -689,6 +689,99 @@
   </DataTemplate>
 
   <!-- Pagina Encontros -->
+  <!-- Pesquisa: todos os Pokemon dos saves abertos, da pasta e do bank -->
+  <DataTemplate DataType="vm:SearchPageViewModel">
+    <DockPanel>
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+        <StackPanel Spacing="2">
+          <TextBlock Text="Pesquisa" Classes="title" />
+          <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="12" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+          <Button Classes="small" Content="✕  Limpar filtros" Command="{Binding ClearCommand}" />
+          <Button Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}"
+                  ToolTip.Tip="Relê os saves abertos, os saves da pasta e o bank" />
+        </StackPanel>
+      </Grid>
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,0,0,8">
+        <TextBox Text="{Binding Query}" Watermark="Buscar: espécie, apelido, golpe, item, habilidade, treinador... (ex.: garchomp earthquake shiny, #25)" />
+        <ComboBox Grid.Column="1" ItemsSource="{Binding SourceOptions}" SelectedIndex="{Binding SourceIndex}" MinWidth="200" MaxWidth="300"
+                  ToolTip.Tip="Procurar em tudo ou só num save (ou num banco do bank)" />
+        <ComboBox Grid.Column="2" ItemsSource="{Binding SortOptions}" SelectedIndex="{Binding SortIndex}" MinWidth="170" />
+      </Grid>
+      <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8" ItemSpacing="8" LineSpacing="8">
+        <ComboBox ItemsSource="{Binding ShinyOptions}" SelectedIndex="{Binding ShinyIndex}" MinWidth="130" />
+        <ComboBox ItemsSource="{Binding IvOptions}" SelectedIndex="{Binding IvIndex}" MinWidth="150"
+                  ToolTip.Tip="IV perfeito = 31 (15 na Gen 1 e 2)" />
+        <ComboBox ItemsSource="{Binding NatureOptions}" SelectedIndex="{Binding NatureIndex}" MinWidth="150" MaxDropDownHeight="400" />
+        <ComboBox ItemsSource="{Binding BallOptions}" SelectedIndex="{Binding BallIndex}" MinWidth="140" MaxDropDownHeight="400" />
+        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+          <TextBlock Text="Nível" Classes="muted" VerticalAlignment="Center" />
+          <NumericUpDown Value="{Binding MinLevel}" Minimum="1" Maximum="100" Width="120" Watermark="mín." FormatString="0" />
+          <TextBlock Text="a" Classes="muted" VerticalAlignment="Center" />
+          <NumericUpDown Value="{Binding MaxLevel}" Minimum="1" Maximum="100" Width="120" Watermark="máx." FormatString="0" />
+        </StackPanel>
+        <CheckBox Content="Incluir ovos" IsChecked="{Binding IncludeEggs}" VerticalAlignment="Center" />
+      </WrapPanel>
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,0,10">
+        <ItemsControl ItemsSource="{Binding Generations}" VerticalAlignment="Center">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:GenerationFilterViewModel">
+              <Button Classes="small" Classes.accent="{Binding IsActive}" Content="{Binding Label}"
+                      ToolTip.Tip="Só Pokémon originários desta geração (clique de novo para mostrar todos)"
+                      Command="{Binding $parent[ItemsControl].((vm:SearchPageViewModel)DataContext).SetGenerationCommand}"
+                      CommandParameter="{Binding Generation}" />
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Grid.Column="1" Text="{Binding CountText}" Classes="muted" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" />
+      </Grid>
+      <Panel>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <!-- Lista virtualizada: so as linhas visiveis sao montadas -->
+          <ItemsRepeater ItemsSource="{Binding Results}">
+            <ItemsRepeater.Layout>
+              <StackLayout Spacing="6" />
+            </ItemsRepeater.Layout>
+            <ItemsRepeater.ItemTemplate>
+              <DataTemplate x:DataType="vm:DbResultViewModel">
+                <Button Classes="homeRecent searchRow" ToolTip.Tip="{Binding OpenTip}" Margin="0,0,10,0"
+                        Command="{Binding $parent[ItemsRepeater].((vm:SearchPageViewModel)DataContext).OpenCommand}"
+                        CommandParameter="{Binding}">
+                  <Grid ColumnDefinitions="56,2*,3*,2*" ColumnSpacing="12">
+                    <Panel>
+                      <Image Source="{Binding Sprite}" Width="56" Height="48" Stretch="Uniform" />
+                      <TextBlock Text="★" Classes="shiny" HorizontalAlignment="Right" VerticalAlignment="Top" IsVisible="{Binding IsShiny}" />
+                    </Panel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding LevelText}" Classes="muted" FontSize="12" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                      <TextBlock Text="{Binding Details}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding MovesText}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding IvText}" Classes="muted" FontSize="11" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" VerticalAlignment="Center" Spacing="2">
+                      <TextBlock Text="{Binding SourceText}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding WhereText}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding OriginText}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsRepeater.ItemTemplate>
+          </ItemsRepeater>
+        </ScrollViewer>
+        <TextBlock Text="Lendo saves e bank..." Classes="muted" IsVisible="{Binding IsBusy}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <TextBlock Text="Nenhum Pokémon com esses filtros." Classes="muted" IsVisible="{Binding HasNoResults}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Panel>
+    </DockPanel>
+  </DataTemplate>
+
   <DataTemplate DataType="vm:EncounterDbViewModel">
     <UserControl>
     <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">
