@@ -96,7 +96,7 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [x] **Menu de idiomas da interface**: Português (Brasil) padrão e English, em “🌐 Idioma” na barra lateral (vale ao reiniciar). A tradução é feita na exibição (`Services/Loc.cs` + `Assets/lang/en.json`, chaves = texto em português, com modelos `{0}`); o teste `Language` lista o que ficou sem tradução. Changelog e descrições do AllGenWiki ficam só em português.
 - [ ] Instalador de verdade (MSIX ou Inno Setup), ícone próprio e assinatura do exe. **Adiado** (03/10/2026): inviável no momento.
 - [x] **Mochila em colunas**: cartões com ícone, item e quantidade, em linhas virtualizadas (bolsos de 260 slots abrem em ~0,3 s).
-- [ ] **Multiplataforma** (Linux/macOS): (1) ~~sprites sem `System.Drawing`~~ feito (Próxima versão: `PKHeX.Modern.Sprites`, idêntico pixel a pixel); (2) `net10.0` sem `-windows`; (3) CI com pacotes Windows/Linux/macOS e atualização automática por sistema; (4) testes headless no Linux/macOS pelo GitHub Actions.
+- [ ] **Multiplataforma** (Linux/macOS): (1) ~~sprites sem `System.Drawing`~~ feito (Próxima versão: `PKHeX.Modern.Sprites`, idêntico pixel a pixel); (2) ~~`net10.0` sem `-windows`~~ feito (Próxima versão; testes também, menos o `SpriteParity`); (3) CI com pacotes Windows/Linux/macOS e atualização automática por sistema; (4) testes headless no Linux/macOS pelo GitHub Actions.
 
 ## Conhecido / observações
 - Em saves com a equipe cheia, ainda não foi testado colocar um Pokémon num slot vazio da equipe. Ele entra na próxima posição livre.

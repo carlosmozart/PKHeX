@@ -8,8 +8,8 @@
   -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <!-- -windows ainda: a troca para net10.0 (Linux/macOS) e a fase 2 da multiplataforma. Os sprites ja nao usam System.Drawing. -->
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- net10.0 (sem -windows): roda no Windows, Linux e macOS; os sprites vem do PKHeX.Modern.Sprites (sem System.Drawing). -->
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>PKHeX.Modern</RootNamespace>
     <!-- Versao do PKHeX Modern (a do PKHeX.Core vem do Directory.Build.props). Atualize junto com a tag modern-vX.Y.Z. -->
     <Version>0.4.5</Version>

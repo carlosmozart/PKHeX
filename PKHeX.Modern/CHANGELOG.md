@@ -9,7 +9,8 @@ Formato: "## versão — data", "### seção", "- item".
 ## Próxima versão
 
 ### 🖥️ Multiplataforma (preparação)
-- Os sprites agora são montados sem depender do Windows: são os mesmos PNGs e a mesma montagem do PKHeX, refeitos com SkiaSharp, e conferidos pixel a pixel contra o original (nada muda na tela). É o primeiro passo para o PKHeX Modern rodar no Linux e no macOS.
+- Os sprites agora são montados sem depender do Windows: são os mesmos PNGs e a mesma montagem do PKHeX, refeitos com SkiaSharp, e conferidos pixel a pixel contra o original (nada muda na tela).
+- O PKHeX Modern deixou de ser um programa só de Windows: o mesmo código já compila para Linux e macOS. Os pacotes desses sistemas chegam numa próxima versão.
 
 ## 0.4.5 — 2026-10-03
 
