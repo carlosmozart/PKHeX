@@ -6,15 +6,17 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.6 — 2026-10-03
 
-### 🖥️ Multiplataforma (preparação)
-- Os sprites agora são montados sem depender do Windows: são os mesmos PNGs e a mesma montagem do PKHeX, refeitos com SkiaSharp, e conferidos pixel a pixel contra o original (nada muda na tela).
-- O PKHeX Modern deixou de ser um programa só de Windows: o mesmo código já compila para Linux e macOS. A publicação agora gera pacotes autocontidos para Windows x64, Linux x64 e macOS Apple Silicon/Intel.
+### 🖥️ Linux e macOS
+- **O PKHeX Modern agora roda no Linux e no macOS**, além do Windows (o PKHeX original é só Windows). A release traz quatro pacotes: Windows x64, Linux x64 (serve também para o Steam Deck), macOS Apple Silicon e macOS Intel. Nenhum precisa do .NET instalado.
+- No macOS o app vem como `PKHeX Modern.app`. Ele não tem assinatura da Apple, então na primeira abertura o macOS pede para liberar: botão direito no app › Abrir, ou Ajustes › Privacidade e Segurança › Abrir mesmo assim. O README explica, junto com as dependências do Linux.
+- A **atualização automática** baixa o pacote certo de cada sistema. No Windows nada muda; no Linux a permissão de execução é mantida; no macOS o app inteiro é trocado.
+- Os sprites agora são montados sem depender do Windows: são os mesmos PNGs e a mesma montagem do PKHeX, refeitos com SkiaSharp e conferidos pixel a pixel contra o original (nada muda na tela).
+- A Ajuda diz onde ficam as preferências, os backups e o bank em cada sistema (`~/.config/PKHeX.Modern` no Linux e no macOS).
 
-- Atualização automática escolhe o pacote do sistema e da arquitetura, mantendo o ZIP e o comportamento das versões Windows já instaladas. No Linux restaura a permissão de execução; no macOS troca o app inteiro, incluindo a versão e o ícone.
-- Pacotes macOS em bundle `.app`, com ícone gerado no Mac, sem assinatura Developer ID ou notarização. O README explica a primeira abertura e as dependências do Linux.
-- CI publica os quatro destinos e executa os testes headless no Linux/macOS (ainda informativos); o teste de paridade GDI+ permanece exclusivo do Windows.
+### 🐞 Correções
+- A atualização automática continua funcionando quando o arquivo do programa foi renomeado (ex.: `PKHeX.Modern (1).exe`).
 
 ## 0.4.5 — 2026-10-03
 

@@ -164,7 +164,7 @@ o download no navegador.
 ### Conheça também: AllGenWiki
 [AllGenWiki](https://allgenwiki.carlosmozartbna.workers.dev/) é meu outro projeto: uma enciclopédia Pokémon em português das nove gerações, com Pokédex por jogo, movesets, TMs, treinadores, mapas, encontros, roteiros e guias, montador de equipes e compatibilidade do Pokémon HOME. Funciona offline. As descrições dos itens da mochila vêm de lá.
 
-As preferências ficam em `%APPDATA%\PKHeX.Modern\settings.json`. Se algo der errado, os detalhes ficam em `%APPDATA%\PKHeX.Modern\crash.log`.
+As preferências ficam em `settings.json` na pasta de dados do app: `%APPDATA%\PKHeX.Modern` no Windows e `~/.config/PKHeX.Modern` no Linux e no macOS (backups e bank ficam na mesma pasta). Se algo der errado, os detalhes ficam em `crash.log`, também nela.
 
 Os nomes do jogo (espécies, golpes, itens) e os textos de legalidade ficam em inglês, como no PKHeX, nos dois idiomas. As notas de versão e as descrições do AllGenWiki existem só em português (em inglês, as descrições ficam ocultas).
 

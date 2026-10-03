@@ -697,7 +697,7 @@
  "Possuídas": "Owned",
  "Preenche os golpes de reaprender a partir do encontro": "Fills in the relearn moves from the encounter",
  "Preferências": "Preferences",
- "Preferências, backups e bank ficam em %APPDATA%\\PKHeX.Modern. Se algo der errado, os detalhes ficam em crash.log.": "Preferences, backups and bank are in %APPDATA%\\PKHeX.Modern. If something goes wrong, the details are in crash.log.",
+ "Preferências, backups e bank ficam na pasta de dados do app: %APPDATA%\\PKHeX.Modern no Windows e ~/.config/PKHeX.Modern no Linux e no macOS. Se algo der errado, os detalhes ficam em crash.log, na mesma pasta.": "Preferences, backups and bank are in the app data folder: %APPDATA%\\PKHeX.Modern on Windows and ~/.config/PKHeX.Modern on Linux and macOS. If something goes wrong, the details are in crash.log, in the same folder.",
  "Presente do Pokémon HOME": "Pokémon HOME gift",
  "Preto e lima da Lumiose de Legends: Z-A, com cantos quase retos.": "Black and lime from Legends: Z-A's Lumiose, with nearly square corners.",
  "Procura cada Pokémon anexado no save ligado a ele e traz a versão do jogo para o bank (de outra geração, guarda como variante)": "Looks for each attached Pokémon in its linked save and brings the game's version to the bank (from another generation, it is kept as a variant)",
