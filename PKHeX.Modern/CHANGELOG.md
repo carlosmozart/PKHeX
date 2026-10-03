@@ -6,6 +6,11 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### Correções
+- O botão “🌐 Idioma” não fica mais cortado na barra lateral, e a dica do Feebas explica o que o botão de evoluir faz.
+
 ## 0.3.8 — 2026-10-03
 
 ### 🌐 Interface

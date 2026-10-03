@@ -228,7 +228,7 @@ public sealed class MainViewModel : ViewModelBase
 
     /// <summary>Idiomas da interface (menu "🌐 Idioma" da barra lateral).</summary>
     public IReadOnlyList<LanguageOptionViewModel> LanguageOptions { get; }
-    public string LanguageText => "🌐  " + Loc.T("Idioma") + ": " + (LanguageOptions.FirstOrDefault(l => l.IsSelected)?.Name ?? "Português (Brasil)");
+    public string LanguageText => "🌐  " + Loc.T("Idioma") + ": " + (LanguageOptions.FirstOrDefault(l => l.IsSelected)?.Code == Loc.English ? "English" : "Português");
     /// <summary>Reiniciar o app (definido pela janela; o mesmo fluxo do Reiniciar da atualizacao).</summary>
     public Func<Task>? RestartAppRequested { get; set; }
 

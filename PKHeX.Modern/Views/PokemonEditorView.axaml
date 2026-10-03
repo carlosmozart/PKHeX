@@ -211,7 +211,7 @@
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <TextBlock Text="Beauty é um atributo de concurso, separado da felicidade. Confira em Extras; alguns jogos só aceitam o valor trazido de outro jogo." Classes="muted" FontSize="11" TextWrapping="Wrap" />
+              <TextBlock Text="Beauty é um atributo de concurso, separado da felicidade. O botão sobe o Beauty até o mínimo (com o Sheen legal) e tira a Everstone; nos jogos sem concursos, só vale se o Pokémon veio de um jogo que tem." Classes="muted" FontSize="11" TextWrapping="Wrap" />
             </StackPanel>
           </Border>
           <Border Classes="card" IsVisible="{Binding HasTradeEvolutions}">

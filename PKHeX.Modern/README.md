@@ -20,8 +20,10 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | ![Fitas e memórias](docs/ribbons.png) | ![Evolução por beleza](docs/beauty.png) |
 | **Evolução por felicidade** | **Layout compacto** |
 | ![Evolução por felicidade](docs/friendship.png) | ![Layout compacto](docs/compact.png) |
+| **Interface em inglês (🌐 Idioma)** | |
+| ![Interface em inglês](docs/english.png) | |
 
-Capturas da versão **0.3.7**, geradas em modo headless com saves sintéticos.
+Capturas da versão **0.3.8**, geradas em modo headless com saves sintéticos.
 
 ## Download
 

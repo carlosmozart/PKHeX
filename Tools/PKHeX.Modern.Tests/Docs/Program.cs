@@ -67,7 +67,12 @@ vm.CurrentPage = vm.SaveManager; Wait(vm.SaveManager.RefreshAsync()); Shot("save
 vm.IsHelpOpen = true; Shot("help"); vm.IsHelpOpen = false;
 vm.CurrentPage = vm.Boxes; win.Width = 1100; win.Height = 800; Shot("compact"); win.Width = 1500; win.Height = 1100;
 var bd = BlankSaveFile.Get(GameVersion.BD); bd.OT = "Demo"; CoreAdapter.Activate(bd);
-var feebas = Make(bd, 349); ((IContestStats)feebas).ContestBeauty = 170; ((IContestStats)feebas).ContestSheen = CoreAdapter.GetContestRule(feebas).MinSheen;
+var feebas = Make(bd, 349); ((IContestStats)feebas).ContestBeauty = 0; ((IContestStats)feebas).ContestSheen = 0; // o botao mostra "Beauty sobe de 0 para 170"
 bd.SetBoxSlotAtIndex(feebas, 0, 0); var bdPath = Path.Combine(library, "Feebas.sav"); File.WriteAllBytes(bdPath, bd.Write().ToArray());
 vm.Open(bdPath); Wait(vm.SelectSlotAsync(vm.Boxes.Slots[0])); vm.Editor!.SelectedTab = 0; Shot("beauty");
+// Interface em ingles: a traducao so e instalada na partida, entao vai por ultimo, numa janela nova.
+Loc.Load(Loc.English); Loc.Hook();
+var vmEn = new MainViewModel(new AppSettings { SavesFolder = library, CheckForUpdates = false, UiLanguage = Loc.English });
+win.Close(); win = new MainWindow { DataContext = vmEn, Width = 1500, Height = 1100 }; win.Show();
+vmEn.Open(black); Wait(vmEn.SelectSlotAsync(vmEn.Boxes.Slots[0])); Shot("english");
 Console.WriteLine("Capturas sintéticas concluídas: " + output);
