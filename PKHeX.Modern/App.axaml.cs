@@ -25,6 +25,9 @@ public sealed class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var settings = Services.AppSettings.Load();
+            // Idioma antes de criar qualquer tela: os tratadores traduzem os textos conforme aparecem.
+            Services.Loc.Load(settings.UiLanguage);
+            Services.Loc.Hook();
             RequestedThemeVariant = settings.DarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
             Theme.AccentTheme.Apply(Theme.AccentTheme.Find(settings.AccentColor));
             var vm = new MainViewModel(settings);

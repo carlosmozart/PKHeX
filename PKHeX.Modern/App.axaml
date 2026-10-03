@@ -936,42 +936,46 @@
           </DockPanel>
         </TabItem>
         <TabItem Header="Novidades">
-          <ScrollViewer Margin="0,12,0,0">
-            <ItemsControl ItemsSource="{Binding Changelog}" MaxWidth="920" HorizontalAlignment="Left">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="svc:ChangelogVersion">
-                  <Border Classes="card" Margin="0,0,0,12">
-                    <StackPanel Spacing="8">
-                      <StackPanel Orientation="Horizontal" Spacing="10">
-                        <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Accent}" />
-                        <TextBlock Text="{Binding Date}" Classes="muted" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Classes="muted" Margin="0,12,0,0" FontSize="12" TextWrapping="Wrap"
+                       IsVisible="{Binding ShowChangelogLanguageNote}" Text="As notas de versão são escritas em português." />
+            <ScrollViewer Margin="0,12,0,0">
+              <ItemsControl ItemsSource="{Binding Changelog}" MaxWidth="920" HorizontalAlignment="Left">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="svc:ChangelogVersion">
+                    <Border Classes="card" Margin="0,0,0,12">
+                      <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                          <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Accent}" />
+                          <TextBlock Text="{Binding Date}" Classes="muted" VerticalAlignment="Bottom" Margin="0,0,0,2" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding Intro}" TextWrapping="Wrap" IsVisible="{Binding Intro, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        <ItemsControl ItemsSource="{Binding Sections}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="svc:ChangelogSection">
+                              <StackPanel Spacing="4" Margin="0,4,0,6">
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                <ItemsControl ItemsSource="{Binding Items}">
+                                  <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                      <Grid ColumnDefinitions="16,*" Margin="4,1">
+                                        <TextBlock Text="•" Classes="muted" />
+                                        <TextBlock Grid.Column="1" Text="{Binding}" TextWrapping="Wrap" FontSize="13" />
+                                      </Grid>
+                                    </DataTemplate>
+                                  </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                              </StackPanel>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                       </StackPanel>
-                      <TextBlock Text="{Binding Intro}" TextWrapping="Wrap" IsVisible="{Binding Intro, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                      <ItemsControl ItemsSource="{Binding Sections}">
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate x:DataType="svc:ChangelogSection">
-                            <StackPanel Spacing="4" Margin="0,4,0,6">
-                              <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                              <ItemsControl ItemsSource="{Binding Items}">
-                                <ItemsControl.ItemTemplate>
-                                  <DataTemplate x:DataType="x:String">
-                                    <Grid ColumnDefinitions="16,*" Margin="4,1">
-                                      <TextBlock Text="•" Classes="muted" />
-                                      <TextBlock Grid.Column="1" Text="{Binding}" TextWrapping="Wrap" FontSize="13" />
-                                    </Grid>
-                                  </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                              </ItemsControl>
-                            </StackPanel>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                    </StackPanel>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </DockPanel>
         </TabItem>
         <TabItem Header="Sobre">
           <ScrollViewer Margin="0,12,0,0">

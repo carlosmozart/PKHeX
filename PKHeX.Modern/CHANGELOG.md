@@ -6,6 +6,15 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 🌐 Interface
+- **Menu de idiomas**: “🌐 Idioma” na barra lateral troca a interface entre **Português (Brasil)** (padrão) e **English**. A escolha fica salva e o app oferece reiniciar para aplicar. Nomes do jogo e textos de legalidade continuam em inglês; as notas de versão e as descrições do AllGenWiki só existem em português (em inglês, as descrições ficam ocultas).
+
+### ♥ Editor
+- **Feebas evolui pelo botão**: “Evoluir para Milotic” agora cumpre os requisitos sozinho: sobe o Beauty até 170, ajusta o Sheen à faixa legal (Gen 3/4 e BDSP), tira a Everstone e sobe um nível. Só fica bloqueado no nível 100 antes da Gen 8 ou num Pokémon que nunca passou por jogos com concursos (ex.: um Feebas nativo de Black/White).
+- **Evolução por felicidade** também cumpre os requisitos: tira a Everstone e, no Sylveon da Gen 6/7, sobe o carinho para 2 corações.
+
 ## 0.3.7 — 2026-10-02
 
 ### ♥ Editor

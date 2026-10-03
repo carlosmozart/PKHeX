@@ -44,6 +44,8 @@ public sealed partial class MainWindow : Window
                 return;
             vm.SaveRequested += () => OnQuickSave(this, new RoutedEventArgs());
             vm.Help.RestartRequested = () => _ = RestartForUpdateAsync(vm);
+            vm.RestartAppRequested = () => RestartAsync(vm, "Reinicie manualmente",
+                "O PKHeX Modern não conseguiu se abrir de novo sozinho. Feche o app e abra outra vez para usar o novo idioma.");
             // Seletores de arquivo/pasta usados pela pagina Bank (pasta externa e outro save).
             vm.Bank.PickFolder = async () => (await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
@@ -62,7 +64,11 @@ public sealed partial class MainWindow : Window
 
     /// <summary>Fechar com alteracoes nao exportadas: pergunta dentro da janela antes de sair.</summary>
     /// <summary>Reiniciar na versao nova: pergunta se houver alteracoes nao salvas, abre o exe novo (com o save aberto) e fecha este.</summary>
-    private async Task RestartForUpdateAsync(MainViewModel vm)
+    private Task RestartForUpdateAsync(MainViewModel vm) => RestartAsync(vm, "Reinicie manualmente",
+        "A versão nova já está instalada, mas o PKHeX Modern não conseguiu se abrir de novo sozinho. Feche o app e abra o PKHeX.Modern.exe outra vez para usar a versão nova.");
+
+    /// <summary>Reinicia o app (pergunta se houver alteracoes nao salvas e reabre o save); se nao der, explica com <paramref name="failMessage"/>.</summary>
+    private async Task RestartAsync(MainViewModel vm, string failTitle, string failMessage)
     {
         if ((vm.IsDirty || vm.OtherSave.IsDirty) && !await vm.ConfirmCloseAsync())
             return;
@@ -78,9 +84,7 @@ public sealed partial class MainWindow : Window
         }
         if (!restarted)
         {
-            await vm.ConfirmAsync("Reinicie manualmente",
-                "A versão nova já está instalada, mas o PKHeX Modern não conseguiu se abrir de novo sozinho. Feche o app e abra o PKHeX.Modern.exe outra vez para usar a versão nova.",
-                "OK", cancelText: "", icon: "🔄");
+            await vm.ConfirmAsync(failTitle, failMessage, "OK", cancelText: "", icon: "🔄");
             return;
         }
         _closeConfirmed = true;

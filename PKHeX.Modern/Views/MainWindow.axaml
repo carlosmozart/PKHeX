@@ -91,6 +91,18 @@
           </ToggleButton>
           <CheckBox Content="Abrir último save ao iniciar" FontSize="12" IsChecked="{Binding OpenLastSaveOnStartup}" />
           <Button Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
+          <Button Classes="ghost" Content="{Binding LanguageText}" ToolTip.Tip="Idioma da interface (vale ao reiniciar). Nomes do jogo continuam em inglês.">
+            <Button.Flyout>
+              <MenuFlyout Placement="TopEdgeAlignedLeft" ItemsSource="{Binding LanguageOptions}">
+                <MenuFlyout.ItemContainerTheme>
+                  <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="vm:LanguageOptionViewModel">
+                    <Setter Property="Header" Value="{Binding Header}" />
+                    <Setter Property="Command" Value="{Binding SelectCommand}" />
+                  </ControlTheme>
+                </MenuFlyout.ItemContainerTheme>
+              </MenuFlyout>
+            </Button.Flyout>
+          </Button>
           <ItemsControl ItemsSource="{Binding AccentOptions}" Margin="8,4,0,4" ClipToBounds="False">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>

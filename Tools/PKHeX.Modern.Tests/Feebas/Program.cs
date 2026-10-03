@@ -39,7 +39,14 @@ foreach (var version in new[] { GameVersion.E, GameVersion.FR, GameVersion.Pt, G
     if (options.Count > 0)
     {
         var low = pk.Clone(); ((IContestStats)low).ContestBeauty = 169; low.CurrentFriendship = 255;
-        Check(version + " felicidade máxima não substitui Beauty", CoreAdapter.GetBeautyEvolutions(low, sav).Single().Blocked is not null);
+        Check(version + " Beauty baixo não bloqueia (o botão sobe)", CoreAdapter.GetBeautyEvolutions(low, sav).Single().Blocked is null);
+        var lowEditor = new PokemonEditorViewModel(low.Clone(), "Teste", _ => { }, Console.WriteLine, sav: sav, legalMode: true);
+        lowEditor.BeautyEvolutions.Single().Command.Execute(null);
+        Check(version + " Beauty 169 → botão sobe e evolui legal", lowEditor.SpeciesName == "Milotic" && lowEditor.CanApply);
+        var zero = pk.Clone(); ((IContestStats)zero).ContestBeauty = 0; ((IContestStats)zero).ContestSheen = 0;
+        CoreAdapter.EvolveByBeauty(zero, CoreAdapter.GetBeautyEvolutions(zero, sav).Single(), sav);
+        var zeroLa = new LegalityAnalysis(zero); if (!zeroLa.Valid) Console.WriteLine(zeroLa.Report());
+        Check(version + " Beauty 0 → 170, Sheen ajustado, legal", zero.Species == 350 && ((IContestStats)zero).ContestBeauty == 170 && zeroLa.Valid);
         var editor = new PokemonEditorViewModel(pk, "Teste", _ => { }, Console.WriteLine, sav: sav, legalMode: true);
         editor.BeautyEvolutions.Single().Command.Execute(null);
         Check(version + " Beauty evolui legal", editor.SpeciesName == "Milotic" && editor.CanApply);
@@ -48,7 +55,9 @@ foreach (var version in new[] { GameVersion.E, GameVersion.FR, GameVersion.Pt, G
         Check(version + " preserva PID, Beauty e felicidade", grown.PID == pid && ((IContestStats)grown).ContestBeauty == 170 && grown.CurrentFriendship == friendship && grown.CurrentLevel == level + 1);
         low.IsEgg = true; Check(version + " ovo bloqueado", CoreAdapter.GetBeautyEvolutions(low, sav).Count == 0);
         low.IsEgg = false; low.HeldItem = Array.IndexOf(CoreAdapter.GetItemNames(low).ToArray(), "Everstone");
-        Check(version + " Everstone bloqueia Beauty", CoreAdapter.GetBeautyEvolutions(low, sav).Single().Blocked is not null);
+        Check(version + " Everstone não bloqueia", CoreAdapter.GetBeautyEvolutions(low, sav).Single().Blocked is null);
+        CoreAdapter.EvolveByBeauty(low, CoreAdapter.GetBeautyEvolutions(low, sav).Single(), sav);
+        Check(version + " Everstone retirada ao evoluir", low.Species == 350 && low.HeldItem == 0);
     }
     var trades = CoreAdapter.GetTradeEvolutions(pk);
     bool supportsTrade = pk.Format >= 5 && version != GameVersion.BD;
@@ -66,6 +75,13 @@ foreach (var version in new[] { GameVersion.E, GameVersion.FR, GameVersion.Pt, G
         CoreAdapter.EvolveByTrade(pk, evo, sav);
         Check(version + " troca legal e escala consumida", pk.Species == 350 && pk.HeldItem == 0 && new LegalityAnalysis(pk).Valid);
     }
+}
+{
+    // Feebas nativo de Black: Gen 5 não tem concursos, o Beauty não pode subir.
+    var bsav = BlankSaveFile.Get(GameVersion.B); CoreAdapter.Activate(bsav);
+    var native = Make(bsav);
+    var opts = CoreAdapter.GetBeautyEvolutions(native, bsav);
+    Check("B nativo sem concursos fica bloqueado", opts.Count == 0 || opts.Single().Blocked is not null);
 }
 var visualSave = BlankSaveFile.Get(GameVersion.BD); CoreAdapter.Activate(visualSave);
 var visual = Make(visualSave); ((IContestStats)visual).ContestBeauty = 169;

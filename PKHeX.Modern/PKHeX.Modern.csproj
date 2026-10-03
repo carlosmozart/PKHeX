@@ -40,5 +40,7 @@
     <!-- Descricoes e locais dos itens, do AllGenWiki (gerado por Tools/build_item_info.py) -->
     <EmbeddedResource Include="Assets\item-info.json" LogicalName="item-info.json" />
     <EmbeddedResource Include="Assets\text-info.json" LogicalName="text-info.json" />
+    <!-- Traducoes da interface (Services/Loc.cs); o portugues e o texto do proprio codigo -->
+    <EmbeddedResource Include="Assets\lang\*.json" LogicalName="lang.%(Filename).json" />
   </ItemGroup>
 </Project>

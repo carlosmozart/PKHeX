@@ -60,6 +60,8 @@ public static class ItemInfo
     /// </summary>
     public static string? GetTooltip(string? itemName, int generation, GameVersion version = GameVersion.Any)
     {
+        if (Loc.IsTranslating)
+            return null; // textos do AllGenWiki so existem em portugues
         if (string.IsNullOrWhiteSpace(itemName))
             return null;
         if (!Items.TryGetValue(Key(itemName), out var e))
@@ -171,8 +173,8 @@ public static class GameText
 
     private static string Key(string name) => new([.. name.ToLowerInvariant().Where(char.IsAsciiLetterOrDigit)]);
 
-    public static string? GetMove(string? name, int generation) => Pick(Data.Moves, name, generation);
-    public static string? GetAbility(string? name, int generation) => Pick(Data.Abilities, name, generation);
+    public static string? GetMove(string? name, int generation) => Loc.IsTranslating ? null : Pick(Data.Moves, name, generation);
+    public static string? GetAbility(string? name, int generation) => Loc.IsTranslating ? null : Pick(Data.Abilities, name, generation);
 
     /// <summary>Texto da geracao pedida ou da ultima mudanca antes dela; se so existe depois, o primeiro texto.</summary>
     private static string? Pick(Dictionary<string, Dictionary<string, string>> all, string? name, int generation)
@@ -217,6 +219,8 @@ public static class GameText
     /// </summary>
     public static string? GetMoveWhere(string? moveName, int generation, GameVersion version)
     {
+        if (Loc.IsTranslating)
+            return null;
         if (string.IsNullOrWhiteSpace(moveName))
             return null;
         var key = Key(moveName);

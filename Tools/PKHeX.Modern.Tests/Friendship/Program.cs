@@ -49,13 +49,19 @@ Check("Sylveon com Fairy tem prioridade", choices.Any(e => e.Species == 700 && e
 eevee.Move1 = 33; eevee.Move2 = eevee.Move3 = eevee.Move4 = 0;
 Check("dia/noite disponíveis sem Fairy", CoreAdapter.GetFriendshipEvolutions(eevee, shield).Where(e => e.Species is 196 or 197).All(e => e.Blocked is null));
 eevee.HeldItem = 229;
-Check("Everstone bloqueia", CoreAdapter.GetFriendshipEvolutions(eevee, shield).All(e => e.Blocked is not null));
+Check("Everstone não bloqueia (o botão tira)", CoreAdapter.GetFriendshipEvolutions(eevee, shield).Where(e => e.Species is 196 or 197).All(e => e.Blocked is null));
+{ var ev = eevee.Clone(); CoreAdapter.EvolveByFriendship(ev, CoreAdapter.GetFriendshipEvolutions(ev, shield).First(e => e.Blocked is null), shield);
+  Check("Everstone retirada ao evoluir", ev.Species != 133 && ev.HeldItem == 0); }
 eevee.HeldItem = 0; eevee.CurrentLevel = 100;
 Check("Gen8 admite Rare Candy no nível 100", CoreAdapter.GetFriendshipEvolutions(eevee, shield).Any(e => e.Blocked is null && e.Requirement.Contains("Rare Candy")));
 var x = BlankSaveFile.Get(GameVersion.X); CoreAdapter.Activate(x);
 var oldEevee = Make(x, 133); oldEevee.CurrentFriendship = 255; oldEevee.Move1 = 608;
 ((IAffection)oldEevee).OriginalTrainerAffection = 0;
-Check("Sylveon antigo exige carinho", CoreAdapter.GetFriendshipEvolutions(oldEevee, x).First(e => e.Species == 700).Blocked is not null);
+Check("Sylveon antigo sem carinho não bloqueia", CoreAdapter.GetFriendshipEvolutions(oldEevee, x).First(e => e.Species == 700).Blocked is null);
+{ var sy = oldEevee.Clone(); sy.CurrentLevel = 20; foreach (ushort mv in Enumerable.Range(1, 700).Select(i => (ushort)i).Where(i => MoveInfo.GetType(i, sy.Context) == 17)) { sy.Move1 = mv; sy.Move1_PP = sy.GetMovePP(mv, 0); if (new LegalityAnalysis(sy).Valid) break; } Console.WriteLine("Fairy: " + sy.Move1 + " legal=" + new LegalityAnalysis(sy).Valid); CoreAdapter.EvolveByFriendship(sy, CoreAdapter.GetFriendshipEvolutions(sy, x).First(e => e.Species == 700), x);
+  var la = new LegalityAnalysis(sy); if (!la.Valid) Console.WriteLine(la.Report());
+  Console.WriteLine($"sy {sy.Species} h={sy.CurrentHandler} ot={((IAffection)sy).OriginalTrainerAffection} ht={((IAffection)sy).HandlingTrainerAffection} valid={la.Valid}");
+  Check("botão sobe o carinho e evolui Sylveon legal", sy.Species == 700 && (sy.CurrentHandler == 0 ? ((IAffection)sy).OriginalTrainerAffection : ((IAffection)sy).HandlingTrainerAffection) >= 50 && la.Valid); }
 ((IAffection)oldEevee).OriginalTrainerAffection = 50;
 ((IAffection)oldEevee).HandlingTrainerAffection = 50;
 Check("Sylveon antigo aceita dois corações", CoreAdapter.GetFriendshipEvolutions(oldEevee, x).First(e => e.Species == 700).Blocked is null);

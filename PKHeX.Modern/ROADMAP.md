@@ -88,7 +88,7 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [x] **Backup automático**: antes de salvar por cima de um save, o arquivo anterior vai para `%APPDATA%\PKHeX.Modern\backups` (20 mais recentes por save; botão "Backups" no Save Manager).
 - [x] **Publicação**: perfil `win-x64` (um único `PKHeX.Modern.exe`, sem precisar do .NET) e GitHub Action `.github/workflows/modern-build.yml` (artefato a cada push no `modern-ui`; Release com o zip em tags `modern-v*`).
-- [ ] **Menu de idiomas da interface**: o padrão continua português (PT-BR), com **inglês** como opção (seletor nas configurações, salvo nas preferências). Exige tirar os textos da interface (XAML, mensagens de status, Ajuda, diálogos) para arquivos de recursos (`.resx` ou dicionários por idioma). Nomes do jogo e textos de legalidade continuam em inglês, como hoje.
+- [x] **Menu de idiomas da interface**: Português (Brasil) padrão e English, em “🌐 Idioma” na barra lateral (vale ao reiniciar). A tradução é feita na exibição (`Services/Loc.cs` + `Assets/lang/en.json`, chaves = texto em português, com modelos `{0}`); o teste `Language` lista o que ficou sem tradução. Changelog e descrições do AllGenWiki ficam só em português.
 - [ ] Instalador de verdade (MSIX ou Inno Setup), ícone próprio e assinatura do exe.
 - [x] **Mochila em colunas**: cartões com ícone, item e quantidade, em linhas virtualizadas (bolsos de 260 slots abrem em ~0,3 s).
 - [ ] **Multiplataforma** (Linux/macOS): trocar o `System.Drawing` dos sprites por um carregador próprio (SkiaSharp), já que o Avalonia roda em todos.

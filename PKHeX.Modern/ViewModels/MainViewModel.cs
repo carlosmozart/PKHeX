@@ -24,6 +24,8 @@ public sealed class MainViewModel : ViewModelBase
         var accent = Theme.AccentTheme.Find(Settings.AccentColor);
         AccentOptions = [.. Theme.AccentTheme.Presets.Select(p => new AccentOptionViewModel(p) { IsSelected = p == accent })];
         SetAccentCommand = new RelayCommand(p => { if (p is AccentOptionViewModel o) SetAccent(o.Preset); });
+        LanguageOptions = [.. Loc.Languages.Select(l => new LanguageOptionViewModel(l.Code, l.Name, l.Code == (Settings.UiLanguage ?? Loc.Portuguese),
+            new RelayCommand(() => _ = SetLanguageAsync(l.Code, l.Name))))];
         ToggleThemeCommand = new RelayCommand(() =>
         {
             Settings.DarkTheme = App.ToggleTheme();
@@ -223,6 +225,32 @@ public sealed class MainViewModel : ViewModelBase
 
     // Cor de destaque
     public IReadOnlyList<AccentOptionViewModel> AccentOptions { get; }
+
+    /// <summary>Idiomas da interface (menu "🌐 Idioma" da barra lateral).</summary>
+    public IReadOnlyList<LanguageOptionViewModel> LanguageOptions { get; }
+    public string LanguageText => "🌐  " + Loc.T("Idioma") + ": " + (LanguageOptions.FirstOrDefault(l => l.IsSelected)?.Name ?? "Português (Brasil)");
+    /// <summary>Reiniciar o app (definido pela janela; o mesmo fluxo do Reiniciar da atualizacao).</summary>
+    public Func<Task>? RestartAppRequested { get; set; }
+
+    /// <summary>Troca o idioma da interface: salva a preferencia e oferece reiniciar (a traducao e instalada na partida).</summary>
+    private async Task SetLanguageAsync(string code, string name)
+    {
+        if (code == (Settings.UiLanguage ?? Loc.Portuguese))
+            return;
+        Settings.UiLanguage = code;
+        Settings.Save();
+        foreach (var l in LanguageOptions)
+            l.IsSelected = l.Code == code;
+        Raise(nameof(LanguageText));
+        // A pergunta aparece nos dois idiomas: a tela atual ainda esta no idioma antigo.
+        var restart = code == Loc.English
+            ? await ConfirmAsync("Restart to switch to English?", "The interface language changes when the app restarts. Game names (species, moves, items) stay in English.\n\nA interface muda de idioma ao reiniciar o app.", "Restart now", cancelText: "Later", icon: "🌐")
+            : await ConfirmAsync("Reiniciar para usar Português?", "O idioma da interface muda ao reiniciar o app. Nomes do jogo (espécies, golpes, itens) continuam em inglês.\n\nThe interface language changes when the app restarts.", "Reiniciar agora", cancelText: "Depois", icon: "🌐");
+        if (restart && RestartAppRequested is { } run)
+            await run();
+        else
+            Status = code == Loc.English ? "Language set to English: it takes effect the next time you open the app." : "Idioma definido para Português: vale na próxima vez que abrir o app.";
+    }
     public RelayCommand SetAccentCommand { get; }
 
     private void SetAccent(Theme.AccentPreset preset)
@@ -1956,6 +1984,16 @@ public sealed class SearchHitViewModel(StoredEntity entity, string reason, strin
 }
 
 /// <summary>Bolinha de cor na barra lateral.</summary>
+public sealed class LanguageOptionViewModel(string code, string name, bool selected, RelayCommand select) : ViewModelBase
+{
+    public string Code { get; } = code;
+    public string Name { get; } = name;
+    private bool _isSelected = selected;
+    public bool IsSelected { get => _isSelected; set { if (Set(ref _isSelected, value)) Raise(nameof(Header)); } }
+    public string Header => (IsSelected ? "✓  " : "     ") + Name;
+    public RelayCommand SelectCommand { get; } = select;
+}
+
 public sealed class AccentOptionViewModel(Theme.AccentPreset preset) : ViewModelBase
 {
     public Theme.AccentPreset Preset { get; } = preset;

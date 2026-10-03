@@ -49,7 +49,7 @@ public sealed class HelpPageViewModel : PageViewModel
         Sections = f.Length == 0
             ? HelpContent.Sections
             : [.. HelpContent.Sections
-                .Select(s => Normalize(s.Title).Contains(f) ? s : s with { Items = [.. s.Items.Where(i => Normalize($"{i.Title} {i.Text} {i.Shortcut}").Contains(f))] })
+                .Select(s => Normalize($"{s.Title} {Loc.T(s.Title)}").Contains(f) ? s : s with { Items = [.. s.Items.Where(i => Normalize($"{i.Title} {i.Text} {i.Shortcut} {Loc.T(i.Title)} {Loc.T(i.Text)}").Contains(f))] })
                 .Where(s => s.Items.Count > 0)];
         Raise(nameof(Sections));
         Raise(nameof(HasNoResults));
@@ -63,6 +63,8 @@ public sealed class HelpPageViewModel : PageViewModel
 
     // Novidades
     public IReadOnlyList<ChangelogVersion> Changelog => Services.Changelog.Versions;
+    /// <summary>Em outro idioma, avisa que o changelog continua em portugues (ele nao e traduzido).</summary>
+    public bool ShowChangelogLanguageNote => Loc.IsTranslating;
 
     // Sobre
     public string VersionText => $"Versão {UpdateChecker.CurrentText}";

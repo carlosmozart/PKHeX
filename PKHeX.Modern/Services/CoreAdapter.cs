@@ -892,9 +892,8 @@ public static class CoreAdapter
                 _ => m.Method,
             } })];
         bool fairyMove = Enumerable.Range(0, 4).Any(i => GetMove(pk, i) != 0 && MoveInfo.GetType(GetMove(pk, i), pk.Context) == 17);
-        bool affectionReady = pk is IAffection a && (pk.CurrentHandler == 0 ? a.OriginalTrainerAffection : a.HandlingTrainerAffection) >= 50;
         int threshold = pk.Format >= 8 ? 160 : 220;
-        bool sylveonReady = methods.Any(m => m.Species == (ushort)Species.Sylveon) && fairyMove && (pk.Format >= 8 || affectionReady);
+        bool sylveonReady = methods.Any(m => m.Species == (ushort)Species.Sylveon) && fairyMove && (pk.Format >= 8 || pk is IAffection);
         foreach (var m in methods)
         {
             if (m.Method is not (EvolutionType.LevelUpFriendship or EvolutionType.LevelUpFriendshipMorning or EvolutionType.LevelUpFriendshipNight or EvolutionType.LevelUpAffection50MoveType)) continue;
@@ -905,10 +904,10 @@ public static class CoreAdapter
             bool manual = pk.Context is EntityContext.Gen8a or EntityContext.Gen9a;
             string requirement = (manual ? "evoluir" : pk.CurrentLevel == 100 && pk.Format >= 8 ? "usar Rare Candy no nível 100" : "subir 1 nível") + time
                 + (affection ? ", carinho ≥ 50 (2 corações)" : $", felicidade ≥ {threshold}")
-                + (m.Method == EvolutionType.LevelUpAffection50MoveType ? ", sabendo golpe Fairy" : "");
-            string? blocked = GetHeldItemName(pk) == "Everstone" ? "está segurando Everstone"
-                : !manual && pk.CurrentLevel == 100 && pk.Format < 8 ? "precisa subir de nível e já está no nível 100"
-                : affection && !affectionReady ? "precisa de pelo menos 50 de carinho com o treinador atual"
+                + (m.Method == EvolutionType.LevelUpAffection50MoveType ? ", sabendo golpe Fairy" : "")
+                + (GetHeldItemName(pk) == "Everstone" ? ", tira a Everstone" : "");
+            // Felicidade, carinho e Everstone o botao resolve; o resto precisa de acao do usuario.
+            string? blocked = !manual && pk.CurrentLevel == 100 && pk.Format < 8 ? "precisa subir de nível e já está no nível 100"
                 : m.Method == EvolutionType.LevelUpAffection50MoveType && !fairyMove ? "precisa saber um golpe Fairy"
                 : m.Species is (ushort)Species.Espeon or (ushort)Species.Umbreon && sylveonReady ? "Sylveon tem prioridade; remova o golpe Fairy para escolher esta evolução"
                 : sav?.Version is GameVersion.FR or GameVersion.LG && m.Method is EvolutionType.LevelUpFriendshipMorning or EvolutionType.LevelUpFriendshipNight ? "FireRed/LeafGreen não têm ciclo de dia/noite para esta evolução"
@@ -922,8 +921,14 @@ public static class CoreAdapter
     {
         var current = GetFriendshipEvolutions(pk, sav).FirstOrDefault(e => e.Species == evo.Species && e.Form == evo.Form && e.Method == evo.Method);
         if (current is null || current.Blocked is not null) throw new InvalidOperationException(current?.Blocked ?? "Esta evolução não está disponível.");
+        RemoveEverstone(pk);
         if (evo.Method != EvolutionType.LevelUpAffection50MoveType || pk.Format >= 8)
             pk.CurrentFriendship = (byte)Math.Max(pk.CurrentFriendship, pk.Format >= 8 ? 160 : 220);
+        else if (pk is IAffection a)
+        {
+            if (pk.CurrentHandler == 0) a.OriginalTrainerAffection = Math.Max(a.OriginalTrainerAffection, (byte)50);
+            else a.HandlingTrainerAffection = Math.Max(a.HandlingTrainerAffection, (byte)50);
+        }
         if (pk.Context is not (EntityContext.Gen8a or EntityContext.Gen9a) && pk.CurrentLevel < 100) pk.CurrentLevel++;
         return EvolveByItem(pk, new ItemEvolution(evo.Species, evo.Form, evo.Name, current.Requirement, 0, null));
     }
@@ -992,10 +997,14 @@ public static class CoreAdapter
             byte form = m.GetDestinationForm(pk.Form);
             if (m.Method != EvolutionType.LevelUpBeauty || m.Species > pk.MaxSpeciesID
                 || sav is not null && !sav.Personal.IsPresentInGame(m.Species, form)) continue;
-            string? blocked = GetHeldItemName(pk) == "Everstone" ? "está segurando Everstone"
-                : pk.CurrentLevel == 100 && pk.Format < 8 ? "precisa subir de nível e já está no nível 100"
-                : stats.ContestBeauty < m.Argument ? $"precisa de Beauty ≥ {m.Argument}; felicidade não substitui Beauty" : null;
-            string requirement = (pk.CurrentLevel == 100 ? "usar Rare Candy no nível 100" : "subir 1 nível") + $", Beauty ≥ {m.Argument}";
+            // O botao cumpre os requisitos: sobe o Beauty (e o Sheen junto, onde ele acompanha) e tira a Everstone.
+            // So bloqueia o que nao da para resolver: nivel 100 antes da Gen 8 ou um historico sem concursos.
+            bool raise = stats.ContestBeauty < m.Argument;
+            string? blocked = pk.CurrentLevel == 100 && pk.Format < 8 ? "precisa subir de nível e já está no nível 100"
+                : raise && GetContestRule(pk).Rule == ContestRule.None ? "o Beauty não pode subir nos jogos por onde ele passou (sem concursos); use a troca com Prism Scale, se houver" : null;
+            string requirement = (pk.CurrentLevel == 100 ? "usar Rare Candy no nível 100" : "subir 1 nível")
+                + (raise ? $", Beauty sobe de {stats.ContestBeauty} para {m.Argument}" : $", Beauty ≥ {m.Argument}")
+                + (GetHeldItemName(pk) == "Everstone" ? ", tira a Everstone" : "");
             list.Add(new(m.Species, form, SpeciesNames[m.Species], requirement, 0, blocked));
         }
         return list;
@@ -1005,8 +1014,34 @@ public static class CoreAdapter
     {
         var current = GetBeautyEvolutions(pk, sav).FirstOrDefault(e => e.Species == evo.Species && e.Form == evo.Form);
         if (current is null || current.Blocked is not null) throw new InvalidOperationException(current?.Blocked ?? "Esta evolução não está disponível.");
+        RemoveEverstone(pk);
+        if (pk is IContestStats contest && contest.ContestBeauty < BeautyNeeded(pk, evo))
+        {
+            contest.ContestBeauty = BeautyNeeded(pk, evo);
+            // Gen 3/4 e BD/SP: Pokeblocks/Poffins dao Sheen junto; ajusta para a faixa legal dos novos atributos.
+            var (rule, min, max) = GetContestRule(pk);
+            if (rule == ContestRule.Correlate)
+                contest.ContestSheen = Math.Clamp(contest.ContestSheen, min, Math.Max(min, max));
+            else if (rule == ContestRule.NoSheen)
+                contest.ContestSheen = 0;
+        }
         if (pk.CurrentLevel < 100) pk.CurrentLevel++;
         return EvolveByItem(pk, current);
+    }
+
+    private static byte BeautyNeeded(PKM pk, ItemEvolution evo)
+    {
+        foreach (var m in EvolutionTree.GetEvolutionTree(pk.Context).Forward.GetForward(pk.Species, pk.Form).Span)
+            if (m.Method == EvolutionType.LevelUpBeauty && m.Species == evo.Species)
+                return (byte)Math.Min(255, (int)m.Argument);
+        return 0;
+    }
+
+    /// <summary>Tira a Everstone segurada (ela impede a evolucao).</summary>
+    private static void RemoveEverstone(PKM pk)
+    {
+        if (GetHeldItemName(pk) == "Everstone")
+            pk.HeldItem = 0;
     }
 
     /// <summary>Evolucoes por item da especie atual (ex.: Pikachu + Thunder Stone → Raichu, Nidorino + Moon Stone → Nidoking).</summary>

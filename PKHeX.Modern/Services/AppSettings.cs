@@ -23,6 +23,8 @@ public sealed class AppSettings
     public bool CheckForUpdates { get; set; } = true;
     /// <summary>Ao achar uma versao nova, mostrar as notas e oferecer atualizar (vale ao reiniciar o app).</summary>
     public bool AutoUpdate { get; set; } = true;
+    /// <summary>Idioma da interface (Services.Loc): "pt-BR" (padrao) ou "en". Vale ao reiniciar.</summary>
+    public string UiLanguage { get; set; } = Loc.Portuguese;
 
     /// <summary>So grava em disco instancias carregadas via <see cref="Load"/> (testes usam instancias em memoria).</summary>
     [System.Text.Json.Serialization.JsonIgnore]
