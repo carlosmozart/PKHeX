@@ -6,6 +6,11 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 🖥️ Multiplataforma (preparação)
+- Os sprites agora são montados sem depender do Windows: são os mesmos PNGs e a mesma montagem do PKHeX, refeitos com SkiaSharp, e conferidos pixel a pixel contra o original (nada muda na tela). É o primeiro passo para o PKHeX Modern rodar no Linux e no macOS.
+
 ## 0.4.5 — 2026-10-03
 
 ### 🎮 Editores por jogo

@@ -1,40 +1,44 @@
-using System.Drawing.Imaging;
-using System.IO;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using PKHeX.Core;
-using PKHeX.Drawing.PokeSprite;
+using PKHeX.Modern.Sprites;
 using AvaloniaBitmap = Avalonia.Media.Imaging.Bitmap;
-using GdiBitmap = System.Drawing.Bitmap;
-using GdiRectangle = System.Drawing.Rectangle;
 
 namespace PKHeX.Modern.Services;
 
-/// <summary>Reaproveita o gerador de sprites do PKHeX e converte para bitmaps do Avalonia.</summary>
+/// <summary>
+/// Sprites do PKHeX (PKHeX.Modern.Sprites: os mesmos PNGs e a mesma montagem do PKHeX, sem System.Drawing, entao
+/// funciona fora do Windows) convertidos para bitmaps do Avalonia.
+/// </summary>
 public static class SpriteService
 {
-    public static AvaloniaBitmap GetBoxWallpaper(SaveFile sav, int box)
-    {
-        using var gdi = PKHeX.Drawing.Misc.WallpaperUtil.WallpaperImage(sav, box);
-        return ToAvalonia(gdi, 4);
-    }
-    /// <summary>Uma geracao de sprite por vez: o gerador do PKHeX (GDI) e chamado tambem fora da thread da interface.</summary>
+    public static AvaloniaBitmap GetBoxWallpaper(SaveFile sav, int box) => ToAvalonia(WallpaperUtil.GetWallpaper(sav, box), 4);
+
+    /// <summary>Uma geracao de sprite por vez: o estilo atual e o estado do gerador sao globais, e a Pokedex gera em segundo plano.</summary>
     private static readonly object SpeciesLock = new();
 
     /// <summary>
     /// Area do icone de brilho que o PKHeX desenha no canto superior esquerdo dos shiny.
     /// O recorte ignora essa area (os cartoes mostram a propria estrela).
     /// </summary>
-    private static readonly GdiRectangle ShinyIconArea;
+    private static readonly Rectangle ShinyIconArea;
 
     static SpriteService()
     {
         // O WinForms liga isto nas configuracoes (Sprite.ShinySprites). Desligado, o PKHeX usa o sprite
         // com as cores normais e so desenha o icone de brilho por cima.
-        SpriteName.AllowShinySprite = true;
+        PKHeX.Drawing.PokeSprite.SpriteName.AllowShinySprite = true;
 
-        var a = PKHeX.Drawing.PokeSprite.Properties.Resources.rare_icon_alt;
-        var b = PKHeX.Drawing.PokeSprite.Properties.Resources.rare_icon_alt_2;
-        ShinyIconArea = new GdiRectangle(0, 0, System.Math.Max(a.Width, b.Width), System.Math.Max(a.Height, b.Height));
+        var a = SpriteResources.Required("rare_icon_alt");
+        var b = SpriteResources.Required("rare_icon_alt_2");
+        ShinyIconArea = new Rectangle(0, 0, System.Math.Max(a.Width, b.Width), System.Math.Max(a.Height, b.Height));
+    }
+
+    /// <summary>Escolhe o estilo dos sprites pelo save ativo (classico, arte no Scarlet/Violet e Z-A, circulo no Legends: Arceus).</summary>
+    public static void Activate(SaveFile sav)
+    {
+        lock (SpeciesLock)
+            SpriteUtil.Initialize(sav);
     }
 
     public static AvaloniaBitmap? GetSprite(PKM pk, SaveFile sav, int box, int slot)
@@ -42,13 +46,8 @@ public static class SpriteService
         if (CoreAdapter.IsEmpty(pk))
             return null;
         lock (SpeciesLock)
-        {
-            using var gdi = pk.Sprite(sav, box, slot);
-            return Convert(gdi, pk.IsShiny);
-        }
+            return Convert(SpriteUtil.GetSprite(pk, sav, box, slot), pk.IsShiny);
     }
-
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<ushort, bool> HasClassic = new();
 
     /// <summary>
     /// Gerador de sprites para a especie. No modo classico (saves ate a Gen 8) o PKHeX nao tem as especies da Gen 9
@@ -58,37 +57,23 @@ public static class SpriteService
     private static SpriteBuilder BuilderFor(ushort species)
     {
         var current = SpriteUtil.Spriter;
-        if (current != SpriteUtil.SB8s || species == 0)
+        if (current != SpriteUtil.Classic || species == 0 || current.HasSpecies(species))
             return current;
-        bool classic = HasClassic.GetOrAdd(species, sp =>
-            PKHeX.Drawing.PokeSprite.Properties.Resources.ResourceManager.GetObject($"b_{sp}") is not null);
-        return classic ? current : SpriteUtil.SB8a;
+        return SpriteUtil.Artwork;
     }
 
-    private static readonly System.Collections.Generic.Dictionary<byte, AvaloniaBitmap?> Balls = [];
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<byte, AvaloniaBitmap?> Balls = new();
 
     /// <summary>Icone da bola (cacheado por tipo de bola).</summary>
     public static AvaloniaBitmap? GetBallSprite(byte ball)
     {
         if (ball == 0)
             return null;
-        if (Balls.TryGetValue(ball, out var cached))
-            return cached;
-        AvaloniaBitmap? bmp;
-        try
+        return Balls.GetOrAdd(ball, static b =>
         {
-            lock (SpeciesLock)
-            {
-                using var gdi = SpriteUtil.GetBallSprite(ball);
-                bmp = ToAvalonia(gdi, PixelScale); // sem recorte: a bola ja ocupa a imagem
-            }
-        }
-        catch
-        {
-            bmp = null;
-        }
-        Balls[ball] = bmp;
-        return bmp;
+            try { return ToAvalonia(SpriteUtil.GetBallSprite(b), PixelScale); } // sem recorte: a bola ja ocupa a imagem
+            catch { return null; }
+        });
     }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<(int, EntityContext), AvaloniaBitmap?> Items = new();
@@ -108,11 +93,10 @@ public static class SpriteService
                 var display = ItemConverter.GetItemDisplay(key.Item1, key.Item2);
                 if (display <= 0)
                     return null;
+                SpriteImage img;
                 lock (SpeciesLock)
-                {
-                    var gdi = SpriteUtil.Spriter.GetItemSprite(display, key.Item2); // recurso compartilhado: nao descartar
-                    return ToAvalonia(gdi, PixelScale);
-                }
+                    img = SpriteUtil.Spriter.GetItemSprite(display, key.Item2);
+                return ToAvalonia(img, PixelScale);
             }
             catch
             {
@@ -124,13 +108,10 @@ public static class SpriteService
     /// <summary>Sprite de um encontro ou Mystery Gift (banco de encontros/eventos).</summary>
     public static AvaloniaBitmap? GetSprite(IEncounterTemplate enc)
     {
-        // Sem o icone da bola que o Core desenha no canto: assim o recorte deixa o Pokemon grande no cartao.
+        // Sem o icone da bola que o PKHeX desenha no canto: assim o recorte deixa o Pokemon grande no cartao.
         var shiny = enc.IsShiny ? Shiny.Always : Shiny.Never;
         lock (SpeciesLock)
-        {
-            using var gdi = BuilderFor(enc.Species).GetSprite(enc.Species, enc.Form, 0, 0, 0, enc.IsEgg, shiny, enc.Context);
-            return Convert(gdi, enc.IsShiny);
-        }
+            return Convert(BuilderFor(enc.Species).GetSprite(enc.Species, enc.Form, 0, 0, 0, enc.IsEgg, shiny, enc.Context), enc.IsShiny);
     }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<(ushort, byte, int, bool), AvaloniaBitmap?> Species = new();
@@ -154,8 +135,8 @@ public static class SpriteService
                 return cached;
             try
             {
-                using var gdi = BuilderFor(species).GetSprite(species, form, (byte)gender, 0, 0, false, shiny ? Shiny.Always : Shiny.Never, context);
-                bmp = Convert(gdi, shiny, CacheScale);
+                var img = BuilderFor(species).GetSprite(species, form, (byte)gender, 0, 0, false, shiny ? Shiny.Always : Shiny.Never, context);
+                bmp = Convert(img, shiny, CacheScale);
             }
             catch
             {
@@ -173,11 +154,11 @@ public static class SpriteService
         lock (SpeciesLock)
         {
             var builder = BuilderFor(pk.Species);
-            using var gdi = builder == SpriteUtil.Spriter
-                ? pk.Sprite()
+            var img = builder == SpriteUtil.Spriter
+                ? SpriteUtil.GetSprite(pk)
                 : builder.GetSprite(pk.Species, pk.Form, pk.Gender, pk is IFormArgument f ? f.FormArgument : 0, pk.SpriteItem, pk.IsEgg,
                     pk.IsShiny ? Shiny.Always : Shiny.Never, pk.Context);
-            return Convert(gdi, pk.IsShiny);
+            return Convert(img, pk.IsShiny);
         }
     }
 
@@ -185,11 +166,11 @@ public static class SpriteService
     /// Os sprites do PKHeX tem bastante borda transparente; recortamos para que o Pokemon
     /// ocupe todo o espaco disponivel ao ser ampliado na interface.
     /// </summary>
-    private static AvaloniaBitmap Convert(GdiBitmap gdi, bool shiny = false, int scale = PixelScale)
+    private static AvaloniaBitmap Convert(SpriteImage img, bool shiny = false, int scale = PixelScale)
     {
-        var bounds = GetOpaqueBounds(gdi, shiny ? ShinyIconArea : GdiRectangle.Empty);
-        using var cropped = bounds.IsEmpty || bounds.Size == gdi.Size ? null : gdi.Clone(bounds, PixelFormat.Format32bppArgb);
-        return ToAvalonia(cropped ?? gdi, scale);
+        var bounds = img.GetOpaqueBounds(shiny ? ShinyIconArea : Rectangle.Empty);
+        var cropped = bounds.IsEmpty || (bounds.Width == img.Width && bounds.Height == img.Height) ? img : img.Crop(bounds);
+        return ToAvalonia(cropped, scale);
     }
 
     /// <summary>Ampliacao inteira (nearest neighbor) dos sprites. Ver <see cref="ToAvalonia"/>.</summary>
@@ -203,59 +184,19 @@ public static class SpriteService
     /// uniformes em vez de borrados ou tortos. Toda Image de sprite precisa de tamanho fixo (Width/Height ou moldura).
     /// O DPI fica em 96: com DPI maior, a Image do Avalonia 11.3 desenha so o canto superior esquerdo.
     /// </summary>
-    private static AvaloniaBitmap ToAvalonia(GdiBitmap src, int scale)
+    private static AvaloniaBitmap ToAvalonia(SpriteImage src, int scale)
     {
-        int w = src.Width * scale, h = src.Height * scale;
-        using var big = new GdiBitmap(w, h, PixelFormat.Format32bppArgb);
-        using (var g = System.Drawing.Graphics.FromImage(big))
-        {
-            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
-            g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-            g.DrawImage(src, new GdiRectangle(0, 0, w, h));
-        }
-        var data = big.LockBits(new GdiRectangle(0, 0, w, h), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+        var big = src.Scale(scale);
+        var handle = GCHandle.Alloc(big.Pixels, GCHandleType.Pinned);
         try
         {
-            // GDI 32bppArgb = BGRA sem pre-multiplicacao.
+            // BGRA sem pre-multiplicacao (o mesmo formato do System.Drawing 32bppArgb).
             return new AvaloniaBitmap(Avalonia.Platform.PixelFormat.Bgra8888, Avalonia.Platform.AlphaFormat.Unpremul,
-                data.Scan0, new Avalonia.PixelSize(w, h), new Avalonia.Vector(96, 96), data.Stride);
+                handle.AddrOfPinnedObject(), new Avalonia.PixelSize(big.Width, big.Height), new Avalonia.Vector(96, 96), big.Width * 4);
         }
         finally
         {
-            big.UnlockBits(data);
-        }
-    }
-
-    /// <param name="ignore">Area cujos pixels nao contam para o recorte (icone de brilho).</param>
-    private static GdiRectangle GetOpaqueBounds(GdiBitmap bmp, GdiRectangle ignore)
-    {
-        var rect = new GdiRectangle(0, 0, bmp.Width, bmp.Height);
-        var data = bmp.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-        try
-        {
-            var pixels = new int[bmp.Width * bmp.Height];
-            for (int y = 0; y < bmp.Height; y++)
-                Marshal.Copy(data.Scan0 + (y * data.Stride), pixels, y * bmp.Width, bmp.Width);
-
-            int minX = bmp.Width, minY = bmp.Height, maxX = -1, maxY = -1;
-            for (int y = 0; y < bmp.Height; y++)
-            {
-                for (int x = 0; x < bmp.Width; x++)
-                {
-                    if ((pixels[(y * bmp.Width) + x] >>> 24) < 16 || ignore.Contains(x, y))
-                        continue;
-                    if (x < minX) minX = x;
-                    if (x > maxX) maxX = x;
-                    if (y < minY) minY = y;
-                    if (y > maxY) maxY = y;
-                }
-            }
-            return maxX < 0 ? GdiRectangle.Empty : GdiRectangle.FromLTRB(minX, minY, maxX + 1, maxY + 1);
-        }
-        finally
-        {
-            bmp.UnlockBits(data);
+            handle.Free();
         }
     }
 }

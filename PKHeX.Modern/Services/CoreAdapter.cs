@@ -141,7 +141,7 @@ public static class CoreAdapter
     {
         ParseSettings.InitFromSaveFileData(sav);
         GameInfo.FilteredSources = new FilteredGameDataSource(sav, GameInfo.Sources);
-        Drawing.PokeSprite.SpriteUtil.Initialize(sav);
+        SpriteService.Activate(sav);
     }
 
     public static void ExportSave(SaveFile sav, string path)

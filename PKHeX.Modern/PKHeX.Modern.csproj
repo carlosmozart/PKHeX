@@ -2,13 +2,13 @@
 
   <!--
     PKHeX.Modern: interface alternativa (Avalonia) para o PKHeX.
-    Regra de ouro: este projeto apenas CONSOME PKHeX.Core / PKHeX.Drawing.*.
+    Regra de ouro: este projeto apenas CONSOME o PKHeX.Core (e os PNGs/codigo de sprites do upstream, via PKHeX.Modern.Sprites).
     Nada aqui deve exigir alteracoes nos projetos do upstream, para que
     "git merge upstream/master" continue sem conflitos.
   -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <!-- -windows apenas porque os sprites usam System.Drawing (PKHeX.Drawing.*). -->
+    <!-- -windows ainda: a troca para net10.0 (Linux/macOS) e a fase 2 da multiplataforma. Os sprites ja nao usam System.Drawing. -->
     <TargetFramework>net10.0-windows</TargetFramework>
     <RootNamespace>PKHeX.Modern</RootNamespace>
     <!-- Versao do PKHeX Modern (a do PKHeX.Core vem do Directory.Build.props). Atualize junto com a tag modern-vX.Y.Z. -->
@@ -29,9 +29,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PKHeX.Core\PKHeX.Core.csproj" />
-    <ProjectReference Include="..\PKHeX.Drawing\PKHeX.Drawing.csproj" />
-    <ProjectReference Include="..\PKHeX.Drawing.Misc\PKHeX.Drawing.Misc.csproj" />
-    <ProjectReference Include="..\PKHeX.Drawing.PokeSprite\PKHeX.Drawing.PokeSprite.csproj" />
+    <!-- Sprites sem System.Drawing (mesmos PNGs e mesma montagem do PKHeX; ver PKHeX.Modern.Sprites) -->
+    <ProjectReference Include="..\PKHeX.Modern.Sprites\PKHeX.Modern.Sprites.csproj" />
   </ItemGroup>
 
   <ItemGroup>

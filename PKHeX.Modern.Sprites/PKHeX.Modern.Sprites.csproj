@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Sprites do PKHeX.Modern sem System.Drawing (que so existe no Windows): os mesmos PNGs do PKHeX, lidos direto das
+    pastas do upstream (sprites novos que chegarem pelo merge entram sozinhos), decodificados com SkiaSharp e montados
+    com a mesma logica do PKHeX.Drawing.PokeSprite, byte a byte. Nao mexe nos projetos do upstream.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PKHeX.Modern.Sprites</RootNamespace>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Mesma versao que o Avalonia.Skia 11.3 usa (as bibliotecas nativas de cada sistema vem com o Avalonia). -->
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PKHeX.Core\PKHeX.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Codigo do upstream sem dependencia de Windows, usado como esta (nomes dos sprites e cores dos tipos). -->
+    <Compile Include="..\PKHeX.Drawing.PokeSprite\Util\SpriteName.cs" Link="Upstream\SpriteName.cs" />
+    <Compile Include="..\PKHeX.Drawing.PokeSprite\Util\TypeColor.cs" Link="Upstream\TypeColor.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Nome do recurso = nome do arquivo com "-" e espaco trocados por "_" (a mesma regra do Resources.resx do PKHeX:
+      "a_1007-1.png" vira "a_1007_1").
+    -->
+    <EmbeddedResource Include="..\PKHeX.Drawing.PokeSprite\Resources\img\**\*.png" Visible="false"
+                      LogicalName="spr.$([System.String]::Copy('%(Filename)').Replace('-','_').Replace(' ','_'))" />
+    <EmbeddedResource Include="..\PKHeX.Drawing.Misc\Resources\img\box\**\*.png" Visible="false"
+                      LogicalName="spr.$([System.String]::Copy('%(Filename)').Replace('-','_').Replace(' ','_'))" />
+  </ItemGroup>
+
+</Project>
