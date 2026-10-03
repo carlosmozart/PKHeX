@@ -5,6 +5,24 @@
   <Style Selector="Window">
     <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
   </Style>
+  <!-- Legendas pequenas: fonte legivel mesmo no tema Pixel (a Pixelify Sans so fica legivel a partir de 14 px) -->
+  <Style Selector=":is(TextBlock)[FontSize=9], :is(TextBlock)[FontSize=10], :is(TextBlock)[FontSize=11], :is(TextBlock)[FontSize=12], :is(TextBlock)[FontSize=13]">
+    <Setter Property="FontFamily" Value="{DynamicResource AppSmallFontFamily}" />
+  </Style>
+  <!-- Texto normal: a fonte do corpo (so muda nas fontes largas, que ficam nos titulos) -->
+  <Style Selector=":is(TextBlock)[FontSize=14], :is(TextBlock)[FontSize=15]">
+    <Setter Property="FontFamily" Value="{DynamicResource AppBodyFontFamily}" />
+  </Style>
+  <Style Selector=":is(TemplatedControl)[FontSize=14], :is(TemplatedControl)[FontSize=15]">
+    <Setter Property="FontFamily" Value="{DynamicResource AppBodyFontFamily}" />
+  </Style>
+  <!-- Titulos (16 px ou mais): sempre a fonte escolhida, mesmo dentro de um controle com a fonte do corpo -->
+  <Style Selector=":is(TextBlock)[FontSize=16], :is(TextBlock)[FontSize=17], :is(TextBlock)[FontSize=18], :is(TextBlock)[FontSize=19], :is(TextBlock)[FontSize=20], :is(TextBlock)[FontSize=21], :is(TextBlock)[FontSize=22], :is(TextBlock)[FontSize=24], :is(TextBlock)[FontSize=26], :is(TextBlock)[FontSize=28], :is(TextBlock)[FontSize=30], :is(TextBlock)[FontSize=32], :is(TextBlock)[FontSize=34], :is(TextBlock)[FontSize=36], :is(TextBlock)[FontSize=40], :is(TextBlock)[FontSize=48]">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+  </Style>
+  <Style Selector=":is(TemplatedControl)[FontSize=9], :is(TemplatedControl)[FontSize=10], :is(TemplatedControl)[FontSize=11], :is(TemplatedControl)[FontSize=12], :is(TemplatedControl)[FontSize=13]">
+    <Setter Property="FontFamily" Value="{DynamicResource AppSmallFontFamily}" />
+  </Style>
 
   <Style Selector="Border.card">
     <Setter Property="Background" Value="{DynamicResource CardBackground}" />

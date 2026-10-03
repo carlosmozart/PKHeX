@@ -1087,7 +1087,7 @@
   <DataTemplate DataType="vm:BoxesPageViewModel">
     <DockPanel>
       <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-        <Button DockPanel.Dock="Right" Classes="small" Content="⇅  Ordenar" Margin="10,0,0,0" VerticalAlignment="Top"
+        <Button x:Name="SortButton" DockPanel.Dock="Right" Classes="small" Content="⇅  Ordenar" Margin="10,0,0,0" VerticalAlignment="Top"
                 ToolTip.Tip="Ordena a caixa aberta ou todas as caixas (Ctrl+Z desfaz)">
           <Button.Flyout>
             <MenuFlyout Placement="BottomEdgeAlignedRight">
@@ -1110,8 +1110,10 @@
             </MenuFlyout>
           </Button.Flyout>
         </Button>
-      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-        <ItemsControl ItemsSource="{Binding BoxTabs}">
+      <!-- Espaco do tamanho do Ordenar: as abas ficam centralizadas na pagina; se nao couberem, rolam ate a atual (Controls/CenteredTabs.cs) -->
+      <Border x:Name="TabsSpacer" DockPanel.Dock="Left" Width="{Binding #SortButton.Bounds.Width}" Margin="0,0,10,0" />
+      <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" c:CenteredTabs.Spacer="{Binding #TabsSpacer}">
+        <ItemsControl ItemsSource="{Binding BoxTabs}" HorizontalAlignment="Center">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
           </ItemsControl.ItemsPanel>

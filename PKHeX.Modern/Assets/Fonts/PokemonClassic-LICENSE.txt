@@ -1,0 +1,12 @@
+Pokemon Classic (Assets/Fonts/PokemonClassic.ttf)
+Copyright TheLouster115 2016
+https://fontstruct.com/fontstructions/show/1351066/pokemon-classic
+Designer notes: font used in the first and second generation Pokemon games; credits to Sarial84 on DeviantART for the
+Cyrillic alphabet and others for the Greek alphabet.
+
+Licensed under the Creative Commons Attribution-ShareAlike 3.0 license:
+https://creativecommons.org/licenses/by-sa/3.0/
+
+The font file is distributed unmodified (renamed from "Pokemon Classic.ttf"). Built with FontStruct; FontStruct is a
+trademark of FSI FontShop International GmbH. Pokémon is a trademark of Nintendo, Creatures Inc. and GAME FREAK inc.;
+this is a fan recreation of the Game Boy font, not an official asset.

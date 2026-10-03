@@ -6,6 +6,16 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.3 — 2026-10-03
+
+### 🎨 Temas
+- **Fonte pixelada no tema Pixel**: a Consolas (fonte de terminal, larga) deu lugar à **Pixelify Sans**, uma fonte pixelada com acentos, embutida no app, com negrito de verdade. Ela aparece nos menus, rótulos e títulos; as legendas pequenas (até 13 px) continuam na fonte padrão, porque fontes pixeladas embolam nesses tamanhos.
+- **Escolha da fonte**: no ⚙ da barra lateral, a seção **Fonte** troca a fonte da interface na hora, em qualquer tema: **Do tema** (o padrão: Pixelify Sans no tema Pixel, Inter nos outros), **Inter**, **Pixelify Sans** ou **Pokémon GB/GBC**. Cada opção aparece escrita na própria fonte, e a escolha fica salva.
+- **Fonte do Pokémon de Game Boy**: a opção **Pokémon GB/GBC** usa a Pokemon Classic, recriação feita por fãs da fonte de Red/Blue/Yellow/Gold/Silver/Crystal (de TheLouster115, CC BY-SA 3.0), com acentos. Como as letras são largas, ela vale nos títulos (nome da caixa, nome do Pokémon, títulos das páginas, logo); o texto normal fica na Inter para não cortar.
+
+### 📦 Caixas
+- **Abas das caixas centralizadas**: quando todas cabem, a lista fica no centro, alinhada ao nome da caixa. Quando não cabem (ex.: 24 ou 32 caixas), ela rola sozinha para deixar a caixa aberta no meio, inclusive ao trocar de caixa pelas setas ou pelo teclado.
+
 ## 0.4.2 — 2026-10-03
 
 ### 🧭 Barra lateral

@@ -112,6 +112,15 @@
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    <TextBlock Text="FONTE" Classes="section" Margin="0,8,0,0" />
+                    <ItemsControl ItemsSource="{Binding FontOptions}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FontOptionViewModel">
+                          <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="8,4"
+                                  Content="{Binding Header}" FontFamily="{Binding Family}" ToolTip.Tip="{Binding Tip}" Command="{Binding SelectCommand}" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     <TextBlock Text="COR DE DESTAQUE" Classes="section" Margin="0,8,0,0" />
                     <ItemsControl ItemsSource="{Binding AccentOptions}" Margin="6,4,0,4" ClipToBounds="False">
                       <ItemsControl.ItemsPanel>

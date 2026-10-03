@@ -26,6 +26,8 @@ public sealed class MainViewModel : ViewModelBase
         SetAccentCommand = new RelayCommand(p => { if (p is AccentOptionViewModel o) SetAccent(o.Preset); });
         var theme = Theme.AppTheme.Find(Settings.ThemeKey);
         ThemeOptions = [.. Theme.AppTheme.Presets.Select(t => new ThemeOptionViewModel(t, t == theme, new RelayCommand(() => SetTheme(t))))];
+        var font = Theme.AppTheme.FindFont(Settings.FontKey);
+        FontOptions = [.. Theme.AppTheme.Fonts.Select(f => new FontOptionViewModel(f, f == font, new RelayCommand(() => SetFont(f))))];
         LanguageOptions = [.. Loc.Languages.Select(l => new LanguageOptionViewModel(l.Code, l.Name, l.Code == (Settings.UiLanguage ?? Loc.Portuguese),
             new RelayCommand(() => _ = SetLanguageAsync(l.Code, l.Name))))];
         ToggleThemeCommand = new RelayCommand(() =>
@@ -266,9 +268,25 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var t in ThemeOptions)
             t.IsSelected = t.Preset == theme;
         Settings.ThemeKey = theme.Key;
+        foreach (var f in FontOptions)
+            f.RefreshFamily();
         SetAccent(Theme.AccentTheme.Find(theme.AccentKey)); // tambem salva as preferencias
         Raise(nameof(ThemeText));
         Status = $"Tema {theme.Name} aplicado.";
+    }
+
+    /// <summary>Fontes da interface (⚙ › Fonte): a do tema, Inter, Pixelify Sans...</summary>
+    public IReadOnlyList<FontOptionViewModel> FontOptions { get; }
+
+    /// <summary>Troca a fonte na hora, independente do tema.</summary>
+    private void SetFont(Theme.AppFontChoice font)
+    {
+        Theme.AppTheme.SetFont(font.Key);
+        foreach (var f in FontOptions)
+            f.IsSelected = f.Font == font;
+        Settings.FontKey = font.Key == "theme" ? null : font.Key;
+        Settings.Save();
+        Status = $"Fonte: {Loc.T(font.Name)}.";
     }
 
     /// <summary>Idiomas da interface (menu "🌐 Idioma" da barra lateral).</summary>
@@ -2169,6 +2187,20 @@ public sealed class ThemeOptionViewModel(Theme.AppThemePreset preset, bool selec
     public bool IsSelected { get => _isSelected; set { if (Set(ref _isSelected, value)) Raise(nameof(Header)); } }
     public string Header => (IsSelected ? "✓  " : "     ") + Loc.T(Preset.Name);
     public string Tip => Loc.T(Preset.Description);
+    public RelayCommand SelectCommand { get; } = select;
+}
+
+public sealed class FontOptionViewModel(Theme.AppFontChoice font, bool selected, RelayCommand select) : ViewModelBase
+{
+    public Theme.AppFontChoice Font { get; } = font;
+    private bool _isSelected = selected;
+    public bool IsSelected { get => _isSelected; set { if (Set(ref _isSelected, value)) Raise(nameof(Header)); } }
+    public string Header => (IsSelected ? "✓  " : "     ") + Loc.T(Font.Name);
+    public string Tip => Loc.T(Font.Description);
+    /// <summary>Amostra do nome escrita na propria fonte (no menu).</summary>
+    public Avalonia.Media.FontFamily Family => Avalonia.Media.FontFamily.Parse(Font.Family ?? Theme.AppTheme.Current.FontFamily ?? "fonts:Inter#Inter, $Default");
+    /// <summary>"Do tema" muda de amostra quando o tema muda.</summary>
+    public void RefreshFamily() => Raise(nameof(Family));
     public RelayCommand SelectCommand { get; } = select;
 }
 

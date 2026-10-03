@@ -66,4 +66,8 @@
   <CornerRadius x:Key="Radius16">16</CornerRadius>
   <Thickness x:Key="CardBorderThickness">1</Thickness>
   <FontFamily x:Key="AppFontFamily">fonts:Inter#Inter, $Default</FontFamily>
+  <!-- Textos pequenos (ate 13 px) usam sempre a Inter: a fonte pixelada do tema Pixel embola nesses tamanhos -->
+  <FontFamily x:Key="AppSmallFontFamily">fonts:Inter#Inter, $Default</FontFamily>
+  <!-- Texto normal (14-15 px): igual a AppFontFamily, menos nas fontes largas (Pokemon GB), que ficam so nos titulos -->
+  <FontFamily x:Key="AppBodyFontFamily">fonts:Inter#Inter, $Default</FontFamily>
 </ResourceDictionary>

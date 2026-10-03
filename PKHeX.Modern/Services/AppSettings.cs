@@ -16,6 +16,8 @@ public sealed class AppSettings
     public string? AccentColor { get; set; }
     /// <summary>Tema completo (chave de Theme.AppTheme.Presets: default, pss, pixel, za).</summary>
     public string? ThemeKey { get; set; }
+    /// <summary>Fonte da interface (chave de Theme.AppTheme.Fonts: theme, inter, pixelify...); null = a do tema.</summary>
+    public string? FontKey { get; set; }
     /// <summary>Pasta do Save Manager (null = pasta "saves" ao lado do exe).</summary>
     public string? SavesFolder { get; set; }
     public bool HideSaveSID { get; set; }

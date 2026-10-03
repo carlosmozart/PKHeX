@@ -109,7 +109,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 **Outros**
 - Treinador (nome, TID/SID, dinheiro, tempo de jogo) e **Mochila com o ícone de cada item**; ao passar o mouse, a descrição em português e onde conseguir o item (dados do AllGenWiki).
 - **Início** (⌂, Ctrl+0): ao abrir um save, cartão do jogo, a equipe no topo, atalhos grandes para cada página e os saves recentes.
-- **Temas completos** (⚙ na barra lateral): Padrão, PSS (X/Y), Pixel (GBA) e Z-A (Lumiose), cada um em claro e escuro, mudando fundo, painéis, cantos, bordas e fonte na hora; mais a **cor de destaque** configurável.
+- **Temas completos** (⚙ na barra lateral): Padrão, PSS (X/Y), Pixel (GBA) e Z-A (Lumiose), cada um em claro e escuro, mudando fundo, painéis, cantos, bordas e fonte na hora; mais a **cor de destaque** configurável. No ⚙ dá para escolher a fonte (a do tema, Inter, Pixelify Sans ou Pokémon GB/GBC) em qualquer tema. O tema Pixel usa a fonte [Pixelify Sans](https://github.com/eifetx/Pixelify-Sans) (SIL Open Font License 1.1, em `Assets/Fonts/OFL.txt`); a opção Pokémon GB/GBC usa a [Pokemon Classic](https://fontstruct.com/fontstructions/show/1351066/pokemon-classic), recriação feita por fãs da fonte dos jogos de Game Boy, de TheLouster115 (CC BY-SA 3.0, em `Assets/Fonts/PokemonClassic-LICENSE.txt`).
 - **Idioma da interface** (⚙ na barra lateral, em Idioma): Português (Brasil), o padrão, ou English. Vale ao reiniciar; o app oferece reiniciar na hora.
 - Atalhos: Q/E trocam de página, Ctrl+1–9 vão direto, Esc volta, Ctrl+O abre.
 
