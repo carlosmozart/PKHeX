@@ -43,6 +43,11 @@ public sealed class MainViewModel : ViewModelBase
             IsOpenPath = p => FindTab(p) is not null,
             Reload = p => _ = ReloadAsync(p),
         };
+        SaveManager.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(SaveManagerViewModel.HasEntries))
+                Raise(nameof(ShowSidebarSaves));
+        };
         BankStorage.ExternalFolders = Settings.ExternalBankFolders;
         OtherSave = new OtherSaveViewModel(s => _ = SelectSlotAsync(s),
             () => SaveManager.Entries
@@ -332,6 +337,8 @@ public sealed class MainViewModel : ViewModelBase
     public bool HasLastSave => ZipSaves.Exists(Settings.LastSavePath);
     /// <summary>Link "↺ Último" na barra lateral: so sem save aberto (com save, as abas e o Inicio mostram os recentes).</summary>
     public bool ShowLastSaveLink => HasLastSave && !HasSave;
+    /// <summary>Sem save aberto e com saves na pasta: a barra lateral lista os saves para abrir com um clique.</summary>
+    public bool ShowSidebarSaves => !HasSave && SaveManager.HasEntries;
     public string LastSaveName => HasLastSave ? ZipSaves.DisplayName(Settings.LastSavePath!) : "";
 
     public bool OpenLastSaveOnStartup
@@ -765,7 +772,7 @@ public sealed class MainViewModel : ViewModelBase
         _selectedSlot = null;
         Editor = null;
         _currentPage = Boxes;
-        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(CurrentPage), nameof(HasSave), nameof(ShowLastSaveLink), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
+        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(CurrentPage), nameof(HasSave), nameof(ShowLastSaveLink), nameof(ShowSidebarSaves), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
             Raise(p);
         OnHistoryChanged();
         RaiseHome();
@@ -809,7 +816,7 @@ public sealed class MainViewModel : ViewModelBase
         Boxes.CurrentBox = tab.CurrentBox;
         Home.Load(tab.Sav);
         CurrentPage = tab.LastPage ?? Home; // save recem-aberto cai no Inicio
-        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(HasSave), nameof(ShowLastSaveLink), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
+        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(HasSave), nameof(ShowLastSaveLink), nameof(ShowSidebarSaves), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
             Raise(p);
         IsHelpOpen = false;
         RaiseHome();

@@ -66,6 +66,8 @@ public sealed class SaveManagerViewModel : PageViewModel
 
     /// <summary>Saves encontrados na pasta (a pagina Bank oferece estes no painel "Outro save").</summary>
     public IReadOnlyList<SaveEntryViewModel> Entries => _all;
+    /// <summary>A pasta tem saves (a barra lateral oferece abrir um deles quando nada esta aberto).</summary>
+    public bool HasEntries => _all.Count > 0;
 
     public RelayCommand RefreshCommand { get; }
     public RelayCommand OpenFolderCommand { get; }
@@ -220,7 +222,7 @@ public sealed class SaveManagerViewModel : PageViewModel
         Generations = [.. _all.Select(e => (int)e.Entry.Generation).Distinct().Order().Select(g => new GenerationFilterViewModel(g) { IsActive = g == _generation })];
         Summary = $"{entries.Count} save(s)" + (skipped > 0 ? $" · {skipped} arquivo(s) ignorado(s) por não serem saves reconhecidos" : "");
         IsLoading = false;
-        foreach (var p in (string[])[nameof(IsEmpty), nameof(ShowLoading), nameof(FolderExists), nameof(Generations), nameof(GenerationFilter)])
+        foreach (var p in (string[])[nameof(IsEmpty), nameof(ShowLoading), nameof(FolderExists), nameof(Generations), nameof(GenerationFilter), nameof(Entries), nameof(HasEntries)])
             Raise(p);
         ApplyFilter();
     }

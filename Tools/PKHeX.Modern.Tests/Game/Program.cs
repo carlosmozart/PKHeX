@@ -67,7 +67,7 @@ foreach (var (file, records) in new[] { ("cr.sav", false), ("fr.sav", true), ("h
     if (g.WorkRows.FirstOrDefault() is { } w)
     {
         workIndex = w.Index;
-        workValue = (w.Value + 1) % 3;
+        workValue = (int)((w.Value + 1) % 3);
         w.ValueNumber = workValue;
         Check($"[{file}] valor de evento alterado", w.Value == workValue);
     }

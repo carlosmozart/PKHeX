@@ -87,12 +87,13 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [x] **Banco de dados / pesquisa**: página 🔎 Pesquisa com todos os Pokémon dos saves abertos, da pasta (inclusive zip) e do bank, com filtros e abrir o resultado.
 - [x] **Batch Editor** (0.4.0): página ⚙ Edição em lote com ações rápidas e o script do PKHeX, escopos (caixa, save, equipe, selecionados, resultados da Pesquisa), pré-visualização, modo legal e um passo no Ctrl+Z.
 - [x] **Editores por jogo, etapa 1** (0.4.1): página 🎮 Jogo com flags e valores de evento (Gen 2–7, com nomes) e recordes (Gen 3, 5, 6, 7, SW/SH, BD/SP).
-- [ ] **Editores por jogo, etapa 2**: eventos de Gen 1, Let's Go, BD/SP, Scarlet/Violet e Z-A (cada um tem editor próprio no PKHeX) e editores específicos (Hall da Fama, base secreta, Pokéathlon, Poffins/Pokéblocks...).
+- [x] **Editores por jogo, etapa 2** (0.4.4): eventos do Scarlet/Violet (blocos com nome, em categorias) e do BD/SP (flags, flags de sistema e valores), mais os atalhos do BD/SP (lendários, errantes, mapa, roupas).
+- [ ] **Editores por jogo, etapa 3**: eventos de Gen 1, Let's Go e Z-A e editores específicos (Hall da Fama, base secreta, Pokéathlon, Poffins/Pokéblocks...).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [x] **Backup automático**: antes de salvar por cima de um save, o arquivo anterior vai para `%APPDATA%\PKHeX.Modern\backups` (20 mais recentes por save; botão "Backups" no Save Manager).
 - [x] **Publicação**: perfil `win-x64` (um único `PKHeX.Modern.exe`, sem precisar do .NET) e GitHub Action `.github/workflows/modern-build.yml` (artefato a cada push no `modern-ui`; Release com o zip em tags `modern-v*`).
 - [x] **Menu de idiomas da interface**: Português (Brasil) padrão e English, em “🌐 Idioma” na barra lateral (vale ao reiniciar). A tradução é feita na exibição (`Services/Loc.cs` + `Assets/lang/en.json`, chaves = texto em português, com modelos `{0}`); o teste `Language` lista o que ficou sem tradução. Changelog e descrições do AllGenWiki ficam só em português.
-- [ ] Instalador de verdade (MSIX ou Inno Setup), ícone próprio e assinatura do exe.
+- [ ] Instalador de verdade (MSIX ou Inno Setup), ícone próprio e assinatura do exe. **Adiado** (03/10/2026): inviável no momento.
 - [x] **Mochila em colunas**: cartões com ícone, item e quantidade, em linhas virtualizadas (bolsos de 260 slots abrem em ~0,3 s).
 - [ ] **Multiplataforma** (Linux/macOS): trocar o `System.Drawing` dos sprites por um carregador próprio (SkiaSharp), já que o Avalonia roda em todos.
 

@@ -96,7 +96,7 @@
   <Style Selector="Button.good:pointerover /template/ ContentPresenter, Button.info:pointerover /template/ ContentPresenter, Button.danger:pointerover /template/ ContentPresenter, Button.warn:pointerover /template/ ContentPresenter, Button.soft:pointerover /template/ ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource TextMuted}" />
   </Style>
-  <Style Selector="Button.good:disabled, Button.info:disabled, Button.danger:disabled, Button.warn:disabled, Button.soft:disabled">
+  <Style Selector="Button.good:disabled, Button.info:disabled, Button.danger:disabled, Button.warn:disabled, Button.soft:disabled, Button.accent:disabled">
     <Setter Property="Opacity" Value="0.45" />
   </Style>
   <!-- Salvar: o botao mais importante da barra -->
@@ -768,6 +768,11 @@
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="Padding" Value="12,5" />
     <Setter Property="Margin" Value="0,0,0,0.5" />
+  </Style>
+  <!-- Saves da pasta na barra lateral (sem save aberto) -->
+  <Style Selector="Button.sideSave">
+    <Setter Property="Padding" Value="8,5" />
+    <Setter Property="Margin" Value="0,0,0,2" />
   </Style>
   <Style Selector="Button.navHome.selected">
     <Setter Property="Background" Value="{DynamicResource AccentSoft}" />

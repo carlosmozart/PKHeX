@@ -14,7 +14,9 @@ $suites = [ordered]@{
     'NameHint' = @{ 'r.sav' = 'Ruby.sav'; 'red.sav' = 'POKEMON RED-0.sav'; 'fr.sav' = 'fire red.sav'; 'cr.sav' = 'Pokemon Crystal Version.sav' }
     'Home' = @{}
     'BoxTabs' = @{}
+    'SidebarSaves' = @{}
     'Fonts' = @{}
+    'GameEvents' = @{ 'sv.sav' = 'Scarlet' }
     'Language' = @{}
     'Friendship' = @{}
     'Feebas' = @{}

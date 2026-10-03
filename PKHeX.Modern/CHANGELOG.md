@@ -6,6 +6,16 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.4 — 2026-10-03
+
+### 🎮 Editores por jogo
+- **Eventos do Scarlet/Violet** na página Jogo: cerca de 650 flags e 280 valores de evento que o PKHeX conhece pelo nome (cada evento é um bloco do save), agrupados em categorias: **Voo** (pontos de voo), **Mapa**, **Receitas de TM**, **Recursos liberados**, **Compras**, **Estacas (Treasures of Ruin)**, **Leilão**, **Surtos**, **Batalhas e desafios**, **Academia**, **História e eventos** e outras. Busca, filtros e “Ativar mostradas” funcionam como nos outros jogos.
+- **Eventos do BD/SP**: as 4000 flags, as 1000 flags de sistema (mostradas como S#0000) e os 500 valores de evento, com os nomes que o PKHeX conhece.
+- **Atalhos do BD/SP** (nova aba ⚡ Atalhos): revanche com Dialga/Palkia, eventos do **Darkrai**, **Shaymin** e **Arceus** (com o item, a Pokédex Nacional e as flags certas), **Spiritomb**, **Mesprit** e **Cresselia** errantes de novo, todas as áreas do mapa e todas as roupas. Cada atalho explica o que faz, pergunta antes e fica desativado quando não há nada a fazer.
+
+### 🗂 Saves
+- **Seus saves na barra lateral**: sem nenhum save aberto, a barra lateral lista os saves da pasta do Save Manager (selo do jogo, nome e arquivo) e um clique abre o save. O “Salvar como...” desativado some até haver um save aberto.
+
 ## 0.4.3 — 2026-10-03
 
 ### 🎨 Temas

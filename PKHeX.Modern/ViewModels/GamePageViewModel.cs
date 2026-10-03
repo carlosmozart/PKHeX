@@ -19,6 +19,7 @@ public sealed class GamePageViewModel : PageViewModel
     private List<FlagRowViewModel> _flags = [];
     private List<WorkRowViewModel> _works = [];
     private List<RecordRowViewModel> _records = [];
+    private List<ShortcutRowViewModel> _shortcuts = [];
 
     /// <param name="confirm">Pergunta (titulo, mensagem, botao) antes de mudar varias flags.</param>
     public GamePageViewModel(Func<string, string, string, Task<bool>> confirm, Action<string> status)
@@ -41,11 +42,13 @@ public sealed class GamePageViewModel : PageViewModel
         _flags = [.. e.Flags.Select(f => new FlagRowViewModel(f, e, Changed))];
         _works = [.. e.Works.Select(w => new WorkRowViewModel(w, e, Changed))];
         _records = [.. e.Records.Select(r => new RecordRowViewModel(r, e, Changed))];
-        Categories = ["Todas as categorias", .. e.Flags.Concat<object>(e.Works).Select(x => x is GameFlag f ? f.Type : ((GameWork)x).Type)
-            .Where(t => t != NamedEventType.None).Distinct().Order().Select(GameEditors.CategoryName).Distinct()];
+        _shortcuts = [.. e.Shortcuts.Select(s => new ShortcutRowViewModel(s, () => _ = RunShortcutAsync(s)))];
+        ShortcutRows = _shortcuts;
+        Categories = ["Todas as categorias", .. e.Flags.Select(GameEditors.CategoryOf).Concat(e.Works.Select(GameEditors.CategoryOf))
+            .Where(c => c.Length > 0).Distinct().Order(StringComparer.CurrentCulture)];
         _category = 0;
         _showUnnamed = !e.HasLabels;
-        _tab = e.HasEvents ? 0 : 2;
+        _tab = e.HasEvents ? 0 : e.WorkCount > 0 ? 1 : 2;
         Raise(string.Empty);
         ApplyFilter();
     }
@@ -56,16 +59,19 @@ public sealed class GamePageViewModel : PageViewModel
     public bool HasEvents => _editors?.HasEvents == true;
     public bool HasWorks => _editors?.WorkCount > 0;
     public bool HasRecords => _editors?.HasRecords == true;
+    public bool HasShortcuts => _editors?.HasShortcuts == true;
+    public IReadOnlyList<ShortcutRowViewModel> ShortcutRows { get; private set; } = [];
     public string Summary => _editors is null ? "" : string.Join(" · ", new[]
     {
         HasEvents ? $"{_editors.FlagCount} flags ({_flags.Count(f => f.HasName)} com nome)" : "",
         HasWorks ? $"{_editors.WorkCount} valores ({_works.Count(w => w.HasName)} com nome)" : "",
         HasRecords ? $"{_records.Count} recordes" : "",
+        HasShortcuts ? $"{_shortcuts.Count} atalhos" : "",
     }.Where(s => s.Length > 0));
     public bool NoLabels => HasEvents && _editors?.HasLabels == false;
 
     private int _tab;
-    /// <summary>0 = flags, 1 = valores, 2 = recordes.</summary>
+    /// <summary>0 = flags, 1 = valores, 2 = recordes, 3 = atalhos.</summary>
     public int Tab
     {
         get => _tab;
@@ -76,6 +82,8 @@ public sealed class GamePageViewModel : PageViewModel
             Raise(nameof(IsFlagsTab));
             Raise(nameof(IsWorksTab));
             Raise(nameof(IsRecordsTab));
+            Raise(nameof(IsShortcutsTab));
+            Raise(nameof(ShowFilters));
             Raise(nameof(ShowCategory));
             ApplyFilter();
         }
@@ -83,7 +91,10 @@ public sealed class GamePageViewModel : PageViewModel
     public bool IsFlagsTab => _tab == 0;
     public bool IsWorksTab => _tab == 1;
     public bool IsRecordsTab => _tab == 2;
-    public bool ShowCategory => _tab != 2;
+    public bool IsShortcutsTab => _tab == 3;
+    public bool ShowCategory => _tab is 0 or 1;
+    /// <summary>Busca e filtros (a aba de atalhos nao tem).</summary>
+    public bool ShowFilters => _tab != 3;
 
     // Filtros
     private string _query = "";
@@ -134,15 +145,39 @@ public sealed class GamePageViewModel : PageViewModel
                 WorkRows = [.. _works.Where(w => Matches(w.Index, w.HasName, w.Name, w.Category) && (!_onlySet || w.Value != 0))];
                 (shown, total) = (WorkRows.Count, _works.Count);
                 break;
-            default:
+            case 2:
                 RecordRows = [.. _records.Where(r => Matches(r.Id, r.HasName, r.Name, "") && (!_onlySet || r.Value != 0))];
                 (shown, total) = (RecordRows.Count, _records.Count);
+                break;
+            default:
+                (shown, total) = (_shortcuts.Count, _shortcuts.Count);
                 break;
         }
         CountText = shown == total ? $"{total} itens" : $"{shown} de {total} itens";
         HasNoRows = shown == 0;
         foreach (var p in (string[])[nameof(FlagRows), nameof(WorkRows), nameof(RecordRows), nameof(CountText), nameof(HasNoRows)])
             Raise(p);
+    }
+
+    /// <summary>Atalho de evento (BD/SP): pergunta, aplica e atualiza as flags/valores mostrados.</summary>
+    private async Task RunShortcutAsync(GameShortcut s)
+    {
+        if (!await _confirm(s.Name, s.Description + " As flags e valores do evento são alterados no save; exporte uma cópia antes, se tiver dúvida.", "Aplicar"))
+            return;
+        try
+        {
+            s.Apply();
+        }
+        catch (Exception ex)
+        {
+            _status($"{s.Name}: erro ({ex.Message})");
+            return;
+        }
+        Changed?.Invoke();
+        foreach (var f in _flags) f.Refresh();
+        foreach (var w in _works) w.Refresh();
+        foreach (var r in _shortcuts) r.Refresh();
+        _status($"{s.Name}: aplicado. Lembre-se de salvar.");
     }
 
     /// <summary>Ativa ou desativa todas as flags que o filtro esta mostrando (ex.: todos os pontos de voo).</summary>
@@ -170,10 +205,11 @@ public sealed class GamePageViewModel : PageViewModel
 public sealed class FlagRowViewModel(GameFlag flag, GameEditors editors, Action changed) : ViewModelBase
 {
     public int Index => flag.Index;
-    public string Number => $"#{flag.Index:0000}";
+    public string Number => flag.Code ?? $"#{flag.Index:0000}";
     public bool HasName => flag.Name.Length > 0;
-    public string Name => HasName ? flag.Name : $"Flag {flag.Index}";
-    public string Category => flag.Type == NamedEventType.None ? "" : GameEditors.CategoryName(flag.Type);
+    public string Name => HasName ? flag.Name : $"Flag {flag.Code ?? flag.Index.ToString()}";
+    public string Category => GameEditors.CategoryOf(flag);
+    public void Refresh() => Raise(nameof(IsSet));
     public bool IsSet
     {
         get => editors.GetFlag(flag.Index);
@@ -203,23 +239,25 @@ public sealed class WorkRowViewModel : ViewModelBase
     }
 
     public int Index => _work.Index;
-    public string Number => $"#{_work.Index:000}";
+    public string Number => _work.Code ?? $"#{_work.Index:000}";
     public bool HasName => _work.Name.Length > 0;
     public string Name => HasName ? _work.Name : $"Valor {_work.Index}";
-    public string Category => _work.Type == NamedEventType.None ? "" : GameEditors.CategoryName(_work.Type);
-    public int Max => _editors.WorkMax;
+    public string Category => GameEditors.CategoryOf(_work);
+    public decimal Min => _work.Min;
+    public decimal Max => _work.Max;
+    public void Refresh() { Raise(nameof(ValueNumber)); Raise(nameof(SelectedOption)); }
     public IReadOnlyList<WorkOption> Options { get; }
     public bool HasOptions => Options.Count > 0;
 
-    public int Value => _editors.GetWork(_work.Index);
+    public long Value => _editors.GetWork(_work.Index);
     public decimal? ValueNumber
     {
         get => Value;
         set
         {
-            if (value is null || (int)value == Value)
+            if (value is null || (long)value == Value)
                 return;
-            _editors.SetWork(_work.Index, (int)value);
+            _editors.SetWork(_work.Index, (long)value);
             _changed();
             Raise();
             Raise(nameof(SelectedOption));
@@ -237,6 +275,18 @@ public sealed class WorkRowViewModel : ViewModelBase
             ValueNumber = value.Value;
         }
     }
+}
+
+/// <summary>Atalho de evento na pagina Jogo (BD/SP): nome, explicacao e se ainda da para usar.</summary>
+public sealed class ShortcutRowViewModel(GameShortcut shortcut, Action run) : ViewModelBase
+{
+    public string Name => shortcut.Name;
+    public string Description => shortcut.Description;
+    public bool IsReady { get { try { return shortcut.Ready(); } catch { return false; } } }
+    /// <summary>Quando nao da para usar: ja feito, ou o jogo ainda nao chegou la (ex.: revanche antes de capturar o lendario).</summary>
+    public string State => IsReady ? "" : "Nada a fazer agora";
+    public RelayCommand ApplyCommand { get; } = new(run);
+    public void Refresh() { Raise(nameof(IsReady)); Raise(nameof(State)); }
 }
 
 public sealed record WorkOption(string Name, ushort Value)

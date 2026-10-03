@@ -797,13 +797,15 @@
                 Command="{Binding SetTabCommand}" CommandParameter="1" ToolTip.Tip="Contadores e estados de eventos (ex.: andamento da história, sorteios diários)" />
         <Button Classes="small" Classes.accent="{Binding IsRecordsTab}" Content="🏆  Recordes" IsVisible="{Binding HasRecords}"
                 Command="{Binding SetTabCommand}" CommandParameter="2" ToolTip.Tip="Estatísticas do treinador: passos, batalhas, ovos chocados..." />
+        <Button Classes="small" Classes.accent="{Binding IsShortcutsTab}" Content="⚡  Atalhos" IsVisible="{Binding HasShortcuts}"
+                Command="{Binding SetTabCommand}" CommandParameter="3" ToolTip.Tip="Eventos prontos: liberar lendários, fazer errantes voltarem, áreas do mapa..." />
       </StackPanel>
-      <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8">
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8" IsVisible="{Binding ShowFilters}">
         <TextBox Text="{Binding Query}" Watermark="Buscar pelo nome ou número (ex.: surf, #120)" />
         <ComboBox Grid.Column="1" ItemsSource="{Binding Categories}" SelectedIndex="{Binding CategoryIndex}" MinWidth="190"
                   IsVisible="{Binding ShowCategory}" />
       </Grid>
-      <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="14" Margin="0,0,0,10">
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="14" Margin="0,0,0,10" IsVisible="{Binding ShowFilters}">
         <CheckBox Content="Mostrar também os sem nome" IsChecked="{Binding ShowUnnamed}" />
         <CheckBox Grid.Column="1" Content="Só os ativados / diferentes de zero" IsChecked="{Binding OnlySet}" />
         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsFlagsTab}">
@@ -822,7 +824,7 @@
             <ItemsRepeater.ItemTemplate>
               <DataTemplate x:DataType="vm:FlagRowViewModel">
                 <Border Classes="card" Padding="10,2" Margin="0,0,10,0">
-                  <Grid ColumnDefinitions="Auto,64,*,Auto" ColumnSpacing="10">
+                  <Grid ColumnDefinitions="Auto,72,*,Auto" ColumnSpacing="10">
                     <CheckBox IsChecked="{Binding IsSet}" MinWidth="0" />
                     <TextBlock Grid.Column="1" Text="{Binding Number}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="2" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
@@ -839,7 +841,7 @@
             <ItemsRepeater.ItemTemplate>
               <DataTemplate x:DataType="vm:WorkRowViewModel">
                 <Border Classes="card" Padding="10,4" Margin="0,0,10,0">
-                  <Grid ColumnDefinitions="56,*,Auto,140" ColumnSpacing="10">
+                  <Grid ColumnDefinitions="72,*,Auto,160" ColumnSpacing="10">
                     <TextBlock Text="{Binding Number}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                       <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
@@ -847,7 +849,7 @@
                     </StackPanel>
                     <ComboBox Grid.Column="2" ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedOption}" MinWidth="200" MaxWidth="320"
                               IsVisible="{Binding HasOptions}" PlaceholderText="(outro valor)" />
-                    <NumericUpDown Grid.Column="3" Value="{Binding ValueNumber}" Minimum="0" Maximum="{Binding Max}" FormatString="0" />
+                    <NumericUpDown Grid.Column="3" Value="{Binding ValueNumber}" Minimum="{Binding Min}" Maximum="{Binding Max}" FormatString="0" />
                   </Grid>
                 </Border>
               </DataTemplate>
@@ -869,6 +871,27 @@
               </DataTemplate>
             </ItemsRepeater.ItemTemplate>
           </ItemsRepeater>
+        </ScrollViewer>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding IsShortcutsTab}">
+          <ItemsControl ItemsSource="{Binding ShortcutRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ShortcutRowViewModel">
+                <Border Classes="card" Padding="14,10" Margin="0,0,10,6">
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding Description}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding State}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+                      <Button Classes="small accent" Content="Aplicar" Command="{Binding ApplyCommand}" IsEnabled="{Binding IsReady}"
+                              ToolTip.Tip="{Binding Description}" ToolTip.ShowOnDisabled="True" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </ScrollViewer>
         <TextBlock Text="Nada com esses filtros." Classes="muted" IsVisible="{Binding HasNoRows}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>

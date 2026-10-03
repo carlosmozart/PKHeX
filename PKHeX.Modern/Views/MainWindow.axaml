@@ -28,7 +28,7 @@
           <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                   Content="Abrir save..." Click="OnOpen" ToolTip.Tip="Ctrl+O" />
           <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
-                  Content="Salvar como..." Click="OnExport" IsEnabled="{Binding HasSave}" ToolTip.Tip="Escolhe onde gravar o save (Ctrl+E)" />
+                  Content="Salvar como..." Click="OnExport" IsVisible="{Binding HasSave}" ToolTip.Tip="Escolhe onde gravar o save (Ctrl+E)" />
           <Button Classes="ghost small" Command="{Binding OpenLastCommand}" IsVisible="{Binding ShowLastSaveLink}"
                   ToolTip.Tip="{Binding Settings.LastSavePath}">
             <TextBlock Text="{Binding LastSaveName, StringFormat='↺  Último: {0}'}" TextTrimming="CharacterEllipsis" />
@@ -190,6 +190,37 @@
             <TextBlock Grid.Column="2" Text="Ctrl+0" Classes="muted" FontSize="10" VerticalAlignment="Center" />
           </Grid>
         </Button>
+        <!-- Sem save aberto: os saves da pasta (Save Manager) para abrir com um clique -->
+        <DockPanel DockPanel.Dock="Top" IsVisible="{Binding ShowSidebarSaves}" Margin="0,10,0,0">
+          <TextBlock DockPanel.Dock="Top" Text="SEUS SAVES" Classes="section" Margin="4,0,0,6" />
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding SaveManager.Entries}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SaveEntryViewModel">
+                  <Button Classes="ghost sideSave" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                          Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SaveManager.OpenCommand}" CommandParameter="{Binding}"
+                          ToolTip.Tip="{Binding Path}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                      <Border Classes="gameBadge" Width="30" Height="30" CornerRadius="6" Background="{Binding Art.Background}">
+                        <Viewbox Margin="1">
+                          <Panel Width="100" Height="100">
+                            <Image Source="{Binding Art.Sprite}" IsVisible="{Binding !Art.IsDual}" />
+                            <Image Source="{Binding Art.Sprite}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                            <Image Source="{Binding Art.Sprite2}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                          </Panel>
+                        </Viewbox>
+                      </Border>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Game}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding FileName}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
         <ListBox Classes="nav" IsVisible="{Binding HasSave}" ItemsSource="{Binding Pages}"
                  SelectedItem="{Binding CurrentPage}" Background="Transparent">
           <ListBox.ItemTemplate>
