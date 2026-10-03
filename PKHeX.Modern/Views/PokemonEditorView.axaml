@@ -182,6 +182,38 @@
           </Border>
 
           <!-- Evoluir por troca: so aparece para especies que evoluem assim -->
+          <Border Classes="card" IsVisible="{Binding HasFriendshipEvolutions}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="EVOLUÇÃO POR FELICIDADE" Classes="section" Margin="0" />
+              <ItemsControl ItemsSource="{Binding FriendshipEvolutions}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:FriendshipEvolutionOption">
+                    <StackPanel Spacing="4" Margin="0,0,0,6">
+                      <Button Classes="small info" Content="{Binding Label, StringFormat='♥  {0}'}" Command="{Binding Command}" IsEnabled="{Binding !IsBlocked}" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" />
+                      <TextBlock Text="{Binding Requirement}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="A felicidade aumenta até o mínimo necessário. Dia/noite é simulado pelo botão escolhido; os demais requisitos precisam ser cumpridos." Classes="muted" FontSize="11" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+          <Border Classes="card" IsVisible="{Binding HasBeautyEvolutions}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="EVOLUÇÃO POR BELEZA" Classes="section" Margin="0" />
+              <ItemsControl ItemsSource="{Binding BeautyEvolutions}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ItemEvolutionOption">
+                    <StackPanel Spacing="4">
+                      <Button Classes="small info" Content="{Binding Label}" Command="{Binding Command}" IsEnabled="{Binding !IsBlocked}" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" />
+                      <TextBlock Text="{Binding Requirement}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="Beauty é um atributo de concurso, separado da felicidade. Confira em Extras; alguns jogos só aceitam o valor trazido de outro jogo." Classes="muted" FontSize="11" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
           <Border Classes="card" IsVisible="{Binding HasTradeEvolutions}">
             <StackPanel Spacing="8">
               <TextBlock Text="EVOLUÇÃO POR TROCA" Classes="section" Margin="0" />

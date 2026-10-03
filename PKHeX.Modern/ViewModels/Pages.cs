@@ -36,6 +36,7 @@ public abstract class SlotPageViewModel(Action<SlotViewModel> select) : PageView
 public sealed class BoxesPageViewModel : SlotPageViewModel
 {
     private SaveFile? _sav;
+    private bool _loading;
 
     public BoxesPageViewModel(Action<SlotViewModel> select) : base(select)
     {
@@ -56,6 +57,49 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
     public override string Icon => "▦";
     public RelayCommand PreviousBoxCommand { get; }
     public RelayCommand NextBoxCommand { get; }
+    public Func<string, string, string, System.Threading.Tasks.Task<string?>>? Prompt { get; set; }
+    public bool CanRename => _sav is IBoxDetailName;
+    public bool HasWallpapers => Wallpapers.Count > 0;
+    public IReadOnlyList<string> Wallpapers { get; private set; } = [];
+    public Avalonia.Media.Imaging.Bitmap? Wallpaper { get; private set; }
+    public RelayCommand RenameCommand => new(async () =>
+    {
+        if (_sav is not IBoxDetailName names || Prompt is null) return;
+        var sav = _sav;
+        int box = CurrentBox, max = CoreAdapter.GetBoxNameLength(sav);
+        var name = await Prompt("Renomear caixa", $"Nome da caixa (até {max} caracteres):", BoxName);
+        while (name is { } && name.Length > max && sav == _sav)
+            name = await Prompt("Nome muito longo", $"Este jogo aceita até {max} caracteres. Escolha um nome menor:", name);
+        if (name is null || sav != _sav || names.GetBoxName(box) == name) return;
+        names.SetBoxName(box, name);
+        RefreshNames();
+        Changed?.Invoke();
+    });
+    public int WallpaperIndex
+    {
+        get => _sav is IBoxDetailWallpaper wp && HasWallpapers ? wp.GetBoxWallpaper(CurrentBox) : -1;
+        set
+        {
+            if (_loading || _sav is not IBoxDetailWallpaper wp || value < 0 || value >= Wallpapers.Count || value == WallpaperIndex) return;
+            wp.SetBoxWallpaper(CurrentBox, value);
+            RefreshWallpaper();
+            Changed?.Invoke();
+        }
+    }
+    private void RefreshNames()
+    {
+        if (_sav is null) return;
+        for (int i = 0; i < BoxTabs.Count; i++) BoxTabs[i].Name = CoreAdapter.GetBoxName(_sav, i);
+        Raise(nameof(BoxName));
+    }
+    private void RefreshWallpaper()
+    {
+        var previous = Wallpaper;
+        Wallpaper = _sav is not null && HasWallpapers ? SpriteService.GetBoxWallpaper(_sav, CurrentBox) : null;
+        Raise(nameof(Wallpaper));
+        Raise(nameof(WallpaperIndex));
+        previous?.Dispose();
+    }
 
     private int _currentBox;
     public int CurrentBox
@@ -78,8 +122,13 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
 
     public override void Load(SaveFile sav)
     {
+        _loading = true;
         _sav = sav;
         _currentBox = 0;
+        Wallpapers = CoreAdapter.GetBoxWallpapers(sav);
+        Raise(nameof(Wallpapers));
+        Raise(nameof(HasWallpapers));
+        Raise(nameof(CanRename));
         BoxTabs.Clear();
         for (int i = 0; i < sav.BoxCount; i++)
         {
@@ -92,6 +141,7 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
         Raise(nameof(CurrentBox));
         LoadBox();
         Raise(nameof(ShowParty));
+        _loading = false;
     }
 
     public void Reload() => LoadBox();
@@ -100,6 +150,8 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
     {
         if (_sav is null)
             return;
+        bool wasLoading = _loading;
+        _loading = true;
         Slots.Clear();
         for (int i = 0; i < _sav.BoxSlotCount; i++)
         {
@@ -109,11 +161,14 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
         }
         Raise(nameof(BoxName));
         Raise(nameof(BoxLabel));
+        RefreshNames();
+        RefreshWallpaper();
         for (int i = 0; i < BoxTabs.Count; i++)
             BoxTabs[i].IsCurrent = i == CurrentBox;
         SlotsLoaded?.Invoke();
         PreviousBoxCommand.NotifyCanExecuteChanged();
         NextBoxCommand.NotifyCanExecuteChanged();
+        _loading = wasLoading;
     }
 }
 
@@ -273,7 +328,8 @@ public sealed class BagItemViewModel(PlayerBag bag, InventoryType type, Inventor
 /// <summary>Uma aba de caixa no topo da pagina Caixas.</summary>
 public sealed class BoxTabViewModel(string name, RelayCommand go) : ViewModelBase
 {
-    public string Name { get; } = name;
+    private string _name = name;
+    public string Name { get => _name; set => Set(ref _name, value); }
     public RelayCommand GoCommand { get; } = go;
     private bool _isCurrent;
     public bool IsCurrent { get => _isCurrent; set => Set(ref _isCurrent, value); }

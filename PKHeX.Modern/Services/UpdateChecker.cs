@@ -10,7 +10,7 @@ namespace PKHeX.Modern.Services;
 /// <param name="AssetUrl">Link do zip do exe (para a atualizacao automatica); null se a release nao tiver.</param>
 /// <param name="AssetDigest">Hash do zip informado pelo GitHub ("sha256:..."), quando houver.</param>
 public sealed record ReleaseInfo(Version Version, string Tag, string Name, string Url, DateTimeOffset? Published,
-    string? AssetUrl = null, string? AssetDigest = null);
+    string? AssetUrl = null, string? AssetDigest = null, string? Notes = null);
 
 /// <summary>
 /// Versao do app e verificacao de releases novas no GitHub (tags <c>modern-v*</c> do fork).
@@ -73,7 +73,7 @@ public static class UpdateChecker
                 }
             }
             best = new ReleaseInfo(v, tag, r.GetProperty("name").GetString() ?? tag, r.GetProperty("html_url").GetString() ?? ReleasesUrl, published,
-                assetUrl, assetDigest);
+                assetUrl, assetDigest, r.TryGetProperty("body", out var body) && body.ValueKind == JsonValueKind.String ? body.GetString() : null);
         }
         return best;
     }

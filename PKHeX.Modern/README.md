@@ -16,8 +16,12 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | ![Save Manager](docs/savemanager.png) | ![Modo legal](docs/legalmode.png) |
 | **Detalhes do encontro** | **Ajuda (F1)** |
 | ![Detalhes do encontro](docs/encounter_detail.png) | ![Ajuda](docs/help.png) |
-| **Fitas e memórias** | |
-| ![Fitas e memórias](docs/ribbons.png) | |
+| **Fitas e memórias** | **Feebas: evolução por beleza** |
+| ![Fitas e memórias](docs/ribbons.png) | ![Evolução por beleza](docs/beauty.png) |
+| **Evolução por felicidade** | **Layout compacto** |
+| ![Evolução por felicidade](docs/friendship.png) | ![Layout compacto](docs/compact.png) |
+
+Capturas da versão **0.3.7**, geradas em modo headless com saves sintéticos.
 
 ## Download
 
@@ -31,6 +35,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 **Saves**
 - Abrir pelo botão, arrastando o arquivo para a janela ou pela linha de comando; salvar com **Ctrl+S**.
 - **Save Manager**: tela inicial que lista os saves da pasta `saves` (ao lado do exe, ou outra à sua escolha), agrupados por console, com treinador, tempo de jogo, dinheiro e equipe. Duplo clique abre.
+- Mostra idioma e início da aventura quando disponíveis; opção para esconder SID e navegação com setas e Enter.
 - **Saves dentro de .zip** (backups do JKSV): aparecem no Save Manager com o selo ZIP; ao salvar, dá para gravar de volta no zip (com backup do zip) ou como arquivo separado.
 - **Selo do jogo**: cada save mostra o Pokémon da capa nas cores da versão (Ho-Oh no HeartGold, Rayquaza no Emerald...), no Save Manager e no cartão do save aberto na barra lateral.
 - Aviso de **alterações não exportadas**: o app pergunta antes de abrir outro save ou fechar.
@@ -53,6 +58,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 
 **Caixas e equipe**
 - Cartões grandes com sprite, nome, nível, gênero, bola, ★ shiny e ✓/⚠ de legalidade; caixas em abas no topo.
+- **Layout das caixas**: renomear e escolher papel de parede, conforme o suporte do jogo.
 - **Resumo ao passar o mouse**, igual ao do PKHeX: set (item, habilidade, IVs/EVs, natureza, golpes) e encontro (local, PID, Origin Seed).
 - **Arrastar e soltar** entre caixa e equipe (Ctrl ou Shift copia, Alt sobrescreve deixando a origem vazia), trocar de caixa parando sobre as setas, soltar `.pk*` para importar e arrastar para fora da janela para exportar.
 - **Busca global (Ctrl+F)** por espécie, apelido, golpe, item, "shiny" ou "ovo" em todas as caixas.
@@ -64,6 +70,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 - Espécie, item e golpes com **busca enquanto digita**; na lista de golpes, os que o Pokémon aprende ficam no topo, em verde.
 - Golpes com tipo colorido, barra de PP e PP Ups.
 - Golpes e habilidades com a **descrição em português** (dados do AllGenWiki), na lista e no campo.
+- **Salvar após editar**: Salvar e Ctrl+S aplicam a edição pendente antes de gravar o save. Se o modo legal impedir aplicar, o app explica o motivo e mantém a edição; erros de gravação também aparecem numa janela.
 - Habilidade (inclusive a oculta), **forma** e **Tera Type** (Scarlet/Violet) escolhidos em listas.
 - Gráfico radar dos atributos, sliders de IV/EV, ▲/▼ da natureza e **Hyper Training** (Gen 7+).
 - Bola, local, nível e data de encontro; treinador original; felicidade, **PID/EC editáveis**, **marcações** (●▲■♥★◆, com azul/rosa na Gen 7+) e "Tornar shiny".
@@ -74,6 +81,9 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 - **Legalidade** no editor: lista os problemas e avisos e oferece correções de um clique, inclusive **Legalizar**, que gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny) mantendo natureza, nível, item, apelido e golpes.
 - **Modo legal** (chave na barra lateral, ligado por padrão): o editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo), desfaz na hora qualquer mudança que deixaria o Pokémon ilegal (explicando o motivo) e só deixa **Aplicar** um Pokémon legal. Habilidade, forma e Tera Type só listam o que é legal; em vez de mexer em local e nível, a aba Encontro oferece **Trocar encontro** (gera de novo a partir de um encontro real escolhido); "Tornar shiny" fica bloqueado em encontros com shiny lock e, nos outros, gera de novo já shiny. Trocar a espécie, a forma ou colar um set Showdown legaliza automaticamente. Pokémon **de fora** (arquivo `.pk*`, bank ou outro save) que chega ilegal ao save aberto ganha a opção **✨ Legalizar** ou **Trazer como está**. Desligado, vale qualquer valor.
 - **Evoluir por troca** (Kadabra, Onix + Metal Coat, Shelmet/Karrablast...), sem precisar de um segundo jogo; da Gen 6 em diante registra o parceiro de troca para o Pokémon continuar legal.
+- A troca pode ser simulada sem o item exigido no jogo; se estiver segurando o item correto, ele é consumido. No modo legal, o resultado é validado antes de substituir a edição.
+- **Evoluir por felicidade**: aumenta automaticamente até o mínimo exigido pelo jogo, simula a subida de nível e oferece dia/noite quando necessário. Respeita Everstone e os requisitos de Sylveon; no modo legal, só aceita a evolução após validar o resultado.
+- **Feebas → Milotic**: opção por Beauty ≥ 170 nos jogos compatíveis, separada da felicidade. BDSP usa Beauty; Z-A usa troca. A troca pode ser simulada sem Prism Scale; se estiver segurando o item, ele é consumido.
 - Colar e copiar no formato **Showdown**.
 
 **Bancos**
@@ -82,10 +92,11 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 - Clique num cartão para ver o **painel de detalhes**: o que o encontro garante (shiny/shiny lock, IVs, habilidade, natureza, bola, item, Tera Type, treinador do evento) e os golpes com que vem.
 - **Filtros** por tipo de encontro, versão e golpe; selo **HOME** nos presentes do Pokémon HOME.
 - "Usar" gera o Pokémon no editor, pronto para gravar.
+- **Arquivo de Mystery Gift**: solte `.wc*`, `.pgf`, `.pcd` e outros formatos de evento num slot da caixa ou da equipe para gerar o Pokémon direto nele, com confirmação antes de substituir e Ctrl+Z para desfazer. Presentes de itens não entram em slots.
 
 **Ajuda e atualizações**
 - Página **Ajuda** (F1 ou "❔ Ajuda e novidades"): todas as funções explicadas, com busca; **Novidades** com o changelog de cada versão; **Sobre** com a versão instalada.
-- **Atualização automática**: ao abrir, o app verifica se saiu uma versão nova no GitHub, baixa o zip da release, confere o SHA-256 informado pelo GitHub e troca o exe (o antigo vira `.old` e é apagado na abertura seguinte). A versão nova vale ao reiniciar pelo botão 🔄 da barra lateral, que pergunta antes se houver alterações não salvas e reabre o save. Dá para desligar em Ajuda › Sobre. Só vale para o `PKHeX.Modern.exe` da release (rodando pelo código, mostra o link).
+- **Atualização automática**: ao abrir, o app verifica se saiu uma versão nova no GitHub e mostra as novidades com “Atualizar agora” e “Depois”. Ao confirmar, baixa o zip da release, confere o SHA-256 informado pelo GitHub e troca o exe (o antigo vira `.old` e é apagado na abertura seguinte). A versão nova vale ao reiniciar pelo botão 🔄 da barra lateral, que pergunta antes se houver alterações não salvas e reabre o save. Dá para desligar em Ajuda › Sobre. Só vale para o `PKHeX.Modern.exe` da release (rodando pelo código, mostra o link).
 
 **Outros**
 - Treinador (nome, TID/SID, dinheiro, tempo de jogo) e **Mochila com o ícone de cada item**; ao passar o mouse, a descrição em português e onde conseguir o item (dados do AllGenWiki).

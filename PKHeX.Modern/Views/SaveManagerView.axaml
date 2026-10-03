@@ -36,7 +36,10 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
       </Grid>
-      <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="12" IsVisible="{Binding Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+      <DockPanel>
+        <CheckBox DockPanel.Dock="Right" Content="Esconder SID" IsChecked="{Binding HideSID}" ToolTip.Tip="Oculta o SID nos cartões; a preferência fica salva" />
+        <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+      </DockPanel>
     </StackPanel>
 
     <Panel>
@@ -62,7 +65,7 @@
                   </ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:SaveEntryViewModel">
-                      <Border Classes="card saveCard" Classes.current="{Binding IsCurrent}" Width="330"
+                      <Border Classes="card saveCard" Classes.current="{Binding IsCurrent}" Width="330" Focusable="True" PointerPressed="OnCardPointerPressed"
                               DoubleTapped="OnCardDoubleTapped" ToolTip.Tip="{Binding Path}">
                         <StackPanel Spacing="6">
                           <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
@@ -80,6 +83,10 @@
                             </StackPanel>
                           </Grid>
                           <TextBlock Text="{Binding Details}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                          <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Classes="chip" Background="{DynamicResource CardBorder}" IsVisible="{Binding HasLanguage}" ToolTip.Tip="Idioma identificado pelo PKHeX"><TextBlock Text="{Binding LanguageBadge}" /></Border>
+                            <TextBlock Text="{Binding AdventureStart}" Classes="muted" FontSize="11" VerticalAlignment="Center" IsVisible="{Binding HasAdventureStart}" />
+                          </StackPanel>
                           <ItemsControl ItemsSource="{Binding PartySprites}" Height="40">
                             <ItemsControl.ItemsPanel>
                               <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>

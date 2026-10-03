@@ -50,6 +50,15 @@ public sealed class MainViewModel : ViewModelBase
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
         Help = new HelpPageViewModel(Settings);
+        Help.ReviewUpdate = release => Dialog is not null ? Task.FromResult(false) : ConfirmAsync(
+            $"Nova versão {UpdateChecker.Format(release.Version)}",
+            Help.CanSelfUpdate ? $"Você está na {UpdateChecker.CurrentText}. Confira as novidades antes de baixar e instalar. A versão nova vale ao reiniciar."
+                : $"Você está na {UpdateChecker.CurrentText}. Confira as novidades antes de abrir a página de download.",
+            Help.CanSelfUpdate ? "Atualizar agora" : "Abrir download", "Depois",
+            details: string.IsNullOrWhiteSpace(release.Notes)
+                ? ["Esta versão não tem notas publicadas. Consulte a página da release para mais detalhes."]
+                : [.. release.Notes.Replace("\r", "").Split('\n').Select(line => line.Trim().TrimStart('#').Trim().Replace("**", "")).Where(line => line.Length > 0)],
+            icon: "⬆");
         OpenHelpCommand = new RelayCommand(OpenHelp);
         CloseHelpCommand = new RelayCommand(() => IsHelpOpen = false);
         AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
@@ -61,6 +70,7 @@ public sealed class MainViewModel : ViewModelBase
         Bank.Sorted = ClearMarks;
         Bank.UseVariant = UseVariantAsync;
         Boxes.Sort = SortBoxes;
+        Boxes.Prompt = PromptAsync;
         ClearMarksCommand = new RelayCommand(ClearMarks);
         DeleteMarkedCommand = new RelayCommand(() => _ = DeleteMarkedAsync());
         Party.SlotsLoaded = ApplySearchHighlight;
@@ -122,6 +132,7 @@ public sealed class MainViewModel : ViewModelBase
         Raise(nameof(ShowHomeSaves));
         Raise(nameof(ShowPage));
         Raise(nameof(ShowEditorPanel));
+        RaiseActionBar();
     }
 
     /// <summary>F1 / botao "Ajuda e novidades".</summary>
@@ -198,6 +209,7 @@ public sealed class MainViewModel : ViewModelBase
             if (!Set(ref _currentPage, value))
                 return;
             Raise(nameof(ShowEditorPanel));
+            RaiseActionBar();
             if (value == SaveManager)
                 _ = SaveManager.RefreshAsync();
             else if (value == Gifts)
@@ -305,6 +317,18 @@ public sealed class MainViewModel : ViewModelBase
     }
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
     public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage is not (BagPageViewModel or TrainerPageViewModel) && !IsHelpOpen;
+    public bool ShowSlotActions => HasSave && !IsHelpOpen && (CurrentPage == Boxes || CurrentPage == Party);
+    public bool ShowSaveActions => HasSave && !IsHelpOpen;
+    public bool ShowSaveManagerActions => !IsHelpOpen && (!HasSave || CurrentPage == SaveManager);
+    public bool ShowEncounterActions => HasSave && !IsHelpOpen && CurrentPage == Encounters;
+    public bool ShowGiftActions => HasSave && !IsHelpOpen && CurrentPage == Gifts;
+    public bool ShowBankActions => HasSave && !IsHelpOpen && CurrentPage == Bank;
+    public bool ShowDexActions => HasSave && !IsHelpOpen && CurrentPage == Pokedex;
+    public BagPageViewModel? ActionBag => !IsHelpOpen ? CurrentPage as BagPageViewModel : null;
+    private void RaiseActionBar()
+    {
+        foreach (var property in new[] { nameof(ShowSlotActions), nameof(ShowSaveActions), nameof(ShowSaveManagerActions), nameof(ShowEncounterActions), nameof(ShowGiftActions), nameof(ShowBankActions), nameof(ShowDexActions), nameof(ActionBag) }) Raise(property);
+    }
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
     /// <summary>Selo do jogo aberto (Pokemon da capa nas cores da versao), no cartao da barra lateral.</summary>
     public GameArt? GameArt => _sav is null ? null : GameArt.Get(_sav.Version);
@@ -477,7 +501,7 @@ public sealed class MainViewModel : ViewModelBase
     {
         var list = PendingActions.Select((d, i) => $"{i + 1}. {char.ToUpper(d[0])}{d[1..]}").ToList();
         if (list.Count == 0)
-            list.Add("Alterações na mochila ou nos dados do treinador.");
+            list.Add("Alterações nas caixas, na mochila ou nos dados do treinador.");
         if (await ConfirmAsync("Alterações não exportadas",
                 "Estas alterações ainda não estão no arquivo do save. Use Salvar para gravar (Ctrl+Z desfaz a última).",
                 "Salvar agora", "Fechar", isDanger: true, details: list, icon: "●"))
@@ -751,12 +775,24 @@ public sealed class MainViewModel : ViewModelBase
         Raise(nameof(LastSaveName));
     }
 
-    public void Export(string path)
+    public string? SaveError { get; private set; }
+    public bool Export(string path)
     {
+        SaveError = null;
         if (_sav is null)
-            return;
+            return false;
         try
         {
+            if (Editor is { IsModified: true } editor)
+            {
+                if (!editor.CanApply)
+                {
+                    SaveError = "A edição do Pokémon ainda não pode ser aplicada no modo legal. Corrija a legalidade ou descarte a edição antes de salvar.";
+                    Status = SaveError;
+                    return false;
+                }
+                editor.ApplyCommand.Execute(null);
+            }
             var backup = SaveBackup.BeforeOverwrite(ZipSaves.FileOf(path)); // copia o arquivo antigo (ou o zip) antes de sobrescrever
             CoreAdapter.ExportSave(_sav, path);
             IsDirty = false;
@@ -764,10 +800,14 @@ public sealed class MainViewModel : ViewModelBase
             Status = backup is null
                 ? $"Salvo em {where}"
                 : $"Salvo em {where}. Backup do arquivo anterior: {System.IO.Path.GetFileName(backup)} (Saves › Backups).";
+            return true;
         }
         catch (Exception ex)
         {
             Status = $"Erro ao salvar: {ex.Message}";
+            SaveError = Status;
+            CrashLog.Write(ex);
+            return false;
         }
     }
 
@@ -777,14 +817,13 @@ public sealed class MainViewModel : ViewModelBase
 
     /// <summary>
     /// Salvar silencioso (botao Salvar / Ctrl+S): grava por cima do arquivo de onde o save foi aberto, sem janela.
-    /// O Export ja faz backup do arquivo anterior. Retorna false se nao ha arquivo de origem (use Salvar como).
+    /// O Export ja faz backup do arquivo anterior. Retorna false se nao ha origem ou se a gravacao falhar.
     /// </summary>
     public bool QuickSave()
     {
         if (QuickSavePath is not { } path)
             return false;
-        Export(path);
-        return true;
+        return Export(path);
     }
 
     public string? SuggestedFileName => ZipSaves.EntryFileName(_sav?.Metadata.FilePath) ?? _sav?.Metadata.FileName;
@@ -1106,10 +1145,25 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_sav is null)
             return;
+        if (!await ConfirmDiscardEditAsync()) return;
+        if (dst.IsOther)
+        {
+            Status = "Importe o arquivo numa caixa ou na equipe do save ativo.";
+            return;
+        }
+        var importedFile = PKHeX.Core.FileUtil.GetSupportedFile(path, _sav);
+        if (importedFile is MysteryGift { IsEntity: false })
+        {
+            Status = "Este Mystery Gift contém itens e não pode gerar um Pokémon no slot.";
+            return;
+        }
         if (dst is { IsBank: true, BankBox: { } bankBox })
         {
             // No bank o arquivo entra como esta (sem conversao).
-            if (PKHeX.Core.FileUtil.GetSupportedFile(path) is not PKM raw)
+            var raw = importedFile as PKM;
+            if (importedFile is MysteryGift { IsEntity: true } bankGift)
+                raw = EncounterDatabase.ToEntity(_sav, bankGift, out _);
+            if (raw is null)
             {
                 Status = "Arquivo não reconhecido como Pokémon.";
                 return;
@@ -1124,7 +1178,7 @@ public sealed class MainViewModel : ViewModelBase
         var pk = CoreAdapter.LoadEntityFile(_sav, path);
         if (pk is null)
         {
-            Status = "Arquivo de Pokémon incompatível com este save.";
+            Status = "Arquivo de Pokémon ou Mystery Gift incompatível com este save.";
             return;
         }
         if (!dst.IsEmpty && !await ConfirmAsync("Substituir Pokémon?",

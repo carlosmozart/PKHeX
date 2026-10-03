@@ -6,6 +6,28 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.3.7 — 2026-10-02
+
+### ♥ Editor
+- **Feebas → Milotic**: evolução por Beauty na Visão geral, separada da felicidade, exige Beauty ≥ 170 e respeita o método disponível no jogo. BDSP usa Beauty; Z-A oferece troca. Beauty não é aumentada automaticamente. A troca pode ser simulada sem Prism Scale; se estiver segurando a escala, ela é consumida. No modo legal, as evoluções por Beauty e troca só são aceitas após validar uma cópia.
+- **Evolução por felicidade**: botões na Visão geral para evoluir com os requisitos do jogo. A felicidade é aumentada apenas até o mínimo necessário, e o nível sobe quando a evolução exige isso. Dia/noite é simulado pelo botão escolhido. Ovos, Everstone, limites de nível e requisitos de Sylveon (golpe Fairy, carinho nas Gen 6/7 e prioridade sobre Espeon/Umbreon) são conferidos. No modo legal, o resultado é testado numa cópia e só é aceito se continuar legal.
+
+### Interface
+- **Barra inferior contextual**: Caixas e Equipe mostram ações de Pokémon; Saves oferece Abrir/Atualizar, Encontros e Eventos permitem usar a seleção, Bank atualiza anexados, Pokédex oferece atualização/sincronização e Mochila permite aplicar os itens. Salvar continua disponível nas páginas do save; Ajuda oferece Voltar.
+
+### 🎁 Importação e salvamento
+- **Mystery Gift num slot**: solte um arquivo de evento (`.wc*`, `.pgf`, `.pcd` e outros formatos reconhecidos pelo PKHeX) numa caixa ou na equipe para gerar o Pokémon. Substituir pergunta antes e Ctrl+Z desfaz; presentes de itens são recusados com uma explicação.
+- **Salvar depois de editar**: Salvar e Ctrl+S agora aplicam a edição pendente do Pokémon antes de gravar o save, inclusive dentro de ZIP. No modo legal, uma edição que não pode ser aplicada bloqueia o salvamento e explica o motivo. Erros de gravação aparecem numa janela e mantêm o save marcado com alterações.
+
+### 🔄 Atualizações
+- **Novidades antes de atualizar**: a janela mostra as notas publicadas no GitHub e oferece “Atualizar agora” ou “Depois”. A oferta automática também aguarda sua escolha antes de baixar e instalar. Rodando pelo código, a janela oferece abrir o download no navegador.
+
+### 🗂 Saves
+- **Save Manager**: cartões mostram o idioma identificado pelo PKHeX e a data de início da aventura quando disponível. Use setas para navegar entre cartões e Enter para abrir; a opção “Esconder SID” fica salva nas preferências. A contagem de arquivos ignorados também aparece quando a pasta não contém nenhum save reconhecido.
+
+### 📦 Caixas
+- **Nome e papel de parede**: renomeie a caixa pelo botão ao lado do título e escolha o papel de parede do jogo na lista. Os nomes das abas acompanham a alteração e o fundo aparece discretamente atrás dos cartões. As opções respeitam o suporte de cada jogo; use Salvar para gravar no save.
+
 ## 0.3.6 — 03/10/2026
 
 ### ✏️ Editor

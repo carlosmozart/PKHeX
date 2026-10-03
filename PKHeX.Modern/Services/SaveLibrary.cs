@@ -21,7 +21,10 @@ public sealed record SaveEntry(
     int Caught,
     DateTime LastWrite,
     IReadOnlyList<PKM> Party,
-    GameVersion Version = GameVersion.Any);
+    GameVersion Version = GameVersion.Any,
+    int Language = -1,
+    DateTime? AdventureStart = null,
+    uint TrainerId = 0);
 
 /// <summary>
 /// Varre a pasta de saves (e subpastas) e le um resumo de cada arquivo reconhecido pelo Core.
@@ -62,7 +65,8 @@ public static class SaveLibrary
                 var before = result.Count;
                 var write = File.GetLastWriteTime(path);
                 foreach (var (zipPath, sav) in ZipSaves.ReadAll(path))
-                    result.Add(Summarize(folder, zipPath, sav, write));
+                    if (Summarize(folder, zipPath, sav, write) is { } zippedEntry)
+                        result.Add(zippedEntry);
                 if (result.Count == before)
                     skipped++;
                 continue;
@@ -121,7 +125,7 @@ public static class SaveLibrary
                 caught,
                 lastWrite,
                 party,
-                sav.Version);
+                sav.Version, sav.Language, CoreAdapter.GetAdventureStart(sav), sav.DisplayTID);
         }
         catch
         {

@@ -171,10 +171,15 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>Salvar: grava por cima do arquivo do save sem abrir janela; sem arquivo de origem, cai no Salvar como.</summary>
-    private void OnQuickSave(object? sender, RoutedEventArgs e)
+    private async void OnQuickSave(object? sender, RoutedEventArgs e)
     {
-        if (!VM.QuickSave())
+        if (!VM.CanQuickSave)
+        {
             OnExport(sender, e);
+            return;
+        }
+        if (!VM.QuickSave() && VM.SaveError is { } error)
+            await VM.ConfirmAsync("Não foi possível salvar", error, "OK", cancelText: "", icon: "⚠");
     }
 
     private async void OnExport(object? sender, RoutedEventArgs e)
@@ -186,7 +191,8 @@ public sealed partial class MainWindow : Window
                     $"Este save está dentro de {ZipSaves.DisplayName(zipPath)}. Gravar de volta no zip (o zip inteiro ganha um backup antes) ou salvar como um arquivo separado?",
                     "Gravar dentro do .zip", "Salvar como arquivo...", icon: "🗜"))
             {
-                VM.Export(zipPath);
+                if (!VM.Export(zipPath) && VM.SaveError is { } zipError)
+                    await VM.ConfirmAsync("Não foi possível salvar", zipError, "OK", cancelText: "", icon: "⚠");
                 return;
             }
         }
@@ -196,7 +202,10 @@ public sealed partial class MainWindow : Window
             SuggestedFileName = VM.SuggestedFileName,
         });
         if (file?.TryGetLocalPath() is { } path)
-            VM.Export(path);
+        {
+            if (!VM.Export(path) && VM.SaveError is { } error)
+                await VM.ConfirmAsync("Não foi possível salvar", error, "OK", cancelText: "", icon: "⚠");
+        }
     }
 
     private async void OnImportEntity(object? sender, RoutedEventArgs e)
@@ -205,7 +214,7 @@ public sealed partial class MainWindow : Window
         {
             Title = "Importar Pokémon",
             AllowMultiple = false,
-            FileTypeFilter = [EntityFileType, FilePickerFileTypes.All],
+            FileTypeFilter = [EntityFileType, new FilePickerFileType("Mystery Gift") { Patterns = ["*.wc*", "*.pgf", "*.pcd", "*.pgt", "*.wb*", "*.wa*", "*.wr7"] }, FilePickerFileTypes.All],
         });
         if (files.FirstOrDefault()?.TryGetLocalPath() is { } path)
             await VM.ImportFileAsync(path);

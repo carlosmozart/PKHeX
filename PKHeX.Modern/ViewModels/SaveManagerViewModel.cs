@@ -155,6 +155,18 @@ public sealed class SaveManagerViewModel : PageViewModel
     }
 
     public ObservableCollection<SaveGroupViewModel> Groups { get; } = [];
+    public bool HideSID
+    {
+        get => _settings.HideSaveSID;
+        set
+        {
+            if (value == _settings.HideSaveSID) return;
+            _settings.HideSaveSID = value;
+            _settings.Save();
+            foreach (var entry in _all) entry.HideSID = value;
+            Raise();
+        }
+    }
 
     private string _search = "";
     public string Search { get => _search; set { if (Set(ref _search, value)) ApplyFilter(); } }
@@ -201,12 +213,12 @@ public sealed class SaveManagerViewModel : PageViewModel
         _all = [.. entries.Select(e => new SaveEntryViewModel(e)
         {
             IsCurrent = IsOpen(e.Path),
+            HideSID = HideSID,
         })];
         if (_generation is { } gen && !_all.Any(e => e.Entry.Generation == gen))
             _generation = null;
         Generations = [.. _all.Select(e => (int)e.Entry.Generation).Distinct().Order().Select(g => new GenerationFilterViewModel(g) { IsActive = g == _generation })];
-        Summary = entries.Count == 0 ? ""
-            : $"{entries.Count} save(s)" + (skipped > 0 ? $" · {skipped} arquivo(s) ignorado(s) por não serem saves" : "");
+        Summary = $"{entries.Count} save(s)" + (skipped > 0 ? $" · {skipped} arquivo(s) ignorado(s) por não serem saves reconhecidos" : "");
         IsLoading = false;
         foreach (var p in (string[])[nameof(IsEmpty), nameof(ShowLoading), nameof(FolderExists), nameof(Generations), nameof(GenerationFilter)])
             Raise(p);
@@ -277,7 +289,16 @@ public sealed class SaveEntryViewModel(SaveEntry entry) : ViewModelBase
     /// <summary>Selo do jogo (Pokemon da capa nas cores da versao).</summary>
     public GameArt Art => GameArt.Get(Entry.Version);
     public string Trainer => Entry.Trainer + (Entry.TrainerIsFemale ? "  ♀" : "  ♂");
-    public string Details => $"{Entry.Ids} · {Entry.PlayTime} · ${Entry.Money:N0}" + (Entry.Caught > 0 ? $" · {Entry.Caught} capturados" : "");
+    private bool _hideSID;
+    public bool HideSID { get => _hideSID; set { if (Set(ref _hideSID, value)) Raise(nameof(Details)); } }
+    public string Details => $"{(HideSID ? $"TID {Entry.TrainerId}" : Entry.Ids)} · {Entry.PlayTime} · ${Entry.Money:N0}" + (Entry.Caught > 0 ? $" · {Entry.Caught} capturados" : "");
+    public string LanguageBadge => Entry.Language switch
+    {
+        1 => "JA", 2 => "EN", 3 => "FR", 4 => "IT", 5 => "DE", 7 => "ES", 8 => "KO", 9 => "ZH-CN", 10 => "ZH-TW", 11 => "ES-LA", _ => "",
+    };
+    public bool HasLanguage => LanguageBadge.Length > 0;
+    public string AdventureStart => Entry.AdventureStart is { } date ? $"Aventura iniciada em {date:dd/MM/yyyy}" : "";
+    public bool HasAdventureStart => Entry.AdventureStart is not null;
     public string LastWrite => $"Salvo em {Entry.LastWrite:dd/MM/yyyy HH:mm}";
     public string SearchText => $"{Entry.Game} {Entry.Trainer} {FileName} {Entry.Group}";
 

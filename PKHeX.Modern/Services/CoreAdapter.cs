@@ -160,6 +160,41 @@ public static class CoreAdapter
     public static string GetBoxName(SaveFile sav, int box)
         => sav is IBoxDetailNameRead n && n.GetBoxName(box) is { Length: > 0 } name && !string.IsNullOrWhiteSpace(name) ? name : $"Box {box + 1}";
 
+    public static int GetBoxNameLength(SaveFile sav) => sav.Generation switch
+    {
+        2 when sav is SAV2 { Japanese: false, Korean: false } => 16,
+        3 when sav is SAV3RSBox => 8 + SAV3RSBox.BoxNamePrefix,
+        6 or 7 => 14,
+        >= 8 => 16,
+        _ => 8,
+    };
+
+    public static DateTime? GetAdventureStart(SaveFile sav)
+    {
+        try
+        {
+            if (sav is SAV8SWSH sw)
+            {
+                var card = sw.TrainerCard;
+                return card.StartedYear >= 2000 ? new DateTime(card.StartedYear, card.StartedMonth, card.StartedDay) : null;
+            }
+            if (sav is SAV8LA la)
+                return la.AdventureStart.Seconds > 0 ? la.AdventureStart.Timestamp : null;
+            if (sav is SAV4 or SAV5 or SAV6 or SAV7 && sav.SecondsToStart > 0)
+                return new DateTime(2000, 1, 1).AddSeconds(sav.SecondsToStart);
+        }
+        catch (ArgumentOutOfRangeException) { }
+        return null;
+    }
+
+    public static string[] GetBoxWallpapers(SaveFile sav)
+    {
+        if (sav is not IBoxDetailWallpaper || sav is SAV8LA or SAV9ZA) return [];
+        int count = sav.Generation switch { 3 or 7 => 16, 4 or 5 or 6 => 24, 8 when sav is SAV8BS => 32, 8 => 19, 9 => 20, _ => 0 };
+        return Enumerable.Range(0, count).Select(i => sav.Generation <= 7 || sav is SAV8BS
+            ? GameInfo.Strings.wallpapernames[i] : $"Papel de parede {i + 1}").ToArray();
+    }
+
     public static bool IsEmpty(PKM pk) => pk.Species == 0;
 
     /// <summary>Pokemon em branco ja preenchido com os dados do treinador do save (como no PKHeX original).</summary>
@@ -443,7 +478,10 @@ public static class CoreAdapter
     /// <summary>Carrega um arquivo .pk* e converte para o formato do save. Retorna null se nao for compativel.</summary>
     public static PKM? LoadEntityFile(SaveFile sav, string path)
     {
-        if (FileUtil.GetSupportedFile(path, sav) is not PKM pk)
+        var file = FileUtil.GetSupportedFile(path, sav);
+        if (file is MysteryGift { IsEntity: true } gift)
+            return EncounterDatabase.ToEntity(sav, gift, out _);
+        if (file is not PKM pk)
             return null;
         if (pk.GetType() == sav.PKMType)
             return pk;
@@ -836,6 +874,60 @@ public static class CoreAdapter
     /// <summary>Uma evolucao por troca possivel: destino, o que a troca exige e se algo impede (Everstone).</summary>
     public sealed record TradeEvolution(ushort Species, byte Form, string Name, string Requirement, int ItemId, string? Blocked);
 
+    public sealed record FriendshipEvolution(ushort Species, byte Form, string Name, string Requirement, EvolutionType Method, string? Blocked);
+
+    public static IReadOnlyList<FriendshipEvolution> GetFriendshipEvolutions(PKM pk, SaveFile? sav)
+    {
+        if (IsEmpty(pk) || pk.IsEgg || pk.Format < 2) return [];
+        var list = new List<FriendshipEvolution>();
+        var methods = EvolutionTree.GetEvolutionTree(pk.Context).Forward.GetForward(pk.Species, pk.Form).ToArray();
+        // A tabela da Gen 2 simplifica felicidade para LevelUp; recupera o requisito das espécies do jogo.
+        if (pk.Context == EntityContext.Gen2)
+            methods = [.. methods.Select(m => m with { Method = m.Species switch
+            {
+                (ushort)Species.Espeon => EvolutionType.LevelUpFriendshipMorning,
+                (ushort)Species.Umbreon => EvolutionType.LevelUpFriendshipNight,
+                (ushort)Species.Crobat or (ushort)Species.Blissey or (ushort)Species.Togetic
+                    or (ushort)Species.Pikachu or (ushort)Species.Clefairy or (ushort)Species.Jigglypuff => EvolutionType.LevelUpFriendship,
+                _ => m.Method,
+            } })];
+        bool fairyMove = Enumerable.Range(0, 4).Any(i => GetMove(pk, i) != 0 && MoveInfo.GetType(GetMove(pk, i), pk.Context) == 17);
+        bool affectionReady = pk is IAffection a && (pk.CurrentHandler == 0 ? a.OriginalTrainerAffection : a.HandlingTrainerAffection) >= 50;
+        int threshold = pk.Format >= 8 ? 160 : 220;
+        bool sylveonReady = methods.Any(m => m.Species == (ushort)Species.Sylveon) && fairyMove && (pk.Format >= 8 || affectionReady);
+        foreach (var m in methods)
+        {
+            if (m.Method is not (EvolutionType.LevelUpFriendship or EvolutionType.LevelUpFriendshipMorning or EvolutionType.LevelUpFriendshipNight or EvolutionType.LevelUpAffection50MoveType)) continue;
+            byte form = m.GetDestinationForm(pk.Form);
+            if (m.Species > pk.MaxSpeciesID || sav is not null && !sav.Personal.IsPresentInGame(m.Species, form)) continue;
+            bool affection = m.Method == EvolutionType.LevelUpAffection50MoveType && pk.Format < 8;
+            string time = m.Method switch { EvolutionType.LevelUpFriendshipMorning => " de dia", EvolutionType.LevelUpFriendshipNight => " à noite", _ => "" };
+            bool manual = pk.Context is EntityContext.Gen8a or EntityContext.Gen9a;
+            string requirement = (manual ? "evoluir" : pk.CurrentLevel == 100 && pk.Format >= 8 ? "usar Rare Candy no nível 100" : "subir 1 nível") + time
+                + (affection ? ", carinho ≥ 50 (2 corações)" : $", felicidade ≥ {threshold}")
+                + (m.Method == EvolutionType.LevelUpAffection50MoveType ? ", sabendo golpe Fairy" : "");
+            string? blocked = GetHeldItemName(pk) == "Everstone" ? "está segurando Everstone"
+                : !manual && pk.CurrentLevel == 100 && pk.Format < 8 ? "precisa subir de nível e já está no nível 100"
+                : affection && !affectionReady ? "precisa de pelo menos 50 de carinho com o treinador atual"
+                : m.Method == EvolutionType.LevelUpAffection50MoveType && !fairyMove ? "precisa saber um golpe Fairy"
+                : m.Species is (ushort)Species.Espeon or (ushort)Species.Umbreon && sylveonReady ? "Sylveon tem prioridade; remova o golpe Fairy para escolher esta evolução"
+                : sav?.Version is GameVersion.FR or GameVersion.LG && m.Method is EvolutionType.LevelUpFriendshipMorning or EvolutionType.LevelUpFriendshipNight ? "FireRed/LeafGreen não têm ciclo de dia/noite para esta evolução"
+                : null;
+            list.Add(new(m.Species, form, SpeciesNames[m.Species], requirement, m.Method, blocked));
+        }
+        return list;
+    }
+
+    public static string EvolveByFriendship(PKM pk, FriendshipEvolution evo, SaveFile? sav)
+    {
+        var current = GetFriendshipEvolutions(pk, sav).FirstOrDefault(e => e.Species == evo.Species && e.Form == evo.Form && e.Method == evo.Method);
+        if (current is null || current.Blocked is not null) throw new InvalidOperationException(current?.Blocked ?? "Esta evolução não está disponível.");
+        if (evo.Method != EvolutionType.LevelUpAffection50MoveType || pk.Format >= 8)
+            pk.CurrentFriendship = (byte)Math.Max(pk.CurrentFriendship, pk.Format >= 8 ? 160 : 220);
+        if (pk.Context is not (EntityContext.Gen8a or EntityContext.Gen9a) && pk.CurrentLevel < 100) pk.CurrentLevel++;
+        return EvolveByItem(pk, new ItemEvolution(evo.Species, evo.Form, evo.Name, current.Requirement, 0, null));
+    }
+
     /// <summary>Evolucoes por troca da especie/forma atual, pela tabela de evolucoes do jogo do Pokemon.</summary>
     public static IReadOnlyList<TradeEvolution> GetTradeEvolutions(PKM pk)
     {
@@ -889,6 +981,33 @@ public static class CoreAdapter
     /// </summary>
     /// <summary>Evolucao por item (pedras e afins): destino, item usado e o motivo se nao der agora.</summary>
     public sealed record ItemEvolution(ushort Species, byte Form, string Name, string Requirement, int ItemId, string? Blocked);
+
+    public static IReadOnlyList<ItemEvolution> GetBeautyEvolutions(PKM pk, SaveFile? sav)
+    {
+        // Z-A conserva os atributos de concurso, mas não oferece evolução por Beauty.
+        if (IsEmpty(pk) || pk.IsEgg || pk.Context == EntityContext.Gen9a || pk is not IContestStatsReadOnly stats) return [];
+        var list = new List<ItemEvolution>();
+        foreach (var m in EvolutionTree.GetEvolutionTree(pk.Context).Forward.GetForward(pk.Species, pk.Form).Span)
+        {
+            byte form = m.GetDestinationForm(pk.Form);
+            if (m.Method != EvolutionType.LevelUpBeauty || m.Species > pk.MaxSpeciesID
+                || sav is not null && !sav.Personal.IsPresentInGame(m.Species, form)) continue;
+            string? blocked = GetHeldItemName(pk) == "Everstone" ? "está segurando Everstone"
+                : pk.CurrentLevel == 100 && pk.Format < 8 ? "precisa subir de nível e já está no nível 100"
+                : stats.ContestBeauty < m.Argument ? $"precisa de Beauty ≥ {m.Argument}; felicidade não substitui Beauty" : null;
+            string requirement = (pk.CurrentLevel == 100 ? "usar Rare Candy no nível 100" : "subir 1 nível") + $", Beauty ≥ {m.Argument}";
+            list.Add(new(m.Species, form, SpeciesNames[m.Species], requirement, 0, blocked));
+        }
+        return list;
+    }
+
+    public static string EvolveByBeauty(PKM pk, ItemEvolution evo, SaveFile? sav)
+    {
+        var current = GetBeautyEvolutions(pk, sav).FirstOrDefault(e => e.Species == evo.Species && e.Form == evo.Form);
+        if (current is null || current.Blocked is not null) throw new InvalidOperationException(current?.Blocked ?? "Esta evolução não está disponível.");
+        if (pk.CurrentLevel < 100) pk.CurrentLevel++;
+        return EvolveByItem(pk, current);
+    }
 
     /// <summary>Evolucoes por item da especie atual (ex.: Pikachu + Thunder Stone → Raichu, Nidorino + Moon Stone → Nidoking).</summary>
     public static IReadOnlyList<ItemEvolution> GetItemEvolutions(PKM pk)
@@ -944,10 +1063,13 @@ public static class CoreAdapter
 
     public static string EvolveByTrade(PKM pk, TradeEvolution evo, ITrainerInfo? owner)
     {
+        var current = GetTradeEvolutions(pk).FirstOrDefault(e => e.Species == evo.Species && e.Form == evo.Form && e.ItemId == evo.ItemId);
+        if (current is null || current.Blocked is not null) throw new InvalidOperationException(current?.Blocked ?? "Esta evolução não está disponível.");
         var handler = pk as IHandlerUpdate;
         bool simulateTrade = handler is not null && owner is not null && pk.Format >= 6 && pk.IsUntraded;
+        string partnerName = pk.OriginalTrainerName == "PKHeX" ? "Trade" : "PKHeX";
         if (simulateTrade)
-            handler!.UpdateHandler(new SimpleTrainerInfo(owner!.Version) { Language = owner.Language });
+            handler!.UpdateHandler(new SimpleTrainerInfo(owner!.Version) { Language = owner.Language, OT = partnerName });
 
         bool nicknamed = pk.IsNicknamed;
         int abilitySlot = pk.AbilityNumber switch { 2 => 1, 4 => 2, _ => 0 };
@@ -956,7 +1078,7 @@ public static class CoreAdapter
         pk.Form = evo.Form;
         if (!nicknamed)
             pk.ClearNickname();
-        pk.RefreshAbility(abilitySlot);
+        if (pk is not PA9) pk.RefreshAbility(abilitySlot); // Z-A conserva a habilidade da origem até passar pelo HOME.
         bool consumed = evo.ItemId > 0 && pk.HeldItem == evo.ItemId;
         if (consumed)
             pk.HeldItem = 0;
@@ -964,9 +1086,11 @@ public static class CoreAdapter
 
         if (simulateTrade)
             handler!.UpdateHandler(owner!); // volta para o dono
+        if (pk is PA9 pa9)
+            pa9.SetPlusFlags(pa9.PersonalInfo, new LegalityAnalysis(pa9), false, false);
         pk.RefreshChecksum();
         return $"{from} evoluiu para {evo.Name} ({evo.Requirement}{(consumed ? "; o item foi consumido" : "")}"
-               + $"{(simulateTrade ? "; parceiro de troca registrado como \"PKHeX\"" : "")})";
+               + $"{(simulateTrade ? $"; parceiro de troca registrado como \"{partnerName}\"" : "")})";
     }
 
     // Correcoes sugeridas (as mesmas do PKHeX original / Batch Editor). Retornam false se nada mudou.

@@ -57,7 +57,7 @@
           <!-- Atualizacao: aviso → baixando → reiniciar -->
           <Button Classes="accent small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,0,6"
                   IsVisible="{Binding Help.ShowInstallButton}" Content="{Binding Help.UpdateBanner}" Command="{Binding Help.InstallUpdateCommand}"
-                  ToolTip.Tip="Baixa e instala a versão nova (vale ao reiniciar)" />
+                  ToolTip.Tip="Mostra as novidades antes de atualizar (vale ao reiniciar)" />
           <Button Classes="accent small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,0,6"
                   IsVisible="{Binding Help.ShowLinkBanner}" Content="{Binding Help.UpdateBanner}" Command="{Binding Help.OpenLatestCommand}"
                   ToolTip.Tip="{Binding Help.UpdateText}" />
@@ -224,7 +224,8 @@
       <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
         <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" VerticalAlignment="Center"
                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Status}" />
-        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasSave}">
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowSlotActions}">
           <Button Classes="small" Content="↶" FontSize="16" Padding="10,0" Command="{Binding UndoCommand}" ToolTip.Tip="{Binding UndoTip}" />
           <Button Classes="small" Content="↷" FontSize="16" Padding="10,0" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" />
           <Button Classes="small good" Content="✓  Verificar legalidade" Command="{Binding CheckLegalityCommand}"
@@ -237,7 +238,21 @@
                   ToolTip.Tip="Apaga o Pokémon selecionado ou os marcados com Ctrl+clique (Delete). No save, dá para desfazer com Ctrl+Z" />
           <Button Classes="small" Content="⭱  Exportar PKM" Click="OnExportEntity" IsEnabled="{Binding CanExportEntity}"
                   ToolTip.Tip="Salva o Pokémon selecionado como arquivo .pk* (ou arraste o slot para fora da janela)" />
-          <Button Classes="accent small primary" Content="💾  Salvar" Click="OnQuickSave"
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowSaveManagerActions}">
+            <Button Classes="small" Content="⟳  Atualizar" Command="{Binding SaveManager.RefreshCommand}" ToolTip.Tip="Reler saves ou backups (F5)" />
+            <Button Classes="small" Content="Abrir save..." Click="OnOpen" ToolTip.Tip="Abrir um arquivo de save (Ctrl+O)" />
+          </StackPanel>
+          <Button Classes="accent small" Content="Usar encontro" IsVisible="{Binding ShowEncounterActions}" IsEnabled="{Binding Encounters.HasDetail}" Command="{Binding Encounters.UseCommand}" CommandParameter="{Binding Encounters.Selected}" />
+          <Button Classes="accent small" Content="Usar evento" IsVisible="{Binding ShowGiftActions}" IsEnabled="{Binding Gifts.HasDetail}" Command="{Binding Gifts.UseCommand}" CommandParameter="{Binding Gifts.Selected}" />
+          <Button Classes="small" Content="Atualizar anexados" IsVisible="{Binding ShowBankActions}" Command="{Binding SyncAttachedCommand}" />
+          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowDexActions}">
+            <Button Classes="small" Content="⟳  Atualizar Pokédex" Command="{Binding Pokedex.RefreshCommand}" />
+            <Button Classes="small" Content="Sincronizar save" Command="{Binding Pokedex.SyncCommand}" />
+          </StackPanel>
+          <Button Classes="small" Content="Aplicar mochila" IsVisible="{Binding ActionBag, Converter={x:Static ObjectConverters.IsNotNull}}" Command="{Binding ActionBag.SaveCommand}" />
+          <Button Classes="small" Content="‹  Voltar" IsVisible="{Binding IsHelpOpen}" Command="{Binding CloseHelpCommand}" ToolTip.Tip="Voltar à página anterior (Esc)" />
+          <Button Classes="accent small primary" Content="💾  Salvar" Click="OnQuickSave" IsVisible="{Binding ShowSaveActions}"
                   ToolTip.Tip="Grava por cima do arquivo do save, sem abrir janela (Ctrl+S). O arquivo anterior vai para os backups antes. Para escolher outro lugar, use “Salvar como...” (Ctrl+E)." />
         </StackPanel>
       </Grid>

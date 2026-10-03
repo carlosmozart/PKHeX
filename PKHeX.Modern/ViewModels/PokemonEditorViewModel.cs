@@ -388,6 +388,50 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
     }
 
+    public IReadOnlyList<FriendshipEvolutionOption> FriendshipEvolutions => [.. CoreAdapter.GetFriendshipEvolutions(_pk, _sav)
+        .Select(e => new FriendshipEvolutionOption(e, new RelayCommand(() => EvolveByFriendship(e))))];
+    public bool HasFriendshipEvolutions => FriendshipEvolutions.Count > 0;
+    private void EvolveByFriendship(CoreAdapter.FriendshipEvolution evo)
+    {
+        try
+        {
+            var candidate = _pk.Clone();
+            var message = CoreAdapter.EvolveByFriendship(candidate, evo, _sav);
+            if (LegalMode && !new LegalityAnalysis(candidate).Valid)
+            {
+                _status("Não foi possível evoluir mantendo a legalidade: " + string.Join(" / ", CoreAdapter.GetLegalityIssues(candidate, 2)));
+                return;
+            }
+            _pk = candidate;
+            _isNew = false;
+            RaiseAll();
+            _status(LegalityStatus(message));
+        }
+        catch (Exception ex) { _status("Não evolui: " + ex.Message); }
+    }
+
+    public IReadOnlyList<ItemEvolutionOption> BeautyEvolutions => [.. CoreAdapter.GetBeautyEvolutions(_pk, _sav)
+        .Select(e => new ItemEvolutionOption(e, new RelayCommand(() => EvolveByBeauty(e)), isBeauty: true))];
+    public bool HasBeautyEvolutions => BeautyEvolutions.Count > 0;
+    private void EvolveByBeauty(CoreAdapter.ItemEvolution evo)
+    {
+        try
+        {
+            var candidate = _pk.Clone();
+            var message = CoreAdapter.EvolveByBeauty(candidate, evo, _sav);
+            if (LegalMode && !new LegalityAnalysis(candidate).Valid)
+            {
+                _status("Não foi possível evoluir mantendo a legalidade: " + string.Join(" / ", CoreAdapter.GetLegalityIssues(candidate, 2)));
+                return;
+            }
+            _pk = candidate;
+            _isNew = false;
+            RaiseAll();
+            _status(LegalityStatus(message));
+        }
+        catch (Exception ex) { _status("Não evolui: " + ex.Message); }
+    }
+
     // Evoluir por troca
     private (ushort, byte, int) _tradeKey = (ushort.MaxValue, 0, 0);
     private IReadOnlyList<TradeEvolutionOption> _tradeEvolutions = [];
@@ -411,12 +455,19 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         if (evo.Blocked is { } why)
         {
-            _status($"Não evolui: {SpeciesName} {why}. Tire o item e tente de novo.");
+            _status($"Não evolui: {SpeciesName} {why}.");
             return;
         }
         try
         {
-            var done = CoreAdapter.EvolveByTrade(_pk, evo, _sav);
+            var candidate = _pk.Clone();
+            var done = CoreAdapter.EvolveByTrade(candidate, evo, _sav);
+            if (LegalMode && !new LegalityAnalysis(candidate).Valid)
+            {
+                _status("Não foi possível evoluir mantendo a legalidade: " + string.Join(" / ", CoreAdapter.GetLegalityIssues(candidate, 2)));
+                return;
+            }
+            _pk = candidate;
             _isNew = false;
             RaiseAll();
             _status(LegalityStatus(done));
@@ -1106,6 +1157,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     private void Refresh()
     {
+        Raise(nameof(FriendshipEvolutions));
+        Raise(nameof(HasFriendshipEvolutions));
+        Raise(nameof(BeautyEvolutions));
+        Raise(nameof(HasBeautyEvolutions));
         Sprite = SpriteService.GetSprite(_pk);
         var final = CoreAdapter.GetFinalStats(_pk);
         var bases = CoreAdapter.GetBaseStats(_pk);
@@ -1491,12 +1546,21 @@ public sealed record FormOption(string Text, int Value, ushort Species, bool Shi
     public override string ToString() => Text;
 }
 
-public sealed class ItemEvolutionOption(CoreAdapter.ItemEvolution evo, RelayCommand command)
+public sealed class FriendshipEvolutionOption(CoreAdapter.FriendshipEvolution evo, RelayCommand command)
 {
     public string Label => $"Evoluir para {evo.Name}";
     public string Requirement => evo.Requirement;
     public bool IsBlocked => evo.Blocked is not null;
-    public string Tooltip => evo.Blocked is { } why ? $"Não dá: {why}." : $"Simula o uso do item ({evo.Requirement}). Clique em Aplicar para gravar.";
+    public string Tooltip => evo.Blocked is { } why ? $"Não dá: {why}." : $"Simula {evo.Requirement}. Para dia/noite, o botão escolhe o período da evolução. Aplicar ou Salvar grava o resultado.";
+    public RelayCommand Command { get; } = command;
+}
+
+public sealed class ItemEvolutionOption(CoreAdapter.ItemEvolution evo, RelayCommand command, bool isBeauty = false)
+{
+    public string Label => $"Evoluir para {evo.Name}";
+    public string Requirement => evo.Requirement;
+    public bool IsBlocked => evo.Blocked is not null;
+    public string Tooltip => evo.Blocked is { } why ? $"Não dá: {why}." : isBeauty ? $"Simula {evo.Requirement}. Aplicar ou Salvar grava o resultado." : $"Simula o uso do item ({evo.Requirement}). Clique em Aplicar para gravar.";
     public RelayCommand Command { get; } = command;
 }
 

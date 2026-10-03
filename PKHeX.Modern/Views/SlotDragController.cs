@@ -18,7 +18,7 @@ namespace PKHeX.Modern.Views;
 /// Arrastar e soltar de slots:
 /// - slot → slot: move/troca (Ctrl ou Shift = copiar; Alt = sobrescrever, origem fica vazia);
 /// - pairar sobre as setas de caixa troca de caixa durante o arraste;
-/// - arquivo .pk* → slot: importa; arquivo de save em qualquer outro lugar: abre o save;
+/// - arquivo .pk* ou Mystery Gift → slot: importa; arquivo de save em qualquer outro lugar: abre o save;
 /// - slot → fora da janela (Explorer, desktop): exporta como arquivo .pk*;
 /// - Ctrl+clique marca/desmarca, Shift+clique marca um intervalo (selecao multipla); arrastar um marcado leva o grupo.
 /// </summary>

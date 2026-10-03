@@ -749,6 +749,10 @@
         <StackPanel Grid.Column="1" HorizontalAlignment="Center">
           <TextBlock Text="{Binding BoxName}" Classes="title" HorizontalAlignment="Center" />
           <TextBlock Text="{Binding BoxLabel}" Classes="muted" HorizontalAlignment="Center" />
+          <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0" HorizontalAlignment="Center">
+            <Button Content="✎ Renomear" Command="{Binding RenameCommand}" IsVisible="{Binding CanRename}" />
+            <ComboBox ItemsSource="{Binding Wallpapers}" SelectedIndex="{Binding WallpaperIndex}" IsVisible="{Binding HasWallpapers}" Width="210" ToolTip.Tip="Papel de parede da caixa (salvo no jogo)" />
+          </StackPanel>
         </StackPanel>
         <Button Grid.Column="2" Classes="boxArrow" Content="›" FontSize="18" Command="{Binding NextBoxCommand}"
                 ToolTip.Tip="Próxima caixa (arraste um Pokémon até aqui para trocar de caixa)" />
@@ -787,6 +791,7 @@
       </Border>
       <ScrollViewer x:Name="BoxScroll" HorizontalScrollBarVisibility="Disabled">
         <Border Classes="card" Padding="12" MaxWidth="1100" VerticalAlignment="Top">
+          <Border.Background><ImageBrush Source="{Binding Wallpaper}" Stretch="UniformToFill" Opacity="0.25" /></Border.Background>
           <ItemsControl ItemsSource="{Binding Slots}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
@@ -994,11 +999,11 @@
                     <Button Classes="small" Content="⟳  Verificar agora" Command="{Binding CheckUpdatesCommand}" />
                     <Button Classes="accent small" Content="⬇  Atualizar agora" Command="{Binding InstallUpdateCommand}" IsVisible="{Binding ShowInstallButton}" />
                     <Button Classes="accent small" Content="{Binding RestartText}" Command="{Binding RestartCommand}" IsVisible="{Binding IsReadyToRestart}" />
-                    <Button Classes="small" Content="{Binding LatestButtonText}" Command="{Binding OpenLatestCommand}" IsVisible="{Binding HasUpdate}"
-                            ToolTip.Tip="Abre a página da release no navegador" />
+                    <Button Classes="small" Content="{Binding LatestButtonText}" Command="{Binding OpenLatestCommand}" IsVisible="{Binding ShowLinkBanner}"
+                            ToolTip.Tip="Mostra as novidades antes de abrir o download" />
                   </WrapPanel>
                   <CheckBox Content="Verificar se saiu uma versão nova ao abrir o app" FontSize="12" IsChecked="{Binding CheckOnStartup}" />
-                  <CheckBox Content="Baixar e instalar sozinho (a versão nova vale ao reiniciar)" FontSize="12" IsChecked="{Binding AutoUpdate}"
+                  <CheckBox Content="Mostrar novidades e oferecer atualização ao encontrar uma versão nova" FontSize="12" IsChecked="{Binding AutoUpdate}"
                             IsEnabled="{Binding CheckOnStartup}" />
                   <TextBlock Text="Rodando pelo código-fonte: a atualização automática só funciona no PKHeX.Modern.exe baixado da release."
                              Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding !CanSelfUpdate}" />

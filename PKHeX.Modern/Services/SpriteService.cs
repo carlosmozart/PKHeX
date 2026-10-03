@@ -12,6 +12,11 @@ namespace PKHeX.Modern.Services;
 /// <summary>Reaproveita o gerador de sprites do PKHeX e converte para bitmaps do Avalonia.</summary>
 public static class SpriteService
 {
+    public static AvaloniaBitmap GetBoxWallpaper(SaveFile sav, int box)
+    {
+        using var gdi = PKHeX.Drawing.Misc.WallpaperUtil.WallpaperImage(sav, box);
+        return ToAvalonia(gdi, 4);
+    }
     /// <summary>Uma geracao de sprite por vez: o gerador do PKHeX (GDI) e chamado tambem fora da thread da interface.</summary>
     private static readonly object SpeciesLock = new();
 

@@ -19,8 +19,8 @@ public sealed class HelpPageViewModel : PageViewModel
     {
         _settings = settings;
         CheckUpdatesCommand = new RelayCommand(() => _ = CheckUpdatesAsync(silent: false), () => !IsChecking);
-        OpenLatestCommand = new RelayCommand(() => Links.Open(Latest?.Url ?? UpdateChecker.ReleasesUrl));
-        InstallUpdateCommand = new RelayCommand(() => _ = InstallUpdateAsync(), () => HasUpdate && !IsDownloading && !IsReadyToRestart);
+        OpenLatestCommand = new RelayCommand(() => _ = InstallUpdateAsync(), () => !IsReviewingUpdate && !IsDownloading);
+        InstallUpdateCommand = new RelayCommand(() => _ = InstallUpdateAsync(), () => HasUpdate && !IsDownloading && !IsReadyToRestart && !IsReviewingUpdate);
         RestartCommand = new RelayCommand(() => RestartRequested?.Invoke());
         OpenReleasesCommand = new RelayCommand(() => Links.Open(UpdateChecker.ReleasesUrl));
         OpenRepoCommand = new RelayCommand(() => Links.Open(UpdateChecker.RepoUrl));
@@ -78,7 +78,7 @@ public sealed class HelpPageViewModel : PageViewModel
         set { _settings.CheckForUpdates = value; _settings.Save(); Raise(); }
     }
 
-    /// <summary>Baixar e instalar sozinho ao achar uma versao nova (preferencia salva).</summary>
+    /// <summary>Oferecer a janela de novidades ao achar uma versao nova (preferencia salva).</summary>
     public bool AutoUpdate
     {
         get => _settings.AutoUpdate;
@@ -86,6 +86,9 @@ public sealed class HelpPageViewModel : PageViewModel
     }
     /// <summary>Esta copia pode se atualizar sozinha (exe publicado). Rodando pelo codigo, so mostra o link.</summary>
     public bool CanSelfUpdate => AutoUpdater.CanSelfUpdate;
+    public Func<ReleaseInfo, Task<bool>>? ReviewUpdate { get; set; }
+    private bool _isReviewingUpdate;
+    public bool IsReviewingUpdate { get => _isReviewingUpdate; private set { Set(ref _isReviewingUpdate, value); RaiseUpdateState(); } }
 
     // Atualizacoes
     public RelayCommand InstallUpdateCommand { get; }
@@ -114,13 +117,20 @@ public sealed class HelpPageViewModel : PageViewModel
         foreach (var p in (string[])[nameof(ShowUpdateBanner), nameof(ShowInstallButton), nameof(ShowLinkBanner), nameof(RestartText), nameof(DownloadText)])
             Raise(p);
         InstallUpdateCommand.NotifyCanExecuteChanged();
+        OpenLatestCommand.NotifyCanExecuteChanged();
     }
 
     /// <summary>Baixa e instala a release mais nova. Se falhar, o aviso continua com o link para baixar manualmente.</summary>
     public async Task InstallUpdateAsync()
     {
-        if (Latest is not { } release || !HasUpdate || IsDownloading || IsReadyToRestart)
+        if (Latest is not { } release || !HasUpdate || IsDownloading || IsReadyToRestart || IsReviewingUpdate)
             return;
+        if (ReviewUpdate is null) return;
+        IsReviewingUpdate = true;
+        bool accepted;
+        try { accepted = await ReviewUpdate(release); }
+        finally { IsReviewingUpdate = false; }
+        if (!accepted || Latest != release) return;
         if (!CanSelfUpdate)
         {
             Links.Open(release.Url);
@@ -137,7 +147,7 @@ public sealed class HelpPageViewModel : PageViewModel
         }
         catch (Exception ex)
         {
-            UpdateText = $"Não foi possível atualizar sozinho: {ex.Message}. Use “Baixar” para pegar pelo site.";
+            UpdateText = $"Não foi possível atualizar: {ex.Message}. Consulte a página de releases para baixar pelo site.";
         }
         finally
         {

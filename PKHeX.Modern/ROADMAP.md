@@ -1,5 +1,11 @@
 # Roadmap / Pendências
 
+- [x] **Evolução por felicidade** no editor, com ajuste automático ao mínimo, requisitos por jogo e validação de legalidade antes de aceitar.
+- [x] **Feebas por Beauty**: requisito separado da felicidade, método por jogo e validação do resultado; troca opcional sem item.
+- [x] **Salvar a edição pendente** com clique ou Ctrl+S, com explicação quando o modo legal ou uma falha de gravação impedir salvar.
+
+Versão **0.3.7**: itens concluídos abaixo estão documentados e cobertos pelos testes de regressão. A identificação de versões antigas e o selo duplo foram adiados pelo usuário; continuam pendentes.
+
 ## Inspirado no TidalHeX (https://github.com/HydrosPlays/TidalHeX)
 Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinForms + WebView2, então o código dele não serve aqui.
 - [x] **Editor em abas**: Visão geral, Atributos, Golpes, Encontro (bola, local, nível, data), Treinador (OT, TID, SID, gênero) e Extras (felicidade, PID/EC, tornar shiny). A aba ativa se mantém ao trocar de slot.
@@ -28,13 +34,14 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - [x] **Atalhos de shiny no editor** (como no PKHeX): Alt+clique na ★ deixa shiny mantendo o PID (muda o SID, então Pokémon com PID/IV ligados continuam legais); Shift+clique = shiny quadrado; Ctrl+clique = shiny estrela.
 - [x] **Seletor de forma com sprite** de cada forma; formas de gênero (Meowstic, Indeedee...) acompanham o gênero; aviso de que o Deoxys da Gen 3 tem a forma definida pelo jogo.
 - [ ] **Temas completos** além da cor de destaque (fundo, painéis e tipografia): por exemplo um tema "PSS" (X/Y), um "Pixel" (GBA) e um "Z-A".
-- [ ] **Save Manager mais completo**: data de início da aventura (Gen 4+), selo de idioma, selo duplo para saves de par (Ruby/Sapphire), navegação por teclado (setas + Enter), aviso de quantos arquivos foram ignorados e opção de esconder o SID.
+- [x] **Save Manager**: data de início da aventura quando disponível, selo de idioma, navegação por teclado (setas + Enter), aviso de quantos arquivos foram ignorados e opção de esconder o SID.
+- [ ] **Selo duplo para saves de par** (Ruby/Sapphire), junto da identificação de versão dos saves antigos.
 - [ ] **Versão e idioma de saves da Gen 1-3 pelo nome** do arquivo, do zip ou da pasta (`red`/`blue`, `rouge`, `rot`, `azul`, `aka`...), como o PKHeX faz; esses saves não guardam qual jogo do par são.
-- [ ] **Layout das caixas**: renomear caixas e trocar o papel de parede.
-- [ ] **Notas da versão antes de atualizar**: mostrar o que mudou na janela de atualização, com "Atualizar agora".
+- [x] **Layout das caixas**: renomear caixas e trocar o papel de parede.
+- [x] **Notas da versão antes de atualizar**: mostrar o que mudou na janela de atualização, com "Atualizar agora".
 - [ ] **Tela inicial (home)** com a equipe no topo, atalhos grandes (Caixas, Encontros, Eventos, Mochila...) e os saves recentes.
-- [ ] **Soltar arquivo de Mystery Gift** (`.wc*`, `.pgf`, `.pcd`) num slot para gerar o Pokémon direto nele.
-- [ ] **Barra inferior contextual**: cada tela mostra as próprias ações e atalhos.
+- [x] **Soltar arquivo de Mystery Gift** (`.wc*`, `.pgf`, `.pcd`) num slot para gerar o Pokémon direto nele.
+- [x] **Barra inferior contextual**: cada tela mostra as próprias ações e atalhos.
 
 ## Inspirado no PKVault (https://github.com/Chnapy/PKVault)
 Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o código dele (web + .NET) não é reaproveitado, só as ideias.
@@ -96,5 +103,5 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 Imagem gerada por IA, guardada como inspiração de layout:
 https://gemini.google.com/share/0415fd854f92?skid=3674e3f1-9296-47ab-bf60-20adff9b8acc
 
-Pontos da referência que ainda não foram implementados: destaque em ciano, busca global no topo,
-golpes com barra de PP, seções de Fitas e Notas no editor, e status de legalidade no rodapé da barra lateral.
+A referência inspirou os cartões, a barra de ações e o editor. Cor de destaque, busca global,
+golpes com PP, fitas e indicador de legalidade já estão implementados; notas livres ainda não.
