@@ -173,21 +173,21 @@ Os nomes do jogo (espécies, golpes, itens) e os textos de legalidade ficam em i
 Requisitos: Windows, Linux ou macOS compatível e [.NET SDK 10](https://dotnet.microsoft.com/download).
 
 ```bash
-dotnet run --project PKHeX.Modern
-dotnet run --project PKHeX.Modern -- "C:\caminho\para\save.sav"   # abre direto um save
+dotnet run --project PKHeX.Modern.Desktop
+dotnet run --project PKHeX.Modern.Desktop -- "C:\caminho\para\save.sav"   # abre direto um save
 ```
 
 Gerar o executável único:
 
 ```bash
-dotnet publish PKHeX.Modern -p:PublishProfile=win-x64
+dotnet publish PKHeX.Modern.Desktop -p:PublishProfile=win-x64
 # Outros perfis: linux-x64, osx-arm64, osx-x64
 python Tools/package_modern.py --rid win-x64
 ```
 
 O empacotador usa só a biblioteca padrão do Python; no macOS, gera o ícone com
 `sips` e `iconutil` a partir de `icon.png`. Se essas ferramentas faltarem, o bundle
-sai sem ícone. O executável deve aparecer em `PKHeX.Modern/bin/publish/<rid>/` antes
+sai sem ícone. O executável deve aparecer em `PKHeX.Modern.Desktop/bin/publish/<rid>/` antes
 do empacotamento. O empacotamento local de macOS fora de um Mac não gera `.icns`.
 
 A cada push no branch `modern-ui`, o GitHub Actions gera os quatro pacotes (aba Actions). Uma tag `modern-v*` cria a Release após os quatro builds e os testes Windows passarem. Os testes headless de Linux/macOS ainda são informativos (`continue-on-error`).

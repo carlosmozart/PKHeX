@@ -93,11 +93,11 @@ def main():
     parser.add_argument("--output", type=Path, default=Path.cwd())
     args = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
-    project = root / "PKHeX.Modern" / "PKHeX.Modern.csproj"
+    project = root / "PKHeX.Modern.Version.props"
     version = ET.parse(project).findtext(".//Version")
     if not version:
         raise ValueError("Version ausente no csproj")
-    published = args.published or root / "PKHeX.Modern" / "bin" / "publish" / args.rid
+    published = args.published or root / "PKHeX.Modern.Desktop" / "bin" / "publish" / args.rid
     package(args.rid, published, args.output, version, root / "icon.png")
 
 

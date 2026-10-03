@@ -9,6 +9,7 @@ namespace PKHeX.Modern;
 
 public sealed class App : Application
 {
+    public static System.Action? MobileExit { get; set; }
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -39,6 +40,27 @@ public sealed class App : Application
             else if (settings.OpenLastSaveOnStartup && vm.HasLastSave)
                 vm.Open(settings.LastSavePath!);
             desktop.MainWindow = new MainWindow { DataContext = vm };
+        }
+        if (ApplicationLifetime is ISingleViewApplicationLifetime mobile)
+        {
+            var settings = Services.AppSettings.Load();
+            settings.CheckForUpdates = false;
+            settings.AutoUpdate = false;
+            settings.ExternalBankFolders.Clear();
+            var root = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "PKHeX.Modern");
+            settings.SavesFolder = System.IO.Path.Combine(root, "documents");
+            Services.SaveBackup.Folder = System.IO.Path.Combine(root, "backups");
+            Services.BankStorage.Root = System.IO.Path.Combine(root, "bank");
+            Services.Loc.Load(settings.UiLanguage);
+            Services.Loc.Hook();
+            RequestedThemeVariant = settings.DarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
+            Theme.AppTheme.SetFont(settings.FontKey);
+            Theme.AppTheme.Apply(Theme.AppTheme.Find(settings.ThemeKey));
+            Theme.AccentTheme.Apply(Theme.AccentTheme.Find(settings.AccentColor));
+            var vm = new MainViewModel(settings);
+            Services.CrashLog.Install(msg => vm.Status = msg);
+            MainView.Documents = new Services.MobileDocuments(root);
+            mobile.MainView = new MobileShell(vm);
         }
         base.OnFrameworkInitializationCompleted();
     }

@@ -8,6 +8,12 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+### 📱 Android
+- Host Android com interface compartilhada, menu de toque, caixas com três/quatro colunas, editor em tela própria e ações explícitas para mover/copiar.
+- Arquivos pelo seletor do sistema, sem acesso amplo ao armazenamento: cópias privadas, bookmarks, gravação verificada e backups por documento. Conflitos com alterações externas bloqueiam a sobrescrita.
+- Saves em ZIP preservam as demais entradas; Bank privado, saves importados e exportação de backups no celular.
+- Desktop separado em PKHeX.Modern.Desktop, preservando PKHeX.Modern.exe e os pacotes das quatro plataformas.
+
 ### 🖥️ Multiplataforma (preparação)
 - Os sprites agora são montados sem depender do Windows: são os mesmos PNGs e a mesma montagem do PKHeX, refeitos com SkiaSharp, e conferidos pixel a pixel contra o original (nada muda na tela).
 - O PKHeX Modern deixou de ser um programa só de Windows: o mesmo código já compila para Linux e macOS. A publicação agora gera pacotes autocontidos para Windows x64, Linux x64 e macOS Apple Silicon/Intel.

@@ -14,6 +14,11 @@ public static class HelpContent
 {
     public static IReadOnlyList<HelpSection> Sections { get; } =
     [
+        new("📱", "Android",
+        [
+            new("Arquivos no Android", "Abra saves e ZIPs pelo seletor do sistema. Salvar grava no original com backup privado e verifica os bytes gravados; se o original mudar em outro app, a sobrescrita é bloqueada. Salvar como exporta uma cópia. Saves importados, Bank e backups ficam no armazenamento privado e são removidos ao desinstalar."),
+            new("Toque e editor", "Menu troca de página. Toque num slot para editar; Mover ou Copiar escolhe uma origem, depois toque no destino. Aplicar confirma a edição em memória; Salvar grava no documento. O editor possui um seletor de seção e ações explícitas de shiny. Teclados externos aceitam Ctrl+S, Ctrl+Z e Ctrl+Y."),
+        ]),
         new("💾", "Saves",
         [
             new("Abrir um save", "Clique em “Abrir save...”, arraste o arquivo para a janela ou passe o caminho pela linha de comando. Sem save aberto, a barra lateral lista os saves da pasta do Save Manager em “Seus saves” (um clique abre) e “↺ Último” reabre o save anterior; para fazer isso sozinho, marque “Abrir último save ao iniciar” no ⚙ da barra lateral.", "Ctrl+O"),

@@ -17,7 +17,7 @@ public static class AutoUpdater
     private const string BundleName = "PKHeX Modern.app";
     private const string DownloadPrefix = "https://github.com/" + UpdateChecker.Repo + "/releases/download/";
     private static readonly string? ProcessExecutable = Environment.ProcessPath;
-    private static OSPlatform CurrentPlatform => OperatingSystem.IsWindows() ? OSPlatform.Windows
+    private static OSPlatform CurrentPlatform => OperatingSystem.IsAndroid() ? OSPlatform.Create("Android") : OperatingSystem.IsWindows() ? OSPlatform.Windows
         : OperatingSystem.IsLinux() ? OSPlatform.Linux : OperatingSystem.IsMacOS() ? OSPlatform.OSX : OSPlatform.Create("Unsupported");
 
     public static string? AssetName => GetAssetName(CurrentPlatform, RuntimeInformation.OSArchitecture);
@@ -33,7 +33,7 @@ public static class AutoUpdater
         _ => null,
     };
 
-    public static bool CanSelfUpdate => CanUpdateExecutable(typeof(AutoUpdater).Assembly.Location, ExePath,
+    public static bool CanSelfUpdate => CanUpdateExecutable((System.Reflection.Assembly.GetEntryAssembly()?.Location ?? typeof(AutoUpdater).Assembly.Location), ExePath,
         CurrentPlatform, RuntimeInformation.OSArchitecture);
 
     /// <summary>

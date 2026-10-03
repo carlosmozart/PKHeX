@@ -1,0 +1,380 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKHeX.Modern.ViewModels"
+             x:Class="PKHeX.Modern.Views.MainView"
+             x:DataType="vm:MainViewModel"
+             Background="{DynamicResource AppBackground}"
+             DragDrop.AllowDrop="True">
+  <!-- Interface principal: a mesma no desktop (dentro de MainWindow) e no Android (vista unica). -->
+
+  <UserControl.KeyBindings>
+    <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}" />
+    <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}" />
+    <KeyBinding Gesture="Ctrl+Shift+Z" Command="{Binding RedoCommand}" />
+  </UserControl.KeyBindings>
+
+  <Grid ColumnDefinitions="232,*,Auto" RowDefinitions="*,Auto">
+
+    <!-- Barra lateral -->
+    <Border Grid.RowSpan="2" Background="{DynamicResource SidebarBackground}"
+            BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,0,1,0" Padding="16">
+      <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,8">
+            <TextBlock Text="PKHeX" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource Accent}" />
+            <TextBlock Text="Modern" Classes="muted" VerticalAlignment="Bottom" Margin="0,0,0,4" />
+          </StackPanel>
+          <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Content="Abrir save..." Click="OnOpen" ToolTip.Tip="Ctrl+O" />
+          <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Content="Salvar como..." Click="OnExport" IsVisible="{Binding HasSave}" ToolTip.Tip="Escolhe onde gravar o save (Ctrl+E)" />
+          <Button Classes="ghost small" Command="{Binding OpenLastCommand}" IsVisible="{Binding ShowLastSaveLink}"
+                  ToolTip.Tip="{Binding Settings.LastSavePath}">
+            <TextBlock Text="{Binding LastSaveName, StringFormat='↺  Último: {0}'}" TextTrimming="CharacterEllipsis" />
+          </Button>
+          <Border Classes="card" Padding="10,8" Margin="0,6,0,4" IsVisible="{Binding HasSave}">
+            <StackPanel Spacing="2">
+              <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,0,2">
+                <Border Classes="gameBadge" Width="42" Height="42" Background="{Binding GameArt.Background}"
+                        ToolTip.Tip="{Binding GameName}">
+                  <Viewbox>
+                    <Panel Width="100" Height="100">
+                      <Image Source="{Binding GameArt.Sprite}" IsVisible="{Binding !GameArt.IsDual}" />
+                      <Image Source="{Binding GameArt.Sprite}" IsVisible="{Binding GameArt.IsDual}" Width="70" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                      <Image Source="{Binding GameArt.Sprite2}" IsVisible="{Binding GameArt.IsDual}" Width="70" Height="70" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                    </Panel>
+                  </Viewbox>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                  <TextBlock Text="{Binding GameName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding GameName}" />
+                  <TextBlock Text="{Binding TrainerInfo}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding TrainerInfo}" />
+                </StackPanel>
+              </Grid>
+              <Button Classes="ghost unsavedLink" Margin="-8,2,0,-4" IsVisible="{Binding IsDirty}" Command="{Binding ShowPendingCommand}"
+                      ToolTip.Tip="Ver a lista e salvar (Ctrl+S grava o arquivo do save)">
+                <TextBlock Text="{Binding PendingText}" Classes="unsaved" FontSize="11" TextDecorations="Underline" />
+              </Button>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Spacing="2">
+          <!-- Atualizacao: aviso → baixando → reiniciar -->
+          <Button Classes="accent small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,0,6"
+                  IsVisible="{Binding Help.ShowInstallButton}" Content="{Binding Help.UpdateBanner}" Command="{Binding Help.InstallUpdateCommand}"
+                  ToolTip.Tip="Mostra as novidades antes de atualizar (vale ao reiniciar)" />
+          <Button Classes="accent small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,0,6"
+                  IsVisible="{Binding Help.ShowLinkBanner}" Content="{Binding Help.UpdateBanner}" Command="{Binding Help.OpenLatestCommand}"
+                  ToolTip.Tip="{Binding Help.UpdateText}" />
+          <StackPanel Spacing="4" Margin="0,0,0,6" IsVisible="{Binding Help.IsDownloading}">
+            <TextBlock Text="{Binding Help.DownloadText}" Classes="muted" FontSize="11" />
+            <ProgressBar Value="{Binding Help.DownloadProgress}" Maximum="100" Height="4" MinHeight="4" />
+          </StackPanel>
+          <Button Classes="accent small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,0,6"
+                  IsVisible="{Binding Help.IsReadyToRestart}" Content="{Binding Help.RestartText}" Command="{Binding Help.RestartCommand}"
+                  ToolTip.Tip="A versão nova já está instalada. Reinicia o app (pergunta antes se houver alterações não salvas)" />
+          <!-- Modo legal: cartao clicavel numa linha (verde = ligado, ambar = desligado) -->
+          <ToggleButton Classes="legalCard" IsChecked="{Binding LegalMode}" Margin="0,0,0,4"
+                        ToolTip.Tip="Ligado: o editor só mostra opções legais (golpes que o Pokémon aprende, bolas do encontro, espécies do jogo), desfaz mudanças que o deixariam ilegal e só aplica Pokémon legal. Clique para ligar ou desligar.">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+              <Viewbox Width="17" Height="19" VerticalAlignment="Center">
+                <Panel>
+                  <Path Classes="legalShield" Data="M12,1 L21,4.5 V11 C21,16.5 17.2,21.2 12,23 C6.8,21.2 3,16.5 3,11 V4.5 Z" />
+                  <Path Classes="legalMark" Data="M7.5,12 L10.8,15.3 L16.8,8.8" StrokeThickness="2.4"
+                        StrokeLineCap="Round" StrokeJoin="Round" IsVisible="{Binding LegalMode}" />
+                  <Path Classes="legalMark" Data="M12,7 V13.5 M12,17 V17.2" StrokeThickness="2.6"
+                        StrokeLineCap="Round" IsVisible="{Binding !LegalMode}" />
+                </Panel>
+              </Viewbox>
+              <TextBlock Grid.Column="1" Classes="legalTitle" Text="Modo legal" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="2" Classes="legalState" Text="Ligado" IsVisible="{Binding LegalMode}" VerticalAlignment="Center" />
+              <TextBlock Grid.Column="2" Classes="legalState" Text="Desligado" IsVisible="{Binding !LegalMode}" VerticalAlignment="Center" />
+            </Grid>
+          </ToggleButton>
+          <!-- Ajuda, atalhos, claro/escuro e preferencias (tema, cor, idioma, abrir ultimo) numa linha -->
+          <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="2">
+            <Button Classes="ghost small" HorizontalAlignment="Stretch" Content="❔  Ajuda" Command="{Binding OpenHelpCommand}"
+                    ToolTip.Tip="Todas as funções explicadas, o que mudou em cada versão e Sobre (F1)" />
+            <Button Grid.Column="1" Classes="ghost small" Content="⌨"
+                    ToolTip.Tip="Atalhos do teclado&#10;Ctrl+F buscar · Q / E trocar página&#10;Esc voltar · Del excluir&#10;Ctrl+clique seleciona vários&#10;Ctrl+Z desfazer · Ctrl+Y refazer&#10;Ctrl+O abrir · Ctrl+S salvar" />
+            <Button Grid.Column="2" Classes="ghost small" Content="◐" Command="{Binding ToggleThemeCommand}" ToolTip.Tip="Alternar tema claro/escuro" />
+            <Button Grid.Column="3" x:Name="PrefsButton" Classes="ghost small" Content="⚙" ToolTip.Tip="Aparência e preferências: tema, cor de destaque, idioma e abrir o último save ao iniciar">
+              <Button.Flyout>
+                <Flyout Placement="RightEdgeAlignedBottom">
+                  <StackPanel Spacing="4" Width="250" Margin="4">
+                    <TextBlock Text="TEMA" Classes="section" Margin="0" />
+                    <ItemsControl ItemsSource="{Binding ThemeOptions}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ThemeOptionViewModel">
+                          <Button Classes="ghost small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                  Content="{Binding Header}" ToolTip.Tip="{Binding Tip}" Command="{Binding SelectCommand}" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="FONTE" Classes="section" Margin="0,8,0,0" />
+                    <ItemsControl ItemsSource="{Binding FontOptions}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FontOptionViewModel">
+                          <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="8,4"
+                                  Content="{Binding Header}" FontFamily="{Binding Family}" ToolTip.Tip="{Binding Tip}" Command="{Binding SelectCommand}" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="COR DE DESTAQUE" Classes="section" Margin="0,8,0,0" />
+                    <ItemsControl ItemsSource="{Binding AccentOptions}" Margin="6,4,0,4" ClipToBounds="False">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel ItemSpacing="7" LineSpacing="7" /></ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AccentOptionViewModel">
+                          <Button Classes="accentDot" Classes.selected="{Binding IsSelected}" Background="{Binding Brush}"
+                                  ToolTip.Tip="{Binding Name}" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SetAccentCommand}"
+                                  CommandParameter="{Binding}" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="IDIOMA" Classes="section" Margin="0,8,0,0" />
+                    <ItemsControl ItemsSource="{Binding LanguageOptions}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LanguageOptionViewModel">
+                          <Button Classes="ghost small" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                  Content="{Binding Header}" Command="{Binding SelectCommand}"
+                                  ToolTip.Tip="Idioma da interface (vale ao reiniciar). Nomes do jogo continuam em inglês." />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <CheckBox Content="Abrir último save ao iniciar" FontSize="12" Margin="0,8,0,0" IsChecked="{Binding OpenLastSaveOnStartup}" />
+                  </StackPanel>
+                </Flyout>
+              </Button.Flyout>
+            </Button>
+          </Grid>
+        </StackPanel>
+
+        <!-- Busca global (Ctrl+F) -->
+        <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,6" IsVisible="{Binding HasSave}">
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox x:Name="SearchBox" Text="{Binding SearchText}" Watermark="🔍  Buscar (Ctrl+F)"
+                     ToolTip.Tip="Espécie, apelido, golpe ou item em todas as caixas e na equipe. Também: shiny, ovo" />
+            <Button Grid.Column="1" Classes="ghost small" Content="✕" Margin="4,0,0,0" Command="{Binding ClearSearchCommand}"
+                    IsVisible="{Binding HasSearch}" ToolTip.Tip="Limpar busca" />
+          </Grid>
+          <TextBlock Text="{Binding SearchSummary}" Classes="muted" FontSize="11" IsVisible="{Binding HasSearch}" />
+          <ScrollViewer MaxHeight="260" IsVisible="{Binding HasSearch}">
+            <ItemsControl ItemsSource="{Binding SearchResults}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SearchHitViewModel">
+                  <Button Classes="ghost searchHit" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                          Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).GoToSearchHitCommand}"
+                          CommandParameter="{Binding}" ToolTip.Tip="{Binding Reason}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                      <Image Source="{Binding Sprite}" Width="28" Height="28" />
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Location}" Classes="muted" FontSize="10" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </StackPanel>
+
+        <Button DockPanel.Dock="Top" Classes="navHome" Classes.selected="{Binding IsHomeActive}" IsVisible="{Binding HasSave}"
+                Command="{Binding GoHomeCommand}" ToolTip.Tip="Tela inicial do save: equipe, atalhos e saves recentes (Ctrl+0)">
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+            <TextBlock Text="⌂" Width="20" TextAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="Início" />
+            <TextBlock Grid.Column="2" Text="Ctrl+0" Classes="muted" FontSize="10" VerticalAlignment="Center" />
+          </Grid>
+        </Button>
+        <!-- Sem save aberto: os saves da pasta (Save Manager) para abrir com um clique -->
+        <DockPanel DockPanel.Dock="Top" IsVisible="{Binding ShowSidebarSaves}" Margin="0,10,0,0">
+          <TextBlock DockPanel.Dock="Top" Text="SEUS SAVES" Classes="section" Margin="4,0,0,6" />
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding SaveManager.Entries}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SaveEntryViewModel">
+                  <Button Classes="ghost sideSave" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                          Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SaveManager.OpenCommand}" CommandParameter="{Binding}"
+                          ToolTip.Tip="{Binding Path}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                      <Border Classes="gameBadge" Width="30" Height="30" CornerRadius="6" Background="{Binding Art.Background}">
+                        <Viewbox Margin="1">
+                          <Panel Width="100" Height="100">
+                            <Image Source="{Binding Art.Sprite}" IsVisible="{Binding !Art.IsDual}" />
+                            <Image Source="{Binding Art.Sprite}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                            <Image Source="{Binding Art.Sprite2}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                          </Panel>
+                        </Viewbox>
+                      </Border>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Game}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding FileName}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
+        <ListBox Classes="nav" IsVisible="{Binding HasSave}" ItemsSource="{Binding Pages}"
+                 SelectedItem="{Binding CurrentPage}" Background="Transparent">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:PageViewModel">
+              <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                <TextBlock Text="{Binding Icon}" Width="20" TextAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding Title}" />
+                <TextBlock Grid.Column="2" Text="{Binding Shortcut}" Classes="muted" FontSize="10" VerticalAlignment="Center" />
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Border>
+
+    <!-- Conteudo -->
+    <DockPanel Grid.Column="1" Margin="24">
+      <!-- Abas dos saves abertos (cada save mantem alteracoes, desfazer, caixa e pagina) -->
+      <Border DockPanel.Dock="Top" Classes="saveTabsBar" IsVisible="{Binding HasTabs}">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <ItemsControl ItemsSource="{Binding OpenSaves}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:SaveTabViewModel">
+                  <Button Classes="saveTab" Classes.active="{Binding IsActive}" Command="{Binding SelectCommand}" ToolTip.Tip="{Binding Tooltip}">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                      <Border Classes="gameBadge" Width="26" Height="26" CornerRadius="6" Background="{Binding Art.Background}">
+                        <Viewbox Margin="1">
+                          <Panel Width="100" Height="100">
+                            <Image Source="{Binding Art.Sprite}" IsVisible="{Binding !Art.IsDual}" />
+                            <Image Source="{Binding Art.Sprite}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                            <Image Source="{Binding Art.Sprite2}" IsVisible="{Binding Art.IsDual}" Width="70" Height="70" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                          </Panel>
+                        </Viewbox>
+                      </Border>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="12" MaxWidth="170" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Game}" Classes="muted" FontSize="10" MaxWidth="170" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="●" Classes="tabDirty" IsVisible="{Binding IsDirty}" VerticalAlignment="Center"
+                                 ToolTip.Tip="Alterações não exportadas" />
+                      <Button Grid.Column="3" Classes="tabClose" Content="✕" Command="{Binding CloseCommand}"
+                              ToolTip.Tip="Fechar este save (Ctrl+W)" />
+                    </Grid>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Classes="tabNew" Content="＋" Command="{Binding NewTabCommand}"
+                    ToolTip.Tip="Abrir outro save numa aba nova (escolha no Save Manager, Ctrl+O ou arraste o arquivo). Ctrl+Tab troca de aba." />
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+      <Panel>
+      <!-- Sem save aberto: o Save Manager e a tela inicial -->
+      <ContentControl Content="{Binding SaveManager}" IsVisible="{Binding ShowHomeSaves}" />
+      <ContentControl Content="{Binding Help}" IsVisible="{Binding IsHelpOpen}" />
+      <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding ShowPage}" />
+      <!-- Selecao multipla (Ctrl/Shift+clique): barra flutuante com o total e as acoes do grupo -->
+      <Border Classes="selectionBar" IsVisible="{Binding HasMarks}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+              ToolTip.Tip="Ctrl+clique marca ou desmarca · Shift+clique marca um intervalo · Ctrl+A marca a caixa toda · Esc desmarca">
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="✓" Classes="markCheck" VerticalAlignment="Center" />
+          <TextBlock Text="{Binding MarkedText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <TextBlock Text="Arraste um deles para mover o grupo (Ctrl copia)" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+          <Button Classes="small danger" Content="🗑  Excluir" Command="{Binding DeleteMarkedCommand}" ToolTip.Tip="Apaga os marcados (Delete)" />
+          <Button Classes="small" Content="✕  Limpar" Command="{Binding ClearMarksCommand}" ToolTip.Tip="Desmarca todos (Esc)" />
+        </StackPanel>
+      </Border>
+      </Panel>
+    </DockPanel>
+
+    <!-- Editor -->
+    <Border Grid.Column="2" Width="410" Background="{DynamicResource SidebarBackground}"
+            BorderBrush="{DynamicResource CardBorder}" BorderThickness="1,0,0,0" IsVisible="{Binding ShowEditorPanel}">
+      <Panel>
+        <TextBlock Text="Selecione um slot" Classes="muted" IsVisible="{Binding !HasEditor}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <ScrollViewer IsVisible="{Binding HasEditor}">
+          <ContentControl Content="{Binding Editor}" Margin="20" />
+        </ScrollViewer>
+      </Panel>
+    </Border>
+
+    <!-- Barra de acoes + status -->
+    <Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Classes="actionBar">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+        <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" VerticalAlignment="Center"
+                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Status}" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowSlotActions}">
+          <Button Classes="small" Content="↶" FontSize="16" Padding="10,0" Command="{Binding UndoCommand}" ToolTip.Tip="{Binding UndoTip}" />
+          <Button Classes="small" Content="↷" FontSize="16" Padding="10,0" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" />
+          <Button Classes="small good" Content="✓  Verificar legalidade" Command="{Binding CheckLegalityCommand}"
+                  ToolTip.Tip="Verifica todos os Pokémon do save (caixas e equipe) e mostra o resultado" />
+          <Button Classes="small info" Content="＋  Criar PKM" Command="{Binding CreateCommand}"
+                  ToolTip.Tip="Novo Pokémon no primeiro slot vazio da caixa" />
+          <Button Classes="small" Content="⭳  Importar" Click="OnImportEntity"
+                  ToolTip.Tip="Importa um arquivo .pk* para o slot selecionado (ou o primeiro vazio)" />
+          <Button Classes="small danger" Content="🗑  Excluir" Command="{Binding DeleteCommand}"
+                  ToolTip.Tip="Apaga o Pokémon selecionado ou os marcados com Ctrl+clique (Delete). No save, dá para desfazer com Ctrl+Z" />
+          <Button Classes="small" Content="⭱  Exportar PKM" Click="OnExportEntity" IsEnabled="{Binding CanExportEntity}"
+                  ToolTip.Tip="Salva o Pokémon selecionado como arquivo .pk* (ou arraste o slot para fora da janela)" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowSaveManagerActions}">
+            <Button Classes="small" Content="⟳  Atualizar" Command="{Binding SaveManager.RefreshCommand}" ToolTip.Tip="Reler saves ou backups (F5)" />
+            <Button Classes="small" Content="Abrir save..." Click="OnOpen" ToolTip.Tip="Abrir um arquivo de save (Ctrl+O)" />
+          </StackPanel>
+          <Button Classes="accent small" Content="Usar encontro" IsVisible="{Binding ShowEncounterActions}" IsEnabled="{Binding Encounters.HasDetail}" Command="{Binding Encounters.UseCommand}" CommandParameter="{Binding Encounters.Selected}" />
+          <Button Classes="accent small" Content="Usar evento" IsVisible="{Binding ShowGiftActions}" IsEnabled="{Binding Gifts.HasDetail}" Command="{Binding Gifts.UseCommand}" CommandParameter="{Binding Gifts.Selected}" />
+          <Button Classes="small" Content="Atualizar anexados" IsVisible="{Binding ShowBankActions}" Command="{Binding SyncAttachedCommand}" />
+          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowDexActions}">
+            <Button Classes="small" Content="⟳  Atualizar Pokédex" Command="{Binding Pokedex.RefreshCommand}" />
+            <Button Classes="small" Content="Sincronizar save" Command="{Binding Pokedex.SyncCommand}" />
+          </StackPanel>
+          <Button Classes="small" Content="Aplicar mochila" IsVisible="{Binding ActionBag, Converter={x:Static ObjectConverters.IsNotNull}}" Command="{Binding ActionBag.SaveCommand}" />
+          <Button Classes="small" Content="‹  Voltar" IsVisible="{Binding IsHelpOpen}" Command="{Binding CloseHelpCommand}" ToolTip.Tip="Voltar à página anterior (Esc)" />
+          <Button Classes="accent small primary" Content="💾  Salvar" Click="OnQuickSave" IsVisible="{Binding ShowSaveActions}"
+                  ToolTip.Tip="Grava por cima do arquivo do save, sem abrir janela (Ctrl+S). O arquivo anterior vai para os backups antes. Para escolher outro lugar, use “Salvar como...” (Ctrl+E)." />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Pergunta dentro da janela (ConfirmAsync): cobre tudo e bloqueia cliques ate responder -->
+    <Border Grid.ColumnSpan="3" Grid.RowSpan="2" Classes="dialogBackdrop" IsVisible="{Binding HasDialog}">
+      <Border Classes="card dialog" DataContext="{Binding Dialog}" x:DataType="vm:ConfirmDialogViewModel"
+              HorizontalAlignment="Center" VerticalAlignment="Center" Width="520">
+        <StackPanel Spacing="14">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <TextBlock Text="{Binding Icon}" FontSize="26" VerticalAlignment="Center" IsVisible="{Binding HasIcon}"
+                       Classes.good="{Binding !IsDanger}" Classes.bad="{Binding IsDanger}" />
+            <TextBlock Text="{Binding Title}" Classes="title" FontSize="18" VerticalAlignment="Center" TextWrapping="Wrap" />
+          </StackPanel>
+          <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+          <TextBox x:Name="DialogInput" Text="{Binding Input}" IsVisible="{Binding HasInput}" />
+          <Border Classes="dialogDetails" IsVisible="{Binding HasDetails}">
+            <ScrollViewer MaxHeight="300">
+              <ItemsControl ItemsSource="{Binding Details}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String">
+                    <SelectableTextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12" Margin="0,2" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Border>
+          <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Content="{Binding CancelText}" Command="{Binding CancelCommand}" ToolTip.Tip="Esc" IsVisible="{Binding HasCancel}" />
+            <Button Classes="accent" Content="{Binding ConfirmText}" Command="{Binding ConfirmCommand}" ToolTip.Tip="Enter" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Border>
+  </Grid>
+</UserControl>

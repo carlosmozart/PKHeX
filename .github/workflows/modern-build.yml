@@ -7,6 +7,8 @@ on:
     tags: [ 'modern-v*' ]
     paths:
       - 'PKHeX.Modern/**'
+      - 'PKHeX.Modern.Desktop/**'
+      - 'PKHeX.Modern.Version.props'
       - 'PKHeX.Core/**'
       - 'PKHeX.Modern.Sprites/**'
       - 'PKHeX.Drawing/**'
@@ -49,7 +51,7 @@ jobs:
       - name: Testar empacotamento
         run: python -B Tools/test_package_modern.py
       - name: Publicar
-        run: dotnet publish PKHeX.Modern -p:PublishProfile=${{ matrix.rid }}
+        run: dotnet publish PKHeX.Modern.Desktop -p:PublishProfile=${{ matrix.rid }}
       - name: Compactar (bundle e icone no macOS)
         run: python Tools/package_modern.py --rid ${{ matrix.rid }}
       - uses: actions/upload-artifact@v7

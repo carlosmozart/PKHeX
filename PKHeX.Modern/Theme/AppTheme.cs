@@ -35,10 +35,10 @@ public sealed record AppFontChoice(string Key, string Name, string Description, 
 public static class AppTheme
 {
     /// <summary>Fonte pixelada embutida (Pixelify Sans, OFL); simbolos que ela nao tem vem da fonte padrao.</summary>
-    private const string PixelFont = "avares://PKHeX.Modern/Assets/Fonts#Pixelify Sans, $Default";
+    private const string PixelFont = "avares://PKHeX.Modern.UI/Assets/Fonts#Pixelify Sans, $Default";
     private const string InterFont = "fonts:Inter#Inter, $Default";
     /// <summary>Recriacao da fonte dos Pokemon de Game Boy (Pokemon Classic, CC BY-SA 3.0: Assets/Fonts/PokemonClassic-LICENSE.txt).</summary>
-    private const string PokemonGbFont = "avares://PKHeX.Modern/Assets/Fonts#Pokemon Classic, $Default";
+    private const string PokemonGbFont = "avares://PKHeX.Modern.UI/Assets/Fonts#Pokemon Classic, $Default";
 
     /// <summary>Fontes da interface (menu ⚙ › Fonte). "Do tema" segue o tema completo (Pixel usa a Pixelify Sans).</summary>
     public static IReadOnlyList<AppFontChoice> Fonts { get; } =

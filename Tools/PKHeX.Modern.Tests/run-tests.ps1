@@ -7,6 +7,7 @@ $root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $saves = Join-Path $root 'saves'
 # nome usado pelo teste -> arquivo em saves/
 $suites = [ordered]@{
+    'Android' = @{}
     # Sprites do porte x PKHeX original (System.Drawing), pixel a pixel; le os saves de saves/ direto, so em memoria
     'SpriteParity' = @{}
     'SaveFocus' = @{}

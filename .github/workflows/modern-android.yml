@@ -1,0 +1,83 @@
+name: PKHeX Modern Android
+on:
+  push:
+    branches: [modern-ui, modern-android-poc]
+    paths: ['PKHeX.Modern/**', 'PKHeX.Modern.Android/**', 'PKHeX.Modern.Sprites/**', 'PKHeX.Core/**', 'PKHeX.Modern.Version.props', 'Tools/verify_android_apk.py', '.github/workflows/modern-android.yml']
+  workflow_dispatch:
+    inputs:
+      signed_release:
+        description: Gerar APK com a assinatura propria (exige secrets Android)
+        type: boolean
+        default: false
+      release_tag:
+        description: Tag modern-vX.Y.Z existente para anexar o APK assinado (opcional)
+        type: string
+        default: ''
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - run: dotnet workload install android
+      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Compilar APK de teste
+        if: ${{ !inputs.signed_release }}
+        run: dotnet build PKHeX.Modern.Android -c Release -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME"
+      - name: Compilar APK com assinatura propria
+        if: ${{ inputs.signed_release }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
+          ANDROID_STORE_PASS: ${{ secrets.ANDROID_STORE_PASS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64" && test -n "$ANDROID_KEY_ALIAS" && test -n "$ANDROID_KEY_PASS" && test -n "$ANDROID_STORE_PASS"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android.keystore"
+          trap 'rm -f "$RUNNER_TEMP/android.keystore"' EXIT
+          dotnet build PKHeX.Modern.Android -c Release -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME" -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$RUNNER_TEMP/android.keystore" -p:AndroidSigningKeyAlias="$ANDROID_KEY_ALIAS" -p:AndroidSigningKeyPass=env:ANDROID_KEY_PASS -p:AndroidSigningStorePass=env:ANDROID_STORE_PASS
+      - name: Conferir alinhamento e assinatura
+        run: |
+          mkdir -p delivery
+          cp PKHeX.Modern.Android/bin/Release/net10.0-android/*-Signed.apk delivery/PKHeX.Modern-Android.apk
+          python Tools/verify_android_apk.py delivery/PKHeX.Modern-Android.apk
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 4 delivery/PKHeX.Modern-Android.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify delivery/PKHeX.Modern-Android.apk
+      - uses: actions/upload-artifact@v7
+        with:
+          name: PKHeX.Modern-Android
+          path: delivery/PKHeX.Modern-Android.apk
+          if-no-files-found: error
+
+  release:
+    if: ${{ inputs.signed_release && inputs.release_tag != '' }}
+    needs: apk
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: PKHeX.Modern-Android
+          path: delivery
+      - name: Anexar APK assinado a uma release existente
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^modern-v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+          gh release upload "$RELEASE_TAG" delivery/PKHeX.Modern-Android.apk --repo "$GITHUB_REPOSITORY"

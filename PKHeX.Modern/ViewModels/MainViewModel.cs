@@ -916,8 +916,11 @@ public sealed class MainViewModel : ViewModelBase
         Raise(nameof(LastSaveName));
     }
 
+    /// <summary>Somente depois que o documento externo foi gravado e verificado.</summary>
+    public void MarkExternallySaved() => IsDirty = false;
+
     public string? SaveError { get; private set; }
-    public bool Export(string path)
+    public bool Export(string path, bool markSaved = true)
     {
         SaveError = null;
         if (_sav is null)
@@ -937,7 +940,7 @@ public sealed class MainViewModel : ViewModelBase
             ApplyPendingPages(); // mochila mudada na tela e ainda nao aplicada
             var backup = SaveBackup.BeforeOverwrite(ZipSaves.FileOf(path)); // copia o arquivo antigo (ou o zip) antes de sobrescrever
             CoreAdapter.ExportSave(_sav, path);
-            IsDirty = false;
+            if (markSaved) IsDirty = false;
             var where = ZipSaves.IsZipPath(path, out _, out _) ? ZipSaves.DisplayName(path) : path;
             Status = backup is null
                 ? $"Salvo em {where}"
