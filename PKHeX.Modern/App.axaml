@@ -799,6 +799,8 @@
                 Command="{Binding SetTabCommand}" CommandParameter="2" ToolTip.Tip="Estatísticas do treinador: passos, batalhas, ovos chocados..." />
         <Button Classes="small" Classes.accent="{Binding IsShortcutsTab}" Content="⚡  Atalhos" IsVisible="{Binding HasShortcuts}"
                 Command="{Binding SetTabCommand}" CommandParameter="3" ToolTip.Tip="Eventos prontos: liberar lendários, fazer errantes voltarem, áreas do mapa..." />
+        <Button Classes="small" Classes.accent="{Binding IsFameTab}" Content="★  Hall da Fama" IsVisible="{Binding HasFame}"
+                Command="{Binding SetTabCommand}" CommandParameter="4" ToolTip.Tip="As equipes que venceram a Liga, como o jogo guardou" />
       </StackPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8" IsVisible="{Binding ShowFilters}">
         <TextBox Text="{Binding Query}" Watermark="Buscar pelo nome ou número (ex.: surf, #120)" />
@@ -816,7 +818,7 @@
         <TextBlock Grid.Column="3" Text="{Binding CountText}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
       </Grid>
       <TextBlock DockPanel.Dock="Bottom" Text="As alterações valem imediatamente; exporte o save para gravar no arquivo."
-                 Classes="muted" FontSize="12" Margin="0,8,0,0" />
+                 Classes="muted" FontSize="12" Margin="0,8,0,0" IsVisible="{Binding !IsFameTab}" />
       <Panel>
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding IsFlagsTab}">
           <ItemsRepeater ItemsSource="{Binding FlagRows}">
@@ -824,9 +826,9 @@
             <ItemsRepeater.ItemTemplate>
               <DataTemplate x:DataType="vm:FlagRowViewModel">
                 <Border Classes="card" Padding="10,2" Margin="0,0,10,0">
-                  <Grid ColumnDefinitions="Auto,72,*,Auto" ColumnSpacing="10">
+                  <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
                     <CheckBox IsChecked="{Binding IsSet}" MinWidth="0" />
-                    <TextBlock Grid.Column="1" Text="{Binding Number}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding Number}" MinWidth="72" Classes="muted" FontSize="12" VerticalAlignment="Center" />
                     <TextBlock Grid.Column="2" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
                     <TextBlock Grid.Column="3" Text="{Binding Category}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
                   </Grid>
@@ -841,8 +843,8 @@
             <ItemsRepeater.ItemTemplate>
               <DataTemplate x:DataType="vm:WorkRowViewModel">
                 <Border Classes="card" Padding="10,4" Margin="0,0,10,0">
-                  <Grid ColumnDefinitions="72,*,Auto,160" ColumnSpacing="10">
-                    <TextBlock Text="{Binding Number}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+                  <Grid ColumnDefinitions="Auto,*,Auto,190" ColumnSpacing="10">
+                    <TextBlock Text="{Binding Number}" MinWidth="72" Classes="muted" FontSize="12" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                       <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
                       <TextBlock Text="{Binding Category}" Classes="muted" FontSize="11" />
@@ -888,6 +890,39 @@
                               ToolTip.Tip="{Binding Description}" ToolTip.ShowOnDisabled="True" />
                     </StackPanel>
                   </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding IsFameTab}">
+          <ItemsControl ItemsSource="{Binding FameRows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:FameTeamViewModel">
+                <Border Classes="card" Padding="14,10" Margin="0,0,10,8">
+                  <StackPanel Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding Date}" Classes="muted" FontSize="12" VerticalAlignment="Center" IsVisible="{Binding HasDate}" />
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding Members}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FameMemberViewModel">
+                          <StackPanel Width="112" Margin="0,0,6,0" ToolTip.Tip="{Binding Tip}">
+                            <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="Uniform" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                              <TextBlock Text="★" Classes="muted" FontSize="11" IsVisible="{Binding Shiny}" />
+                              <TextBlock Text="{Binding Level}" Classes="muted" FontSize="11" />
+                            </StackPanel>
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
                 </Border>
               </DataTemplate>
             </ItemsControl.ItemTemplate>

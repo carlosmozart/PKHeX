@@ -22,9 +22,10 @@ public sealed record GameRecord(int Id, string Name, long Max);
 public sealed record GameShortcut(string Name, string Description, Func<bool> Ready, Action Apply);
 
 /// <summary>
-/// Editores por jogo: flags e valores de evento (Gen 2–7 e BD/SP com os nomes das listas do PKHeX; Scarlet/Violet
-/// pelos blocos do save que o PKHeX conhece pelo nome), atalhos de eventos do BD/SP e recordes (Gen 3, 5, 6, 7,
-/// Sword/Shield e BD/SP). Le e grava direto no save aberto.
+/// Editores por jogo: flags e valores de evento (Gen 1–7, Let's Go e BD/SP com os nomes das listas do PKHeX;
+/// Scarlet/Violet pelos blocos do save que o PKHeX conhece pelo nome; Z-A pelas tabelas de hash do save), atalhos
+/// de eventos (Gen 1, Let's Go, BD/SP e Z-A) e recordes (Gen 3, 5, 6, 7, Sword/Shield e BD/SP). Le e grava direto
+/// no save aberto.
 /// </summary>
 public sealed class GameEditors
 {
@@ -48,19 +49,37 @@ public sealed class GameEditors
             case SAV9SV sv:
                 LoadScarletViolet(sv, flags, works, out _getFlag, out _setFlag, out _getWork, out _setWork);
                 break;
+            case SAV7b gg:
+                LoadLetsGo(gg, flags, works, out _getFlag, out _setFlag, out _getWork, out _setWork);
+                Shortcuts = LoadShortcuts7b(gg);
+                break;
+            case SAV9ZA za:
+                LoadZA(za, flags, works, out _getFlag, out _setFlag, out _getWork, out _setWork);
+                Shortcuts = LoadShortcuts9a(za);
+                break;
             default:
                 LoadClassic(sav, flags, works, out _getFlag, out _setFlag, out _getWork, out _setWork);
+                if (sav is SAV1 s1)
+                {
+                    NameFlags1(s1, flags);
+                    Shortcuts = LoadShortcuts1(s1);
+                }
                 break;
         }
         Flags = flags;
         Works = works;
+        Shortcuts = [.. Shortcuts, .. LoadCaseShortcuts(sav)];
+        Fame = HallOfFame.Load(sav);
         Records = LoadRecords();
     }
 
     public bool HasEvents => Flags.Count > 0;
     public bool HasRecords => Records.Count > 0;
     public bool HasShortcuts => Shortcuts.Count > 0;
-    public bool IsAvailable => HasEvents || Works.Count > 0 || HasRecords || HasShortcuts;
+    public bool HasFame => Fame.Count > 0;
+    public bool IsAvailable => HasEvents || Works.Count > 0 || HasRecords || HasShortcuts || HasFame;
+    /// <summary>Equipes do Hall da Fama (so leitura).</summary>
+    public IReadOnlyList<FameTeam> Fame { get; } = [];
 
     // Eventos
     public int FlagCount => Flags.Count;
@@ -71,7 +90,7 @@ public sealed class GameEditors
     public IReadOnlyList<GameWork> Works { get; }
     /// <summary>A lista de nomes do jogo existe (sem ela, tudo aparece só pelo número).</summary>
     public bool HasLabels { get; private set; }
-    /// <summary>Atalhos de eventos (so BD/SP por enquanto).</summary>
+    /// <summary>Atalhos de eventos (Gen 1, Let's Go, BD/SP e Z-A).</summary>
     public IReadOnlyList<GameShortcut> Shortcuts { get; } = [];
 
     public bool GetFlag(int index) => _getFlag!(index);
@@ -87,7 +106,7 @@ public sealed class GameEditors
     public static string CategoryOf(GameFlag f) => f.Group ?? (f.Type == NamedEventType.None ? "" : CategoryName(f.Type));
     public static string CategoryOf(GameWork w) => w.Group ?? (w.Type == NamedEventType.None ? "" : CategoryName(w.Type));
 
-    // Gen 2–7: IEventFlagArray + IEventWorkArray, nomes de flags_xx/const_xx
+    // Gen 1–7: IEventFlagArray + IEventWorkArray, nomes de flags_xx/const_xx (o Gen 1 nao tem lista)
     private void LoadClassic(SaveFile sav, List<GameFlag> flags, List<GameWork> works,
         out Func<int, bool>? getFlag, out Action<int, bool>? setFlag, out Func<int, long>? getWork, out Action<int, long>? setWork)
     {
@@ -95,6 +114,7 @@ public sealed class GameEditors
         {
             IEventFlag37 f => f,
             IEventFlagProvider37 p => p.EventWork,
+            SAV1 s => s,
             SAV2 s => s,
             _ => null,
         };
@@ -194,6 +214,255 @@ public sealed class GameEditors
             new("Cresselia errante de novo", "Faz a Cresselia voltar a vagar (depois de capturada ou derrotada).", () => u.ResetReadyRoamerCresselia, u.RespawnCresselia),
             new("Todas as áreas do mapa", "Marca todas as cidades e áreas como visitadas (voo) e revela as ilhas e caminhos escondidos.", () => true, u.UnlockZones),
             new("Todas as roupas", "Libera todas as roupas do provador.", () => true, u.UnlockFashion),
+        ];
+    }
+
+    // Gen 1: o PKHeX so conhece as flags dos Pokemon fixos do mapa (G1OverworldSpawner); da nome a elas.
+    private static void NameFlags1(SAV1 sav, List<GameFlag> flags)
+    {
+        foreach (var (name, eventFlag, _) in GetSpawns1(sav))
+        {
+            if (eventFlag > 0 && eventFlag < flags.Count && flags[eventFlag].Name.Length == 0)
+                flags[eventFlag] = flags[eventFlag] with { Name = $"{name}: já obtido ou derrotado", Type = NamedEventType.EventEncounter };
+        }
+    }
+
+    /// <summary>Pokemon fixos do mapa no Gen 1: nome ("Voltorb 3"), flag de evento e o par do Core.</summary>
+    private static IEnumerable<(string Name, int EventFlag, FlagPairG1Detail Pair)> GetSpawns1(SAV1 sav)
+    {
+        var spawner = new G1OverworldSpawner(sav);
+        foreach (var pair in spawner.GetFlagPairs())
+        {
+            var name = pair.Name[G1OverworldSpawner.FlagPropertyPrefix.Length..].Replace('_', ' ');
+            var backing = typeof(FlagPairG1Detail).GetField("Backing", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(pair)
+                ?? typeof(FlagPairG1Detail).GetFields(BindingFlags.Instance | BindingFlags.NonPublic).FirstOrDefault(f => f.FieldType == typeof(FlagPairG1))?.GetValue(pair);
+            var eventFlag = backing is FlagPairG1 b
+                ? (int)(typeof(FlagPairG1).GetField("EventFlag", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(b) ?? 0)
+                : 0;
+            yield return (name, eventFlag, pair);
+        }
+    }
+
+    /// <summary>Onde cada Pokemon fixo do Gen 1 aparece (para a explicacao do atalho).</summary>
+    private static string Place1(string species) => species switch
+    {
+        "Mewtwo" => "Cerulean Cave",
+        "Articuno" => "Seafoam Islands",
+        "Zapdos" or "Voltorb" or "Electrode" => "Power Plant",
+        "Moltres" => "Victory Road",
+        "Hitmonlee" or "Hitmonchan" => "Fighting Dojo, Saffron City",
+        "Eevee" => "Celadon Mansion",
+        "Kabuto" or "Omanyte" => "Mt. Moon",
+        "Aerodactyl" => "Pewter Museum",
+        "Bulbasaur" => "Cerulean City",
+        "Squirtle" => "Vermilion City",
+        "Charmander" => "Route 24",
+        _ => "",
+    };
+
+    /// <summary>Atalhos do Gen 1: faz os Pokemon fixos do mapa (lendarios, presentes, Voltorbs...) aparecerem de novo.</summary>
+    private static List<GameShortcut> LoadShortcuts1(SAV1 sav)
+    {
+        List<GameShortcut> list = [];
+        foreach (var group in GetSpawns1(sav).GroupBy(s => s.Name.Split(' ')[0]).OrderBy(g => g.Key, StringComparer.Ordinal))
+        {
+            var species = group.Key;
+            var names = group.Select(g => g.Name).ToHashSet();
+            var place = Place1(species);
+            var many = names.Count > 1;
+            var desc = many
+                ? $"Faz os {species} voltarem a aparecer ({place}), depois de capturados, derrotados ou recebidos."
+                : $"Faz o {species} voltar a aparecer ({place}), depois de capturado, derrotado ou recebido.";
+            // Cada uso recria o spawner do Core: ele copia as flags do save e grava todas de volta no Save().
+            IEnumerable<FlagPairG1Detail> Pairs(G1OverworldSpawner o) => o.GetFlagPairs()
+                .Where(p => names.Contains(p.Name[G1OverworldSpawner.FlagPropertyPrefix.Length..].Replace('_', ' ')));
+            list.Add(new GameShortcut(many ? $"{species} de novo ({names.Count})" : $"{species} de novo", desc,
+                () => Pairs(new G1OverworldSpawner(sav)).Any(p => p.IsHidden),
+                () =>
+                {
+                    var o = new G1OverworldSpawner(sav);
+                    foreach (var p in Pairs(o))
+                        p.Reset();
+                    o.Save();
+                }));
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// Atalhos dos estojos e do Pokeathlon (os botoes "dar todos" do PKHeX): Pokeblocks (Ruby/Sapphire/Emerald e
+    /// Omega Ruby/Alpha Sapphire), Poffins (Diamond/Pearl/Platinum e BD/SP) e Pokeathlon (HeartGold/SoulSilver).
+    /// </summary>
+    private static List<GameShortcut> LoadCaseShortcuts(SaveFile sav)
+    {
+        List<GameShortcut> list = [];
+        switch (sav)
+        {
+            case SAV3 { LargeBlock: ISaveBlock3LargeHoenn hoenn }:
+                list.Add(new("Estojo de Pokéblocks cheio", "Enche o estojo com 40 Pokéblocks dourados de sabor e maciez máximos (para concursos).",
+                    () => hoenn.PokeBlocks.Blocks.Any(b => b.Color != PokeBlock3Color.Gold || b.Level != 255 || b.Feel != 255),
+                    () => { var c = hoenn.PokeBlocks; c.MaximizeAll(true); hoenn.PokeBlocks = c; }));
+                break;
+            case SAV4Sinnoh sinnoh:
+                list.Add(new("Estojo de Poffins cheio", "Enche o estojo com 100 Poffins de todos os sabores no máximo (para concursos).",
+                    () => new PoffinCase4(sinnoh).Poffins.Any(p => p.Type != PoffinFlavor4.Rich || p.Smoothness != 255 || p.BoostSpicy != 255),
+                    () => { var c = new PoffinCase4(sinnoh); c.FillCase(); c.Save(); }));
+                break;
+            case SAV4HGSS hgss:
+                list.Add(new("Pontos do Pokéathlon no máximo", $"Deixa os pontos do Pokéathlon em {Pokeathlon4.MaxPoints:N0} (para a loja do Athlon Dome).",
+                    () => hgss.Pokeathlon.Points < Pokeathlon4.MaxPoints, () => { var a = hgss.Pokeathlon; a.Points = Pokeathlon4.MaxPoints; }));
+                list.Add(new("Todos os Data Cards do Pokéathlon", "Marca os 27 Data Cards do Pokéathlon como obtidos.",
+                    () => hgss.Pokeathlon.FlagsDataCard != Pokeathlon4.DataCardAllObtained, () => { var a = hgss.Pokeathlon; a.FlagsDataCard = Pokeathlon4.DataCardAllObtained; }));
+                list.Add(new("Todas as medalhas do Pokéathlon", "Dá as medalhas dos 5 cursos do Pokéathlon para todas as espécies (Bulbasaur a Arceus).",
+                    () => hgss.Pokeathlon.Medals.GetTotalCount() < PokeathlonMedalManager4.SIZE * 5, () => hgss.Pokeathlon.Medals.SetAllMedals()));
+                break;
+            case SAV6AO ao:
+                list.Add(new("999 Pokéblocks de cada", "Deixa 999 Pokéblocks de cada uma das 12 cores no estojo (para concursos).",
+                    () => Enumerable.Range(0, Contest6.CountBlock).Any(i => ao.Contest.GetBlockCount(i) < Contest6.MaxBlock),
+                    () => { for (int i = 0; i < Contest6.CountBlock; i++) ao.Contest.SetBlockCount(i, Contest6.MaxBlock); }));
+                break;
+            case SAV8BS bs:
+                list.Add(new("Estojo de Poffins cheio", "Enche o estojo com 100 Poffins de nível 60 e todos os sabores no máximo (para concursos).",
+                    () => bs.Poffins.GetPoffins().Any(p => p.MstID != 0x1C || p.Level != 60 || p.Taste != 0xFF),
+                    () =>
+                    {
+                        var all = bs.Poffins.GetPoffins();
+                        foreach (var p in all)
+                        {
+                            p.MstID = 0x1C;
+                            p.Level = 60;
+                            p.Taste = 0xFF;
+                            p.FlavorSpicy = p.FlavorBitter = p.FlavorDry = p.FlavorSour = p.FlavorSweet = 0xFF;
+                        }
+                        bs.Poffins.SetPoffins(all);
+                    }));
+                break;
+        }
+        return list;
+    }
+
+    // Let's Go: EventWork7b (4096 flags e 1000 valores int32 divididos em zona, sistema, objetos/cenas e eventos),
+    // nomes de flags_gg/const_gg (que numeram cada tipo separado: "v0277" = objeto 277).
+    private void LoadLetsGo(SAV7b gg, List<GameFlag> flags, List<GameWork> works,
+        out Func<int, bool>? getFlag, out Action<int, bool>? setFlag, out Func<int, long>? getWork, out Action<int, long>? setWork)
+    {
+        var ev = gg.Blocks.EventWork;
+        Dictionary<int, string> flagNames = [], workNames = [];
+        try
+        {
+            var editor = new SplitEventEditor<int>(ev,
+                GameLanguage.GetStrings("gg", GameInfo.CurrentLanguage, "const"),
+                GameLanguage.GetStrings("gg", GameInfo.CurrentLanguage, "flags"));
+            foreach (var v in editor.Flag.SelectMany(g => g.Vars))
+                flagNames.TryAdd(v.RawIndex, v.Name);
+            foreach (var v in editor.Work.SelectMany(g => g.Vars))
+                workNames.TryAdd(v.RawIndex, v.Name);
+            HasLabels = flagNames.Count + workNames.Count > 0;
+        }
+        catch
+        {
+            // sem lista de nomes
+        }
+        for (int i = 0; i < ev.CountFlag; i++)
+        {
+            var (prefix, group) = Group7b(ev.GetFlagType(i, out var sub), flag: true);
+            flags.Add(new GameFlag(i, flagNames.GetValueOrDefault(i, ""), NamedEventType.None, $"{prefix}#{sub:0000}", group));
+        }
+        // Os ultimos 72 valores nao pertencem a nenhum tipo (sem uso no jogo)
+        for (int i = 0; i < ev.CountWork; i++)
+        {
+            int sub = i;
+            var (prefix, group) = i < 928 ? Group7b(ev.GetWorkType(i, out sub), flag: false) : ("U", "Sem uso");
+            if (i >= 928) sub = i - 928;
+            works.Add(new GameWork(i, workNames.GetValueOrDefault(i, ""), NamedEventType.None, [], int.MinValue, int.MaxValue, $"{prefix}#{sub:000}", group));
+        }
+        getFlag = ev.GetFlag;
+        setFlag = (i, v) => ev.SetFlag(i, v);
+        getWork = i => ev.GetWork(i);
+        setWork = (i, v) => ev.SetWork(i, (int)v);
+    }
+
+    private static (string Prefix, string Group) Group7b(EventVarType type, bool flag) => type switch
+    {
+        EventVarType.Zone => ("Z", "Zonas"),
+        EventVarType.System => ("S", "Sistema"),
+        EventVarType.Vanish => flag ? ("V", "Objetos do mapa") : ("C", "Cenas"),
+        _ => ("E", "Eventos"),
+    };
+
+    /// <summary>Atalhos do Let's Go: titulos de Mestre Treinador.</summary>
+    private static List<GameShortcut> LoadShortcuts7b(SAV7b gg)
+    {
+        var ev = gg.Blocks.EventWork;
+        return
+        [
+            new("Todos os títulos de Mestre Treinador", "Libera os títulos de Mestre Treinador de todas as espécies (como se tivesse vencido cada um).",
+                () => Enumerable.Range(0, EventWork7b.MaxTitleFlag).Any(i => !ev.GetTitleFlag(i)), ev.UnlockAllTitleFlags),
+        ];
+    }
+
+    // Z-A: flags e valores ficam em tabelas (hash de 64 bits, valor). O jogo nao guarda os nomes; o PKHeX so conhece
+    // os itens do mapa (Colorful Screws e TMs). Mostra as entradas usadas de cada tabela, com o hash como codigo.
+    private void LoadZA(SAV9ZA za, List<GameFlag> flags, List<GameWork> works,
+        out Func<int, bool>? getFlag, out Action<int, bool>? setFlag, out Func<int, long>? getWork, out Action<int, long>? setWork)
+    {
+        var b = za.Blocks;
+        var fieldNames = new Dictionary<ulong, string>();
+        var screw = GameInfo.Strings.Item[ColorfulScrew9a.ColorfulScrewItemIndex];
+        foreach (var (item, _) in ColorfulScrew9a.GetScrewLocations(b.FieldItems, false).Concat(ColorfulScrew9a.GetScrewLocations(b.FieldItems, true)))
+            fieldNames.TryAdd(FnvHash.HashFnv1a_64(item), $"{screw} ({item})");
+        foreach (var (item, id, _) in TechnicalMachine9a.TechnicalMachines)
+            fieldNames.TryAdd(FnvHash.HashFnv1a_64(item), $"{GameInfo.Strings.Item[id]} ({item})");
+
+        var flagSlots = new List<(EventWorkFlagStorage Table, int Slot)>();
+        void AddFlags(EventWorkFlagStorage table, string group, bool named)
+        {
+            for (int i = 0; i < table.CountUsed; i++)
+            {
+                var key = table.GetKey(i);
+                flags.Add(new GameFlag(flags.Count, named ? fieldNames.GetValueOrDefault(key, "") : "", NamedEventType.None, $"{key:X16}", group));
+                flagSlots.Add((table, i));
+            }
+        }
+        AddFlags(b.Event, "Eventos", false);
+        AddFlags(b.Flags, "Sistema", false);
+        AddFlags(b.FieldItems, "Itens do mapa", true);
+
+        var workSlots = new List<(EventWorkValueStorage Table, int Slot)>();
+        void AddWorks(EventWorkValueStorage table, string group)
+        {
+            for (int i = 0; i < table.CountUsed; i++)
+            {
+                works.Add(new GameWork(works.Count, "", NamedEventType.None, [], long.MinValue, long.MaxValue, $"{table.GetKey(i):X16}", group));
+                workSlots.Add((table, i));
+            }
+        }
+        AddWorks(b.Work, "Sistema");
+        AddWorks(b.Quest, "Missões");
+        AddWorks(b.WorkMable, "Tarefas da Mable");
+        AddWorks(b.CountMable, "Contagens da Mable");
+        AddWorks(b.CountTitle, "Títulos");
+
+        HasLabels = fieldNames.Count > 0;
+        getFlag = i => flagSlots[i].Table.GetValue(flagSlots[i].Slot);
+        setFlag = (i, v) => flagSlots[i].Table.SetValue(flagSlots[i].Slot, v);
+        getWork = i => unchecked((long)workSlots[i].Table.GetValue(workSlots[i].Slot));
+        setWork = (i, v) => workSlots[i].Table.SetValue(workSlots[i].Slot, unchecked((ulong)v));
+    }
+
+    /// <summary>Atalhos do Z-A (os mesmos botoes do Treinador do PKHeX): Colorful Screws e TMs do mapa.</summary>
+    private static List<GameShortcut> LoadShortcuts9a(SAV9ZA za)
+    {
+        var field = za.Blocks.FieldItems;
+        bool TmMissing() => TechnicalMachine9a.TechnicalMachines
+            .Select(t => field.GetIndex(FnvHash.HashFnv1a_64(t.FieldItem)))
+            .Any(i => i != -1 && !field.GetValue(i));
+        return
+        [
+            new("Pegar todos os Colorful Screws", "Marca como pegos os Colorful Screws que faltam no mapa e põe a quantidade na mochila (até 100).",
+                () => ColorfulScrew9a.GetScrewLocations(za, false).Any(), () => ColorfulScrew9a.CollectScrews(za)),
+            new("Pegar as TMs do mapa", "Marca como pegas as TMs espalhadas pelo mapa e põe cada uma na mochila.",
+                TmMissing, () => TechnicalMachine9a.SetAllTechnicalMachines(za, true)),
         ];
     }
 

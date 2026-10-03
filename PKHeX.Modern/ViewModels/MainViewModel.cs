@@ -79,7 +79,17 @@ public sealed class MainViewModel : ViewModelBase
             p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
         Batch = new BatchPageViewModel(GetBatchTargets, () => _sav, ApplyBatchAsync);
         Game = new GamePageViewModel((t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true, icon: "🎮"), s => Status = s);
-        AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager, Game, Search, Batch];
+        var bag = new BagPageViewModel(s => Status = s);
+        AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), bag, Encounters, Gifts, SaveManager, Game, Search, Batch];
+        // Atalhos da pagina Jogo podem dar itens (Member Card, Colorful Screws...) e liberar a Pokedex Nacional
+        Game.BeforeShortcut = ApplyPendingPages;
+        Game.AfterShortcut = () =>
+        {
+            if (_sav is null)
+                return;
+            bag.Load(_sav);
+            Pokedex.Load(_sav);
+        };
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
         Boxes.SlotsLoaded = () => { ApplySearchHighlight(); ApplyMarks(); };

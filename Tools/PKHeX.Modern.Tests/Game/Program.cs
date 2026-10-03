@@ -34,9 +34,9 @@ SaveFile Reopen(string file)
     return sav;
 }
 
-// Gen 1: sem página Jogo
+// Gen 1: página Jogo com flags e atalhos (o teste GameEvents cobre o resto)
 vm.Open(Path.Combine(work, "red.sav")); Pump();
-Check("[red] Gen 1 não mostra a página Jogo", !vm.Pages.Contains(vm.Game));
+Check("[red] Gen 1 mostra a página Jogo", vm.Pages.Contains(vm.Game) && vm.Game.HasEvents && vm.Game.HasShortcuts, vm.Game.Summary);
 
 foreach (var (file, records) in new[] { ("cr.sav", false), ("fr.sav", true), ("hg.sav", false), ("bw.sav", true), ("y.sav", true), ("moon.sav", true) })
 {

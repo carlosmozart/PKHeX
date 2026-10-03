@@ -22,6 +22,11 @@ public sealed class GamePageViewModel : PageViewModel
     private List<ShortcutRowViewModel> _shortcuts = [];
 
     /// <param name="confirm">Pergunta (titulo, mensagem, botao) antes de mudar varias flags.</param>
+    /// <summary>Antes de um atalho: grava o que a mochila tem pendente na tela.</summary>
+    public Action? BeforeShortcut { get; set; }
+    /// <summary>Depois de um atalho: rele as paginas que o atalho pode ter mudado (mochila, Pokedex).</summary>
+    public Action? AfterShortcut { get; set; }
+
     public GamePageViewModel(Func<string, string, string, Task<bool>> confirm, Action<string> status)
     {
         _confirm = confirm;
@@ -44,11 +49,12 @@ public sealed class GamePageViewModel : PageViewModel
         _records = [.. e.Records.Select(r => new RecordRowViewModel(r, e, Changed))];
         _shortcuts = [.. e.Shortcuts.Select(s => new ShortcutRowViewModel(s, () => _ = RunShortcutAsync(s)))];
         ShortcutRows = _shortcuts;
+        FameRows = [.. e.Fame.Select(t => new FameTeamViewModel(t, sav.Context))];
         Categories = ["Todas as categorias", .. e.Flags.Select(GameEditors.CategoryOf).Concat(e.Works.Select(GameEditors.CategoryOf))
             .Where(c => c.Length > 0).Distinct().Order(StringComparer.CurrentCulture)];
         _category = 0;
         _showUnnamed = !e.HasLabels;
-        _tab = e.HasEvents ? 0 : e.WorkCount > 0 ? 1 : 2;
+        _tab = e.HasEvents ? 0 : e.WorkCount > 0 ? 1 : e.HasRecords ? 2 : e.HasShortcuts ? 3 : 4;
         Raise(string.Empty);
         ApplyFilter();
     }
@@ -61,17 +67,20 @@ public sealed class GamePageViewModel : PageViewModel
     public bool HasRecords => _editors?.HasRecords == true;
     public bool HasShortcuts => _editors?.HasShortcuts == true;
     public IReadOnlyList<ShortcutRowViewModel> ShortcutRows { get; private set; } = [];
+    public bool HasFame => _editors?.HasFame == true;
+    public IReadOnlyList<FameTeamViewModel> FameRows { get; private set; } = [];
     public string Summary => _editors is null ? "" : string.Join(" · ", new[]
     {
         HasEvents ? $"{_editors.FlagCount} flags ({_flags.Count(f => f.HasName)} com nome)" : "",
         HasWorks ? $"{_editors.WorkCount} valores ({_works.Count(w => w.HasName)} com nome)" : "",
         HasRecords ? $"{_records.Count} recordes" : "",
         HasShortcuts ? $"{_shortcuts.Count} atalhos" : "",
+        HasFame ? $"{FameRows.Count} {(FameRows.Count == 1 ? "equipe" : "equipes")} no Hall da Fama" : "",
     }.Where(s => s.Length > 0));
     public bool NoLabels => HasEvents && _editors?.HasLabels == false;
 
     private int _tab;
-    /// <summary>0 = flags, 1 = valores, 2 = recordes, 3 = atalhos.</summary>
+    /// <summary>0 = flags, 1 = valores, 2 = recordes, 3 = atalhos, 4 = Hall da Fama.</summary>
     public int Tab
     {
         get => _tab;
@@ -83,6 +92,7 @@ public sealed class GamePageViewModel : PageViewModel
             Raise(nameof(IsWorksTab));
             Raise(nameof(IsRecordsTab));
             Raise(nameof(IsShortcutsTab));
+            Raise(nameof(IsFameTab));
             Raise(nameof(ShowFilters));
             Raise(nameof(ShowCategory));
             ApplyFilter();
@@ -92,9 +102,10 @@ public sealed class GamePageViewModel : PageViewModel
     public bool IsWorksTab => _tab == 1;
     public bool IsRecordsTab => _tab == 2;
     public bool IsShortcutsTab => _tab == 3;
+    public bool IsFameTab => _tab == 4;
     public bool ShowCategory => _tab is 0 or 1;
-    /// <summary>Busca e filtros (a aba de atalhos nao tem).</summary>
-    public bool ShowFilters => _tab != 3;
+    /// <summary>Busca e filtros (atalhos e Hall da Fama nao tem).</summary>
+    public bool ShowFilters => _tab < 3;
 
     // Filtros
     private string _query = "";
@@ -118,7 +129,7 @@ public sealed class GamePageViewModel : PageViewModel
     public string CountText { get; private set; } = "";
     public bool HasNoRows { get; private set; }
 
-    private bool Matches(int index, bool hasName, string name, string category)
+    private bool Matches(int index, bool hasName, string name, string category, string code = "")
     {
         if (!_showUnnamed && !hasName)
             return false;
@@ -129,7 +140,8 @@ public sealed class GamePageViewModel : PageViewModel
             return true;
         if (q.StartsWith('#') && int.TryParse(q[1..], out var n))
             return index == n;
-        return name.Contains(q, StringComparison.OrdinalIgnoreCase) || index.ToString() == q;
+        return name.Contains(q, StringComparison.OrdinalIgnoreCase) || index.ToString() == q
+            || (code.Length > 0 && code.Contains(q, StringComparison.OrdinalIgnoreCase));
     }
 
     private void ApplyFilter()
@@ -138,19 +150,22 @@ public sealed class GamePageViewModel : PageViewModel
         switch (_tab)
         {
             case 0:
-                FlagRows = [.. _flags.Where(f => Matches(f.Index, f.HasName, f.Name, f.Category) && (!_onlySet || f.IsSet))];
+                FlagRows = [.. _flags.Where(f => Matches(f.Index, f.HasName, f.Name, f.Category, f.Code) && (!_onlySet || f.IsSet))];
                 (shown, total) = (FlagRows.Count, _flags.Count);
                 break;
             case 1:
-                WorkRows = [.. _works.Where(w => Matches(w.Index, w.HasName, w.Name, w.Category) && (!_onlySet || w.Value != 0))];
+                WorkRows = [.. _works.Where(w => Matches(w.Index, w.HasName, w.Name, w.Category, w.Code) && (!_onlySet || w.Value != 0))];
                 (shown, total) = (WorkRows.Count, _works.Count);
                 break;
             case 2:
                 RecordRows = [.. _records.Where(r => Matches(r.Id, r.HasName, r.Name, "") && (!_onlySet || r.Value != 0))];
                 (shown, total) = (RecordRows.Count, _records.Count);
                 break;
-            default:
+            case 3:
                 (shown, total) = (_shortcuts.Count, _shortcuts.Count);
+                break;
+            default:
+                (shown, total) = (FameRows.Count, FameRows.Count);
                 break;
         }
         CountText = shown == total ? $"{total} itens" : $"{shown} de {total} itens";
@@ -159,13 +174,14 @@ public sealed class GamePageViewModel : PageViewModel
             Raise(p);
     }
 
-    /// <summary>Atalho de evento (BD/SP): pergunta, aplica e atualiza as flags/valores mostrados.</summary>
+    /// <summary>Atalho de evento: pergunta, aplica e atualiza as flags/valores mostrados.</summary>
     private async Task RunShortcutAsync(GameShortcut s)
     {
         if (!await _confirm(s.Name, s.Description + " As flags e valores do evento são alterados no save; exporte uma cópia antes, se tiver dúvida.", "Aplicar"))
             return;
         try
         {
+            BeforeShortcut?.Invoke();
             s.Apply();
         }
         catch (Exception ex)
@@ -177,6 +193,7 @@ public sealed class GamePageViewModel : PageViewModel
         foreach (var f in _flags) f.Refresh();
         foreach (var w in _works) w.Refresh();
         foreach (var r in _shortcuts) r.Refresh();
+        AfterShortcut?.Invoke();
         _status($"{s.Name}: aplicado. Lembre-se de salvar.");
     }
 
@@ -206,8 +223,10 @@ public sealed class FlagRowViewModel(GameFlag flag, GameEditors editors, Action 
 {
     public int Index => flag.Index;
     public string Number => flag.Code ?? $"#{flag.Index:0000}";
+    public string Code => flag.Code ?? "";
     public bool HasName => flag.Name.Length > 0;
-    public string Name => HasName ? flag.Name : $"Flag {flag.Code ?? flag.Index.ToString()}";
+    // Hash do Z-A (16 digitos) ja aparece na coluna do codigo; nao repete no nome
+    public string Name => HasName ? flag.Name : flag.Code is { Length: > 8 } ? "Sem nome conhecido" : $"Flag {flag.Code ?? flag.Index.ToString()}";
     public string Category => GameEditors.CategoryOf(flag);
     public void Refresh() => Raise(nameof(IsSet));
     public bool IsSet
@@ -240,8 +259,9 @@ public sealed class WorkRowViewModel : ViewModelBase
 
     public int Index => _work.Index;
     public string Number => _work.Code ?? $"#{_work.Index:000}";
+    public string Code => _work.Code ?? "";
     public bool HasName => _work.Name.Length > 0;
-    public string Name => HasName ? _work.Name : $"Valor {_work.Index}";
+    public string Name => HasName ? _work.Name : _work.Code is { Length: > 8 } ? "Sem nome conhecido" : $"Valor {_work.Code ?? _work.Index.ToString()}";
     public string Category => GameEditors.CategoryOf(_work);
     public decimal Min => _work.Min;
     public decimal Max => _work.Max;
@@ -277,7 +297,7 @@ public sealed class WorkRowViewModel : ViewModelBase
     }
 }
 
-/// <summary>Atalho de evento na pagina Jogo (BD/SP): nome, explicacao e se ainda da para usar.</summary>
+/// <summary>Atalho de evento na pagina Jogo: nome, explicacao e se ainda da para usar.</summary>
 public sealed class ShortcutRowViewModel(GameShortcut shortcut, Action run) : ViewModelBase
 {
     public string Name => shortcut.Name;
@@ -287,6 +307,37 @@ public sealed class ShortcutRowViewModel(GameShortcut shortcut, Action run) : Vi
     public string State => IsReady ? "" : "Nada a fazer agora";
     public RelayCommand ApplyCommand { get; } = new(run);
     public void Refresh() { Raise(nameof(IsReady)); Raise(nameof(State)); }
+}
+
+/// <summary>Equipe do Hall da Fama na pagina Jogo.</summary>
+public sealed class FameTeamViewModel(FameTeam team, EntityContext context)
+{
+    public string Title => team.Title;
+    public string Date => team.Date;
+    public bool HasDate => team.Date.Length > 0;
+    public IReadOnlyList<FameMemberViewModel> Members { get; } = [.. team.Members.Select(m => new FameMemberViewModel(m, context))];
+}
+
+public sealed class FameMemberViewModel(FameMember member, EntityContext context)
+{
+    private Avalonia.Media.Imaging.Bitmap? _sprite;
+    private bool _loaded;
+    public Avalonia.Media.Imaging.Bitmap? Sprite
+    {
+        get
+        {
+            if (!_loaded)
+            {
+                _loaded = true;
+                _sprite = SpriteService.GetSpeciesSprite(member.Species, member.Shiny, member.Form, member.Gender, context);
+            }
+            return _sprite;
+        }
+    }
+    public string Name => member.Nickname;
+    public string Level => member.Level > 0 ? $"Nv. {member.Level}" : "";
+    public bool Shiny => member.Shiny;
+    public string Tip => (member.Species < GameInfo.Strings.Species.Count ? GameInfo.Strings.Species[member.Species] : "") + (member.Shiny ? " ★" : "");
 }
 
 public sealed record WorkOption(string Name, ushort Value)

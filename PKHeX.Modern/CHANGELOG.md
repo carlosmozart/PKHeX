@@ -6,6 +6,14 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.5 — 2026-10-03
+
+### 🎮 Editores por jogo
+- **Eventos do Gen 1, Let's Go e Z-A** na página Jogo. Gen 1: as 2560 flags e 256 valores, com nome nas flags dos Pokémon fixos do mapa. Let's Go: as 4096 flags e 1000 valores, com os nomes da lista do PKHeX (Snorlax, aves lendárias...) e o tipo no código (Z zona, S sistema, V objeto do mapa, E evento). Z-A: as tabelas de eventos, sistema, itens do mapa, missões, tarefas da Mable e títulos; o jogo guarda só o hash de cada evento, então os itens do mapa (Colorful Screws e TMs) são os únicos com nome. A busca agora também encontra pelo código.
+- **Novos atalhos**: Pokémon fixos do mapa de novo no Gen 1 (Mewtwo, Articuno, Zapdos, Moltres, Voltorbs da Power Plant, Eevee, fósseis, presentes do Yellow...), todos os títulos de Mestre Treinador no Let's Go, Colorful Screws e TMs do mapa no Z-A, estojo cheio de Pokéblocks (Ruby/Sapphire/Emerald e Omega Ruby/Alpha Sapphire) e de Poffins (Diamond/Pearl/Platinum e BD/SP), e pontos, Data Cards e medalhas do Pokéathlon (HeartGold/SoulSilver).
+- **Hall da Fama** (nova aba ★, só leitura): as equipes que venceram a Liga com sprite, apelido e nível no Gen 1, Gen 3, X/Y e Omega Ruby/Alpha Sapphire (com a data), e as espécies da primeira equipe e da mais recente no Sun/Moon.
+- Atalhos que dão itens (Member Card do BD/SP, Colorful Screws, TMs) agora atualizam a Mochila e a Pokédex na hora, sem perder o que estava sendo editado na Mochila.
+
 ## 0.4.4 — 2026-10-03
 
 ### 🎮 Editores por jogo
