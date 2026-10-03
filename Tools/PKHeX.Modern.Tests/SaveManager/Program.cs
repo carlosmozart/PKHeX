@@ -83,6 +83,8 @@ var footer = fullWindow.GetVisualDescendants().OfType<Border>().First(b => b.Cla
 bool FooterShows(string text) => footer.GetVisualDescendants().OfType<Button>().Any(b => b.IsEffectivelyVisible && b.Content?.ToString() == text);
 Check("barra inicial oferece Abrir e Atualizar", FooterShows("Abrir save...") && FooterShows("⟳  Atualizar") && !FooterShows("💾  Salvar"));
 main.Open(Path.Combine(library, "black-0.sav")); Pump();
+Check("Início mostra Salvar sem ações de slot", main.CurrentPage == main.Home && FooterShows("💾  Salvar") && !FooterShows("⭳  Importar"));
+main.CurrentPage = main.Boxes; Pump();
 Check("caixas mostram ações e Salvar", FooterShows("⭳  Importar") && FooterShows("💾  Salvar") && !FooterShows("Abrir save..."));
 foreach (var page in main.Pages.ToArray())
 {

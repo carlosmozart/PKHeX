@@ -236,16 +236,20 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
 
     public RelayCommand SaveCommand => new(Save);
 
+    /// <summary>Itens mudados na tela que ainda nao foram gravados no save (Salvar aplica antes de gravar).</summary>
+    public bool HasPendingChanges { get; private set; }
+
     public override void Load(SaveFile sav)
     {
         _sav = sav;
+        HasPendingChanges = false;
         Pouches.Clear();
         try
         {
             _bag = CoreAdapter.GetBag(sav);
             bool editable = CoreAdapter.IsBagItemIdEditable(sav);
             foreach (var p in _bag.Pouches)
-                Pouches.Add(new PouchViewModel(_bag, p, editable, CoreAdapter.GetItemNames(sav), sav.Context, sav.Version));
+                Pouches.Add(new PouchViewModel(_bag, p, editable, CoreAdapter.GetItemNames(sav), sav.Context, sav.Version, OnItemChanged));
         }
         catch (Exception ex)
         {
@@ -255,11 +259,29 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
         Raise(nameof(IsAvailable));
     }
 
+    /// <summary>Mexeu num item: o save passa a ter alteracoes pendentes (antes, o Salvar gravava sem a mochila).</summary>
+    private void OnItemChanged()
+    {
+        HasPendingChanges = true;
+        Changed?.Invoke();
+    }
+
+    /// <summary>Grava no save os itens mudados na tela, se houver (chamado pelo Salvar e ao trocar de aba).</summary>
+    public bool ApplyPending()
+    {
+        if (!HasPendingChanges || _sav is null || _bag is null)
+            return false;
+        CoreAdapter.SaveBag(_sav, _bag);
+        HasPendingChanges = false;
+        return true;
+    }
+
     private void Save()
     {
         if (_sav is null || _bag is null)
             return;
         CoreAdapter.SaveBag(_sav, _bag);
+        HasPendingChanges = false;
         Changed?.Invoke();
         status("Mochila gravada. Lembre-se de exportar o save.");
     }
@@ -268,12 +290,12 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
 public sealed class PouchViewModel : ViewModelBase
 {
     /// <param name="names">Nomes na numeracao do save (Gen 1-3 tem numeracao propria).</param>
-    public PouchViewModel(PlayerBag bag, InventoryPouch pouch, bool editable, IReadOnlyList<string> names, EntityContext context, GameVersion version = GameVersion.Any)
+    public PouchViewModel(PlayerBag bag, InventoryPouch pouch, bool editable, IReadOnlyList<string> names, EntityContext context, GameVersion version = GameVersion.Any, Action? changed = null)
     {
         Name = pouch.Type.ToString();
         Options = [.. pouch.GetAllItems().ToArray().Prepend((ushort)0).Distinct()
             .Select(id => new ItemOption(id, id == 0 ? "(nenhum)" : id < names.Count && names[id].Length > 0 ? names[id] : $"Item #{id}", context, version))];
-        Items = [.. pouch.Items.Select(it => new BagItemViewModel(bag, pouch.Type, it, Options, editable))];
+        Items = [.. pouch.Items.Select(it => new BagItemViewModel(bag, pouch.Type, it, Options, editable, changed))];
     }
 
     public string Name { get; }
@@ -290,7 +312,7 @@ public sealed record ItemOption(int Id, string Name, EntityContext Context = Ent
     public override string ToString() => Name;
 }
 
-public sealed class BagItemViewModel(PlayerBag bag, InventoryType type, InventoryItem item, IReadOnlyList<ItemOption> options, bool editable) : ViewModelBase
+public sealed class BagItemViewModel(PlayerBag bag, InventoryType type, InventoryItem item, IReadOnlyList<ItemOption> options, bool editable, Action? changed = null) : ViewModelBase
 {
     public IReadOnlyList<ItemOption> Options { get; } = options;
     public bool IsEditable { get; } = editable;
@@ -300,11 +322,12 @@ public sealed class BagItemViewModel(PlayerBag bag, InventoryType type, Inventor
         get => Options.FirstOrDefault(o => o.Id == item.Index);
         set
         {
-            if (value is null)
+            if (value is null || value.Id == item.Index)
                 return;
             item.Index = value.Id;
             if (value.Id == 0)
                 item.Count = 0;
+            changed?.Invoke();
             Raise();
             Raise(nameof(Count));
             Raise(nameof(Icon));
@@ -321,7 +344,15 @@ public sealed class BagItemViewModel(PlayerBag bag, InventoryType type, Inventor
     public decimal Count
     {
         get => item.Count;
-        set { item.Count = item.Index == 0 ? 0 : bag.Clamp(type, item.Index, (int)value); Raise(); }
+        set
+        {
+            var count = item.Index == 0 ? 0 : bag.Clamp(type, item.Index, (int)value);
+            if (count == item.Count)
+                return;
+            item.Count = count;
+            changed?.Invoke();
+            Raise();
+        }
     }
 }
 

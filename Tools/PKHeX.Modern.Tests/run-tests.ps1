@@ -7,6 +7,8 @@ $root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $saves = Join-Path $root 'saves'
 # nome usado pelo teste -> arquivo em saves/
 $suites = [ordered]@{
+    'SaveFocus' = @{}
+    'Home' = @{}
     'Language' = @{}
     'Friendship' = @{}
     'Feebas' = @{}

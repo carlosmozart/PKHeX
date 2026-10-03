@@ -3,6 +3,8 @@
 Interface alternativa para o [PKHeX](https://github.com/kwsch/PKHeX), feita em **Avalonia + Fluent**, com tema escuro e claro e interface em **português** ou **inglês**.
 Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos originais: as regras de save, legalidade e encontros são as mesmas do PKHeX, e as atualizações do PKHeX oficial entram por merge sem conflitos.
 
+![Início](docs/home.png)
+
 ![Caixas e editor](docs/boxes.png)
 
 | Golpes com busca (verde = aprende) | Banco de encontros |
@@ -20,8 +22,12 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | ![Fitas e memórias](docs/ribbons.png) | ![Evolução por beleza](docs/beauty.png) |
 | **Evolução por felicidade** | **Layout compacto** |
 | ![Evolução por felicidade](docs/friendship.png) | ![Layout compacto](docs/compact.png) |
-| **Interface em inglês (🌐 Idioma)** | |
-| ![Interface em inglês](docs/english.png) | |
+| **Interface em inglês (🌐 Idioma)** | **Tema PSS (X/Y)** |
+| ![Interface em inglês](docs/english.png) | ![Tema PSS](docs/theme_pss.png) |
+| **Tema Pixel (GBA)** | **Tema Pixel no modo claro** |
+| ![Tema Pixel](docs/theme_pixel.png) | ![Tema Pixel claro](docs/theme_pixel_light.png) |
+| **Tema Z-A (Lumiose)** | |
+| ![Tema Z-A](docs/theme_za.png) | |
 
 Capturas da versão **0.3.8**, geradas em modo headless com saves sintéticos.
 
@@ -102,7 +108,8 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 
 **Outros**
 - Treinador (nome, TID/SID, dinheiro, tempo de jogo) e **Mochila com o ícone de cada item**; ao passar o mouse, a descrição em português e onde conseguir o item (dados do AllGenWiki).
-- Tema claro/escuro e **cor de destaque** configurável.
+- **Início** (⌂, Ctrl+0): ao abrir um save, cartão do jogo, a equipe no topo, atalhos grandes para cada página e os saves recentes.
+- **Temas completos** (🎨): Padrão, PSS (X/Y), Pixel (GBA) e Z-A (Lumiose), cada um em claro e escuro, mudando fundo, painéis, cantos, bordas e fonte na hora; mais a **cor de destaque** configurável.
 - **Idioma da interface** (“🌐 Idioma” na barra lateral): Português (Brasil), o padrão, ou English. Vale ao reiniciar; o app oferece reiniciar na hora.
 - Atalhos: Q/E trocam de página, Ctrl+1–9 vão direto, Esc volta, Ctrl+O abre.
 
@@ -150,6 +157,7 @@ Services/UpdateChecker.cs      ← versão do app e releases novas no GitHub
 Services/AutoUpdater.cs        ← baixa, confere e troca o exe (atualização automática)
 Services/ZipSaves.cs           ← saves dentro de .zip ("arquivo.zip|entrada")
 Services/ItemInfo.cs           ← descrição/onde conseguir itens (Assets/item-info.json, do AllGenWiki)
+Theme/AppTheme.cs              ← temas completos (cores, cantos, bordas e fonte)
 Services/Loc.cs                ← idioma da interface (traduz na tela com Assets/lang/en.json)
 Services/AppSettings.cs, CrashLog.cs
         │

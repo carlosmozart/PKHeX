@@ -90,19 +90,35 @@
             </Grid>
           </ToggleButton>
           <CheckBox Content="Abrir último save ao iniciar" FontSize="12" IsChecked="{Binding OpenLastSaveOnStartup}" />
-          <Button Classes="ghost" Content="◐  Alternar tema" Command="{Binding ToggleThemeCommand}" />
-          <Button Classes="ghost" Content="{Binding LanguageText}" ToolTip.Tip="Idioma da interface (vale ao reiniciar). Nomes do jogo continuam em inglês.">
-            <Button.Flyout>
-              <MenuFlyout Placement="TopEdgeAlignedLeft" ItemsSource="{Binding LanguageOptions}">
-                <MenuFlyout.ItemContainerTheme>
-                  <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="vm:LanguageOptionViewModel">
-                    <Setter Property="Header" Value="{Binding Header}" />
-                    <Setter Property="Command" Value="{Binding SelectCommand}" />
-                  </ControlTheme>
-                </MenuFlyout.ItemContainerTheme>
-              </MenuFlyout>
-            </Button.Flyout>
-          </Button>
+          <!-- Aparencia: claro/escuro, tema completo e idioma numa linha -->
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="4">
+            <Button Classes="ghost small" Content="◐" Command="{Binding ToggleThemeCommand}" ToolTip.Tip="Alternar tema claro/escuro" />
+            <Button Grid.Column="1" Classes="ghost small" Content="{Binding ThemeText}" HorizontalAlignment="Stretch" ToolTip.Tip="Tema completo: fundo, painéis, cantos e fonte (vale na hora)">
+              <Button.Flyout>
+                <MenuFlyout Placement="TopEdgeAlignedLeft" ItemsSource="{Binding ThemeOptions}">
+                  <MenuFlyout.ItemContainerTheme>
+                    <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="vm:ThemeOptionViewModel">
+                      <Setter Property="Header" Value="{Binding Header}" />
+                      <Setter Property="ToolTip.Tip" Value="{Binding Tip}" />
+                      <Setter Property="Command" Value="{Binding SelectCommand}" />
+                    </ControlTheme>
+                  </MenuFlyout.ItemContainerTheme>
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+            <Button Grid.Column="2" Classes="ghost small" Content="{Binding LanguageShort}" ToolTip.Tip="Idioma da interface (vale ao reiniciar). Nomes do jogo continuam em inglês.">
+              <Button.Flyout>
+                <MenuFlyout Placement="TopEdgeAlignedLeft" ItemsSource="{Binding LanguageOptions}">
+                  <MenuFlyout.ItemContainerTheme>
+                    <ControlTheme TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}" x:DataType="vm:LanguageOptionViewModel">
+                      <Setter Property="Header" Value="{Binding Header}" />
+                      <Setter Property="Command" Value="{Binding SelectCommand}" />
+                    </ControlTheme>
+                  </MenuFlyout.ItemContainerTheme>
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
+          </Grid>
           <ItemsControl ItemsSource="{Binding AccentOptions}" Margin="8,4,0,4" ClipToBounds="False">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
@@ -117,8 +133,8 @@
           </ItemsControl>
         </StackPanel>
 
-        <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding HasSave}" Classes="muted" FontSize="11" Margin="4,0,0,12"
-                   TextWrapping="Wrap" Text="Ctrl+F buscar · Q / E trocar página&#10;Esc voltar · Del excluir&#10;Ctrl+clique seleciona vários&#10;Ctrl+Z desfazer · Ctrl+Y refazer&#10;Ctrl+O abrir · Ctrl+S salvar" />
+        <TextBlock DockPanel.Dock="Bottom" IsVisible="{Binding HasSave}" Classes="muted" FontSize="11" Margin="4,0,0,10"
+                   Text="⌨  Atalhos do teclado" ToolTip.Tip="Ctrl+F buscar · Q / E trocar página&#10;Esc voltar · Del excluir&#10;Ctrl+clique seleciona vários&#10;Ctrl+Z desfazer · Ctrl+Y refazer&#10;Ctrl+O abrir · Ctrl+S salvar" />
 
         <!-- Busca global (Ctrl+F) -->
         <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,10" IsVisible="{Binding HasSave}">
@@ -150,6 +166,14 @@
           </ScrollViewer>
         </StackPanel>
 
+        <Button DockPanel.Dock="Top" Classes="navHome" Classes.selected="{Binding IsHomeActive}" IsVisible="{Binding HasSave}"
+                Command="{Binding GoHomeCommand}" ToolTip.Tip="Tela inicial do save: equipe, atalhos e saves recentes (Ctrl+0)">
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+            <TextBlock Text="⌂" Width="20" TextAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="Início" />
+            <TextBlock Grid.Column="2" Text="Ctrl+0" Classes="muted" FontSize="10" VerticalAlignment="Center" />
+          </Grid>
+        </Button>
         <ListBox Classes="nav" IsVisible="{Binding HasSave}" ItemsSource="{Binding Pages}"
                  SelectedItem="{Binding CurrentPage}" Background="Transparent">
           <ListBox.ItemTemplate>

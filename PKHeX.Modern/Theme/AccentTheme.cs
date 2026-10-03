@@ -28,6 +28,7 @@ public static class AccentTheme
         new("purple", "Roxo", Color.Parse("#8E6CEF"), Color.Parse("#6D4AD8")),
         new("green", "Verde", Color.Parse("#3DBE6B"), Color.Parse("#2F8A42")),
         new("orange", "Laranja", Color.Parse("#F59E3B"), Color.Parse("#D97706")),
+        new("lime", "Lima (Z-A)", Color.Parse("#B8E62E"), Color.Parse("#5E8A00")),
     ];
 
     public static AccentPreset Default => Presets[0];
@@ -40,8 +41,9 @@ public static class AccentTheme
         if (Application.Current is not { } app)
             return;
         _opacity ??= ReadOpacities(app);
-        Fill(GetThemeDictionary(app, ThemeVariant.Dark), preset.Dark, Color.Parse("#20242C"), 0.22);
-        Fill(GetThemeDictionary(app, ThemeVariant.Light), preset.Light, Colors.White, 0.12);
+        // O fundo suave do destaque mistura a cor com o cartao do tema atual.
+        Fill(GetThemeDictionary(app, ThemeVariant.Dark), preset.Dark, Color.Parse(AppTheme.Current.Dark.Card), 0.22);
+        Fill(GetThemeDictionary(app, ThemeVariant.Light), preset.Light, Color.Parse(AppTheme.Current.Light.Card), 0.12);
     }
 
     /// <summary>
@@ -113,7 +115,7 @@ public static class AccentTheme
         return result;
     }
 
-    private static ResourceDictionary GetThemeDictionary(Application app, ThemeVariant variant)
+    internal static ResourceDictionary GetThemeDictionary(Application app, ThemeVariant variant)
     {
         if (app.Resources.ThemeDictionaries.TryGetValue(variant, out var existing) && existing is ResourceDictionary rd)
             return rd;

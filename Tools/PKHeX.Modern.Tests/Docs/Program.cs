@@ -52,7 +52,7 @@ var win = new MainWindow { DataContext = vm, Width = 1500, Height = 1100 }; win.
 void Pump() { for (int i = 0; i < 4; i++) { Dispatcher.UIThread.RunJobs(); AvaloniaHeadlessPlatform.ForceRenderTimerTick(); } }
 void Wait(Task task) { for (int i = 0; i < 6000 && !task.IsCompleted; i++) { Pump(); System.Threading.Thread.Sleep(5); } if (!task.IsCompleted) throw new TimeoutException(); task.GetAwaiter().GetResult(); Pump(); }
 void Shot(string name) { Pump(); win.CaptureRenderedFrame()!.Save(Path.Combine(output, name + ".png")); Console.WriteLine(name); }
-vm.Open(black); Wait(vm.SelectSlotAsync(vm.Boxes.Slots[0])); Shot("boxes"); Shot("friendship");
+vm.Open(black); Shot("home"); vm.CurrentPage = vm.Boxes; Wait(vm.SelectSlotAsync(vm.Boxes.Slots[0])); Shot("boxes"); Shot("friendship");
 vm.Editor!.SelectedTab = 2; Shot("moves");
 vm.Editor.SelectedTab = 6; Shot("ribbons");
 vm.Editor.SelectedTab = 3; Shot("legalmode");
@@ -70,6 +70,14 @@ var bd = BlankSaveFile.Get(GameVersion.BD); bd.OT = "Demo"; CoreAdapter.Activate
 var feebas = Make(bd, 349); ((IContestStats)feebas).ContestBeauty = 0; ((IContestStats)feebas).ContestSheen = 0; // o botao mostra "Beauty sobe de 0 para 170"
 bd.SetBoxSlotAtIndex(feebas, 0, 0); var bdPath = Path.Combine(library, "Feebas.sav"); File.WriteAllBytes(bdPath, bd.Write().ToArray());
 vm.Open(bdPath); Wait(vm.SelectSlotAsync(vm.Boxes.Slots[0])); vm.Editor!.SelectedTab = 0; Shot("beauty");
+// Temas completos: o Inicio em cada tema (e o Pixel tambem no claro), depois volta ao Padrao.
+Wait(vm.OpenAsync(black)); vm.CurrentPage = vm.Home; // a aba do Black (com equipe)
+foreach (var key in new[] { "pss", "pixel", "za" })
+{
+    vm.ThemeOptions.First(o => o.Preset.Key == key).SelectCommand.Execute(null); Shot("theme_" + key);
+    if (key == "pixel") { Avalonia.Application.Current!.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light; Shot("theme_pixel_light"); Avalonia.Application.Current.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark; }
+}
+vm.ThemeOptions.First(o => o.Preset.Key == "default").SelectCommand.Execute(null);
 // Interface em ingles: a traducao so e instalada na partida, entao vai por ultimo, numa janela nova.
 Loc.Load(Loc.English); Loc.Hook();
 var vmEn = new MainViewModel(new AppSettings { SavesFolder = library, CheckForUpdates = false, UiLanguage = Loc.English });

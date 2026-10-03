@@ -29,6 +29,7 @@ public sealed class App : Application
             Services.Loc.Load(settings.UiLanguage);
             Services.Loc.Hook();
             RequestedThemeVariant = settings.DarkTheme ? ThemeVariant.Dark : ThemeVariant.Light;
+            Theme.AppTheme.Apply(Theme.AppTheme.Find(settings.ThemeKey));
             Theme.AccentTheme.Apply(Theme.AccentTheme.Find(settings.AccentColor));
             var vm = new MainViewModel(settings);
             Services.CrashLog.Install(msg => vm.Status = msg);

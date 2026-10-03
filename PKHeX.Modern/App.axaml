@@ -116,6 +116,96 @@
   </DataTemplate>
 
   <!-- Pagina Bank: duas telas lado a lado (bank local | save aberto). Arraste entre elas para guardar ou trazer Pokemon. -->
+  <!-- Inicio: cartao do jogo, equipe no topo, atalhos grandes e saves recentes -->
+  <DataTemplate DataType="vm:HomePageViewModel">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="18" MaxWidth="1100">
+        <Border Classes="card">
+          <Grid ColumnDefinitions="Auto,*" ColumnSpacing="18">
+            <Border Classes="gameBadge" Width="72" Height="72" CornerRadius="{DynamicResource Radius16}" Background="{Binding Art.Background}">
+              <Image Source="{Binding Art.Sprite}" Margin="4" />
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+              <TextBlock Text="{Binding GameName}" FontSize="24" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Trainer}" Classes="muted" FontSize="13" />
+              <TextBlock Text="{Binding Facts}" Classes="muted" FontSize="13" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <StackPanel Spacing="8" IsVisible="{Binding HasParty}">
+          <TextBlock Text="EQUIPE" Classes="section" Margin="0" />
+          <ItemsControl ItemsSource="{Binding Party}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><UniformGrid Columns="6" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:HomePartyViewModel">
+                <Button Classes="homeParty" Command="{Binding OpenCommand}" ToolTip.Tip="Abrir na página Equipe">
+                  <StackPanel Spacing="2" HorizontalAlignment="Center">
+                    <Panel>
+                      <Image Source="{Binding Sprite}" Width="72" Height="72" />
+                      <TextBlock Text="★" Classes="shiny" HorizontalAlignment="Right" VerticalAlignment="Top" IsVisible="{Binding IsShiny}" />
+                    </Panel>
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Level}" Classes="muted" FontSize="11" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <StackPanel Spacing="8">
+          <TextBlock Text="ATALHOS" Classes="section" Margin="0" />
+          <ItemsControl ItemsSource="{Binding Tiles}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:HomeTileViewModel">
+                <Button Classes="homeTile" Command="{Binding Command}">
+                  <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                    <TextBlock Text="{Binding Icon}" FontSize="28" VerticalAlignment="Center" Width="36" TextAlignment="Center" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                      <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding Shortcut}" Classes="muted" FontSize="10" VerticalAlignment="Top" />
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <StackPanel Spacing="8" IsVisible="{Binding HasRecent}">
+          <TextBlock Text="SAVES RECENTES" Classes="section" Margin="0" />
+          <ItemsControl ItemsSource="{Binding Recent}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:HomeRecentViewModel">
+                <Button Classes="homeRecent" Command="{Binding OpenCommand}" ToolTip.Tip="Abrir numa aba nova">
+                  <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <Border Classes="gameBadge" Width="40" Height="40" CornerRadius="{DynamicResource Radius8}" Background="{Binding Art.Background}">
+                      <Image Source="{Binding Art.Sprite}" Margin="2" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                      <TextBlock Text="{Binding Game}" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding Detail}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+  </DataTemplate>
+
   <DataTemplate DataType="vm:BankPageViewModel">
     <UserControl>
     <Grid ColumnDefinitions="*,16,*">

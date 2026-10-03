@@ -145,6 +145,7 @@ public sealed partial class MainWindow : Window
                 case Key.S when vm.HasSave: OnQuickSave(this, e); e.Handled = true; return;
                 case Key.E when vm.HasSave: OnExport(this, e); e.Handled = true; return;
                 case Key.A when vm.HasSave && !IsTyping(): vm.MarkAll(); e.Handled = true; return;
+                case Key.D0 or Key.NumPad0: vm.GoToPage(-1); e.Handled = true; return;
                 case >= Key.D1 and <= Key.D9: vm.GoToPage(e.Key - Key.D1); e.Handled = true; return;
                 case >= Key.NumPad1 and <= Key.NumPad9: vm.GoToPage(e.Key - Key.NumPad1); e.Handled = true; return;
             }

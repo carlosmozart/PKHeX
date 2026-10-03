@@ -33,13 +33,13 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 **Novas ideias (revisão do TidalHeX em 03/10/2026)**, ainda não feitas:
 - [x] **Atalhos de shiny no editor** (como no PKHeX): Alt+clique na ★ deixa shiny mantendo o PID (muda o SID, então Pokémon com PID/IV ligados continuam legais); Shift+clique = shiny quadrado; Ctrl+clique = shiny estrela.
 - [x] **Seletor de forma com sprite** de cada forma; formas de gênero (Meowstic, Indeedee...) acompanham o gênero; aviso de que o Deoxys da Gen 3 tem a forma definida pelo jogo.
-- [ ] **Temas completos** além da cor de destaque (fundo, painéis e tipografia): por exemplo um tema "PSS" (X/Y), um "Pixel" (GBA) e um "Z-A".
+- [x] **Temas completos** além da cor de destaque (fundo, painéis e tipografia): por exemplo um tema "PSS" (X/Y), um "Pixel" (GBA) e um "Z-A".
 - [x] **Save Manager**: data de início da aventura quando disponível, selo de idioma, navegação por teclado (setas + Enter), aviso de quantos arquivos foram ignorados e opção de esconder o SID.
 - [ ] **Selo duplo para saves de par** (Ruby/Sapphire), junto da identificação de versão dos saves antigos.
 - [ ] **Versão e idioma de saves da Gen 1-3 pelo nome** do arquivo, do zip ou da pasta (`red`/`blue`, `rouge`, `rot`, `azul`, `aka`...), como o PKHeX faz; esses saves não guardam qual jogo do par são.
 - [x] **Layout das caixas**: renomear caixas e trocar o papel de parede.
 - [x] **Notas da versão antes de atualizar**: mostrar o que mudou na janela de atualização, com "Atualizar agora".
-- [ ] **Tela inicial (home)** com a equipe no topo, atalhos grandes (Caixas, Encontros, Eventos, Mochila...) e os saves recentes.
+- [x] **Tela inicial (home)** com a equipe no topo, atalhos grandes (Caixas, Encontros, Eventos, Mochila...) e os saves recentes.
 - [x] **Soltar arquivo de Mystery Gift** (`.wc*`, `.pgf`, `.pcd`) num slot para gerar o Pokémon direto nele.
 - [x] **Barra inferior contextual**: cada tela mostra as próprias ações e atalhos.
 

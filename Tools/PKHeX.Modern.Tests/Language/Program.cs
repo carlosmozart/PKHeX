@@ -64,7 +64,7 @@ void Scan(string page)
     }
 }
 Pump(); Scan("Save Manager");
-vm.Open(path); Pump();
+vm.Open(path); Pump(); Scan("Início");
 foreach (var page in vm.Pages)
 {
     vm.CurrentPage = page; Scan(page.Title);

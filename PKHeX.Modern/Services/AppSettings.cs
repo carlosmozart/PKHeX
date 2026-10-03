@@ -8,10 +8,14 @@ namespace PKHeX.Modern.Services;
 public sealed class AppSettings
 {
     public string? LastSavePath { get; set; }
+    /// <summary>Saves abertos por ultimo (mais recente primeiro), para o Inicio.</summary>
+    public System.Collections.Generic.List<string> RecentSaves { get; set; } = [];
     public bool OpenLastSaveOnStartup { get; set; }
     public bool DarkTheme { get; set; } = true;
     /// <summary>Cor de destaque (chave de Theme.AccentTheme.Presets: red, cyan, blue...).</summary>
     public string? AccentColor { get; set; }
+    /// <summary>Tema completo (chave de Theme.AppTheme.Presets: default, pss, pixel, za).</summary>
+    public string? ThemeKey { get; set; }
     /// <summary>Pasta do Save Manager (null = pasta "saves" ao lado do exe).</summary>
     public string? SavesFolder { get; set; }
     public bool HideSaveSID { get; set; }

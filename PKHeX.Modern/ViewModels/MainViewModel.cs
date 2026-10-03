@@ -24,6 +24,8 @@ public sealed class MainViewModel : ViewModelBase
         var accent = Theme.AccentTheme.Find(Settings.AccentColor);
         AccentOptions = [.. Theme.AccentTheme.Presets.Select(p => new AccentOptionViewModel(p) { IsSelected = p == accent })];
         SetAccentCommand = new RelayCommand(p => { if (p is AccentOptionViewModel o) SetAccent(o.Preset); });
+        var theme = Theme.AppTheme.Find(Settings.ThemeKey);
+        ThemeOptions = [.. Theme.AppTheme.Presets.Select(t => new ThemeOptionViewModel(t, t == theme, new RelayCommand(() => SetTheme(t))))];
         LanguageOptions = [.. Loc.Languages.Select(l => new LanguageOptionViewModel(l.Code, l.Name, l.Code == (Settings.UiLanguage ?? Loc.Portuguese),
             new RelayCommand(() => _ = SetLanguageAsync(l.Code, l.Name))))];
         ToggleThemeCommand = new RelayCommand(() =>
@@ -63,6 +65,9 @@ public sealed class MainViewModel : ViewModelBase
             icon: "⬆");
         OpenHelpCommand = new RelayCommand(OpenHelp);
         CloseHelpCommand = new RelayCommand(() => IsHelpOpen = false);
+        Home = new HomePageViewModel(page => CurrentPage = page,
+            i => { CurrentPage = Party; if (i < Party.Slots.Count) _ = SelectSlotAsync(Party.Slots[i]); },
+            p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
         AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
@@ -140,6 +145,11 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>F1 / botao "Ajuda e novidades".</summary>
     public void OpenHelp() => IsHelpOpen = true;
     public PartyPageViewModel Party { get; }
+    /// <summary>Tela inicial do save aberto (Ctrl+0); fica fora da lista numerada da barra lateral.</summary>
+    public HomePageViewModel Home { get; }
+    public RelayCommand GoHomeCommand => _goHome ??= new RelayCommand(() => { if (HasSave) CurrentPage = Home; });
+    private RelayCommand? _goHome;
+    public bool IsHomeActive => CurrentPage == Home && !IsHelpOpen;
     private IReadOnlyList<PageViewModel> AllPages { get; }
     public IReadOnlyList<PageViewModel> Pages
     {
@@ -156,6 +166,11 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Vai para a pagina de indice <paramref name="index"/> (Ctrl+1..9).</summary>
     public void GoToPage(int index)
     {
+        if (index < 0)
+        {
+            GoHomeCommand.Execute(null); // Ctrl+0
+            return;
+        }
         var pages = Pages;
         if (HasSave && (uint)index < (uint)pages.Count)
             CurrentPage = pages[index];
@@ -211,8 +226,11 @@ public sealed class MainViewModel : ViewModelBase
             if (!Set(ref _currentPage, value))
                 return;
             Raise(nameof(ShowEditorPanel));
+            Raise(nameof(IsHomeActive));
             RaiseActionBar();
-            if (value == SaveManager)
+            if (value == Home)
+                Home.Refresh(); // a equipe e os numeros podem ter mudado
+            else if (value == SaveManager)
                 _ = SaveManager.RefreshAsync();
             else if (value == Gifts)
                 _ = Gifts.EnsureLoadedAsync();
@@ -226,8 +244,26 @@ public sealed class MainViewModel : ViewModelBase
     // Cor de destaque
     public IReadOnlyList<AccentOptionViewModel> AccentOptions { get; }
 
+    /// <summary>Temas completos (menu "🎨 Tema" da barra lateral).</summary>
+    public IReadOnlyList<ThemeOptionViewModel> ThemeOptions { get; }
+    public string ThemeText => "🎨  " + Loc.T(Theme.AppTheme.Current.ShortName);
+
+    /// <summary>Troca o tema na hora; a cor de destaque passa a ser a sugerida pelo tema (da para trocar depois).</summary>
+    private void SetTheme(Theme.AppThemePreset theme)
+    {
+        Theme.AppTheme.Apply(theme);
+        foreach (var t in ThemeOptions)
+            t.IsSelected = t.Preset == theme;
+        Settings.ThemeKey = theme.Key;
+        SetAccent(Theme.AccentTheme.Find(theme.AccentKey)); // tambem salva as preferencias
+        Raise(nameof(ThemeText));
+        Status = $"Tema {theme.Name} aplicado.";
+    }
+
     /// <summary>Idiomas da interface (menu "🌐 Idioma" da barra lateral).</summary>
     public IReadOnlyList<LanguageOptionViewModel> LanguageOptions { get; }
+    /// <summary>Botao compacto da barra lateral: "🌐 PT" / "🌐 EN".</summary>
+    public string LanguageShort => "🌐 " + ((Settings.UiLanguage ?? Loc.Portuguese) == Loc.English ? "EN" : "PT");
     public string LanguageText => "🌐  " + Loc.T("Idioma") + ": " + (LanguageOptions.FirstOrDefault(l => l.IsSelected)?.Code == Loc.English ? "English" : "Português");
     /// <summary>Reiniciar o app (definido pela janela; o mesmo fluxo do Reiniciar da atualizacao).</summary>
     public Func<Task>? RestartAppRequested { get; set; }
@@ -242,6 +278,7 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var l in LanguageOptions)
             l.IsSelected = l.Code == code;
         Raise(nameof(LanguageText));
+        Raise(nameof(LanguageShort));
         // A pergunta aparece nos dois idiomas: a tela atual ainda esta no idioma antigo.
         var restart = code == Loc.English
             ? await ConfirmAsync("Restart to switch to English?", "The interface language changes when the app restarts. Game names (species, moves, items) stay in English.\n\nA interface muda de idioma ao reiniciar o app.", "Restart now", cancelText: "Later", icon: "🌐")
@@ -344,7 +381,7 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
-    public bool ShowEditorPanel => HasSave && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage is not (BagPageViewModel or TrainerPageViewModel) && !IsHelpOpen;
+    public bool ShowEditorPanel => HasSave && CurrentPage != Home && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage is not (BagPageViewModel or TrainerPageViewModel) && !IsHelpOpen;
     public bool ShowSlotActions => HasSave && !IsHelpOpen && (CurrentPage == Boxes || CurrentPage == Party);
     public bool ShowSaveActions => HasSave && !IsHelpOpen;
     public bool ShowSaveManagerActions => !IsHelpOpen && (!HasSave || CurrentPage == SaveManager);
@@ -690,6 +727,7 @@ public sealed class MainViewModel : ViewModelBase
     {
         if (_activeTab is not { } tab)
             return;
+        ApplyPendingPages(); // a mochila desta aba seria relida ao voltar e perderia o que nao foi aplicado
         tab.HistoryAtSave = _historyAtSave;
         tab.IsDirty = IsDirty;
         tab.CurrentBox = Boxes.CurrentBox;
@@ -717,7 +755,8 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var page in AllPages)
             page.Load(tab.Sav);
         Boxes.CurrentBox = tab.CurrentBox;
-        CurrentPage = tab.LastPage ?? Boxes;
+        Home.Load(tab.Sav);
+        CurrentPage = tab.LastPage ?? Home; // save recem-aberto cai no Inicio
         foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
             Raise(p);
         IsHelpOpen = false;
@@ -798,6 +837,10 @@ public sealed class MainViewModel : ViewModelBase
         ActivateTab(tab);
         Status = $"Aberto: {ZipSaves.DisplayName(path)}" + zipNote;
         Settings.LastSavePath = ZipSaves.IsZipPath(path, out var zip, out var entry) ? ZipSaves.Combine(System.IO.Path.GetFullPath(zip), entry) : System.IO.Path.GetFullPath(path);
+        Settings.RecentSaves.RemoveAll(p => string.Equals(p, Settings.LastSavePath, StringComparison.OrdinalIgnoreCase));
+        Settings.RecentSaves.Insert(0, Settings.LastSavePath);
+        if (Settings.RecentSaves.Count > 12)
+            Settings.RecentSaves.RemoveRange(12, Settings.RecentSaves.Count - 12);
         Settings.Save();
         Raise(nameof(HasLastSave));
         Raise(nameof(LastSaveName));
@@ -821,6 +864,7 @@ public sealed class MainViewModel : ViewModelBase
                 }
                 editor.ApplyCommand.Execute(null);
             }
+            ApplyPendingPages(); // mochila mudada na tela e ainda nao aplicada
             var backup = SaveBackup.BeforeOverwrite(ZipSaves.FileOf(path)); // copia o arquivo antigo (ou o zip) antes de sobrescrever
             CoreAdapter.ExportSave(_sav, path);
             IsDirty = false;
@@ -837,6 +881,13 @@ public sealed class MainViewModel : ViewModelBase
             CrashLog.Write(ex);
             return false;
         }
+    }
+
+    /// <summary>Grava no save o que as paginas guardam so na tela (hoje, a mochila).</summary>
+    private void ApplyPendingPages()
+    {
+        foreach (var bag in AllPages.OfType<BagPageViewModel>())
+            bag.ApplyPending();
     }
 
     /// <summary>Arquivo de onde o save ativo foi aberto (ou "zip|entrada"), se ainda existir.</summary>
@@ -1984,6 +2035,16 @@ public sealed class SearchHitViewModel(StoredEntity entity, string reason, strin
 }
 
 /// <summary>Bolinha de cor na barra lateral.</summary>
+public sealed class ThemeOptionViewModel(Theme.AppThemePreset preset, bool selected, RelayCommand select) : ViewModelBase
+{
+    public Theme.AppThemePreset Preset { get; } = preset;
+    private bool _isSelected = selected;
+    public bool IsSelected { get => _isSelected; set { if (Set(ref _isSelected, value)) Raise(nameof(Header)); } }
+    public string Header => (IsSelected ? "✓  " : "     ") + Loc.T(Preset.Name);
+    public string Tip => Loc.T(Preset.Description);
+    public RelayCommand SelectCommand { get; } = select;
+}
+
 public sealed class LanguageOptionViewModel(string code, string name, bool selected, RelayCommand select) : ViewModelBase
 {
     public string Code { get; } = code;

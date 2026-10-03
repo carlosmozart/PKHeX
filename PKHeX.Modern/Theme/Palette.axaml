@@ -56,4 +56,14 @@
   </ResourceDictionary.ThemeDictionaries>
   <CornerRadius x:Key="CardRadius">12</CornerRadius>
   <CornerRadius x:Key="SlotRadius">8</CornerRadius>
+  <!-- Raios usados pelos estilos; cada tema (Theme/AppTheme.cs) multiplica pela sua escala. -->
+  <CornerRadius x:Key="Radius3">3</CornerRadius>
+  <CornerRadius x:Key="Radius4">4</CornerRadius>
+  <CornerRadius x:Key="Radius6">6</CornerRadius>
+  <CornerRadius x:Key="Radius8">8</CornerRadius>
+  <CornerRadius x:Key="Radius10">10</CornerRadius>
+  <CornerRadius x:Key="Radius12">12</CornerRadius>
+  <CornerRadius x:Key="Radius16">16</CornerRadius>
+  <Thickness x:Key="CardBorderThickness">1</Thickness>
+  <FontFamily x:Key="AppFontFamily">fonts:Inter#Inter, $Default</FontFamily>
 </ResourceDictionary>

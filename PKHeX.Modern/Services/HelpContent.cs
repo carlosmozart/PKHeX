@@ -18,6 +18,7 @@ public static class HelpContent
         [
             new("Abrir um save", "Clique em “Abrir save...”, arraste o arquivo para a janela ou passe o caminho pela linha de comando. “↺ Último” reabre o save anterior; marque “Abrir último save ao iniciar” para fazer isso sozinho.", "Ctrl+O"),
             new("Vários saves em abas", "Cada save aberto vira uma aba no topo, com o selo do jogo e ● quando tem alterações não exportadas. Trocar de aba não perde nada: cada save guarda as alterações, o desfazer/refazer, a caixa e a página. Abrir um save que já está numa aba só troca para ela. “＋” vai para o Save Manager; ✕ fecha a aba (pergunta se houver alterações).", "Ctrl+Tab / Ctrl+W"),
+            new("Tela inicial", "Ao abrir um save, o app mostra o Início (⌂ na barra lateral, Ctrl+0): o cartão do jogo com treinador, tempo de jogo, dinheiro e Pokédex; a equipe no topo (clique abre na página Equipe); um atalho grande para cada página, com um resumo; e os saves recentes, que abrem numa aba nova.", "Ctrl+0"),
             new("Save Manager", "Tela inicial e página Saves: lista os saves da pasta escolhida (subpastas como gba, ds, 3ds e switch viram grupos), com treinador, TID/SID, tempo de jogo, dinheiro, capturados e equipe. Busca por jogo, treinador ou arquivo e filtro por geração. Duplo clique abre.", "Ctrl+9"),
             new("Detalhes e teclado no Save Manager", "Os cartões mostram o idioma identificado pelo PKHeX e o início da aventura quando o jogo guarda uma data disponível. Clique num cartão ou use Tab para dar foco; as setas navegam entre cartões e Enter abre o selecionado. “Esconder SID” oculta esse dado e mantém a preferência nas próximas aberturas. O resumo informa arquivos que não foram reconhecidos como saves, inclusive em pastas sem saves válidos."),
             new("Saves dentro de .zip", "Backups do JKSV (ou qualquer .zip com saves) na pasta de saves aparecem no Save Manager com o selo ZIP, um cartão por save lá dentro. Também dá para abrir um .zip direto. Ao salvar, o app oferece gravar de volta dentro do zip (o zip inteiro ganha um backup antes) ou salvar como arquivo separado."),
@@ -30,7 +31,7 @@ public static class HelpContent
         [
             new("Barra inferior contextual", "Os botões da barra inferior acompanham a página: ações de Pokémon em Caixas/Equipe; Abrir e Atualizar em Saves; Usar encontro/evento nos bancos; Atualizar anexados no Bank; Atualizar e Sincronizar na Pokédex; Aplicar mochila nos itens. Salvar permanece disponível nas páginas do save aberto. Ajuda mostra Voltar; os atalhos existentes continuam funcionando."),
             new("Importar Mystery Gift", "Solte um arquivo de evento (.wc*, .pgf, .pcd e outros formatos do PKHeX) num slot da caixa ou da equipe do save ativo, ou use Importar. O Pokémon é gerado para o save, com confirmação antes de substituir e Ctrl+Z para desfazer. Um presente de itens não pode gerar Pokémon no slot."),
-            new("Salvar uma edição pendente", "Salvar, Ctrl+S e Salvar como também aplicam a edição pendente do Pokémon antes de gravar. Se o modo legal impedir Aplicar, o salvamento é bloqueado e mostra o motivo: corrija ou descarte a edição. Falhas de gravação mostram uma janela e mantêm as alterações na memória."),
+            new("Salvar uma edição pendente", "Salvar, Ctrl+S e Salvar como também aplicam a edição pendente do Pokémon e os itens mudados na Mochila antes de gravar. Se o modo legal impedir Aplicar, o salvamento é bloqueado e mostra o motivo: corrija ou descarte a edição. Falhas de gravação mostram uma janela e mantêm as alterações na memória."),
             new("Nome e papel de parede", "Na página Caixas, use “✎ Renomear” para mudar o nome da caixa atual e a lista ao lado para escolher o papel de parede. O limite de caracteres e as opções dependem do jogo; jogos sem suporte escondem os controles. As alterações ficam na aba do save e são gravadas com Salvar. O fundo aparece discretamente atrás dos cartões."),
             new("Cartões", "Cada slot mostra sprite, nome, nível, gênero, bola, ★ shiny e ✓/⚠ de legalidade. Passe o mouse para ver o resumo (set, encontro, PID e o primeiro problema de legalidade). As caixas ficam em abas no topo.", "Ctrl+1 / Ctrl+2"),
             new("Arrastar e soltar", "Arraste para mover (num slot ocupado, troca). Com Ctrl ou Shift copia; com Alt sobrescreve o destino e deixa a origem vazia."),
@@ -103,15 +104,15 @@ public static class HelpContent
         ]),
         new("⌨️", "Atalhos",
         [
-            new("Páginas", "Ctrl+1 a Ctrl+9 vão para cada página; Q e E passam para a anterior/seguinte.", "Ctrl+1–9 · Q/E"),
+            new("Páginas", "Ctrl+0 vai para o Início; Ctrl+1 a Ctrl+9 vão para cada página; Q e E passam para a anterior/seguinte.", "Ctrl+0–9 · Q/E"),
             new("Ajuda", "Abre esta página; Esc ou “‹ Voltar” fecha.", "F1"),
             new("Voltar", "Esc desmarca a seleção, fecha o editor ou volta para Caixas.", "Esc"),
             new("Perguntas", "Enter confirma e Esc cancela.", "Enter / Esc"),
         ]),
         new("⚙️", "Preferências",
         [
-            new("Tema e cor", "“◐ Alternar tema” troca claro/escuro; as bolinhas mudam a cor de destaque. “🌐 Idioma” troca entre português e inglês (vale ao reiniciar)."),
-            new("Idioma da interface", "Em “🌐 Idioma”, na barra lateral, escolha Português (Brasil) ou English. A preferência fica salva e o app oferece reiniciar para aplicar. Nomes do jogo (espécies, golpes, itens) e os textos de legalidade do PKHeX continuam em inglês nos dois idiomas."),
+            new("Temas e cor", "Na linha de baixo da barra lateral: ◐ troca claro/escuro; 🎨 escolhe o tema completo (Padrão, PSS de X/Y, Pixel de GBA ou Z-A de Lumiose), que muda fundo, painéis, cantos, bordas e fonte na hora e aplica a cor de destaque sugerida pelo tema; as bolinhas trocam a cor de destaque; 🌐 troca o idioma (vale ao reiniciar)."),
+            new("Idioma da interface", "No botão “🌐” (PT/EN) da barra lateral, escolha Português (Brasil) ou English. A preferência fica salva e o app oferece reiniciar para aplicar. Nomes do jogo (espécies, golpes, itens) e os textos de legalidade do PKHeX continuam em inglês nos dois idiomas."),
             new("Atualização automática", "Ao abrir, o app verifica se saiu uma versão nova no GitHub. Se saiu, mostra as notas da versão: “Atualizar agora” baixa e instala conferindo o arquivo; “Depois” mantém o aviso para atualizar mais tarde. A oferta automática pode ser desligada em Ajuda › Sobre. A versão nova vale ao clicar em “🔄 Reiniciar” ou na próxima abertura; antes de reiniciar, o app pergunta se houver alterações não salvas e reabre o save. Rodando pelo código, a janela oferece abrir o download no navegador."),
             new("Arquivos do app", "Preferências, backups e bank ficam em %APPDATA%\\PKHeX.Modern. Se algo der errado, os detalhes ficam em crash.log."),
         ]),

@@ -6,9 +6,18 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.3.9 — 2026-10-03
+
+### ⌂ Início
+- **Tela inicial do save**: ao abrir um save, o app mostra o Início (⌂ na barra lateral, **Ctrl+0**), com o cartão do jogo (treinador, tempo de jogo, dinheiro e Pokédex), a **equipe no topo**, um **atalho grande** para cada página com um resumo e os **saves recentes**, que abrem numa aba nova.
+
+### 🎨 Temas
+- **Temas completos**: além da cor de destaque, o botão 🎨 troca fundo, painéis, cantos, bordas e fonte na hora. Quatro temas, cada um em claro e escuro: **Padrão**, **PSS** (X/Y, azul e bem arredondado), **Pixel** (GBA, cantos retos, bordas grossas e fonte de terminal) e **Z-A** (Lumiose, preto e lima). Cada tema aplica a cor de destaque sugerida (nova cor: Lima).
+- Barra lateral mais compacta: claro/escuro, tema e idioma numa linha só, e as dicas de atalho num “⌨ Atalhos do teclado” (passe o mouse).
 
 ### Correções
+- **Salvar às vezes não gravava**: com o mouse parado sobre o 💾 Salvar, a dica do botão abria por cima dele (no canto da janela não havia espaço embaixo) e o clique caía na dica. As dicas da barra de baixo agora abrem acima dos botões e nenhuma dica captura clique.
+- **Mochila no Salvar**: itens mudados na Mochila sem clicar em “Aplicar mochila” ficavam de fora do save e nem marcavam alterações. Agora contam como alteração pendente e o Salvar (ou trocar de aba) aplica antes de gravar.
 - O botão “🌐 Idioma” não fica mais cortado na barra lateral, e a dica do Feebas explica o que o botão de evoluir faz.
 
 ## 0.3.8 — 2026-10-03

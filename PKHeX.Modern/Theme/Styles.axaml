@@ -1,10 +1,15 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+  <!-- Fonte do tema (Theme/AppTheme.cs): herdada por todos os textos da janela. -->
+  <Style Selector="Window">
+    <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+  </Style>
+
   <Style Selector="Border.card">
     <Setter Property="Background" Value="{DynamicResource CardBackground}" />
     <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="{DynamicResource CardBorderThickness}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
     <Setter Property="Padding" Value="16" />
   </Style>
@@ -25,7 +30,7 @@
 
   <!-- Botoes -->
   <Style Selector="Button">
-    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius8}" />
     <Setter Property="Padding" Value="14,7" />
   </Style>
   <Style Selector="Button.accent /template/ ContentPresenter">
@@ -130,7 +135,7 @@
     <Setter Property="Background" Value="{DynamicResource CardBackground}" />
     <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
   </Style>
   <Style Selector="Button.dexCard.owned /template/ ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource TintGoodForeground}" />
@@ -169,7 +174,7 @@
     <Setter Property="Background" Value="{DynamicResource CardBackground}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius12}" />
     <Setter Property="Padding" Value="14,8" />
     <Setter Property="Margin" Value="0,0,0,-12" />
     <Setter Property="BoxShadow" Value="0 6 24 0 #50000000" />
@@ -281,7 +286,7 @@
   </Style>
   <Style Selector="Border.dialogDetails">
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
-    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius8}" />
     <Setter Property="Padding" Value="12,8" />
   </Style>
   <Style Selector="TextBlock.good">
@@ -309,7 +314,7 @@
   <Style Selector="ProgressBar.pp">
     <Setter Property="Height" Value="6" />
     <Setter Property="MinHeight" Value="6" />
-    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius3}" />
     <Setter Property="Foreground" Value="#4FA3F7" />
     <Setter Property="MinWidth" Value="0" />
   </Style>
@@ -328,13 +333,13 @@
     <Setter Property="MinWidth" Value="0" />
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
     <Setter Property="BorderThickness" Value="2" />
     <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
   <Style Selector="Button.accentDot /template/ ContentPresenter">
     <Setter Property="Background" Value="{Binding $parent[Button].Background}" />
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
   </Style>
   <Style Selector="Button.accentDot.selected /template/ ContentPresenter, Button.accentDot:pointerover /template/ ContentPresenter">
     <Setter Property="BorderBrush" Value="{DynamicResource TextMuted}" />
@@ -350,7 +355,7 @@
   <Style Selector="Border.moveOption">
     <Setter Property="Padding" Value="8,4" />
     <Setter Property="Margin" Value="-8,-4" />
-    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius4}" />
   </Style>
   <Style Selector="Border.moveOption.learnable">
     <Setter Property="Background" Value="#2E46A758" />
@@ -391,7 +396,7 @@
   </Style>
 
   <Style Selector="TextBox, ComboBox, NumericUpDown">
-    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius8}" />
   </Style>
   <Style Selector="NumericUpDown">
     <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -404,7 +409,7 @@
 
   <!-- Navegacao lateral -->
   <Style Selector="ListBox.nav ListBoxItem">
-    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius8}" />
     <Setter Property="Padding" Value="12,9" />
     <Setter Property="Margin" Value="0,2" />
   </Style>
@@ -418,7 +423,7 @@
 
   <!-- Abas em pilula (bolsos da mochila) -->
   <Style Selector="ListBox.tabs ListBoxItem">
-    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius16}" />
     <Setter Property="Padding" Value="14,6" />
     <Setter Property="Margin" Value="0,0,6,6" />
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
@@ -455,7 +460,7 @@
 
   <!-- Selo do jogo: Pokemon da capa sobre o degrade da versao -->
   <Style Selector="Border.gameBadge">
-    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius12}" />
     <Setter Property="ClipToBounds" Value="True" />
     <Setter Property="Padding" Value="6" />
     <Setter Property="BoxShadow" Value="0 2 6 0 #40000000" />
@@ -507,14 +512,14 @@
 
   <!-- Modo legal: aviso acima do Aplicar quando o Pokemon esta ilegal -->
   <Style Selector="Border.legalBlock">
-    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius8}" />
     <Setter Property="Padding" Value="10,8" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="{DynamicResource Bad}" />
     <Setter Property="Background" Value="#22E5484D" />
   </Style>
   <Style Selector="Border.chip">
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
     <Setter Property="Padding" Value="9,2" />
   </Style>
   <Style Selector="Border.chip > TextBlock">
@@ -540,7 +545,7 @@
   <Style Selector="ProgressBar.base">
     <Setter Property="MinHeight" Value="6" />
     <Setter Property="Height" Value="6" />
-    <Setter Property="CornerRadius" Value="3" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius3}" />
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
   </Style>
   <Style Selector="Slider.stat">
@@ -563,7 +568,7 @@
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="Padding" Value="10,8" />
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
   <Style Selector="ToggleButton.legalCard /template/ ContentPresenter">
@@ -603,7 +608,7 @@
   <Style Selector="Border.variantsPanel">
     <Setter Property="Margin" Value="0,10,0,0" />
     <Setter Property="Padding" Value="10" />
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
     <Setter Property="Background" Value="{DynamicResource TintInfoBackground}" />
     <Setter Property="BorderBrush" Value="{DynamicResource TintInfoForeground}" />
     <Setter Property="BorderThickness" Value="1" />
@@ -611,7 +616,7 @@
   <Style Selector="Border.variantRow">
     <Setter Property="Padding" Value="6,4" />
     <Setter Property="Margin" Value="0,2" />
-    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius8}" />
     <Setter Property="Background" Value="{DynamicResource CardBackground}" />
   </Style>
   <Style Selector="Border.formatChip">
@@ -628,7 +633,7 @@
   </Style>
   <Style Selector="Button.saveTab">
     <Setter Property="Padding" Value="8,5,4,5" />
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
     <Setter Property="Background" Value="{DynamicResource CardBackground}" />
     <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
     <Setter Property="BorderThickness" Value="1" />
@@ -652,7 +657,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Padding" Value="5,2" />
     <Setter Property="FontSize" Value="11" />
-    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius6}" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
   </Style>
@@ -662,7 +667,7 @@
   </Style>
   <Style Selector="Button.tabNew">
     <Setter Property="Padding" Value="12,6" />
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
     <Setter Property="FontSize" Value="16" />
     <Setter Property="VerticalAlignment" Value="Stretch" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -672,7 +677,7 @@
   <Style Selector="Border.bagItem">
     <Setter Property="Margin" Value="4" />
     <Setter Property="Padding" Value="8,6" />
-    <Setter Property="CornerRadius" Value="10" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
     <Setter Property="Background" Value="{DynamicResource CardBackground}" />
     <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
     <Setter Property="BorderThickness" Value="1" />
@@ -686,7 +691,7 @@
   <Style Selector="Border.bagIcon">
     <Setter Property="Width" Value="40" />
     <Setter Property="Height" Value="40" />
-    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="CornerRadius" Value="{DynamicResource Radius8}" />
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
   </Style>
 
@@ -736,4 +741,53 @@
   <Style Selector="Button.genderToggle:disabled /template/ ContentPresenter">
     <Setter Property="Background" Value="Transparent" />
   </Style>
+
+  <!-- Inicio -->
+  <Style Selector="Button.navHome">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+  <Style Selector="Button.navHome.selected">
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="Button.homeTile, Button.homeRecent, Button.homeParty">
+    <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+    <Setter Property="BorderThickness" Value="{DynamicResource CardBorderThickness}" />
+    <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="Margin" Value="0,0,10,10" />
+  </Style>
+  <Style Selector="Button.homeTile">
+    <Setter Property="Padding" Value="18,16" />
+    <Setter Property="MinHeight" Value="76" />
+  </Style>
+  <Style Selector="Button.homeRecent">
+    <Setter Property="Padding" Value="14,10" />
+  </Style>
+  <Style Selector="Button.homeParty">
+    <Setter Property="Padding" Value="6,10" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.homeTile:pointerover /template/ ContentPresenter, Button.homeRecent:pointerover /template/ ContentPresenter, Button.homeParty:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource SlotHover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+  </Style>
+
+
+  <!-- Dicas nunca capturam clique: no canto da janela, a dica do Salvar abria por cima do proprio botao e o clique
+       caia nela (o save nao era gravado). Na barra de baixo, as dicas abrem acima do botao. -->
+  <Style Selector="ToolTip">
+    <Setter Property="IsHitTestVisible" Value="False" />
+  </Style>
+  <Style Selector="Border.actionBar Button">
+    <Setter Property="ToolTip.Placement" Value="Top" />
+    <Setter Property="ToolTip.VerticalOffset" Value="-10" />
+  </Style>
+
 </Styles>
