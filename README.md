@@ -12,7 +12,7 @@ PKHeX
 >
 > ![PKHeX Modern](PKHeX.Modern/docs/boxes.png)
 >
-> **[⬇ Baixar para Windows](https://github.com/carlosmozart/PKHeX/releases/latest)** · [Funcionalidades](PKHeX.Modern/README.md) · [Roadmap](PKHeX.Modern/ROADMAP.md) · [Como continuar o desenvolvimento](PKHeX.Modern/CONTINUAR.md)
+> **[⬇ Baixar para Windows](https://github.com/carlosmozart/PKHeX/releases/latest)** · [Funcionalidades](PKHeX.Modern/README.md) · [Como continuar o desenvolvimento](PKHeX.Modern/CONTINUAR.md)
 
 Pokémon core series save editor, programmed in [C#](https://en.wikipedia.org/wiki/C_Sharp_%28programming_language%29).
 

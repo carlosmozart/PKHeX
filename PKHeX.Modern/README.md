@@ -1,6 +1,6 @@
 # PKHeX Modern
 
-Interface alternativa para o [PKHeX](https://github.com/kwsch/PKHeX), feita em **Avalonia + Fluent**, com tema escuro e claro e interface em português.
+Interface alternativa para o [PKHeX](https://github.com/kwsch/PKHeX), feita em **Avalonia + Fluent**, com tema escuro e claro e interface em **português** ou **inglês**.
 Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos originais: as regras de save, legalidade e encontros são as mesmas do PKHeX, e as atualizações do PKHeX oficial entram por merge sem conflitos.
 
 ![Caixas e editor](docs/boxes.png)
@@ -82,8 +82,8 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 - **Modo legal** (chave na barra lateral, ligado por padrão): o editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo), desfaz na hora qualquer mudança que deixaria o Pokémon ilegal (explicando o motivo) e só deixa **Aplicar** um Pokémon legal. Habilidade, forma e Tera Type só listam o que é legal; em vez de mexer em local e nível, a aba Encontro oferece **Trocar encontro** (gera de novo a partir de um encontro real escolhido); "Tornar shiny" fica bloqueado em encontros com shiny lock e, nos outros, gera de novo já shiny. Trocar a espécie, a forma ou colar um set Showdown legaliza automaticamente. Pokémon **de fora** (arquivo `.pk*`, bank ou outro save) que chega ilegal ao save aberto ganha a opção **✨ Legalizar** ou **Trazer como está**. Desligado, vale qualquer valor.
 - **Evoluir por troca** (Kadabra, Onix + Metal Coat, Shelmet/Karrablast...), sem precisar de um segundo jogo; da Gen 6 em diante registra o parceiro de troca para o Pokémon continuar legal.
 - A troca pode ser simulada sem o item exigido no jogo; se estiver segurando o item correto, ele é consumido. No modo legal, o resultado é validado antes de substituir a edição.
-- **Evoluir por felicidade**: aumenta automaticamente até o mínimo exigido pelo jogo, simula a subida de nível e oferece dia/noite quando necessário. Respeita Everstone e os requisitos de Sylveon; no modo legal, só aceita a evolução após validar o resultado.
-- **Feebas → Milotic**: opção por Beauty ≥ 170 nos jogos compatíveis, separada da felicidade. BDSP usa Beauty; Z-A usa troca. A troca pode ser simulada sem Prism Scale; se estiver segurando o item, ele é consumido.
+- **Evoluir por felicidade**: o botão cumpre os requisitos do jogo: sobe a felicidade (ou o carinho do Sylveon na Gen 6/7) até o mínimo, tira a Everstone, simula a subida de nível e oferece dia/noite quando necessário. No modo legal, só aceita a evolução após validar o resultado.
+- **Feebas → Milotic**: o botão sobe o Beauty até 170 (com o Sheen ajustado para continuar legal), tira a Everstone e evolui. BDSP usa Beauty; Z-A usa troca. A troca pode ser simulada sem Prism Scale; se estiver segurando o item, ele é consumido.
 - Colar e copiar no formato **Showdown**.
 
 **Bancos**
@@ -101,6 +101,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 **Outros**
 - Treinador (nome, TID/SID, dinheiro, tempo de jogo) e **Mochila com o ícone de cada item**; ao passar o mouse, a descrição em português e onde conseguir o item (dados do AllGenWiki).
 - Tema claro/escuro e **cor de destaque** configurável.
+- **Idioma da interface** (“🌐 Idioma” na barra lateral): Português (Brasil), o padrão, ou English. Vale ao reiniciar; o app oferece reiniciar na hora.
 - Atalhos: Q/E trocam de página, Ctrl+1–9 vão direto, Esc volta, Ctrl+O abre.
 
 ### Conheça também: AllGenWiki
@@ -108,7 +109,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 
 As preferências ficam em `%APPDATA%\PKHeX.Modern\settings.json`. Se algo der errado, os detalhes ficam em `%APPDATA%\PKHeX.Modern\crash.log`.
 
-Os nomes do jogo (espécies, golpes, itens) e os textos de legalidade ficam em inglês, como no PKHeX; só a interface é em português.
+Os nomes do jogo (espécies, golpes, itens) e os textos de legalidade ficam em inglês, como no PKHeX, nos dois idiomas. As notas de versão e as descrições do AllGenWiki existem só em português (em inglês, as descrições ficam ocultas).
 
 ## Rodar a partir do código
 
@@ -147,6 +148,7 @@ Services/UpdateChecker.cs      ← versão do app e releases novas no GitHub
 Services/AutoUpdater.cs        ← baixa, confere e troca o exe (atualização automática)
 Services/ZipSaves.cs           ← saves dentro de .zip ("arquivo.zip|entrada")
 Services/ItemInfo.cs           ← descrição/onde conseguir itens (Assets/item-info.json, do AllGenWiki)
+Services/Loc.cs                ← idioma da interface (traduz na tela com Assets/lang/en.json)
 Services/AppSettings.cs, CrashLog.cs
         │
 ViewModels/                    ← estado e lógica (Pages.cs = páginas da barra lateral)
@@ -165,12 +167,14 @@ dotnet build PKHeX.Modern
 Fora de `PKHeX.Modern/`, `Tools/` e `.github/workflows/modern-build.yml`, o fork altera apenas uma linha no `PKHeX.slnx` e um bloco no `README.md` da raiz.
 Se o build quebrar depois de um merge, o erro estará quase sempre em `Services/`.
 
-## Capturas de tela automáticas
+## Testes e capturas de tela
 
 ```bash
-dotnet run --project Tools/PKHeX.Modern.Render -- "save.sav" "pasta_saida"
+powershell -File Tools/PKHeX.Modern.Tests/run-tests.ps1           # testes de regressão headless (todos)
+powershell -File Tools/PKHeX.Modern.Tests/run-tests.ps1 Language  # só um (ex.: interface em inglês)
+dotnet run -c Release --project Tools/PKHeX.Modern.Tests/Docs -- PKHeX.Modern/docs   # refaz as capturas deste README
 ```
 
-Renderiza a interface sem abrir janela (Avalonia headless), útil para conferir o layout.
+Tudo roda sem abrir janela (Avalonia headless). As capturas usam saves sintéticos; alguns testes usam cópias de saves reais da pasta `saves/` (fora do Git) e são pulados se ela não existir.
 
-Veja também: [ROADMAP.md](ROADMAP.md) (pendências) e [CONTINUAR.md](CONTINUAR.md) (contexto para continuar em outro PC).
+Contexto para continuar o desenvolvimento em outro PC: [CONTINUAR.md](CONTINUAR.md).
