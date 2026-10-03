@@ -43,7 +43,9 @@
           <StackPanel Orientation="Horizontal" Spacing="6">
             <TextBlock Text="{Binding SpeciesName}" Classes="title" />
             <TextBlock Text="{Binding GenderSymbol}" FontSize="18" Classes="muted" VerticalAlignment="Center" />
-            <TextBlock Text="★" Classes="shiny" FontSize="18" IsVisible="{Binding IsShiny}" VerticalAlignment="Center" />
+            <Button x:Name="ShinyStar" Classes="shinyStar" Classes.on="{Binding IsShiny}" Content="{Binding ShinySymbol}"
+                    IsEnabled="{Binding CanToggleShiny}" Click="OnShinyClick" VerticalAlignment="Center"
+                    ToolTip.Tip="{Binding ShinyShortcutsTip}" ToolTip.ShowOnDisabled="True" />
           </StackPanel>
           <ItemsControl ItemsSource="{Binding Types}">
             <ItemsControl.ItemsPanel>
@@ -428,8 +430,9 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <Button Grid.Row="4" Grid.Column="1" Classes="small" Content="★  Tornar shiny" Command="{Binding MakeShinyCommand}"
-                        ToolTip.Tip="{Binding ShinyTip}" ToolTip.ShowOnDisabled="True" />
+                <Button x:Name="ShinyButton" Grid.Row="4" Grid.Column="1" Classes="small" Content="{Binding ShinyActionText}"
+                        IsEnabled="{Binding CanToggleShiny}" Click="OnShinyClick"
+                        ToolTip.Tip="{Binding ShinyShortcutsTip}" ToolTip.ShowOnDisabled="True" />
               </Grid>
             </StackPanel>
           </Border>

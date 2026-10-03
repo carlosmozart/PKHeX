@@ -6,6 +6,11 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### ✏️ Editor
+- **Atalhos de shiny** (como no PKHeX): a estrela ao lado do nome agora é clicável (☆ normal, ★ estrela, ◆ quadrado). **Clique** torna shiny ou tira o shiny; **Alt+clique** deixa shiny mantendo o PID (troca o SID do treinador original, então Pokémon da Gen 3/4 com PID e IVs ligados continuam legais); **Shift+clique** pede shiny quadrado e **Ctrl+clique** shiny estrela (a diferença só existe a partir da Gen 8). O botão "Tornar shiny" da aba Extras aceita os mesmos atalhos e vira "Tirar shiny" quando o Pokémon já é shiny. Com o modo legal, o Legalizar respeita o formato pedido.
+
 ## 0.3.5 — 03/10/2026
 
 ### 💾 Saves

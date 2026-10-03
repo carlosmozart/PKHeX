@@ -224,7 +224,9 @@ public static class EncounterDatabase
             return null;
         }
 
-        var shiny = current.IsShiny ? Shiny.Always : Shiny.Never;
+        var shiny = !current.IsShiny ? Shiny.Never
+            : current.Context.IsSquareShinyDifferentiated ? ShinyExtensions.GetType(current) // quadrado ou estrela
+            : Shiny.Always;
         var gender = current.PersonalInfo.IsDualGender ? (Gender)current.Gender : Gender.Random;
         EncounterCriteria[] attempts =
         [

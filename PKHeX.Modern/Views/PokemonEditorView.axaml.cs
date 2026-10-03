@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using PKHeX.Modern.ViewModels;
@@ -7,7 +8,24 @@ namespace PKHeX.Modern.Views;
 
 public sealed partial class PokemonEditorView : UserControl
 {
-    public PokemonEditorView() => InitializeComponent();
+    public PokemonEditorView()
+    {
+        InitializeComponent();
+        // O Click nao traz as teclas modificadoras: guarda as do momento em que o mouse foi pressionado (os botoes
+        // marcam o PointerPressed como tratado, por isso handledEventsToo).
+        foreach (var b in new[] { ShinyStar, ShinyButton })
+            b.AddHandler(PointerPressedEvent, (_, e) => _shinyMods = e.KeyModifiers, RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    private KeyModifiers _shinyMods;
+
+    /// <summary>Estrela / "Tornar shiny": Alt mantem o PID (troca o SID), Shift = quadrado, Ctrl = estrela.</summary>
+    private void OnShinyClick(object? sender, RoutedEventArgs e)
+    {
+        var mods = _shinyMods;
+        _shinyMods = KeyModifiers.None; // Enter/Espaco depois vale como clique simples
+        VM?.ShinyClick(mods.HasFlag(KeyModifiers.Alt), mods.HasFlag(KeyModifiers.Shift), mods.HasFlag(KeyModifiers.Control));
+    }
 
     private PokemonEditorViewModel? VM => DataContext as PokemonEditorViewModel;
 

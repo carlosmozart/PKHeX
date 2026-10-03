@@ -586,7 +586,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             .Where(t => !filter || t.Value == tera || CoreAdapter.IsLegalWith(_pk, p => CoreAdapter.SetTeraType(p, t.Value)))];
         IsShinyLocked = LegalMode && !_pk.IsShiny && CoreAdapter.IsShinyLocked(_pk);
         CurrentEncounter = CoreAdapter.GetCurrentEncounterLabel(_pk);
-        foreach (var p in (string[])[nameof(IsShinyLocked), nameof(CanMakeShiny), nameof(ShinyTip), nameof(CurrentEncounter), nameof(AbilityTip)])
+        foreach (var p in (string[])[nameof(IsShinyLocked), nameof(CanMakeShiny), nameof(ShinyTip), nameof(CurrentEncounter), nameof(AbilityTip), nameof(ShinySymbol), nameof(CanToggleShiny), nameof(ShinyShortcutsTip), nameof(ShinyActionText)])
             Raise(p);
         MakeShinyCommand.NotifyCanExecuteChanged();
 
@@ -701,6 +701,82 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         : IsShinyLocked ? "Modo legal: este encontro nunca é shiny (shiny lock)."
         : LegalMode ? "Gera de novo a partir do encontro já como shiny, mantendo natureza, nível, item e golpes."
         : "Gera um PID shiny (na Gen 3/4 a natureza pode mudar).";
+
+    /// <summary>Simbolo do shiny no cabecalho: ☆ normal, ★ estrela, ◆ quadrado (o quadrado so existe a partir da Gen 8).</summary>
+    public string ShinySymbol => !_pk.IsShiny ? "☆"
+        : _pk.Context.IsSquareShinyDifferentiated && ShinyExtensions.GetType(_pk) == Shiny.AlwaysSquare ? "◆" : "★";
+    public bool CanToggleShiny => !CoreAdapter.IsEmpty(_pk) && !_pk.IsEgg;
+    public string ShinyActionText => _pk.IsShiny ? "☆  Tirar shiny" : "★  Tornar shiny";
+    public string ShinyShortcutsTip => (_pk.IsShiny ? "Clique: tira o shiny." : "Clique: torna shiny (troca o PID).")
+        + "\nAlt+clique: shiny mantendo o PID (troca o SID do treinador; mantém a ligação PID/IV da Gen 3/4)."
+        + "\nShift+clique: shiny quadrado · Ctrl+clique: shiny estrela (a diferença só aparece a partir da Gen 8)."
+        + (IsShinyLocked && LegalMode ? "\nEste encontro nunca é shiny (shiny lock): no modo legal, não dá." : "");
+
+    /// <summary>
+    /// Clique na estrela (ou em "Tornar shiny") com os atalhos do PKHeX: Alt mantem o PID e troca o SID,
+    /// Shift pede shiny quadrado, Ctrl shiny estrela; sem modificador, alterna (torna shiny ou tira).
+    /// </summary>
+    public void ShinyClick(bool alt, bool shift, bool ctrl)
+    {
+        if (!CanToggleShiny)
+            return;
+        var type = shift ? Shiny.AlwaysSquare : ctrl ? Shiny.AlwaysStar : Shiny.Random;
+        bool wantsShape = shift || ctrl;
+
+        // Ja shiny e sem pedir formato: tira o shiny.
+        if (_pk.IsShiny && !wantsShape && !alt)
+        {
+            if (!LegalMode)
+            {
+                _pk.SetUnshiny();
+                RaiseAll();
+                _status("Não é mais shiny.");
+                return;
+            }
+            var before = _pk.Clone();
+            _guardSuspended = true;
+            _pk.SetUnshiny();
+            _isNew = false;
+            RaiseAll();
+            LegalizeOrRestore(before);
+            return;
+        }
+        if (IsShinyLocked && LegalMode)
+        {
+            _status($"Modo legal: {SpeciesName} vem de um encontro que nunca é shiny (shiny lock).");
+            return;
+        }
+        if (_pk.Format <= 2)
+        {
+            MakeShiny(); // Gen 1/2: o shiny vem dos IVs
+            return;
+        }
+        if (alt)
+        {
+            // Mantem o PID (e a ligacao PID/IV), muda o SID do treinador original.
+            var oldSid = _pk.SID16;
+            _pk.SetShinySID(type);
+            _isNew = false;
+            RaiseAll(); // no modo legal, o guarda desfaz se ficar ilegal
+            if (_pk.IsShiny)
+                _status(LegalityStatus($"Shiny mantendo o PID: o SID do treinador original mudou de {oldSid} para {_pk.SID16}"));
+            return;
+        }
+        if (!LegalMode)
+        {
+            _pk.SetShiny(type);
+            RaiseAll();
+            _status($"Shiny{(type == Shiny.AlwaysSquare ? " quadrado" : type == Shiny.AlwaysStar ? " estrela" : "")} (PID trocado).");
+            return;
+        }
+        // Modo legal: trocar o PID quebra a correlacao PID/IV; o Legalizar refaz pedindo o shiny (e o formato).
+        var prev = _pk.Clone();
+        _guardSuspended = true;
+        _pk.SetShiny(type);
+        _isNew = false;
+        RaiseAll();
+        LegalizeOrRestore(prev);
+    }
 
     private void MakeShiny()
     {

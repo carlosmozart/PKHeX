@@ -25,7 +25,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 - Fora de escopo: modo clássico, plugins do PKHeX (dependem do WinForms). Fundo animado só com opção de reduzir movimento.
 
 **Novas ideias (revisão do TidalHeX em 03/10/2026)**, ainda não feitas:
-- [ ] **Atalhos de shiny no editor** (como no PKHeX): Alt+clique na ★ deixa shiny mantendo o PID (muda o SID, então Pokémon com PID/IV ligados continuam legais); Shift+clique = shiny quadrado; Ctrl+clique = shiny estrela.
+- [x] **Atalhos de shiny no editor** (como no PKHeX): Alt+clique na ★ deixa shiny mantendo o PID (muda o SID, então Pokémon com PID/IV ligados continuam legais); Shift+clique = shiny quadrado; Ctrl+clique = shiny estrela.
 - [ ] **Seletor de forma com sprite** de cada forma; formas de gênero (Meowstic, Indeedee...) acompanham o gênero; aviso de que o Deoxys da Gen 3 tem a forma definida pelo jogo.
 - [ ] **Temas completos** além da cor de destaque (fundo, painéis e tipografia): por exemplo um tema "PSS" (X/Y), um "Pixel" (GBA) e um "Z-A".
 - [ ] **Save Manager mais completo**: data de início da aventura (Gen 4+), selo de idioma, selo duplo para saves de par (Ruby/Sapphire), navegação por teclado (setas + Enter), aviso de quantos arquivos foram ignorados e opção de esconder o SID.
