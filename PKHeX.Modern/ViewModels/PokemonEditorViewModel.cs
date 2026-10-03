@@ -66,8 +66,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         LegalizeCommand = new RelayCommand(() => _ = LegalizeAsync(), () => !IsLegalizing);
         SuggestMovesCommand = new RelayCommand(() => Fix("Golpes sugeridos", pk => CoreAdapter.SuggestMoves(pk)));
         SuggestRelearnCommand = new RelayCommand(() => Fix("Golpes de reaprender", pk => CoreAdapter.SuggestRelearnMoves(pk)));
-        SuggestMetCommand = new RelayCommand(() => Fix("Encontro sugerido", CoreAdapter.SuggestMetData, "nenhum encontro possível para esta espécie neste jogo"));
-        FixIVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.IV = _pk.MaxIV; _status(LegalityStatus("IVs máximos: aplicado")); });
+        SuggestMetCommand = new RelayCommand(() => Fix("Encontro sugerido", pk => _sav is null ? CoreAdapter.SuggestMetData(pk) : EncounterDatabase.SuggestMet(_sav, pk), "nenhum encontro possível para esta espécie neste jogo"));
         _allBalls = CoreAdapter.GetBalls();
         MetLocationList = CoreAdapter.GetMetLocations(_pk);
         Refresh();
@@ -308,6 +307,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         {
             foreach (var s in Stats)
                 s.IV = _pk.MaxIV;
+            _status(LegalityStatus("IVs máximos: aplicado"));
             return;
         }
         var name = SpeciesName;
@@ -429,7 +429,6 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public RelayCommand SuggestRelearnCommand { get; }
     public RelayCommand SuggestMetCommand { get; }
-    public RelayCommand FixIVsCommand { get; }
     /// <summary>Golpes de reaprender so existem a partir da Gen 6.</summary>
     public bool HasRelearnMoves => _pk.Format >= 6;
     public IReadOnlyList<string> LegalityIssues { get; private set; } = [];
@@ -442,8 +441,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     /// <summary>Aplica uma correcao sugerida e informa o resultado na barra de status.</summary>
     private void Fix(string what, Func<PKM, bool?> apply, string? whenNull = null)
     {
+        // Testa numa copia: no modo legal, uma correcao que deixaria o Pokemon ilegal nao e aplicada (e o motivo aparece).
+        var test = _pk.Clone();
         bool? changed;
-        try { changed = apply(_pk); }
+        try { changed = apply(test); }
         catch (Exception ex) { _status($"{what}: erro ({ex.Message})"); return; }
         if (changed is null)
         {
@@ -452,9 +453,16 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
         if (changed == false)
         {
-            _status($"{what}: nada a mudar.");
+            _status($"{what}: nada a mudar{(IsLegal ? "" : " (o problema está em outro ponto; tente ✨ Legalizar)")}.");
             return;
         }
+        if (LegalMode && IsLegal && !new LegalityAnalysis(test).Valid)
+        {
+            var why = CoreAdapter.GetLegalityIssues(test, 1);
+            _status($"Modo legal: {what.ToLowerInvariant()} não aplicado, deixaria o Pokémon ilegal ({(why.Count > 0 ? why[0] : "?")}).");
+            return;
+        }
+        _pk = test;
         _isNew = false;
         RaiseAll();
         _status(LegalityStatus($"{what}: aplicado"));
@@ -580,13 +588,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         var abilityIndex = CoreAdapter.GetAbilityIndex(_pk);
         IReadOnlyList<ComboItem> abilities = [.. CoreAdapter.GetAbilityOptions(_pk)
             .Where(a => !filter || a.Value == abilityIndex || CoreAdapter.IsLegalWith(_pk, p => CoreAdapter.SetAbilityIndex(p, a.Value)))];
-        var forms = _sav is null ? [] : CoreAdapter.GetFormOptions(_pk, _sav.Personal, hideBattleOnly: LegalMode);
+        IReadOnlyList<FormOption> forms = _sav is null ? [] : [.. CoreAdapter.GetFormOptions(_pk, _sav.Personal, hideBattleOnly: LegalMode)
+            .Select(f => new FormOption(f.Text, f.Value, _pk.Species, _pk.IsShiny, _pk.Gender, _pk.Context))];
         var tera = CoreAdapter.GetTeraType(_pk);
         IReadOnlyList<ComboItem> teras = tera < 0 ? [] : [.. CoreAdapter.GetTeraOptions()
             .Where(t => !filter || t.Value == tera || CoreAdapter.IsLegalWith(_pk, p => CoreAdapter.SetTeraType(p, t.Value)))];
         IsShinyLocked = LegalMode && !_pk.IsShiny && CoreAdapter.IsShinyLocked(_pk);
         CurrentEncounter = CoreAdapter.GetCurrentEncounterLabel(_pk);
-        foreach (var p in (string[])[nameof(IsShinyLocked), nameof(CanMakeShiny), nameof(ShinyTip), nameof(CurrentEncounter), nameof(AbilityTip), nameof(ShinySymbol), nameof(CanToggleShiny), nameof(ShinyShortcutsTip), nameof(ShinyActionText)])
+        foreach (var p in (string[])[nameof(IsShinyLocked), nameof(CanMakeShiny), nameof(ShinyTip), nameof(CurrentEncounter), nameof(AbilityTip), nameof(ShinySymbol), nameof(CanToggleShiny), nameof(ShinyShortcutsTip), nameof(ShinyActionText), nameof(CanToggleGender), nameof(GenderTip), nameof(HasFormNote)])
             Raise(p);
         MakeShinyCommand.NotifyCanExecuteChanged();
 
@@ -610,6 +619,18 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             Raise(p);
         RaiseSelections();
         Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ballReselect = false; RaiseSelections(); }, Avalonia.Threading.DispatcherPriority.Background);
+    }
+
+    private static bool SameItems(IReadOnlyList<FormOption> a, IReadOnlyList<FormOption> b)
+    {
+        if (a.Count != b.Count)
+            return false;
+        for (int i = 0; i < a.Count; i++)
+        {
+            if (a[i] != b[i])
+                return false;
+        }
+        return true;
     }
 
     private static bool SameItems(IReadOnlyList<ComboItem> a, IReadOnlyList<ComboItem> b)
@@ -658,12 +679,41 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
     }
 
-    // Forma
-    public IReadOnlyList<ComboItem> FormOptions { get; private set; } = [];
-    public bool HasForms => FormOptions.Count > 1;
-    public ComboItem? SelectedForm
+    // Forma (cada opcao com o sprite da forma)
+    public IReadOnlyList<FormOption> FormOptions { get; private set; } = [];
+    public bool HasForms => FormOptions.Count > 1 && !HasFormNote;
+    /// <summary>Deoxys na Gen 3: a forma nao fica no Pokemon, depende do jogo em que ele esta.</summary>
+    public bool HasFormNote => _pk.Format == 3 && _pk.Species == (ushort)PKHeX.Core.Species.Deoxys;
+    public string FormNote => "Na Gen 3, a forma do Deoxys depende do jogo em que ele está: Normal em Ruby/Sapphire, Ataque no FireRed, Defesa no LeafGreen e Velocidade no Emerald.";
+
+    // Genero (clicavel)
+    /// <summary>Da para trocar o genero: especies com os dois generos (ou cuja forma e o genero), da Gen 3 em diante.</summary>
+    public bool CanToggleGender => !CoreAdapter.IsEmpty(_pk) && !_pk.IsEgg && _pk.Format >= 3
+        && (_pk.PersonalInfo.IsDualGender || (CoreAdapter.IsGenderForm(_pk.Species) && _pk.Format >= 6));
+    public string GenderTip => !CanToggleGender ? "Gênero" :
+        "Clique para trocar o gênero." + (CoreAdapter.IsGenderForm(_pk.Species) ? " A forma muda junto (nesta espécie, a forma é o gênero)." : "")
+        + (_pk.Gen3 || _pk.Gen4 || _pk.Gen5 ? " Até a Gen 5 o gênero vem do PID: um PID novo é gerado (mesma natureza)." : "");
+
+    public void ToggleGender()
     {
-        get => _ballReselect ? null : Find(FormOptions, _pk.Form);
+        if (!CanToggleGender)
+            return;
+        var gender = (byte)(_pk.Gender == 0 ? 1 : 0);
+        var before = _pk.Clone();
+        _guardSuspended = LegalMode;
+        CoreAdapter.SetGender(_pk, gender);
+        _isNew = false;
+        RaiseAll();
+        if (LegalMode)
+            LegalizeOrRestore(before); // PID novo ou outra forma: se ficar ilegal, gera de novo (ou volta)
+        else
+            _guardSuspended = false;
+        _status($"Gênero: {CoreAdapter.GetGenderSymbol(_pk)}" + (CoreAdapter.IsGenderForm(_pk.Species) ? " (forma trocada junto)" : ""));
+    }
+
+    public FormOption? SelectedForm
+    {
+        get => _ballReselect ? null : FormOptions.FirstOrDefault(f => f.Value == _pk.Form);
         set
         {
             if (value is null || _ballReselect || value.Value == _pk.Form)
@@ -1434,6 +1484,13 @@ public sealed class StatViewModel(string name, string color, Func<int> getIV, Ac
 }
 
 /// <summary>Botao "Evoluir por troca" de um destino.</summary>
+/// <summary>Uma forma no seletor, com o sprite dela (mesmo shiny e genero do Pokemon).</summary>
+public sealed record FormOption(string Text, int Value, ushort Species, bool Shiny, byte Gender, EntityContext Context)
+{
+    public Avalonia.Media.Imaging.Bitmap? Sprite => SpriteService.GetSpeciesSprite(Species, Shiny, (byte)Value, Gender, Context);
+    public override string ToString() => Text;
+}
+
 public sealed class ItemEvolutionOption(CoreAdapter.ItemEvolution evo, RelayCommand command)
 {
     public string Label => $"Evoluir para {evo.Name}";

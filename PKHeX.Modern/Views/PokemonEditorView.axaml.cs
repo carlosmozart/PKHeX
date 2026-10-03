@@ -19,6 +19,9 @@ public sealed partial class PokemonEditorView : UserControl
 
     private KeyModifiers _shinyMods;
 
+    /// <summary>Simbolo do genero: troca macho/femea (a forma acompanha nas especies em que a forma e o genero).</summary>
+    private void OnGenderClick(object? sender, RoutedEventArgs e) => VM?.ToggleGender();
+
     /// <summary>Estrela / "Tornar shiny": Alt mantem o PID (troca o SID), Shift = quadrado, Ctrl = estrela.</summary>
     private void OnShinyClick(object? sender, RoutedEventArgs e)
     {

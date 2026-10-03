@@ -158,7 +158,19 @@ public static class EncounterDatabase
     /// <param name="only">Encontro escolhido pelo usuario (modo legal, "Trocar encontro"); null = procura o melhor.</param>
     public static PKM? Legalize(SaveFile sav, PKM current, out string message, CancellationToken token = default, IEncounterInfo? only = null)
     {
+        // Ja legal, so com avisos "Fishy" de valores livres (EVs/EXP): corrige no lugar, mantendo a origem e o PID.
+        if (only is null && new LegalityAnalysis(current).Valid)
+        {
+            var tidy = current.Clone();
+            if (CoreAdapter.TidyFishy(tidy) > 0 && CoreAdapter.CountFishy(tidy) == 0)
+            {
+                message = "avisos corrigidos sem trocar o encontro (EVs ganhos em batalha e EXP a caminho do próximo nível)";
+                return tidy;
+            }
+        }
         var result = LegalizeCore(sav, current, out message, token, only);
+        if (result is not null)
+            CoreAdapter.TidyFishy(result);
         if (result is not null || !current.IsNicknamed)
             return result;
         // O apelido pode ser o problema (ex.: barrado pelo filtro de palavras): tenta de novo com o nome da especie.
@@ -167,8 +179,59 @@ public static class EncounterDatabase
         var retry = LegalizeCore(sav, plain, out var retryMessage, token, only);
         if (retry is null)
             return null;
+        CoreAdapter.TidyFishy(retry);
         message = $"{retryMessage}; o apelido “{current.Nickname}” foi trocado pelo nome da espécie, {retry.Nickname} (não é aceito neste jogo, ex.: filtro de palavras)";
         return retry;
+    }
+
+    /// <summary>
+    /// Encontro sugerido (local e nivel de encontro, e o nivel atual se ficar abaixo): primeiro a sugestao do Core; se
+    /// ela nao existir ou nao deixar legal (ex.: ovo chocado na Gen 3, que nao guarda que veio de ovo), tenta os
+    /// encontros reais do jogo de origem do Pokemon e fica com o primeiro que deixa legal. Null = nenhum encontro possivel.
+    /// </summary>
+    public static bool? SuggestMet(SaveFile sav, PKM pk, CancellationToken token = default)
+    {
+        var core = pk.Clone();
+        var coreResult = CoreAdapter.SuggestMetData(core);
+        if (coreResult == false)
+            return false;
+        if (coreResult == true && new LegalityAnalysis(core).Valid)
+            return CopyMet(core, pk);
+
+        var candidates = SearchEncounters(sav, pk.Species, onlyThisGame: false, token)
+            .Where(e => e.Generation == pk.Generation && (e.Version == pk.Version || e.Version.Contains(pk.Version)))
+            .OrderBy(e => GetPreference(e, pk)).Take(300);
+        foreach (var enc in candidates)
+        {
+            token.ThrowIfCancellationRequested();
+            var test = pk.Clone();
+            if (enc.IsEgg)
+            {
+                test.MetLevel = EncounterSuggestion.GetSuggestedEncounterEggMetLevel(test);
+            }
+            else
+            {
+                test.MetLevel = enc.LevelMin;
+                if (enc is ILocation loc && loc.Location != 0)
+                    test.MetLocation = loc.Location;
+            }
+            if (test.CurrentLevel < test.MetLevel)
+                test.CurrentLevel = test.MetLevel;
+            if (new LegalityAnalysis(test).Valid)
+                return CopyMet(test, pk);
+        }
+        // Nenhum deixou legal: aplica a do Core (se houver), que ao menos corrige local/nivel.
+        return coreResult == true ? CopyMet(core, pk) : null;
+
+        static bool CopyMet(PKM from, PKM to)
+        {
+            bool changed = to.MetLevel != from.MetLevel || to.MetLocation != from.MetLocation || to.CurrentLevel != from.CurrentLevel;
+            to.MetLevel = from.MetLevel;
+            to.MetLocation = from.MetLocation;
+            if (to.CurrentLevel != from.CurrentLevel)
+                to.CurrentLevel = from.CurrentLevel;
+            return changed;
+        }
     }
 
     /// <summary>

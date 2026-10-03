@@ -741,6 +741,29 @@ public static class CoreAdapter
         return list.Count > 1 ? list : [];
     }
 
+    /// <summary>Especies cuja forma e o genero (forma 0 = macho, 1 = femea): Meowstic, Indeedee, Basculegion, Oinkologne.</summary>
+    public static bool IsGenderForm(ushort species) => species is
+        (ushort)PKHeX.Core.Species.Meowstic or (ushort)PKHeX.Core.Species.Indeedee
+        or (ushort)PKHeX.Core.Species.Basculegion or (ushort)PKHeX.Core.Species.Oinkologne;
+
+    /// <summary>
+    /// Troca o genero como o jogo permitiria: nas especies em que a forma e o genero, troca a forma junto; da Gen 3 a
+    /// 5 o genero vem do PID (gera outro PID com a mesma natureza); da Gen 6 em diante e um campo proprio.
+    /// </summary>
+    public static void SetGender(PKM pk, byte gender)
+    {
+        if (IsGenderForm(pk.Species) && pk.Format >= 6)
+        {
+            SetForm(pk, gender); // SetForm ajusta o genero pela forma
+            pk.Gender = gender;
+            return;
+        }
+        if (pk.Gen3 || pk.Gen4 || pk.Gen5)
+            pk.SetPIDGender(gender);
+        pk.Gender = gender;
+        pk.RefreshChecksum();
+    }
+
     /// <summary>Troca a forma mantendo o slot da habilidade e o genero coerente.</summary>
     public static void SetForm(PKM pk, byte form)
     {
@@ -987,6 +1010,82 @@ public static class CoreAdapter
             pk.CurrentLevel = current;
         return true;
     }
+
+    /// <summary>
+    /// Corrige os avisos "Fishy" que dependem so de valores livres, sem mexer no encontro: EVs zerados apesar de ter
+    /// subido de nivel (ganha EVs como em batalhas), EXP exatamente no limiar do nivel, EVs todos iguais e 508 EVs.
+    /// So mantem a mudanca se o Pokemon continuar legal. Retorna os avisos corrigidos (0 = nada mudou).
+    /// </summary>
+    public static int TidyFishy(PKM pk)
+    {
+        if (pk.IsEgg)
+            return 0;
+        var la = new LegalityAnalysis(pk);
+        if (!la.Valid)
+            return 0;
+        var codes = la.Results.Where(r => r.Judgement == Severity.Fishy).Select(r => r.Result).ToHashSet();
+        int fixedCount = 0;
+        Span<int> evs = stackalloc int[6];
+        pk.GetEVs(evs);
+        Span<int> oldEvs = stackalloc int[6];
+        evs.CopyTo(oldEvs);
+        var oldExp = pk.EXP;
+        int cap = pk.Format >= 6 ? 252 : 255;
+
+        if (codes.Contains(LegalityCheckResultCode.EffortEXPIncreased))
+        {
+            // EVs proporcionais aos niveis ganhos, puxados para os atributos que a propria especie da (nunca todos iguais).
+            var gained = Math.Max(1, pk.CurrentLevel - Math.Max(1, (int)pk.MetLevel));
+            var total = Math.Clamp(gained * 4, 8, 300);
+            var y = pk.PersonalInfo is IEffortValueYield ey ? new[] { ey.EV_HP, ey.EV_ATK, ey.EV_DEF, ey.EV_SPE, ey.EV_SPA, ey.EV_SPD } : new int[6];
+            int sum = 0;
+            for (int i = 0; i < 6; i++) { y[i] = y[i] * 3 + 1; sum += y[i]; }
+            for (int i = 0; i < 6; i++)
+                evs[i] = Math.Min(cap, total * y[i] / sum);
+            if (!evs.ContainsAnyExcept(evs[0]))
+                evs[0] = Math.Min(cap, evs[0] + 4);
+            fixedCount++;
+        }
+        else if (codes.Contains(LegalityCheckResultCode.EffortAllEqual))
+        {
+            evs[0] = evs[0] >= 4 ? evs[0] - 4 : evs[0] + 4;
+            fixedCount++;
+        }
+        else if (codes.Contains(LegalityCheckResultCode.Effort2Remaining))
+        {
+            int i = 0;
+            while (i < 6 && evs[i] < 4) i++;
+            if (i < 6) { evs[i] -= 4; fixedCount++; }
+        }
+        pk.SetEVs(evs);
+
+        if (codes.Contains(LegalityCheckResultCode.LevelEXPThreshold) && pk.CurrentLevel < Experience.MaxLevel)
+        {
+            // Um pouco de EXP a caminho do proximo nivel (como depois de algumas batalhas).
+            var growth = pk.PersonalInfo.EXPGrowth;
+            var cur = Experience.GetEXP(pk.CurrentLevel, growth);
+            var next = Experience.GetEXP((byte)(pk.CurrentLevel + 1), growth);
+            pk.EXP = cur + Math.Max(1u, (next - cur) / 3);
+            fixedCount++;
+        }
+        if (fixedCount == 0)
+            return 0;
+        pk.ResetPartyStats();
+        pk.RefreshChecksum();
+        var after = new LegalityAnalysis(pk);
+        if (!after.Valid)
+        {
+            pk.SetEVs(oldEvs);
+            pk.EXP = oldExp;
+            pk.ResetPartyStats();
+            pk.RefreshChecksum();
+            return 0;
+        }
+        return fixedCount;
+    }
+
+    /// <summary>Quantos avisos "Fishy" o Pokemon tem (legal, mas suspeito).</summary>
+    public static int CountFishy(PKM pk) => new LegalityAnalysis(pk).Results.Count(r => r.Judgement == Severity.Fishy);
 
     /// <summary>
     /// Ate <paramref name="max"/> problemas de legalidade em texto curto: primeiro os invalidos, depois os avisos

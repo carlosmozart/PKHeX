@@ -42,7 +42,8 @@
         <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="6">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <TextBlock Text="{Binding SpeciesName}" Classes="title" />
-            <TextBlock Text="{Binding GenderSymbol}" FontSize="18" Classes="muted" VerticalAlignment="Center" />
+            <Button Classes="genderToggle" Content="{Binding GenderSymbol}" Click="OnGenderClick" IsEnabled="{Binding CanToggleGender}"
+                    VerticalAlignment="Center" ToolTip.Tip="{Binding GenderTip}" ToolTip.ShowOnDisabled="True" />
             <Button x:Name="ShinyStar" Classes="shinyStar" Classes.on="{Binding IsShiny}" Content="{Binding ShinySymbol}"
                     IsEnabled="{Binding CanToggleShiny}" Click="OnShinyClick" VerticalAlignment="Center"
                     ToolTip.Tip="{Binding ShinyShortcutsTip}" ToolTip.ShowOnDisabled="True" />
@@ -126,8 +127,30 @@
                           ToolTip.Tip="{Binding AbilityTip}" />
                 <TextBlock Grid.Row="6" Text="Forma" VerticalAlignment="Center" IsVisible="{Binding HasForms}" />
                 <ComboBox Grid.Row="6" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding FormOptions}" IsVisible="{Binding HasForms}"
-                          SelectedItem="{Binding SelectedForm}" ItemTemplate="{StaticResource ComboItemTemplate}"
-                          ToolTip.Tip="Formas que existem neste jogo. No modo legal, trocar a forma gera o Pokémon de novo a partir de um encontro dela." />
+                          SelectedItem="{Binding SelectedForm}" MaxDropDownHeight="420"
+                          ToolTip.Tip="Formas que existem neste jogo. No modo legal, trocar a forma gera o Pokémon de novo a partir de um encontro dela." >
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FormOption">
+                      <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Classes="spriteWell" Width="44" Height="40" Padding="2">
+                          <Image Source="{Binding Sprite}" Stretch="Uniform" />
+                        </Border>
+                        <TextBlock Text="{Binding Text}" VerticalAlignment="Center" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                  <ComboBox.SelectionBoxItemTemplate>
+                    <DataTemplate x:DataType="vm:FormOption">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Image Source="{Binding Sprite}" Width="24" Height="22" Stretch="Uniform" />
+                        <TextBlock Text="{Binding Text}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.SelectionBoxItemTemplate>
+                </ComboBox>
+                <TextBlock Grid.Row="6" Text="Forma" VerticalAlignment="Center" IsVisible="{Binding HasFormNote}" />
+                <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding FormNote}" IsVisible="{Binding HasFormNote}"
+                           Classes="muted" FontSize="12" TextWrapping="Wrap" />
                 <TextBlock Grid.Row="7" Text="Tera Type" VerticalAlignment="Center" IsVisible="{Binding HasTera}" />
                 <ComboBox Grid.Row="7" Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding TeraOptions}" IsVisible="{Binding HasTera}"
                           SelectedItem="{Binding SelectedTera}" ItemTemplate="{StaticResource ComboItemTemplate}"
@@ -197,15 +220,16 @@
               <Button Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Content="✨  Legalizar"
             Command="{Binding LegalizeCommand}" IsVisible="{Binding ShowLegalize}"
             ToolTip.Tip="Gera de novo a partir de um encontro real deste jogo (PID/IV corretos), mantendo natureza, nível, item, apelido e golpes quando possível" />
-    <TextBlock Text="Correções sugeridas" Classes="muted" FontSize="11" Margin="0,4,0,0" />
+              <TextBlock Text="Correções sugeridas" Classes="muted" FontSize="11" Margin="0,4,0,0" />
               <WrapPanel ItemSpacing="6" LineSpacing="6">
-                <Button Classes="small" Content="Golpes sugeridos" Command="{Binding SuggestMovesCommand}"
+                <Button Classes="small info" Content="⚔  Golpes sugeridos" Command="{Binding SuggestMovesCommand}"
                         ToolTip.Tip="Troca os golpes por um conjunto legal (aprendidos por nível)" />
-                <Button Classes="small" Content="Golpes de reaprender" Command="{Binding SuggestRelearnCommand}" IsVisible="{Binding HasRelearnMoves}"
+                <Button Classes="small soft" Content="↺  Golpes de reaprender" Command="{Binding SuggestRelearnCommand}" IsVisible="{Binding HasRelearnMoves}"
                         ToolTip.Tip="Preenche os golpes de reaprender a partir do encontro" />
-                <Button Classes="small" Content="Encontro sugerido" Command="{Binding SuggestMetCommand}"
+                <Button Classes="small warn" Content="📍  Encontro sugerido" Command="{Binding SuggestMetCommand}"
                         ToolTip.Tip="Ajusta local e nível de encontro (e o nível atual, se estiver abaixo do mínimo)" />
-                <Button Classes="small" Content="IVs máximos" Command="{Binding FixIVsCommand}" />
+                <Button Classes="small good" Content="▲  IVs máximos" Command="{Binding MaxIVsCommand}"
+                        ToolTip.Tip="Todos os IVs no máximo. No modo legal, se o encontro não permitir (Gen 3/4 selvagem), oferece converter em nascido de ovo" />
               </WrapPanel>
               <Expander Header="Relatório completo" HorizontalAlignment="Stretch">
                 <SelectableTextBlock Text="{Binding LegalityReport}" TextWrapping="Wrap" FontSize="12" />

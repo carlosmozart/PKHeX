@@ -6,10 +6,20 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.3.6 — 03/10/2026
 
 ### ✏️ Editor
 - **Atalhos de shiny** (como no PKHeX): a estrela ao lado do nome agora é clicável (☆ normal, ★ estrela, ◆ quadrado). **Clique** torna shiny ou tira o shiny; **Alt+clique** deixa shiny mantendo o PID (troca o SID do treinador original, então Pokémon da Gen 3/4 com PID e IVs ligados continuam legais); **Shift+clique** pede shiny quadrado e **Ctrl+clique** shiny estrela (a diferença só existe a partir da Gen 8). O botão "Tornar shiny" da aba Extras aceita os mesmos atalhos e vira "Tirar shiny" quando o Pokémon já é shiny. Com o modo legal, o Legalizar respeita o formato pedido.
+- **Seletor de forma com sprite**: cada forma aparece com o próprio sprite (no mesmo shiny e gênero do Pokémon), na lista e na caixa do campo.
+- **Gênero clicável**: clique no ♂/♀ ao lado do nome para trocar o gênero. Até a Gen 5 o gênero vem do PID, então um PID novo é gerado com a mesma natureza (no modo legal, o Legalizar refaz se precisar). Nas espécies em que a forma é o gênero (Meowstic, Indeedee, Basculegion, Oinkologne), forma e gênero trocam juntos, nos dois sentidos.
+- **Deoxys na Gen 3**: em vez da lista de formas, o editor explica que a forma depende do jogo (Normal em Ruby/Sapphire, Ataque no FireRed, Defesa no LeafGreen, Velocidade no Emerald).
+
+### 🛡️ Legalidade
+- **Legalizar tira os avisos "Fishy"**: um Pokémon legal com avisos de EVs zerados depois de subir de nível ou EXP exatamente no limite do nível (ex.: um Whismur nascido de ovo no Sapphire) agora é corrigido sem trocar o encontro nem o PID: ganha EVs como em batalhas e um pouco de EXP a caminho do próximo nível. Quando o Legalizar precisa gerar de novo, o resultado também sai sem esses avisos.
+- **Correções sugeridas coloridas** (golpes em azul, reaprender em destaque, encontro em âmbar, IVs em verde) e conferidas:
+  - **Encontro sugerido** funciona com Pokémon nascidos de ovo na Gen 3 (antes dizia "nenhum encontro possível"): tenta os encontros reais do jogo de origem e fica com o que deixa legal;
+  - **IVs máximos** usa a mesma lógica do botão da aba Atributos (no modo legal, oferece converter em nascido de ovo);
+  - no modo legal, uma correção que deixaria o Pokémon ilegal não é aplicada e o motivo aparece na barra de status (antes ela era desfeita em silêncio e a mensagem dizia "aplicado").
 
 ## 0.3.5 — 03/10/2026
 

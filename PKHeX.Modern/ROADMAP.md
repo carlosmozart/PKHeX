@@ -26,7 +26,7 @@ Ideias de UX para aproveitar, na ordem combinada. Só ideias: o TidalHeX é WinF
 
 **Novas ideias (revisão do TidalHeX em 03/10/2026)**, ainda não feitas:
 - [x] **Atalhos de shiny no editor** (como no PKHeX): Alt+clique na ★ deixa shiny mantendo o PID (muda o SID, então Pokémon com PID/IV ligados continuam legais); Shift+clique = shiny quadrado; Ctrl+clique = shiny estrela.
-- [ ] **Seletor de forma com sprite** de cada forma; formas de gênero (Meowstic, Indeedee...) acompanham o gênero; aviso de que o Deoxys da Gen 3 tem a forma definida pelo jogo.
+- [x] **Seletor de forma com sprite** de cada forma; formas de gênero (Meowstic, Indeedee...) acompanham o gênero; aviso de que o Deoxys da Gen 3 tem a forma definida pelo jogo.
 - [ ] **Temas completos** além da cor de destaque (fundo, painéis e tipografia): por exemplo um tema "PSS" (X/Y), um "Pixel" (GBA) e um "Z-A".
 - [ ] **Save Manager mais completo**: data de início da aventura (Gen 4+), selo de idioma, selo duplo para saves de par (Ruby/Sapphire), navegação por teclado (setas + Enter), aviso de quantos arquivos foram ignorados e opção de esconder o SID.
 - [ ] **Versão e idioma de saves da Gen 1-3 pelo nome** do arquivo, do zip ou da pasta (`red`/`blue`, `rouge`, `rot`, `azul`, `aka`...), como o PKHeX faz; esses saves não guardam qual jogo do par são.
@@ -81,6 +81,7 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [x] **Backup automático**: antes de salvar por cima de um save, o arquivo anterior vai para `%APPDATA%\PKHeX.Modern\backups` (20 mais recentes por save; botão "Backups" no Save Manager).
 - [x] **Publicação**: perfil `win-x64` (um único `PKHeX.Modern.exe`, sem precisar do .NET) e GitHub Action `.github/workflows/modern-build.yml` (artefato a cada push no `modern-ui`; Release com o zip em tags `modern-v*`).
+- [ ] **Menu de idiomas da interface**: o padrão continua português (PT-BR), com **inglês** como opção (seletor nas configurações, salvo nas preferências). Exige tirar os textos da interface (XAML, mensagens de status, Ajuda, diálogos) para arquivos de recursos (`.resx` ou dicionários por idioma). Nomes do jogo e textos de legalidade continuam em inglês, como hoje.
 - [ ] Instalador de verdade (MSIX ou Inno Setup), ícone próprio e assinatura do exe.
 - [x] **Mochila em colunas**: cartões com ícone, item e quantidade, em linhas virtualizadas (bolsos de 260 slots abrem em ~0,3 s).
 - [ ] **Multiplataforma** (Linux/macOS): trocar o `System.Drawing` dos sprites por um carregador próprio (SkiaSharp), já que o Avalonia roda em todos.
