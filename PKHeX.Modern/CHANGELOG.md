@@ -6,7 +6,7 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.1 — 2026-10-03
 
 ### 🎮 Editores por jogo
 - **Página Jogo** (nova): **flags de evento** da Gen 2 à 7 (itens escondidos já pegos, treinadores vencidos, pontos de voo, história, encontros, presentes...) com os nomes das listas do PKHeX, busca por nome ou número, filtro por categoria e “Ativar/Desativar mostradas” para mudar de uma vez tudo que o filtro mostra (com confirmação).
