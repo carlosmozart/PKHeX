@@ -85,7 +85,9 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [x] **Editor, parte 1**: habilidade em lista, formas, Tera Type, PID/EC editáveis, marcações e Hyper Training.
 - [x] **Editor, parte 2**: fitas (com "todas as legais"), memórias, contest stats, Dynamax/Gigantamax, alpha/nobre.
 - [x] **Banco de dados / pesquisa**: página 🔎 Pesquisa com todos os Pokémon dos saves abertos, da pasta (inclusive zip) e do bank, com filtros e abrir o resultado.
-- [ ] **Batch Editor** e **editores específicos de cada jogo** (eventos, flags, records).
+- [x] **Batch Editor** (0.4.0): página ⚙ Edição em lote com ações rápidas e o script do PKHeX, escopos (caixa, save, equipe, selecionados, resultados da Pesquisa), pré-visualização, modo legal e um passo no Ctrl+Z.
+- [x] **Editores por jogo, etapa 1** (0.4.1): página 🎮 Jogo com flags e valores de evento (Gen 2–7, com nomes) e recordes (Gen 3, 5, 6, 7, SW/SH, BD/SP).
+- [ ] **Editores por jogo, etapa 2**: eventos de Gen 1, Let's Go, BD/SP, Scarlet/Violet e Z-A (cada um tem editor próprio no PKHeX) e editores específicos (Hall da Fama, base secreta, Pokéathlon, Poffins/Pokéblocks...).
 - [x] **Desfazer/refazer** alterações nos slots (ver seção TidalHeX acima).
 - [x] **Backup automático**: antes de salvar por cima de um save, o arquivo anterior vai para `%APPDATA%\PKHeX.Modern\backups` (20 mais recentes por save; botão "Backups" no Save Manager).
 - [x] **Publicação**: perfil `win-x64` (um único `PKHeX.Modern.exe`, sem precisar do .NET) e GitHub Action `.github/workflows/modern-build.yml` (artefato a cada push no `modern-ui`; Release com o zip em tags `modern-v*`).

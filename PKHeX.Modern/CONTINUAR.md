@@ -12,14 +12,18 @@ winget install Microsoft.DotNet.SDK.10
 winget install GitHub.cli          # para releases (gh auth login uma vez)
 dotnet run --project PKHeX.Modern
 ```
+Depois do `winget install`, **abra um terminal novo** (o PATH só vale em terminais abertos depois da instalação; no mesmo terminal, use `"C:\Program Files\dotnet\dotnet.exe"`). Em seguida, `gh auth login` e `git pull origin modern-ui` sempre que trocar de PC.
+
 Depois, copie a pasta `saves/` (saves reais de teste, fora do git) para a raiz do repositório e rode `echo /saves/ >> .git/info/exclude` (ver "Testado com").
 
 ## Testes de regressão
-Ficam em `Tools/PKHeX.Modern.Tests/` (um projeto por tema: `Shiny`, `Forms`, `Yellow`, `Tabs`, `Variants`, `Fixes`, `Layout`, `SaveManager`, `Updates`, `SaveAndGifts`, `Friendship`, `Feebas`, `Language`, `Home`, `SaveFocus`, `NameHint`, `Search`). Rodam headless e usam **cópias** dos saves de `saves/` numa pasta temporária única por execução (os originais nunca mudam); `SaveManager`, `SaveAndGifts`, `Friendship` e `Feebas` geram os próprios saves, e `Updates` usa releases simuladas sem baixar nem instalar:
+Ficam em `Tools/PKHeX.Modern.Tests/` (um projeto por tema: `Shiny`, `Forms`, `Yellow`, `Tabs`, `Variants`, `Fixes`, `Layout`, `SaveManager`, `Updates`, `SaveAndGifts`, `Friendship`, `Feebas`, `Language`, `Home`, `SaveFocus`, `NameHint`, `Search`, `Batch`, `Game`). Rodam headless e usam **cópias** dos saves de `saves/` numa pasta temporária única por execução (os originais nunca mudam); `SaveManager`, `SaveAndGifts`, `Friendship`, `Feebas`, `Search` e `Batch` geram os próprios saves (`Game` usa cópias de Red, Crystal, FireRed, HeartGold, Black, Y e Moon), e `Updates` usa releases simuladas sem baixar nem instalar:
 ```powershell
 powershell -ExecutionPolicy Bypass -File Tools/PKHeX.Modern.Tests/run-tests.ps1            # todos
 powershell -ExecutionPolicy Bypass -File Tools/PKHeX.Modern.Tests/run-tests.ps1 Fixes Tabs # só alguns
 ```
+A suíte completa leva mais de 10 minutos: num assistente de IA, rode em segundo plano. Sem `saves/shield`, `Layout`, `Shiny`, `Forms` e `Fixes` são pulados (não falham).
+
 Cada teste imprime `OK`/`FAIL` por verificação e termina com "TUDO OK"; o script avisa quais falharam (e pula os que não acharem o save). O mapa "nome no teste → arquivo em saves/" fica no topo do `run-tests.ps1`. Ao criar um teste novo, copie um existente (padrão: `MainViewModel` + `MainWindow` headless, `Pump()`/`Wait()` processando a fila, `vm.Dialog.Complete(true)` para responder perguntas, `SaveBackup.Folder` e `BankStorage.Root` na pasta temporária) e adicione-o no mapa.
 
 ## Gerar o executável
