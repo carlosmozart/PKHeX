@@ -14,7 +14,7 @@
     <!-- Versao do PKHeX Modern (a do PKHeX.Core vem do Directory.Build.props). Atualize junto com a tag modern-vX.Y.Z. -->
     <Version>0.4.5</Version>
     <AssemblyName>PKHeX.Modern</AssemblyName>
-    <ApplicationIcon>..\PKHeX.WinForms\Resources\Icon.ico</ApplicationIcon>
+    <ApplicationIcon>..\PKHeX.WinForms\Resources\icon.ico</ApplicationIcon>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
