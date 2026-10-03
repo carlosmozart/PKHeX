@@ -10,7 +10,11 @@ Formato: "## versão — data", "### seção", "- item".
 
 ### 🖥️ Multiplataforma (preparação)
 - Os sprites agora são montados sem depender do Windows: são os mesmos PNGs e a mesma montagem do PKHeX, refeitos com SkiaSharp, e conferidos pixel a pixel contra o original (nada muda na tela).
-- O PKHeX Modern deixou de ser um programa só de Windows: o mesmo código já compila para Linux e macOS. Os pacotes desses sistemas chegam numa próxima versão.
+- O PKHeX Modern deixou de ser um programa só de Windows: o mesmo código já compila para Linux e macOS. A publicação agora gera pacotes autocontidos para Windows x64, Linux x64 e macOS Apple Silicon/Intel.
+
+- Atualização automática escolhe o pacote do sistema e da arquitetura, mantendo o ZIP e o comportamento das versões Windows já instaladas. No Linux restaura a permissão de execução; no macOS troca o app inteiro, incluindo a versão e o ícone.
+- Pacotes macOS em bundle `.app`, com ícone gerado no Mac, sem assinatura Developer ID ou notarização. O README explica a primeira abertura e as dependências do Linux.
+- CI publica os quatro destinos e executa os testes headless no Linux/macOS (ainda informativos); o teste de paridade GDI+ permanece exclusivo do Windows.
 
 ## 0.4.5 — 2026-10-03
 

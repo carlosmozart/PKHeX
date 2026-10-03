@@ -43,7 +43,10 @@ public static class UpdateChecker
     }
 
     /// <summary>Escolhe a maior versao <c>modern-vX.Y.Z</c> da resposta da API de releases.</summary>
-    public static ReleaseInfo? ParseLatest(string json)
+    public static ReleaseInfo? ParseLatest(string json) => ParseLatest(json, AutoUpdater.AssetName);
+
+    /// <summary>Escolhe o asset indicado; separado para testar todas as plataformas sem rede.</summary>
+    public static ReleaseInfo? ParseLatest(string json, string? assetName)
     {
         using var doc = JsonDocument.Parse(json);
         ReleaseInfo? best = null;
@@ -66,7 +69,7 @@ public static class UpdateChecker
             {
                 foreach (var a in assets.EnumerateArray())
                 {
-                    if (a.GetProperty("name").GetString() != AutoUpdater.AssetName)
+                    if (assetName is null || a.GetProperty("name").GetString() != assetName)
                         continue;
                     assetUrl = a.GetProperty("browser_download_url").GetString();
                     assetDigest = a.TryGetProperty("digest", out var dg) && dg.ValueKind == JsonValueKind.String ? dg.GetString() : null;

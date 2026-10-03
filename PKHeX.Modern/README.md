@@ -38,6 +38,54 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 
 > O Windows pode mostrar o aviso do SmartScreen, porque o executável não é assinado. Clique em "Mais informações" e "Executar assim mesmo".
 
+### Linux (x64)
+
+Baixe `PKHeX.Modern-linux-x64.zip`, extraia numa pasta onde seu usuário possa
+escrever e execute `PKHeX.Modern`. Se o extrator não conservar a permissão:
+
+```bash
+chmod +x PKHeX.Modern
+./PKHeX.Modern
+```
+
+O pacote já inclui o .NET. O ambiente gráfico precisa das bibliotecas nativas do
+Avalonia; em Debian/Ubuntu, se faltarem:
+
+```bash
+sudo apt install libx11-6 libice6 libsm6 libfontconfig1
+```
+
+Fedora: `sudo dnf install libX11 libICE libSM fontconfig`. As dependências de sistema
+do .NET, como ICU e OpenSSL, também precisam estar presentes. Use uma distribuição
+compatível com [.NET 10](https://learn.microsoft.com/en-us/dotnet/core/install/linux).
+As bibliotecas gráficas estão descritas na [documentação do Avalonia](https://docs.avaloniaui.net/docs/deployment/linux).
+
+### macOS (Apple Silicon ou Intel)
+
+Baixe `PKHeX.Modern-osx-arm64.zip` para Apple Silicon (M1/M2/M3/M4 e posteriores)
+ou `PKHeX.Modern-osx-x64.zip` para Intel. Extraia e mova **PKHeX Modern.app** para
+Aplicativos ou outra pasta gravável pelo seu usuário. O bundle inclui o .NET;
+o mínimo declarado é **macOS 14**, seguindo os sistemas suportados pelo
+[.NET 10](https://learn.microsoft.com/en-us/dotnet/core/install/macos).
+
+O app não tem assinatura Developer ID nem notarização. Na primeira abertura,
+o macOS pode bloquear: tente botão direito no app › Abrir; se essa opção não
+liberar, tente abrir uma vez e use **Ajustes do Sistema › Privacidade e Segurança ›
+Abrir Mesmo Assim** para autorizar este app. A disponibilidade dessa opção depende
+das políticas do computador. Veja as [instruções da Apple](https://support.apple.com/pt-br/102445).
+
+### Atualizações e pacotes
+
+Os ZIPs mantêm os nomes acima e guardam a permissão Unix de execução. Alguns
+extratores perdem essa informação; o atualizador sempre restaura a permissão.
+A atualização automática funciona nas cópias publicadas em arquivo único:
+Windows x64, Linux x64 e macOS arm64/x64. No Windows o executável anterior vira
+`.old`; no Linux o arquivo novo substitui o atual por rename; no macOS o bundle
+inteiro é trocado para atualizar também Info.plist e ícone, preservando arquivos locais que não fazem parte da release. A cópia antiga fica
+até a próxima abertura. A pasta de instalação precisa ser gravável; caso contrário,
+use o link da release para instalar manualmente. Rodando pelo código, o app oferece
+o download no navegador.
+
 ## Funcionalidades
 
 **Saves**
@@ -104,7 +152,7 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 
 **Ajuda e atualizações**
 - Página **Ajuda** (F1 ou "❔ Ajuda e novidades"): todas as funções explicadas, com busca; **Novidades** com o changelog de cada versão; **Sobre** com a versão instalada.
-- **Atualização automática**: ao abrir, o app verifica se saiu uma versão nova no GitHub e mostra as novidades com “Atualizar agora” e “Depois”. Ao confirmar, baixa o zip da release, confere o SHA-256 informado pelo GitHub e troca o exe (o antigo vira `.old` e é apagado na abertura seguinte). A versão nova vale ao reiniciar pelo botão 🔄 da barra lateral, que pergunta antes se houver alterações não salvas e reabre o save. Dá para desligar em Ajuda › Sobre. Só vale para o `PKHeX.Modern.exe` da release (rodando pelo código, mostra o link).
+- **Atualização automática**: ao abrir, o app verifica se saiu uma versão nova no GitHub e mostra as novidades com “Atualizar agora” e “Depois”. Ao confirmar, baixa o ZIP da plataforma, confere o SHA-256 informado pelo GitHub e troca a instalação (a cópia antiga vira `.old` e é apagada na abertura seguinte). A versão nova vale ao reiniciar pelo botão 🔄 da barra lateral, que pergunta antes se houver alterações não salvas e reabre o save. Dá para desligar em Ajuda › Sobre. Vale para os pacotes publicados de Windows, Linux e macOS (rodando pelo código, mostra o link).
 
 **Outros**
 - Treinador (nome, TID/SID, dinheiro, tempo de jogo) e **Mochila com o ícone de cada item**; ao passar o mouse, a descrição em português e onde conseguir o item (dados do AllGenWiki).
@@ -122,7 +170,7 @@ Os nomes do jogo (espécies, golpes, itens) e os textos de legalidade ficam em i
 
 ## Rodar a partir do código
 
-Requisitos: Windows e [.NET SDK 10](https://dotnet.microsoft.com/download).
+Requisitos: Windows, Linux ou macOS compatível e [.NET SDK 10](https://dotnet.microsoft.com/download).
 
 ```bash
 dotnet run --project PKHeX.Modern
@@ -133,9 +181,16 @@ Gerar o executável único:
 
 ```bash
 dotnet publish PKHeX.Modern -p:PublishProfile=win-x64
+# Outros perfis: linux-x64, osx-arm64, osx-x64
+python Tools/package_modern.py --rid win-x64
 ```
 
-A cada push no branch `modern-ui`, o GitHub Actions gera o executável (aba Actions). Uma tag `modern-v*` também cria a Release.
+O empacotador usa só a biblioteca padrão do Python; no macOS, gera o ícone com
+`sips` e `iconutil` a partir de `icon.png`. Se essas ferramentas faltarem, o bundle
+sai sem ícone. O executável deve aparecer em `PKHeX.Modern/bin/publish/<rid>/` antes
+do empacotamento. O empacotamento local de macOS fora de um Mac não gera `.icns`.
+
+A cada push no branch `modern-ui`, o GitHub Actions gera os quatro pacotes (aba Actions). Uma tag `modern-v*` cria a Release após os quatro builds e os testes Windows passarem. Os testes headless de Linux/macOS ainda são informativos (`continue-on-error`).
 
 ## Arquitetura
 
@@ -148,7 +203,7 @@ Services/ShinyMethodH.cs       ← shiny da Gen 3 com sequência RNG do jogo
 Services/SlotHistory.cs        ← desfazer/refazer
 Services/SaveLibrary.cs        ← Save Manager
 Services/EntitySearch.cs       ← busca global
-Services/SpriteService.cs      ← sprites System.Drawing → Avalonia
+Services/SpriteService.cs      ← sprites PKHeX.Modern.Sprites → Avalonia
 Services/SaveBackup.cs         ← backup antes de sobrescrever um save
 Services/GameArt.cs           ← selo do jogo (Pokémon da capa + cores da versão)
 Services/HelpContent.cs        ← texto da Ajuda (atualize a cada função nova)
@@ -184,6 +239,8 @@ powershell -File Tools/PKHeX.Modern.Tests/run-tests.ps1           # testes de re
 powershell -File Tools/PKHeX.Modern.Tests/run-tests.ps1 Language  # só um (ex.: interface em inglês)
 dotnet run -c Release --project Tools/PKHeX.Modern.Tests/Docs -- PKHeX.Modern/docs   # refaz as capturas deste README
 ```
+
+No Linux/macOS, use `pwsh -File Tools/PKHeX.Modern.Tests/run-tests.ps1`. `SpriteParity` é pulado nesses sistemas porque depende de System.Drawing.
 
 Tudo roda sem abrir janela (Avalonia headless). As capturas usam saves sintéticos; alguns testes usam cópias de saves reais da pasta `saves/` (fora do Git) e são pulados se ela não existir.
 
