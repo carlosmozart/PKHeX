@@ -6,6 +6,13 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 🎮 Editores por jogo
+- **Página Jogo** (nova): **flags de evento** da Gen 2 à 7 (itens escondidos já pegos, treinadores vencidos, pontos de voo, história, encontros, presentes...) com os nomes das listas do PKHeX, busca por nome ou número, filtro por categoria e “Ativar/Desativar mostradas” para mudar de uma vez tudo que o filtro mostra (com confirmação).
+- **Valores de evento**: contadores e estados de cada evento, com os valores conhecidos numa lista e o número livre ao lado.
+- **Recordes do treinador** na Gen 3, 5, 6, 7, Sword/Shield e BD/SP: passos, batalhas, capturas, ovos chocados e os demais contadores do jogo.
+
 ## 0.4.0 — 2026-10-03
 
 ### ⚙ Edição em lote

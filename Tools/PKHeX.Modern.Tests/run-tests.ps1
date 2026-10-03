@@ -10,6 +10,7 @@ $suites = [ordered]@{
     'SaveFocus' = @{}
     'Search' = @{}
     'Batch' = @{}
+    'Game' = @{ 'red.sav' = 'POKEMON RED-0.sav'; 'cr.sav' = 'Pokemon Crystal Version.sav'; 'fr.sav' = 'fire red.sav'; 'hg.sav' = 'Pokemon Heart Gold Version.sav'; 'bw.sav' = 'Pokemon - Black Version.sav'; 'y.sav' = 'Pokemon Y'; 'moon.sav' = 'moon.sav' }
     'NameHint' = @{ 'r.sav' = 'Ruby.sav'; 'red.sav' = 'POKEMON RED-0.sav'; 'fr.sav' = 'fire red.sav'; 'cr.sav' = 'Pokemon Crystal Version.sav' }
     'Home' = @{}
     'Language' = @{}

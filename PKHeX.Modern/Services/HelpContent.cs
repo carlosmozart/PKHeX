@@ -97,6 +97,7 @@ public static class HelpContent
         [
             new("Treinador", "Nome, TID/SID, dinheiro e tempo de jogo do save, com o estado dos checksums."),
             new("Mochila", "Itens por bolso, em colunas: cada slot é um cartão com o ícone, o item e a quantidade. Passe o mouse para ver a descrição em português e onde conseguir (dados do AllGenWiki); nas TMs/TRs/HMs, o golpe que ensinam e onde pegar a máquina. Troque o item e a quantidade e clique em “Gravar mochila”."),
+            new("Jogo: flags, valores e recordes", "A página 🎮 Jogo edita o que o save guarda sobre o andamento do jogo. Flags de evento (Gen 2 a 7): itens escondidos já pegos, treinadores vencidos, pontos de voo, eventos da história e outros, com os nomes das listas do PKHeX; busque pelo nome ou número (#120), filtre por categoria e use “Ativar mostradas” para ligar de uma vez tudo que o filtro mostra (ex.: categoria Voo). Valores de evento: contadores e estados, com os valores conhecidos numa lista. Recordes (Gen 3, 5, 6, 7, Sword/Shield e BD/SP): passos, batalhas, ovos chocados... As alterações valem na hora; exporte o save para gravar. Mudar flags de história fora de ordem pode travar eventos do jogo."),
         ]),
         new("🌿", "Encontros e eventos",
         [

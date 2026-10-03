@@ -71,7 +71,8 @@ public sealed class MainViewModel : ViewModelBase
             i => { CurrentPage = Party; if (i < Party.Slots.Count) _ = SelectSlotAsync(Party.Slots[i]); },
             p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
         Batch = new BatchPageViewModel(GetBatchTargets, () => _sav, ApplyBatchAsync);
-        AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager, Search, Batch];
+        Game = new GamePageViewModel((t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true, icon: "🎮"), s => Status = s);
+        AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager, Game, Search, Batch];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
         Boxes.SlotsLoaded = () => { ApplySearchHighlight(); ApplyMarks(); };
@@ -121,6 +122,7 @@ public sealed class MainViewModel : ViewModelBase
     /// <summary>Pesquisa: todos os Pokemon dos saves abertos, da pasta e do bank, com filtros.</summary>
     public SearchPageViewModel Search { get; }
     public BatchPageViewModel Batch { get; }
+    public GamePageViewModel Game { get; }
     public GiftDbViewModel Gifts { get; }
     /// <summary>Ajuda (F1): funcoes, novidades, Sobre e verificacao de atualizacoes.</summary>
     public HelpPageViewModel Help { get; }
@@ -390,7 +392,7 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
-    public bool ShowEditorPanel => HasSave && CurrentPage != Home && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage != Search && CurrentPage != Batch && CurrentPage is not (BagPageViewModel or TrainerPageViewModel) && !IsHelpOpen;
+    public bool ShowEditorPanel => HasSave && CurrentPage != Home && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage != Search && CurrentPage != Batch && CurrentPage is not (BagPageViewModel or TrainerPageViewModel or GamePageViewModel) && !IsHelpOpen;
     public bool ShowSlotActions => HasSave && !IsHelpOpen && (CurrentPage == Boxes || CurrentPage == Party);
     public bool ShowSaveActions => HasSave && !IsHelpOpen;
     public bool ShowSaveManagerActions => !IsHelpOpen && (!HasSave || CurrentPage == SaveManager);

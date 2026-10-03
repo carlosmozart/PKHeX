@@ -1,0 +1,267 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using PKHeX.Core;
+using PKHeX.Modern.Services;
+
+namespace PKHeX.Modern.ViewModels;
+
+/// <summary>
+/// Editores por jogo: flags de evento, valores de evento e recordes do save aberto. As alteracoes valem na hora
+/// (como no Treinador) e marcam o save como alterado; exporte o save para gravar no arquivo.
+/// </summary>
+public sealed class GamePageViewModel : PageViewModel
+{
+    private readonly Func<string, string, string, Task<bool>> _confirm;
+    private readonly Action<string> _status;
+    private GameEditors? _editors;
+    private List<FlagRowViewModel> _flags = [];
+    private List<WorkRowViewModel> _works = [];
+    private List<RecordRowViewModel> _records = [];
+
+    /// <param name="confirm">Pergunta (titulo, mensagem, botao) antes de mudar varias flags.</param>
+    public GamePageViewModel(Func<string, string, string, Task<bool>> confirm, Action<string> status)
+    {
+        _confirm = confirm;
+        _status = status;
+        SetTabCommand = new RelayCommand(p => { if (p is string s && int.TryParse(s, out var t)) Tab = t; });
+        SetVisibleCommand = new RelayCommand(p => _ = SetVisibleAsync(p is "1"));
+    }
+
+    public override string Title => "Jogo";
+    public override string Icon => "🎮";
+    public override bool IsAvailable => _editors is null || _editors.IsAvailable;
+
+    public override void Load(SaveFile sav)
+    {
+        _editors = new GameEditors(sav);
+        var e = _editors;
+        void Changed() => this.Changed?.Invoke();
+        _flags = [.. e.Flags.Select(f => new FlagRowViewModel(f, e, Changed))];
+        _works = [.. e.Works.Select(w => new WorkRowViewModel(w, e, Changed))];
+        _records = [.. e.Records.Select(r => new RecordRowViewModel(r, e, Changed))];
+        Categories = ["Todas as categorias", .. e.Flags.Concat<object>(e.Works).Select(x => x is GameFlag f ? f.Type : ((GameWork)x).Type)
+            .Where(t => t != NamedEventType.None).Distinct().Order().Select(GameEditors.CategoryName).Distinct()];
+        _category = 0;
+        _showUnnamed = !e.HasLabels;
+        _tab = e.HasEvents ? 0 : 2;
+        Raise(string.Empty);
+        ApplyFilter();
+    }
+
+    public RelayCommand SetTabCommand { get; }
+    public RelayCommand SetVisibleCommand { get; }
+
+    public bool HasEvents => _editors?.HasEvents == true;
+    public bool HasWorks => _editors?.WorkCount > 0;
+    public bool HasRecords => _editors?.HasRecords == true;
+    public string Summary => _editors is null ? "" : string.Join(" · ", new[]
+    {
+        HasEvents ? $"{_editors.FlagCount} flags ({_flags.Count(f => f.HasName)} com nome)" : "",
+        HasWorks ? $"{_editors.WorkCount} valores ({_works.Count(w => w.HasName)} com nome)" : "",
+        HasRecords ? $"{_records.Count} recordes" : "",
+    }.Where(s => s.Length > 0));
+    public bool NoLabels => HasEvents && _editors?.HasLabels == false;
+
+    private int _tab;
+    /// <summary>0 = flags, 1 = valores, 2 = recordes.</summary>
+    public int Tab
+    {
+        get => _tab;
+        set
+        {
+            if (!Set(ref _tab, value))
+                return;
+            Raise(nameof(IsFlagsTab));
+            Raise(nameof(IsWorksTab));
+            Raise(nameof(IsRecordsTab));
+            Raise(nameof(ShowCategory));
+            ApplyFilter();
+        }
+    }
+    public bool IsFlagsTab => _tab == 0;
+    public bool IsWorksTab => _tab == 1;
+    public bool IsRecordsTab => _tab == 2;
+    public bool ShowCategory => _tab != 2;
+
+    // Filtros
+    private string _query = "";
+    /// <summary>Texto no nome ou numero (ex.: "surf", "#120").</summary>
+    public string Query { get => _query; set { if (Set(ref _query, value ?? "")) ApplyFilter(); } }
+
+    public IReadOnlyList<string> Categories { get; private set; } = ["Todas as categorias"];
+    private int _category;
+    public int CategoryIndex { get => _category; set { if (value >= 0 && Set(ref _category, value)) ApplyFilter(); } }
+
+    private bool _showUnnamed;
+    public bool ShowUnnamed { get => _showUnnamed; set { if (Set(ref _showUnnamed, value)) ApplyFilter(); } }
+
+    private bool _onlySet;
+    /// <summary>So flags ativadas / valores diferentes de zero / recordes acima de zero.</summary>
+    public bool OnlySet { get => _onlySet; set { if (Set(ref _onlySet, value)) ApplyFilter(); } }
+
+    public IReadOnlyList<FlagRowViewModel> FlagRows { get; private set; } = [];
+    public IReadOnlyList<WorkRowViewModel> WorkRows { get; private set; } = [];
+    public IReadOnlyList<RecordRowViewModel> RecordRows { get; private set; } = [];
+    public string CountText { get; private set; } = "";
+    public bool HasNoRows { get; private set; }
+
+    private bool Matches(int index, bool hasName, string name, string category)
+    {
+        if (!_showUnnamed && !hasName)
+            return false;
+        if (_category > 0 && _tab != 2 && category != Categories[_category])
+            return false;
+        var q = _query.Trim();
+        if (q.Length == 0)
+            return true;
+        if (q.StartsWith('#') && int.TryParse(q[1..], out var n))
+            return index == n;
+        return name.Contains(q, StringComparison.OrdinalIgnoreCase) || index.ToString() == q;
+    }
+
+    private void ApplyFilter()
+    {
+        int shown, total;
+        switch (_tab)
+        {
+            case 0:
+                FlagRows = [.. _flags.Where(f => Matches(f.Index, f.HasName, f.Name, f.Category) && (!_onlySet || f.IsSet))];
+                (shown, total) = (FlagRows.Count, _flags.Count);
+                break;
+            case 1:
+                WorkRows = [.. _works.Where(w => Matches(w.Index, w.HasName, w.Name, w.Category) && (!_onlySet || w.Value != 0))];
+                (shown, total) = (WorkRows.Count, _works.Count);
+                break;
+            default:
+                RecordRows = [.. _records.Where(r => Matches(r.Id, r.HasName, r.Name, "") && (!_onlySet || r.Value != 0))];
+                (shown, total) = (RecordRows.Count, _records.Count);
+                break;
+        }
+        CountText = shown == total ? $"{total} itens" : $"{shown} de {total} itens";
+        HasNoRows = shown == 0;
+        foreach (var p in (string[])[nameof(FlagRows), nameof(WorkRows), nameof(RecordRows), nameof(CountText), nameof(HasNoRows)])
+            Raise(p);
+    }
+
+    /// <summary>Ativa ou desativa todas as flags que o filtro esta mostrando (ex.: todos os pontos de voo).</summary>
+    private async Task SetVisibleAsync(bool value)
+    {
+        var rows = FlagRows.Where(f => f.IsSet != value).ToList();
+        if (_tab != 0 || rows.Count == 0)
+        {
+            _status(value ? "Todas as flags mostradas já estão ativadas." : "Todas as flags mostradas já estão desativadas.");
+            return;
+        }
+        var verb = value ? "Ativar" : "Desativar";
+        if (!await _confirm($"{verb} {rows.Count} flags",
+                $"{verb} as {rows.Count} flags mostradas pelo filtro atual? Flags de história fora de ordem podem travar eventos do jogo; prefira itens escondidos, pontos de voo e treinadores. Exporte uma cópia do save antes, se tiver dúvida.",
+                verb))
+            return;
+        foreach (var f in rows)
+            f.IsSet = value;
+        _status($"{rows.Count} flags {(value ? "ativadas" : "desativadas")}. Lembre-se de salvar.");
+        if (_onlySet)
+            ApplyFilter();
+    }
+}
+
+public sealed class FlagRowViewModel(GameFlag flag, GameEditors editors, Action changed) : ViewModelBase
+{
+    public int Index => flag.Index;
+    public string Number => $"#{flag.Index:0000}";
+    public bool HasName => flag.Name.Length > 0;
+    public string Name => HasName ? flag.Name : $"Flag {flag.Index}";
+    public string Category => flag.Type == NamedEventType.None ? "" : GameEditors.CategoryName(flag.Type);
+    public bool IsSet
+    {
+        get => editors.GetFlag(flag.Index);
+        set
+        {
+            if (value == IsSet)
+                return;
+            editors.SetFlag(flag.Index, value);
+            changed();
+            Raise();
+        }
+    }
+}
+
+public sealed class WorkRowViewModel : ViewModelBase
+{
+    private readonly GameWork _work;
+    private readonly GameEditors _editors;
+    private readonly Action _changed;
+
+    public WorkRowViewModel(GameWork work, GameEditors editors, Action changed)
+    {
+        _work = work;
+        _editors = editors;
+        _changed = changed;
+        Options = [.. work.Options.Where(o => !o.IsCustom).Select(o => new WorkOption(o.Name, o.Value))];
+    }
+
+    public int Index => _work.Index;
+    public string Number => $"#{_work.Index:000}";
+    public bool HasName => _work.Name.Length > 0;
+    public string Name => HasName ? _work.Name : $"Valor {_work.Index}";
+    public string Category => _work.Type == NamedEventType.None ? "" : GameEditors.CategoryName(_work.Type);
+    public int Max => _editors.WorkMax;
+    public IReadOnlyList<WorkOption> Options { get; }
+    public bool HasOptions => Options.Count > 0;
+
+    public int Value => _editors.GetWork(_work.Index);
+    public decimal? ValueNumber
+    {
+        get => Value;
+        set
+        {
+            if (value is null || (int)value == Value)
+                return;
+            _editors.SetWork(_work.Index, (int)value);
+            _changed();
+            Raise();
+            Raise(nameof(SelectedOption));
+        }
+    }
+
+    /// <summary>Valor conhecido (lista do PKHeX); null quando o valor atual nao tem nome.</summary>
+    public WorkOption? SelectedOption
+    {
+        get => Options.FirstOrDefault(o => o.Value == Value);
+        set
+        {
+            if (value is null)
+                return;
+            ValueNumber = value.Value;
+        }
+    }
+}
+
+public sealed record WorkOption(string Name, ushort Value)
+{
+    public override string ToString() => $"{Name} ({Value})";
+}
+
+public sealed class RecordRowViewModel(GameRecord record, GameEditors editors, Action changed) : ViewModelBase
+{
+    public int Id => record.Id;
+    public string Number => $"#{record.Id:000}";
+    public bool HasName => record.Name.Length > 0;
+    public string Name => HasName ? record.Name : $"Recorde {record.Id}";
+    public decimal Max => record.Max;
+    public long Value => editors.GetRecord(record);
+    public decimal? ValueNumber
+    {
+        get => Value;
+        set
+        {
+            if (value is null || (long)value == Value)
+                return;
+            editors.SetRecord(record, (long)value);
+            changed();
+            Raise();
+        }
+    }
+}
