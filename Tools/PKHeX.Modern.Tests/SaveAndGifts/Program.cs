@@ -45,6 +45,7 @@ using (var locked = new FileStream(path, FileMode.Open, FileAccess.Read, FileSha
 {
     Check("falha de gravação é informada", !vm.Export(path) && vm.SaveError is not null && vm.IsDirty);
     win.MouseDown(point, MouseButton.Left); win.MouseUp(point, MouseButton.Left); Pump();
+    for (int w = 0; w < 50 && vm.Dialog is null; w++) Pump(); // a janela abre depois da gravacao falhar (assincrono)
     Check("clique com erro mostra janela", vm.Dialog?.Title == "Não foi possível salvar");
     vm.Dialog?.Complete(false); Pump();
 }
