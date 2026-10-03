@@ -27,9 +27,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
       - run: dotnet workload install android
-      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      # O runner Ubuntu ja traz o Android SDK (ANDROID_HOME); a action setup-android falhava no sdkmanager.
+      - run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
       - name: Compilar APK de teste
         if: ${{ !inputs.signed_release }}
         run: dotnet build PKHeX.Modern.Android -c Release -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME"
