@@ -6,6 +6,14 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.7 — 2026-10-03
+
+### 📱 Android
+- **O PKHeX Modern agora tem versão para Android** (APK na release). A interface é a mesma do desktop, com a tela deitada: barra lateral, caixas e editor lado a lado. Em celulares tudo é reduzido para caber; em tablets fica no tamanho normal.
+- Os saves são abertos pelo seletor de arquivos do Android, sem pedir acesso a todo o armazenamento. O app edita uma cópia própria e, ao **Salvar**, grava de volta no arquivo original e confere a gravação; o original anterior vai para os backups. Se o arquivo mudou em outro app, nada é sobrescrito.
+- Importar e exportar Pokémon, Salvar como e saves dentro de .zip funcionam pelo seletor também. O botão Voltar do Android fecha a pergunta aberta ou volta como o Esc.
+- Fora desta primeira versão: atualização automática (instale o APK novo por cima), explorador de pastas e bank em pasta externa.
+
 ## 0.4.6 — 2026-10-03
 
 ### 🖥️ Linux e macOS

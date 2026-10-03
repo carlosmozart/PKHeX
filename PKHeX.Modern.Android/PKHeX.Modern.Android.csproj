@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../PKHeX.Modern.Version.props" />
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
+    <ApplicationId>io.github.carlosmozart.pkhexmodern</ApplicationId>
+    <ApplicationTitle>PKHeX Modern</ApplicationTitle>
+    <ApplicationVersion>40701</ApplicationVersion>
+    <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
+    <AndroidPackageFormats>apk</AndroidPackageFormats>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <PublishTrimmed>false</PublishTrimmed>
+    <RunAOTCompilation>false</RunAOTCompilation>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Android" Version="11.3.22" />
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Android" Version="3.119.0" />
+    <ProjectReference Include="../PKHeX.Modern/PKHeX.Modern.csproj" />
+  </ItemGroup>
+</Project>

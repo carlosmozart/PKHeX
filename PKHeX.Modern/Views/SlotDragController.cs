@@ -29,7 +29,7 @@ public sealed class SlotDragController
     private static readonly DataFormat<string> SlotFormat = DataFormat.CreateStringApplicationFormat(Format);
     private const double Threshold = 6;
 
-    private readonly Window _window;
+    private readonly Control _window;
     private readonly Func<MainViewModel> _vm;
     private readonly DispatcherTimer _boxHover = new() { Interval = TimeSpan.FromMilliseconds(550) };
 
@@ -41,7 +41,7 @@ public sealed class SlotDragController
     private SlotViewModel? _hoverTarget;
     private Button? _hoverArrow;
 
-    public SlotDragController(Window window, Func<MainViewModel> vm)
+    public SlotDragController(Control window, Func<MainViewModel> vm)
     {
         _window = window;
         _vm = vm;
@@ -142,7 +142,7 @@ public sealed class SlotDragController
             Directory.CreateDirectory(dir);
             var path = Path.Combine(dir, CoreAdapter.GetEntityFileName(pk));
             CoreAdapter.ExportEntity(pk, path);
-            return await _window.StorageProvider.TryGetFileFromPathAsync(path);
+            return TopLevel.GetTopLevel(_window) is { } top ? await top.StorageProvider.TryGetFileFromPathAsync(path) : null;
         }
         catch (Exception)
         {

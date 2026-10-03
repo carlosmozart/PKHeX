@@ -120,5 +120,10 @@ public static class HelpContent
             new("Atualização automática", "Ao abrir, o app verifica se saiu uma versão nova no GitHub. Se saiu, mostra as notas da versão: “Atualizar agora” baixa e instala conferindo o arquivo; “Depois” mantém o aviso para atualizar mais tarde. A oferta automática pode ser desligada em Ajuda › Sobre. A versão nova vale ao clicar em “🔄 Reiniciar” ou na próxima abertura; antes de reiniciar, o app pergunta se houver alterações não salvas e reabre o save. Rodando pelo código, a janela oferece abrir o download no navegador. Nos pacotes publicados, escolhe o download de Windows, Linux ou macOS e da arquitetura; no macOS troca o app inteiro, e no Linux restaura a permissão de execução. A pasta de instalação precisa permitir gravação."),
             new("Arquivos do app", "Preferências, backups e bank ficam na pasta de dados do app: %APPDATA%\\PKHeX.Modern no Windows e ~/.config/PKHeX.Modern no Linux e no macOS. Se algo der errado, os detalhes ficam em crash.log, na mesma pasta."),
         ]),
+        new("📱", "Android",
+        [
+            new("Arquivos no Android", "Abra saves e ZIPs pelo seletor do sistema. Salvar grava no original com backup privado e verifica os bytes gravados; se o original mudar em outro app, a sobrescrita é bloqueada. Salvar como exporta uma cópia. Saves importados, Bank e backups ficam no armazenamento privado e são removidos ao desinstalar."),
+            new("Tela e toque", "A interface é a mesma do desktop, com a tela deitada; em celulares tudo é reduzido para caber. Toque num slot para editar. O botão Voltar do Android fecha a pergunta aberta ou volta como o Esc. Teclados externos aceitam os mesmos atalhos do desktop."),
+        ]),
     ];
 }

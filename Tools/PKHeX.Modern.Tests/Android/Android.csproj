@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Headless" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Skia" Version="11.3.22" />
+    <ProjectReference Include="../../../PKHeX.Modern/PKHeX.Modern.csproj" />
+  </ItemGroup>
+  <!-- Executar com -p:AndroidSkia=true verifica a substituicao usada pelo host Android. -->
+  <ItemGroup Condition="'$(AndroidSkia)' == 'true'">
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.0" />
+  </ItemGroup>
+</Project>

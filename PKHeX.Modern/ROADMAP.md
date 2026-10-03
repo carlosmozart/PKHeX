@@ -97,6 +97,7 @@ Ideias escolhidas, na ordem combinada. O PKVault também usa o PKHeX.Core; o có
 - [ ] Instalador de verdade (MSIX ou Inno Setup), ícone próprio e assinatura do exe. **Adiado** (03/10/2026): inviável no momento.
 - [x] **Mochila em colunas**: cartões com ícone, item e quantidade, em linhas virtualizadas (bolsos de 260 slots abrem em ~0,3 s).
 - [x] **Multiplataforma** (0.4.6: Linux e macOS): (1) ~~sprites sem `System.Drawing`~~ feito (0.4.6: `PKHeX.Modern.Sprites`, idêntico pixel a pixel); (2) ~~`net10.0` sem `-windows`~~ feito (0.4.6; testes também, menos o `SpriteParity`); (3) CI com pacotes Windows/Linux/macOS e atualização automática por sistema; (4) testes headless no Linux/macOS pelo GitHub Actions.
+- [x] **Android** (0.4.7): APK assinado na release; mesma interface do desktop em paisagem (`MobileShell` reduz para caber em celulares), arquivos pelo seletor SAF (`MobileDocuments`). Falta: atualização automática no Android, bank em pasta externa, testar em mais aparelhos.
 
 ## Conhecido / observações
 - Em saves com a equipe cheia, ainda não foi testado colocar um Pokémon num slot vazio da equipe. Ele entra na próxima posição livre.

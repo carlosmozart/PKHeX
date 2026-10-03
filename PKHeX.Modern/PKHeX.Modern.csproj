@@ -1,4 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../PKHeX.Modern.Version.props" />
 
   <!--
     PKHeX.Modern: interface alternativa (Avalonia) para o PKHeX.
@@ -7,22 +8,20 @@
     "git merge upstream/master" continue sem conflitos.
   -->
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Library</OutputType>
     <!-- net10.0 (sem -windows): roda no Windows, Linux e macOS; os sprites vem do PKHeX.Modern.Sprites (sem System.Drawing). -->
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>PKHeX.Modern</RootNamespace>
-    <!-- Versao do PKHeX Modern (a do PKHeX.Core vem do Directory.Build.props). Atualize junto com a tag modern-vX.Y.Z. -->
-    <Version>0.4.6</Version>
     <AssemblyName>PKHeX.Modern</AssemblyName>
     <ApplicationIcon>..\PKHeX.WinForms\Resources\icon.ico</ApplicationIcon>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AssemblyName>PKHeX.Modern.UI</AssemblyName>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.22" />
     <PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="11.1.5" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
   </ItemGroup>

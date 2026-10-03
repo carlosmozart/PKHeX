@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../PKHeX.Core/PKHeX.Core.csproj" />
+    <Compile Include="../PKHeX.Modern.AndroidPoc/SaveSummary.cs" Link="SaveSummary.cs" />
+  </ItemGroup>
+</Project>
