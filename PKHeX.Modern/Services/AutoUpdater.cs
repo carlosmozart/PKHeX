@@ -36,11 +36,22 @@ public static class AutoUpdater
     public static bool CanSelfUpdate => CanUpdateExecutable(typeof(AutoUpdater).Assembly.Location, ExePath,
         CurrentPlatform, RuntimeInformation.OSArchitecture);
 
-    /// <summary>Assembly sem caminho identifica arquivo unico; valida tambem o nome e o bundle.</summary>
+    /// <summary>
+    /// Assembly sem caminho identifica arquivo unico. O nome do executavel pode ter sido trocado pelo usuario
+    /// ("PKHeX.Modern (1).exe", como nas versoes anteriores): vale qualquer nome, menos o host do .NET; no Windows precisa
+    /// ser .exe e no macOS precisa estar dentro de um bundle .app.
+    /// </summary>
     public static bool CanUpdateExecutable(string? assemblyLocation, string? exe, OSPlatform platform, Architecture architecture)
-        => assemblyLocation == "" && exe is not null && GetAssetName(platform, architecture) is not null
-            && Path.GetFileName(exe) == (platform == OSPlatform.Windows ? ExecutableName + ".exe" : ExecutableName)
-            && (platform != OSPlatform.OSX || GetBundlePath(exe) is not null);
+    {
+        if (assemblyLocation != "" || exe is null || GetAssetName(platform, architecture) is null)
+            return false;
+        var name = Path.GetFileNameWithoutExtension(exe);
+        if (name.Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+            return false;
+        if (platform == OSPlatform.Windows)
+            return Path.GetExtension(exe).Equals(".exe", StringComparison.OrdinalIgnoreCase);
+        return platform != OSPlatform.OSX || GetBundlePath(exe) is not null;
+    }
 
     /// <summary>Apaga a copia antiga deixada pela atualizacao, quando ela ja nao esta em uso.</summary>
     public static bool CleanupOld()

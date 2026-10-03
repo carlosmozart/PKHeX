@@ -61,6 +61,8 @@ foreach (var asset in new[] { "PKHeX.Modern-win-x64.zip", "PKHeX.Modern-linux-x6
 }
 Check("dotnet run nao se atualiza", !AutoUpdater.CanSelfUpdate);
 Check("arquivo unico Windows", AutoUpdater.CanUpdateExecutable("", Path.Combine(args[0], "PKHeX.Modern.exe"), OSPlatform.Windows, Architecture.X64));
+Check("exe renomeado no Windows ainda se atualiza", AutoUpdater.CanUpdateExecutable("", Path.Combine(args[0], "PKHeX.Modern (1).exe"), OSPlatform.Windows, Architecture.X64));
+Check("binario renomeado no Linux ainda se atualiza", AutoUpdater.CanUpdateExecutable("", Path.Combine(args[0], "pkhex-modern"), OSPlatform.Linux, Architecture.X64));
 Check("DLL Windows nao se atualiza", !AutoUpdater.CanUpdateExecutable("app.dll", "PKHeX.Modern.exe", OSPlatform.Windows, Architecture.X64));
 Check("arquivo unico Linux", AutoUpdater.CanUpdateExecutable("", Path.Combine(args[0], "PKHeX.Modern"), OSPlatform.Linux, Architecture.X64));
 Check("host dotnet nao se atualiza", !AutoUpdater.CanUpdateExecutable("", Path.Combine(args[0], "dotnet"), OSPlatform.Linux, Architecture.X64));
