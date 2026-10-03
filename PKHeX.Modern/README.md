@@ -22,7 +22,7 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | ![Fitas e memórias](docs/ribbons.png) | ![Evolução por beleza](docs/beauty.png) |
 | **Evolução por felicidade** | **Layout compacto** |
 | ![Evolução por felicidade](docs/friendship.png) | ![Layout compacto](docs/compact.png) |
-| **Interface em inglês (🌐 Idioma)** | **Tema PSS (X/Y)** |
+| **Interface em inglês (⚙ › Idioma)** | **Tema PSS (X/Y)** |
 | ![Interface em inglês](docs/english.png) | ![Tema PSS](docs/theme_pss.png) |
 | **Tema Pixel (GBA)** | **Tema Pixel no modo claro** |
 | ![Tema Pixel](docs/theme_pixel.png) | ![Tema Pixel claro](docs/theme_pixel_light.png) |
@@ -109,8 +109,8 @@ Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/
 **Outros**
 - Treinador (nome, TID/SID, dinheiro, tempo de jogo) e **Mochila com o ícone de cada item**; ao passar o mouse, a descrição em português e onde conseguir o item (dados do AllGenWiki).
 - **Início** (⌂, Ctrl+0): ao abrir um save, cartão do jogo, a equipe no topo, atalhos grandes para cada página e os saves recentes.
-- **Temas completos** (🎨): Padrão, PSS (X/Y), Pixel (GBA) e Z-A (Lumiose), cada um em claro e escuro, mudando fundo, painéis, cantos, bordas e fonte na hora; mais a **cor de destaque** configurável.
-- **Idioma da interface** (“🌐 Idioma” na barra lateral): Português (Brasil), o padrão, ou English. Vale ao reiniciar; o app oferece reiniciar na hora.
+- **Temas completos** (⚙ na barra lateral): Padrão, PSS (X/Y), Pixel (GBA) e Z-A (Lumiose), cada um em claro e escuro, mudando fundo, painéis, cantos, bordas e fonte na hora; mais a **cor de destaque** configurável.
+- **Idioma da interface** (⚙ na barra lateral, em Idioma): Português (Brasil), o padrão, ou English. Vale ao reiniciar; o app oferece reiniciar na hora.
 - Atalhos: Q/E trocam de página, Ctrl+1–9 vão direto, Esc volta, Ctrl+O abre.
 
 ### Conheça também: AllGenWiki

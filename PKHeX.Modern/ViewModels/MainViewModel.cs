@@ -312,6 +312,8 @@ public sealed class MainViewModel : ViewModelBase
     public RelayCommand OpenLastCommand { get; }
 
     public bool HasLastSave => ZipSaves.Exists(Settings.LastSavePath);
+    /// <summary>Link "↺ Último" na barra lateral: so sem save aberto (com save, as abas e o Inicio mostram os recentes).</summary>
+    public bool ShowLastSaveLink => HasLastSave && !HasSave;
     public string LastSaveName => HasLastSave ? ZipSaves.DisplayName(Settings.LastSavePath!) : "";
 
     public bool OpenLastSaveOnStartup
@@ -745,7 +747,7 @@ public sealed class MainViewModel : ViewModelBase
         _selectedSlot = null;
         Editor = null;
         _currentPage = Boxes;
-        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(CurrentPage), nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
+        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(CurrentPage), nameof(HasSave), nameof(ShowLastSaveLink), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
             Raise(p);
         OnHistoryChanged();
         RaiseHome();
@@ -789,7 +791,7 @@ public sealed class MainViewModel : ViewModelBase
         Boxes.CurrentBox = tab.CurrentBox;
         Home.Load(tab.Sav);
         CurrentPage = tab.LastPage ?? Home; // save recem-aberto cai no Inicio
-        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(HasSave), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
+        foreach (var p in (string[])[nameof(IsDirty), nameof(PendingActions), nameof(PendingText), nameof(HasSave), nameof(ShowLastSaveLink), nameof(ShowEditorPanel), nameof(GameName), nameof(GameArt), nameof(TrainerInfo), nameof(Pages), nameof(ActiveTab)])
             Raise(p);
         IsHelpOpen = false;
         RaiseHome();
@@ -875,6 +877,7 @@ public sealed class MainViewModel : ViewModelBase
             Settings.RecentSaves.RemoveRange(12, Settings.RecentSaves.Count - 12);
         Settings.Save();
         Raise(nameof(HasLastSave));
+        Raise(nameof(ShowLastSaveLink));
         Raise(nameof(LastSaveName));
     }
 

@@ -16,7 +16,7 @@ public static class HelpContent
     [
         new("💾", "Saves",
         [
-            new("Abrir um save", "Clique em “Abrir save...”, arraste o arquivo para a janela ou passe o caminho pela linha de comando. “↺ Último” reabre o save anterior; marque “Abrir último save ao iniciar” para fazer isso sozinho.", "Ctrl+O"),
+            new("Abrir um save", "Clique em “Abrir save...”, arraste o arquivo para a janela ou passe o caminho pela linha de comando. Sem save aberto, “↺ Último” reabre o save anterior; para fazer isso sozinho, marque “Abrir último save ao iniciar” no ⚙ da barra lateral.", "Ctrl+O"),
             new("Vários saves em abas", "Cada save aberto vira uma aba no topo, com o selo do jogo e ● quando tem alterações não exportadas. Trocar de aba não perde nada: cada save guarda as alterações, o desfazer/refazer, a caixa e a página. Abrir um save que já está numa aba só troca para ela. “＋” vai para o Save Manager; ✕ fecha a aba (pergunta se houver alterações).", "Ctrl+Tab / Ctrl+W"),
             new("Tela inicial", "Ao abrir um save, o app mostra o Início (⌂ na barra lateral, Ctrl+0): o cartão do jogo com treinador, tempo de jogo, dinheiro e Pokédex; a equipe no topo (clique abre na página Equipe); um atalho grande para cada página, com um resumo; e os saves recentes, que abrem numa aba nova.", "Ctrl+0"),
             new("Save Manager", "Tela inicial e página Saves: lista os saves da pasta escolhida (subpastas como gba, ds, 3ds e switch viram grupos), com treinador, TID/SID, tempo de jogo, dinheiro, capturados e equipe. Busca por jogo, treinador ou arquivo e filtro por geração. Duplo clique abre.", "Ctrl+9"),
@@ -115,8 +115,8 @@ public static class HelpContent
         ]),
         new("⚙️", "Preferências",
         [
-            new("Temas e cor", "Na linha de baixo da barra lateral: ◐ troca claro/escuro; 🎨 escolhe o tema completo (Padrão, PSS de X/Y, Pixel de GBA ou Z-A de Lumiose), que muda fundo, painéis, cantos, bordas e fonte na hora e aplica a cor de destaque sugerida pelo tema; as bolinhas trocam a cor de destaque; 🌐 troca o idioma (vale ao reiniciar)."),
-            new("Idioma da interface", "No botão “🌐” (PT/EN) da barra lateral, escolha Português (Brasil) ou English. A preferência fica salva e o app oferece reiniciar para aplicar. Nomes do jogo (espécies, golpes, itens) e os textos de legalidade do PKHeX continuam em inglês nos dois idiomas."),
+            new("Temas e cor", "Na linha de baixo da barra lateral: ◐ troca claro/escuro e ⚙ abre as preferências: o tema completo (Padrão, PSS de X/Y, Pixel de GBA ou Z-A de Lumiose), que muda fundo, painéis, cantos, bordas e fonte na hora e aplica a cor de destaque sugerida pelo tema; as bolinhas da cor de destaque; o idioma (vale ao reiniciar) e “Abrir último save ao iniciar”. ⌨ mostra os atalhos do teclado."),
+            new("Idioma da interface", "No ⚙ da barra lateral, em Idioma, escolha Português (Brasil) ou English. A preferência fica salva e o app oferece reiniciar para aplicar. Nomes do jogo (espécies, golpes, itens) e os textos de legalidade do PKHeX continuam em inglês nos dois idiomas."),
             new("Atualização automática", "Ao abrir, o app verifica se saiu uma versão nova no GitHub. Se saiu, mostra as notas da versão: “Atualizar agora” baixa e instala conferindo o arquivo; “Depois” mantém o aviso para atualizar mais tarde. A oferta automática pode ser desligada em Ajuda › Sobre. A versão nova vale ao clicar em “🔄 Reiniciar” ou na próxima abertura; antes de reiniciar, o app pergunta se houver alterações não salvas e reabre o save. Rodando pelo código, a janela oferece abrir o download no navegador."),
             new("Arquivos do app", "Preferências, backups e bank ficam em %APPDATA%\\PKHeX.Modern. Se algo der errado, os detalhes ficam em crash.log."),
         ]),

@@ -410,8 +410,9 @@
   <!-- Navegacao lateral -->
   <Style Selector="ListBox.nav ListBoxItem">
     <Setter Property="CornerRadius" Value="{DynamicResource Radius8}" />
-    <Setter Property="Padding" Value="12,9" />
-    <Setter Property="Margin" Value="0,2" />
+    <Setter Property="Padding" Value="12,5" />
+    <Setter Property="Margin" Value="0,0.5" />
+    <Setter Property="MinHeight" Value="0" />
   </Style>
   <Style Selector="ListBox.nav ListBoxItem:selected /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
@@ -567,7 +568,7 @@
   <Style Selector="ToggleButton.legalCard">
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="Padding" Value="10,6" />
     <Setter Property="CornerRadius" Value="{DynamicResource Radius10}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
@@ -747,8 +748,8 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-    <Setter Property="Padding" Value="12,9" />
-    <Setter Property="Margin" Value="0,0,0,2" />
+    <Setter Property="Padding" Value="12,5" />
+    <Setter Property="Margin" Value="0,0,0,0.5" />
   </Style>
   <Style Selector="Button.navHome.selected">
     <Setter Property="Background" Value="{DynamicResource AccentSoft}" />

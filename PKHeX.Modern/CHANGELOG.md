@@ -6,6 +6,13 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.2 — 2026-10-03
+
+### 🧭 Barra lateral
+- **Mais compacta**: as 13 páginas cabem sem rolar na janela padrão (e a partir de 720 px de altura). Os itens da lista ficaram mais baixos, o cartão do jogo menor e o modo legal virou uma linha só.
+- **Preferências no ⚙**: tema, cor de destaque, idioma e “Abrir último save ao iniciar” ficam no botão ⚙ da linha de baixo, ao lado de ❔ Ajuda, ⌨ (atalhos do teclado) e ◐ (claro/escuro).
+- “↺ Último” aparece só sem save aberto (com um save aberto, as abas e o Início já mostram os recentes).
+
 ## 0.4.1 — 2026-10-03
 
 ### 🎮 Editores por jogo
