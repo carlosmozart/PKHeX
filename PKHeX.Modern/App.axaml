@@ -782,6 +782,99 @@
     </DockPanel>
   </DataTemplate>
 
+  <DataTemplate DataType="vm:BatchPageViewModel">
+    <Grid ColumnDefinitions="400,*" ColumnSpacing="16">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="10" Margin="0,0,10,0">
+          <StackPanel Spacing="2">
+            <TextBlock Text="Edição em lote" Classes="title" />
+            <TextBlock Text="Altera vários Pokémon do save aberto de uma vez. Pré-visualize antes; Ctrl+Z desfaz." Classes="muted" FontSize="12" TextWrapping="Wrap" />
+          </StackPanel>
+          <Border Classes="card" Padding="14">
+            <StackPanel Spacing="8">
+              <TextBlock Text="1. QUAIS POKÉMON" Classes="section" Margin="0" />
+              <ComboBox ItemsSource="{Binding ScopeOptions}" SelectedIndex="{Binding ScopeIndex}" HorizontalAlignment="Stretch"
+                        ToolTip.Tip="Selecionados: slots marcados com Ctrl+clique nas caixas. Resultados da Pesquisa: o que a página Pesquisa está mostrando deste save." />
+              <CheckBox Content="Incluir ovos" IsChecked="{Binding IncludeEggs}" />
+            </StackPanel>
+          </Border>
+          <Border Classes="card" Padding="14">
+            <StackPanel Spacing="4">
+              <TextBlock Text="2. O QUE FAZER" Classes="section" Margin="0,0,0,4" />
+              <ItemsControl ItemsSource="{Binding Actions}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:BatchActionViewModel">
+                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked}" ToolTip.Tip="{Binding Tip}" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+          <Border Classes="card" Padding="14">
+            <StackPanel Spacing="8">
+              <TextBlock Text="AVANÇADO: SCRIPT DO PKHEX" Classes="section" Margin="0" />
+              <TextBlock Classes="muted" FontSize="12" TextWrapping="Wrap"
+                         Text="Uma instrução por linha. =Prop=valor filtra (! diferente, &gt; maior, &lt; menor); .Prop=valor altera. Linha vazia separa conjuntos. Ex.: =Species=Pikachu, !IsShiny=True, .CurrentLevel=100, .Ball=Poke Ball, .PID=$shiny" />
+              <TextBox Text="{Binding Script}" AcceptsReturn="True" MinHeight="110" FontFamily="Consolas,Menlo,monospace" FontSize="13"
+                       Watermark="=Species=Pikachu&#x0a;.CurrentLevel=100" TextWrapping="NoWrap" />
+              <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+                <AutoCompleteBox ItemsSource="{Binding PropertyNames}" Text="{Binding Property}" FilterMode="ContainsOrdinal"
+                                 Watermark="Propriedade (ex.: CurrentLevel)" MinimumPrefixLength="1" />
+                <Button Grid.Column="1" Classes="small" Content="＝ Filtro" Command="{Binding AddFilterCommand}"
+                        ToolTip.Tip="Acrescenta =Propriedade= ao script" />
+                <Button Grid.Column="2" Classes="small" Content="✎ Alterar" Command="{Binding AddChangeCommand}"
+                        ToolTip.Tip="Acrescenta .Propriedade= ao script" />
+              </Grid>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="{Binding Error}" Classes="legalBad" FontWeight="Normal" FontSize="13" TextWrapping="Wrap" IsVisible="{Binding HasError}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="👁  Pré-visualizar" Command="{Binding PreviewCommand}" />
+            <Button Classes="accent" Content="⚙  Aplicar" Command="{Binding ApplyCommand}" />
+            <Button Classes="ghost" Content="Limpar" Command="{Binding ClearCommand}" />
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+      <DockPanel Grid.Column="1">
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" Classes="muted" TextWrapping="Wrap" Margin="0,4,0,10" />
+        <Panel>
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <ItemsRepeater ItemsSource="{Binding Preview}">
+              <ItemsRepeater.Layout>
+                <StackLayout Spacing="6" />
+              </ItemsRepeater.Layout>
+              <ItemsRepeater.ItemTemplate>
+                <DataTemplate x:DataType="vm:BatchChangeViewModel">
+                  <Border Classes="card" Padding="10,6" Margin="0,0,10,0">
+                    <Grid ColumnDefinitions="56,2*,4*,Auto" ColumnSpacing="12">
+                      <Panel>
+                        <Image Source="{Binding Sprite}" Width="56" Height="48" Stretch="Uniform" />
+                        <TextBlock Text="★" Classes="shiny" HorizontalAlignment="Right" VerticalAlignment="Top" IsVisible="{Binding IsShiny}" />
+                      </Panel>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Where}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="{Binding Diff}" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center" />
+                      <Panel Grid.Column="3" VerticalAlignment="Center">
+                        <TextBlock Text="✓" Classes="legalOk" FontSize="14" IsVisible="{Binding IsLegal}" ToolTip.Tip="Continua legal" />
+                        <TextBlock Text="⚠" Classes="legalBad" FontSize="15" IsVisible="{Binding BecomesIllegal}" ToolTip.Tip="Ficaria ilegal (no modo legal, este é pulado)" />
+                      </Panel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+          </ScrollViewer>
+          <TextBlock Text="Analisando..." Classes="muted" IsVisible="{Binding IsBusy}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Panel>
+      </DockPanel>
+    </Grid>
+  </DataTemplate>
+
   <DataTemplate DataType="vm:EncounterDbViewModel">
     <UserControl>
     <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="12">

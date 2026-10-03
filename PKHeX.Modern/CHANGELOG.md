@@ -8,6 +8,11 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+### ⚙ Edição em lote
+- **Batch Editor** (nova página): altera vários Pokémon do save aberto de uma vez. Escolha o grupo (caixa atual, todas as caixas, equipe, caixas e equipe, Pokémon selecionados com Ctrl+clique ou os **resultados da Pesquisa** deste save) e o que fazer: ações rápidas (nível 100, IVs máximos, zerar EVs, felicidade máxima, curar PS e PP, tornar shiny, golpes sugeridos, bola legal) e/ou o **script do Batch Editor do PKHeX** (`=Species=Pikachu` filtra, `.CurrentLevel=100` altera), com lista de propriedades para inserir.
+- **Pré-visualizar** mostra cada Pokémon com o que vai mudar (nível, IVs, EVs, shiny, golpes, bola...) e se continua legal, sem gravar nada. **Aplicar** pergunta antes, grava tudo num passo só e **Ctrl+Z desfaz** o lote inteiro.
+- **Modo legal**: quem ficaria ilegal (⚠) é pulado; com o modo legal desligado, grava mesmo assim e avisa.
+
 ### 🔎 Pesquisa
 - **Banco de dados / pesquisa** (nova página, **Ctrl+Shift+F**): todos os Pokémon dos saves abertos (com as alterações não salvas), dos saves da pasta (inclusive dentro de .zip) e do bank numa lista só. Busca por espécie, apelido, golpe, item, habilidade, natureza, bola, treinador ou jogo (todas as palavras precisam bater; `#25` busca pelo número), filtros de origem, shiny, IVs perfeitos, natureza, bola, nível, geração de origem e ovos, e cinco ordens. Clicar num resultado vai até o slot, abrindo o save numa aba se preciso, ou abre a caixa do bank.
 

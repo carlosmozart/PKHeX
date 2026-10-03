@@ -70,7 +70,8 @@ public sealed class MainViewModel : ViewModelBase
         Home = new HomePageViewModel(page => CurrentPage = page,
             i => { CurrentPage = Party; if (i < Party.Slots.Count) _ = SelectSlotAsync(Party.Slots[i]); },
             p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
-        AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager, Search];
+        Batch = new BatchPageViewModel(GetBatchTargets, () => _sav, ApplyBatchAsync);
+        AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), new BagPageViewModel(s => Status = s), Encounters, Gifts, SaveManager, Search, Batch];
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
         Boxes.SlotsLoaded = () => { ApplySearchHighlight(); ApplyMarks(); };
@@ -119,6 +120,7 @@ public sealed class MainViewModel : ViewModelBase
     public EncounterDbViewModel Encounters { get; }
     /// <summary>Pesquisa: todos os Pokemon dos saves abertos, da pasta e do bank, com filtros.</summary>
     public SearchPageViewModel Search { get; }
+    public BatchPageViewModel Batch { get; }
     public GiftDbViewModel Gifts { get; }
     /// <summary>Ajuda (F1): funcoes, novidades, Sobre e verificacao de atualizacoes.</summary>
     public HelpPageViewModel Help { get; }
@@ -388,7 +390,7 @@ public sealed class MainViewModel : ViewModelBase
         }
     }
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
-    public bool ShowEditorPanel => HasSave && CurrentPage != Home && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage != Search && CurrentPage is not (BagPageViewModel or TrainerPageViewModel) && !IsHelpOpen;
+    public bool ShowEditorPanel => HasSave && CurrentPage != Home && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage != Search && CurrentPage != Batch && CurrentPage is not (BagPageViewModel or TrainerPageViewModel) && !IsHelpOpen;
     public bool ShowSlotActions => HasSave && !IsHelpOpen && (CurrentPage == Boxes || CurrentPage == Party);
     public bool ShowSaveActions => HasSave && !IsHelpOpen;
     public bool ShowSaveManagerActions => !IsHelpOpen && (!HasSave || CurrentPage == SaveManager);
@@ -1880,6 +1882,98 @@ public sealed class MainViewModel : ViewModelBase
         Raise(nameof(RedoTip));
         Raise(nameof(PendingActions));
         Raise(nameof(PendingText));
+    }
+
+    // Edicao em lote
+    /// <summary>Pokemon do save aberto em cada escopo da edicao em lote (lidos agora, com as alteracoes da aba).</summary>
+    private IReadOnlyList<BatchTarget> GetBatchTargets(BatchScope scope)
+    {
+        if (_sav is not { } sav)
+            return [];
+        var list = new List<BatchTarget>();
+        void AddBox(int b, int i)
+        {
+            var pk = CoreAdapter.GetBoxSlot(sav, b, i);
+            if (!CoreAdapter.IsEmpty(pk))
+                list.Add(new BatchTarget(b, i, pk, $"{CoreAdapter.GetBoxName(sav, b)} · {i + 1}"));
+        }
+        void AddParty()
+        {
+            for (int i = 0; i < sav.PartyCount; i++)
+                if (CoreAdapter.GetPartySlot(sav, i) is { Species: > 0 } pk)
+                    list.Add(new BatchTarget(-1, i, pk, $"Equipe · {i + 1}"));
+        }
+        void AddBoxes(IEnumerable<int> boxes)
+        {
+            foreach (var b in boxes)
+                for (int i = 0; i < sav.BoxSlotCount; i++)
+                    AddBox(b, i);
+        }
+        switch (scope)
+        {
+            case BatchScope.CurrentBox: AddBoxes([Boxes.CurrentBox]); break;
+            case BatchScope.AllBoxes: AddBoxes(Enumerable.Range(0, sav.BoxCount)); break;
+            case BatchScope.Party: AddParty(); break;
+            case BatchScope.BoxesAndParty: AddParty(); AddBoxes(Enumerable.Range(0, sav.BoxCount)); break;
+            case BatchScope.Marked:
+                foreach (var k in _marks.Where(k => k.Bank is null && !k.Other).OrderBy(k => k.Box).ThenBy(k => k.Slot))
+                    AddBox(k.Box, k.Slot);
+                break;
+            case BatchScope.SearchResults:
+                var path = _activeTab is { } t ? Normalize(t.Path) : null;
+                foreach (var e in Search.Results.Select(r => r.Entry).Where(e => e.Source.IsOpen && path is not null && Normalize(e.Source.Id) == path))
+                {
+                    if (e.Box < 0)
+                    {
+                        if (CoreAdapter.GetPartySlot(sav, e.Slot) is { Species: > 0 } pk)
+                            list.Add(new BatchTarget(-1, e.Slot, pk, $"Equipe · {e.Slot + 1}"));
+                    }
+                    else if (e.Box < sav.BoxCount)
+                        AddBox(e.Box, e.Slot);
+                }
+                break;
+        }
+        return list;
+
+        static string Normalize(string p) => FullPath(p);
+    }
+
+    /// <summary>Grava o lote: pergunta antes, pula (no modo legal) os que ficariam ilegais e registra um passo de desfazer.</summary>
+    private async Task ApplyBatchAsync(IReadOnlyList<BatchChange> changes)
+    {
+        if (_sav is not { } sav || _history is null)
+            return;
+        var illegal = changes.Where(c => c.BecomesIllegal).ToList();
+        var write = LegalMode ? changes.Where(c => !c.BecomesIllegal).ToList() : [.. changes];
+        if (write.Count == 0)
+        {
+            Status = $"Nada gravado: os {illegal.Count} Pokémon ficariam ilegais e o modo legal está ligado. Desligue o modo legal na barra lateral para gravar mesmo assim.";
+            return;
+        }
+        string Line(BatchChange c) => $"{CoreAdapter.SpeciesNames[c.Result.Species]} ({c.Target.Where})" + (c.BecomesIllegal ? " ⚠" : "");
+        var message = $"{write.Count} Pokémon serão alterados neste save. Dá para desfazer com Ctrl+Z.";
+        if (illegal.Count > 0)
+            message += LegalMode
+                ? $" Modo legal: {illegal.Count} que ficariam ilegais serão pulados."
+                : $" Atenção: {illegal.Count} vão ficar ilegais (⚠).";
+        if (!await ConfirmAsync("Aplicar edição em lote", message, "Aplicar", details: [.. write.Select(Line)], icon: "⚙"))
+        {
+            Status = "Edição em lote cancelada.";
+            return;
+        }
+        _history.Record($"edição em lote ({write.Count})", [.. write.Select(c => SlotHistory.KeyOf(c.Target.Box, c.Target.Slot))]);
+        foreach (var c in write)
+        {
+            if (c.Target.Box < 0)
+                CoreAdapter.SetPartySlot(sav, c.Result, c.Target.Slot);
+            else
+                CoreAdapter.SetBoxSlot(sav, c.Result, c.Target.Box, c.Target.Slot);
+        }
+        IsDirty = true;
+        RefreshSlots();
+        OnHistoryChanged();
+        Status = $"Edição em lote: {write.Count} Pokémon alterados" + (LegalMode && illegal.Count > 0 ? $", {illegal.Count} pulados (ficariam ilegais)." : ".")
+            + " Ctrl+Z desfaz. Lembre-se de salvar.";
     }
 
     private void RefreshSlots()

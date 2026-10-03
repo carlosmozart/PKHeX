@@ -9,6 +9,7 @@ $saves = Join-Path $root 'saves'
 $suites = [ordered]@{
     'SaveFocus' = @{}
     'Search' = @{}
+    'Batch' = @{}
     'NameHint' = @{ 'r.sav' = 'Ruby.sav'; 'red.sav' = 'POKEMON RED-0.sav'; 'fr.sav' = 'fire red.sav'; 'cr.sav' = 'Pokemon Crystal Version.sav' }
     'Home' = @{}
     'Language' = @{}
