@@ -12,7 +12,7 @@ namespace PKHeX.Modern.ViewModels;
 /// Editor de um Pokemon. Trabalha sobre uma copia (Clone) e so grava no save ao clicar em "Aplicar".
 /// Para adicionar um novo campo: crie uma propriedade aqui que leia/escreva em <see cref="_pk"/> e um controle na view.
 /// </summary>
-public sealed class PokemonEditorViewModel : ViewModelBase
+public sealed partial class PokemonEditorViewModel : ViewModelBase
 {
     private PKM _pk;
     private readonly SaveFile? _sav;
@@ -49,6 +49,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             m.Changed += Refresh;
         HealPPCommand = new RelayCommand(() => { _pk.HealPP(); foreach (var m in Moves) m.RaiseAll(); _status("PP restaurado."); });
         ApplyCommand = new RelayCommand(Apply, () => CanApply);
+        GivePokerusCommand = new RelayCommand(() => SetPokerus(1, Pokerus.GetMaxDuration(1)), () => CanEditPokerus);
         MaxIVsCommand = new RelayCommand(() => _ = MaxIVsAsync());
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
         MakeShinyCommand = new RelayCommand(MakeShiny, () => CanMakeShiny);
@@ -103,6 +104,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             foreach (var m in Moves)
                 m.RaiseAll();
             RaiseLegalMode();
+            RaiseHiddenPower();
         }
     }
     /// <summary>Ultima versao legal do Pokemon: para onde o modo legal volta quando uma mudanca o deixa ilegal.</summary>
@@ -119,9 +121,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     private void RaiseLegalMode()
     {
-        foreach (var p in (string[])[nameof(CanApply), nameof(ShowLegalModeBlock), nameof(ApplyTip), nameof(HasContestStats), nameof(ContestNote)])
+        foreach (var p in (string[])[nameof(CanApply), nameof(ShowLegalModeBlock), nameof(ApplyTip), nameof(HasContestStats), nameof(ContestNote), nameof(CanEditPokerus), nameof(PokerusNote)])
             Raise(p);
         ApplyCommand.NotifyCanExecuteChanged();
+        GivePokerusCommand.NotifyCanExecuteChanged();
     }
 
     private void Apply()
@@ -210,6 +213,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public IReadOnlyList<string> NatureList => CoreAdapter.NatureNames;
     public IReadOnlyList<StatViewModel> Stats { get; }
     public string Location { get; }
+    public bool HasQr => _pk is PK7 && _sav?.Generation == 7;
+    public Action<PK7>? ShowQr { get; set; }
+    public RelayCommand QrCommand => new(() => { if (HasQr && _pk is PK7 pk) ShowQr?.Invoke(pk.Clone()); });
     public int MaxIV => _pk.MaxIV;
     public int MaxEV => _pk.MaxEV;
 
@@ -1180,6 +1186,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         LegalityIssues = CoreAdapter.GetLegalityIssues(_pk); // ilegal: problemas; legal: avisos "Fishy"
         foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityIssues), nameof(HasLegalityIssues), nameof(HasWarnings), nameof(ShowLegalize), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
             Raise(p);
+        RefreshPokerus();
+        RaiseHiddenPower();
         RaiseLegalMode();
         GuardLegality();
         RefreshBalls();
@@ -1474,7 +1482,9 @@ public sealed class MoveSlotViewModel(Func<PKM> pk, int index, Func<IReadOnlyLis
         ? CombineTip(Tip, GameText.GetMoveWhere(CoreAdapter.MoveNames[Move], pk().Format, version?.Invoke() ?? pk().Version))
         : "Golpes em verde: aprende oficialmente (nível, TM, tutor, ovo ou encontro)";
     public RelayCommand ClearCommand => new(() => Move = 0);
-    private (string Name, uint Argb)? Type => CoreAdapter.GetMoveType((ushort)Move, pk().Context);
+    private (string Name, uint Argb)? Type => Move == (int)PKHeX.Core.Move.HiddenPower && pk().Format is >= 2 and <= 7
+        ? (CoreAdapter.GetHiddenPowerType(pk()).Name, CoreAdapter.GetHiddenPowerType(pk()).Argb)
+        : CoreAdapter.GetMoveType((ushort)Move, pk().Context);
     public string TypeName => Type?.Name ?? "";
     public Avalonia.Media.IBrush TypeBrush => new Avalonia.Media.SolidColorBrush(Type?.Argb ?? 0x00000000);
 

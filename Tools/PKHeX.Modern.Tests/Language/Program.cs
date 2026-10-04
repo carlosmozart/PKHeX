@@ -87,6 +87,18 @@ nick.Text = "Caixas"; Pump();
 var nickBox = nick.Text == "Caixas" ? nick : null;
 Check("TextBox não é traduzido", nickBox is not null);
 
+// Special Game tabs and QR are shared by desktop and Android.
+vm.CurrentPage = vm.Game; vm.Game.Tab = 5; Scan("Stored cards");
+var originalContent = win.Content;
+foreach (var version in new[] { GameVersion.SH, GameVersion.SL })
+{
+    var demo = BlankSaveFile.Get(version); CoreAdapter.Activate(demo);
+    var page = new GamePageViewModel((_, _, _) => System.Threading.Tasks.Task.FromResult(true), _ => { }); page.Load(demo); page.Tab = 6;
+    win.Content = new ContentControl { Content = page, Margin = new Thickness(16) }; Scan("Raids " + version);
+    if (version == GameVersion.SL) { page.RaidRegion = page.RaidRegions.Last(); Scan("Seven-star records"); }
+}
+win.Content = originalContent; vm.ShowPokemonQr(new PK7 { Species = 25 }); Scan("QR"); vm.CloseQr();
+
 File.WriteAllLines(Path.Combine(work, "missing.txt"), missing.Select(m => $"{m.Value}\t{m.Key.Replace("\n", "\n")}"));
 Console.WriteLine($"Textos em português na tela: {missing.Count} (lista em {Path.Combine(work, "missing.txt")})");
 foreach (var m in missing.Take(400)) Console.WriteLine($"  [{m.Value}] {m.Key.Replace("\n", "\n")}");

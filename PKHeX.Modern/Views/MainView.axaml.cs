@@ -53,6 +53,9 @@ public sealed partial class MainView : UserControl
             if (DataContext is not MainViewModel vm)
                 return;
             vm.SaveRequested += () => OnQuickSave(this, new RoutedEventArgs());
+            vm.Game.PickCardFile = PickCardFileAsync;
+            vm.Game.ExportCardFile = ExportCardFileAsync;
+            vm.SaveQrImage = SaveQrImageAsync;
             // Seletores de arquivo/pasta usados pela pagina Bank (pasta externa e outro save).
             if (SaveFolder is { } saveFolder)
             {
@@ -134,6 +137,11 @@ public sealed partial class MainView : UserControl
             return;
 
         // Pergunta aberta: Enter confirma, Esc cancela, o resto fica bloqueado.
+        if (vm.HasQr && vm.Dialog is null)
+        {
+            if (e.Key == Key.Escape) vm.CloseQr();
+            e.Handled = true; return;
+        }
         if (vm.Dialog is { } dialog)
         {
             if (e.Key is Key.Enter or Key.Return)

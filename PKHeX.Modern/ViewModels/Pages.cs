@@ -172,12 +172,12 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
     }
 }
 
-public sealed class PartyPageViewModel(Action<SlotViewModel> select) : SlotPageViewModel(select)
+public sealed partial class PartyPageViewModel(Action<SlotViewModel> select) : SlotPageViewModel(select)
 {
     private SaveFile? _sav;
     public override string Title => "Equipe";
     public override string Icon => "◉";
-    public override bool IsAvailable => _sav is null || CoreAdapter.GetPartyCount(_sav) > 0;
+    public override bool IsAvailable => _sav is null || CoreAdapter.GetPartyCount(_sav) > 0 || Daycares.All(_sav).Length > 0;
 
     public override void Load(SaveFile sav)
     {
@@ -191,6 +191,7 @@ public sealed class PartyPageViewModel(Action<SlotViewModel> select) : SlotPageV
         }
         SlotsLoaded?.Invoke();
         Raise(nameof(IsAvailable));
+        RefreshDaycare();
     }
 }
 

@@ -320,6 +320,23 @@
         <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" VerticalAlignment="Center"
                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Status}" />
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+          <Button x:Name="BoxFolderButton" Classes="small" Content="⋯" IsVisible="{Binding ShowBoxFolderActions}" ToolTip.Tip="Caixas em pasta">
+            <Button.Flyout>
+              <Flyout>
+                <StackPanel Spacing="8" MaxWidth="320">
+                  <TextBlock Text="Exportar caixas" Classes="section" />
+                  <CheckBox Content="Todas as caixas (desmarque para só esta caixa)" IsChecked="{Binding ExportAllBoxes}" />
+                  <CheckBox Content="Uma subpasta por caixa" IsChecked="{Binding BoxSubfolders}" />
+                  <Button Content="Exportar caixas para pasta..." Click="OnExportBoxFolder" />
+                  <TextBlock Text="Importar caixas" Classes="section" />
+                  <CheckBox Content="Da primeira caixa (desmarque para esta caixa)" IsChecked="{Binding ImportFirstBox}" />
+                  <CheckBox Content="Limpar as caixas antes" IsChecked="{Binding ClearImportBoxes}" />
+                  <CheckBox Content="Sobrescrever slots ocupados" IsChecked="{Binding OverwriteImportSlots}" />
+                  <Button Content="Importar pasta para as caixas..." Click="OnImportBoxFolder" />
+                </StackPanel>
+              </Flyout>
+            </Button.Flyout>
+          </Button>
           <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowSlotActions}">
           <Button Classes="small" Content="↶" FontSize="16" Padding="10,0" Command="{Binding UndoCommand}" ToolTip.Tip="{Binding UndoTip}" />
           <Button Classes="small" Content="↷" FontSize="16" Padding="10,0" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" />
@@ -340,6 +357,7 @@
           </StackPanel>
           <Button Classes="accent small" Content="Usar encontro" IsVisible="{Binding ShowEncounterActions}" IsEnabled="{Binding Encounters.HasDetail}" Command="{Binding Encounters.UseCommand}" CommandParameter="{Binding Encounters.Selected}" />
           <Button Classes="accent small" Content="Usar evento" IsVisible="{Binding ShowGiftActions}" IsEnabled="{Binding Gifts.HasDetail}" Command="{Binding Gifts.UseCommand}" CommandParameter="{Binding Gifts.Selected}" />
+          <Button Classes="small" Content="Adicionar ao save" IsVisible="{Binding ShowGiftActions}" IsEnabled="{Binding Game.HasCards}" Command="{Binding AddSelectedCardCommand}" ToolTip.Tip="Guarda o cartão selecionado para receber dentro do jogo" />
           <Button Classes="small" Content="Atualizar anexados" IsVisible="{Binding ShowBankActions}" Command="{Binding SyncAttachedCommand}" />
           <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowDexActions}">
             <Button Classes="small" Content="⟳  Atualizar Pokédex" Command="{Binding Pokedex.RefreshCommand}" />
@@ -354,6 +372,21 @@
     </Border>
 
     <!-- Pergunta dentro da janela (ConfirmAsync): cobre tudo e bloqueia cliques ate responder -->
+    <Border Grid.ColumnSpan="3" Grid.RowSpan="2" Classes="dialogBackdrop" IsVisible="{Binding HasQr}">
+      <Border Classes="card dialog" DataContext="{Binding Qr}" x:DataType="vm:QrPreviewViewModel" Width="500" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Spacing="12">
+          <TextBlock Text="{Binding Title}" Classes="title" />
+          <TextBlock Text="{Binding Note}" Classes="muted" TextWrapping="Wrap" />
+          <Border Background="White" Padding="12" HorizontalAlignment="Center">
+            <Image Source="{Binding Image}" Width="320" Height="320" Stretch="Uniform" />
+          </Border>
+          <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Content="Fechar" Command="{Binding CloseCommand}" />
+            <Button Content="Salvar imagem" Command="{Binding SaveCommand}" Classes="accent" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Border>
     <Border Grid.ColumnSpan="3" Grid.RowSpan="2" Classes="dialogBackdrop" IsVisible="{Binding HasDialog}">
       <Border Classes="card dialog" DataContext="{Binding Dialog}" x:DataType="vm:ConfirmDialogViewModel"
               HorizontalAlignment="Center" VerticalAlignment="Center" Width="520">

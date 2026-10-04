@@ -42,6 +42,7 @@
         <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="6">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <TextBlock Text="{Binding SpeciesName}" Classes="title" />
+            <Button Content="QR" Classes="small" Command="{Binding QrCommand}" IsVisible="{Binding HasQr}" />
             <Button Classes="genderToggle" Content="{Binding GenderSymbol}" Click="OnGenderClick" IsEnabled="{Binding CanToggleGender}"
                     VerticalAlignment="Center" ToolTip.Tip="{Binding GenderTip}" ToolTip.ShowOnDisabled="True" />
             <Button x:Name="ShinyStar" Classes="shinyStar" Classes.on="{Binding IsShiny}" Content="{Binding ShinySymbol}"
@@ -274,6 +275,19 @@
       <TabItem Header="Atributos">
         <StackPanel Spacing="12" Margin="0,12,0,0">
           <!-- Atributos -->
+          <Border Classes="card" IsVisible="{Binding HasHiddenPower}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Hidden Power" Classes="section" />
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Border Classes="chip" Background="{Binding HiddenPowerChip.Brush}" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding HiddenPowerChip.Name}" />
+                </Border>
+                <ComboBox ItemsSource="{Binding HiddenPowerTypes}" SelectedIndex="{Binding HiddenPowerType}" IsEnabled="{Binding CanChooseHiddenPower}" MinWidth="130" />
+                <TextBlock Text="{Binding HiddenPowerPower}" Classes="muted" VerticalAlignment="Center" />
+              </StackPanel>
+              <TextBlock Text="{Binding HiddenPowerNote}" Classes="muted" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
           <Border Classes="card">
             <StackPanel Spacing="6">
               <Grid ColumnDefinitions="*,Auto">
@@ -456,6 +470,24 @@
       </TabItem>
       <TabItem Header="Extras">
         <StackPanel Spacing="12" Margin="0,12,0,0">
+          <Border Classes="card" IsVisible="{Binding HasPokerus}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Pokérus" Classes="section" />
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <ComboBox ItemsSource="{Binding PokerusStates}" SelectedIndex="{Binding PokerusState}" IsEnabled="{Binding CanEditPokerus}" MinWidth="180" />
+                <Button Content="Dar Pokérus" Command="{Binding GivePokerusCommand}" />
+              </StackPanel>
+              <TextBlock Text="{Binding PokerusNote}" Classes="muted" TextWrapping="Wrap" />
+              <Expander Header="Avançado" HorizontalAlignment="Stretch">
+                <Grid ColumnDefinitions="Auto,*,Auto,*" ColumnSpacing="8" IsEnabled="{Binding CanEditPokerus}">
+                  <TextBlock Text="Cepa" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="0" Maximum="{Binding MaxPokerusStrain}" Value="{Binding PokerusStrain}" FormatString="0" />
+                  <TextBlock Grid.Column="2" Text="Dias" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="3" Minimum="0" Maximum="{Binding MaxPokerusDays}" Value="{Binding PokerusDays}" FormatString="0" />
+                </Grid>
+              </Expander>
+            </StackPanel>
+          </Border>
           <!-- Extras -->
           <Border Classes="card">
             <StackPanel>

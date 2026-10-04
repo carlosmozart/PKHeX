@@ -11,7 +11,7 @@ namespace PKHeX.Modern.ViewModels;
 /// Editores por jogo: flags de evento, valores de evento e recordes do save aberto. As alteracoes valem na hora
 /// (como no Treinador) e marcam o save como alterado; exporte o save para gravar no arquivo.
 /// </summary>
-public sealed class GamePageViewModel : PageViewModel
+public sealed partial class GamePageViewModel : PageViewModel
 {
     private readonly Func<string, string, string, Task<bool>> _confirm;
     private readonly Action<string> _status;
@@ -47,6 +47,8 @@ public sealed class GamePageViewModel : PageViewModel
     {
         _editors = new GameEditors(sav);
         _sav = sav;
+        RefreshCards();
+        RefreshRaids();
         FameCaps = HallOfFame.Caps(sav);
         SpeciesOptions = [.. Enumerable.Range(1, FameCaps.MaxSpecies).Select(i => GameInfo.Strings.Species[i])];
         SelectedFameMember = null;
@@ -101,6 +103,8 @@ public sealed class GamePageViewModel : PageViewModel
             Raise(nameof(IsRecordsTab));
             Raise(nameof(IsShortcutsTab));
             Raise(nameof(IsFameTab));
+            Raise(nameof(IsCardsTab));
+            Raise(nameof(IsRaidsTab));
             Raise(nameof(ShowFilters));
             Raise(nameof(ShowCategory));
             ApplyFilter();
@@ -177,7 +181,7 @@ public sealed class GamePageViewModel : PageViewModel
                 break;
         }
         CountText = shown == total ? $"{total} itens" : $"{shown} de {total} itens";
-        HasNoRows = shown == 0 && _tab != 4; // Hall da Fama vazio tem o proprio aviso
+        HasNoRows = shown == 0 && _tab < 4; // As abas especiais tem seus proprios avisos.
         foreach (var p in (string[])[nameof(FlagRows), nameof(WorkRows), nameof(RecordRows), nameof(CountText), nameof(HasNoRows)])
             Raise(p);
     }

@@ -8,6 +8,20 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+- Jogo: raids de Sword/Shield e Scarlet/Violet por região, seed, tipo, estrelas disponíveis, flags de Watts/LP e registros de 7 estrelas. Ativar/desativar a região pede confirmação; a seed não é pesquisada por Pokémon.
+
+- QR: código da Gen 7 no editor, sobreposição e exportação PNG pelo seletor, sem System.Drawing. Cartões Gen 6/7 podem gerar QR no formato do PKHeX.
+
+- Equipe: creche com edição de Pokémon, depositar/retirar com desfazer, ovo pronto, experiência e seed conforme o jogo. Inclui as duas creches de OR/AS e SW/SH.
+
+- Jogo: cartões de evento armazenados, importação/exportação, inclusão do evento selecionado, exclusão e flags de recebido. Tratamento de PCD/PGT e Lock Capsule na Gen 4; registros WR7 em Let's Go.
+
+- Caixas: exportar e importar pastas pelo botão ⋯, com conversão, confirmação, legalização do lote, recusas detalhadas e um passo de desfazer. Suporte a subpastas e seletor Android.
+
+- Editor: tipo e poder de Hidden Power na Gen 2–7, ajuste de IVs e validação de legalidade; o golpe mostra o tipo calculado.
+
+- Editor: Pokérus na aba Extras, com estado, cepa, dias e proteção do modo legal, também no Android.
+
 ### 📱 Android
 - A pasta de saves funciona com todos os saves da pasta escolhida. Se você escolheu a pasta antes da 0.4.10, toque em “Escolher pasta...” e escolha de novo (essas versões não guardavam a escolha).
 

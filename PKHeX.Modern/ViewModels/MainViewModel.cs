@@ -7,7 +7,7 @@ using PKHeX.Modern.Services;
 
 namespace PKHeX.Modern.ViewModels;
 
-public sealed class MainViewModel : ViewModelBase
+public sealed partial class MainViewModel : ViewModelBase
 {
     private SaveFile? _sav;
     private SlotHistory? _history;
@@ -36,6 +36,10 @@ public sealed class MainViewModel : ViewModelBase
             Settings.Save();
         });
         Party = new PartyPageViewModel(s => _ = SelectSlotAsync(s));
+        Party.EditDaycare = EditDaycareAsync;
+        Party.DepositDaycare = DepositDaycareAsync;
+        Party.WithdrawDaycare = WithdrawDaycareAsync;
+        Party.DaycareStatus = s => Status = s;
         Boxes = new BoxesPageViewModel(s => _ = SelectSlotAsync(s)) { Party = Party };
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
         SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p), (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s)
@@ -79,6 +83,13 @@ public sealed class MainViewModel : ViewModelBase
             p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
         Batch = new BatchPageViewModel(GetBatchTargets, () => _sav, ApplyBatchAsync);
         Game = new GamePageViewModel((t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true, icon: "🎮"), s => Status = s);
+        Game.ShowCardQr = ShowCardQr;
+        AddSelectedCardCommand = new RelayCommand(() =>
+        {
+            if (Gifts.Selected?.Encounter is DataMysteryGift gift && Game.AddCard(gift)) CurrentPage = Game;
+        }, () => Game.HasCards && Gifts.Selected?.Encounter is DataMysteryGift);
+        Gifts.PropertyChanged += (_, _) => AddSelectedCardCommand.NotifyCanExecuteChanged();
+        Game.PropertyChanged += (_, _) => AddSelectedCardCommand.NotifyCanExecuteChanged();
         var bag = new BagPageViewModel(s => Status = s);
         AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), bag, Encounters, Gifts, SaveManager, Game, Search, Batch];
         // Atalhos da pagina Jogo podem dar itens (Member Card, Colorful Screws...) e liberar a Pokedex Nacional
@@ -140,6 +151,7 @@ public sealed class MainViewModel : ViewModelBase
     public SearchPageViewModel Search { get; }
     public BatchPageViewModel Batch { get; }
     public GamePageViewModel Game { get; }
+    public RelayCommand AddSelectedCardCommand { get; }
     public GiftDbViewModel Gifts { get; }
     /// <summary>Ajuda (F1): funcoes, novidades, Sobre e verificacao de atualizacoes.</summary>
     public HelpPageViewModel Help { get; }
@@ -440,7 +452,7 @@ public sealed class MainViewModel : ViewModelBase
     public BagPageViewModel? ActionBag => !IsHelpOpen ? CurrentPage as BagPageViewModel : null;
     private void RaiseActionBar()
     {
-        foreach (var property in new[] { nameof(ShowSlotActions), nameof(ShowSaveActions), nameof(ShowSaveManagerActions), nameof(ShowEncounterActions), nameof(ShowGiftActions), nameof(ShowBankActions), nameof(ShowDexActions), nameof(ActionBag) }) Raise(property);
+        foreach (var property in new[] { nameof(ShowBoxFolderActions), nameof(ShowSlotActions), nameof(ShowSaveActions), nameof(ShowSaveManagerActions), nameof(ShowEncounterActions), nameof(ShowGiftActions), nameof(ShowBankActions), nameof(ShowDexActions), nameof(ActionBag) }) Raise(property);
     }
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
     /// <summary>Selo do jogo aberto (Pokemon da capa nas cores da versao), no cartao da barra lateral.</summary>
@@ -2181,7 +2193,7 @@ public sealed class MainViewModel : ViewModelBase
             applied?.Invoke(pk);
             RaiseSelectionChanged();
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
-        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab, Confirm = (t, m, ok) => ConfirmAsync(t, m, ok) };
+        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab, ShowQr = ShowPokemonQr, Confirm = (t, m, ok) => ConfirmAsync(t, m, ok) };
     }
 }
 

@@ -356,6 +356,12 @@ public static class CoreAdapter
     }
 
     // Golpes por indice (0-3): o PKM so expoe Move1..Move4 e seus PP.
+    public static ViewModels.TypeChip GetHiddenPowerType(PKM pk)
+    {
+        var type = (byte)(pk.HPType + 1);
+        return new(GameInfo.Strings.types[type], (uint)Drawing.PokeSprite.TypeColor.GetTypeSpriteColor(type).ToArgb());
+    }
+
     public static ushort GetMove(PKM pk, int i) => i switch { 0 => pk.Move1, 1 => pk.Move2, 2 => pk.Move3, _ => pk.Move4 };
     public static void SetMove(PKM pk, int i, ushort move)
     {
