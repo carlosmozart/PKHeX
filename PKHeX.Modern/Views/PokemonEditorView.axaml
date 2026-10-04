@@ -274,6 +274,19 @@
       <TabItem Header="Atributos">
         <StackPanel Spacing="12" Margin="0,12,0,0">
           <!-- Atributos -->
+          <Border Classes="card" IsVisible="{Binding HasHiddenPower}">
+            <StackPanel Spacing="8">
+              <TextBlock Text="Hidden Power" Classes="section" />
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Border Classes="chip" Background="{Binding HiddenPowerChip.Brush}" VerticalAlignment="Center">
+                  <TextBlock Text="{Binding HiddenPowerChip.Name}" />
+                </Border>
+                <ComboBox ItemsSource="{Binding HiddenPowerTypes}" SelectedIndex="{Binding HiddenPowerType}" IsEnabled="{Binding CanChooseHiddenPower}" MinWidth="130" />
+                <TextBlock Text="{Binding HiddenPowerPower}" Classes="muted" VerticalAlignment="Center" />
+              </StackPanel>
+              <TextBlock Text="{Binding HiddenPowerNote}" Classes="muted" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
           <Border Classes="card">
             <StackPanel Spacing="6">
               <Grid ColumnDefinitions="*,Auto">

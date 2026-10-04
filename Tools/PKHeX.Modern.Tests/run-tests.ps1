@@ -8,6 +8,7 @@ $saves = Join-Path $root 'saves'
 if ($env:PKHEX_TEST_SAVES) { $saves = $env:PKHEX_TEST_SAVES }
 # nome usado pelo teste -> arquivo em saves/
 $suites = [ordered]@{
+    'HiddenPower' = @{ 'fr.sav' = 'fire red.sav'; 'y.sav' = 'Pokemon Y'; 'cr.sav' = 'Pokemon Crystal Version.sav' }
     'Pokerus' = @{ 'fr.sav' = 'fire red.sav'; 'moon.sav' = 'moon.sav' }
     'Android' = @{}
     # Sprites do porte x PKHeX original (System.Drawing), pixel a pixel; le os saves de saves/ direto, so em memoria

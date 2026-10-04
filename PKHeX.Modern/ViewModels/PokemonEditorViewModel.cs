@@ -104,6 +104,7 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
             foreach (var m in Moves)
                 m.RaiseAll();
             RaiseLegalMode();
+            RaiseHiddenPower();
         }
     }
     /// <summary>Ultima versao legal do Pokemon: para onde o modo legal volta quando uma mudanca o deixa ilegal.</summary>
@@ -1183,6 +1184,7 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
         foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityIssues), nameof(HasLegalityIssues), nameof(HasWarnings), nameof(ShowLegalize), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
             Raise(p);
         RefreshPokerus();
+        RaiseHiddenPower();
         RaiseLegalMode();
         GuardLegality();
         RefreshBalls();
@@ -1477,7 +1479,9 @@ public sealed class MoveSlotViewModel(Func<PKM> pk, int index, Func<IReadOnlyLis
         ? CombineTip(Tip, GameText.GetMoveWhere(CoreAdapter.MoveNames[Move], pk().Format, version?.Invoke() ?? pk().Version))
         : "Golpes em verde: aprende oficialmente (nível, TM, tutor, ovo ou encontro)";
     public RelayCommand ClearCommand => new(() => Move = 0);
-    private (string Name, uint Argb)? Type => CoreAdapter.GetMoveType((ushort)Move, pk().Context);
+    private (string Name, uint Argb)? Type => Move == (int)PKHeX.Core.Move.HiddenPower && pk().Format is >= 2 and <= 7
+        ? (CoreAdapter.GetHiddenPowerType(pk()).Name, CoreAdapter.GetHiddenPowerType(pk()).Argb)
+        : CoreAdapter.GetMoveType((ushort)Move, pk().Context);
     public string TypeName => Type?.Name ?? "";
     public Avalonia.Media.IBrush TypeBrush => new Avalonia.Media.SolidColorBrush(Type?.Argb ?? 0x00000000);
 
