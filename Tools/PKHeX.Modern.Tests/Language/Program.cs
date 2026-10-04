@@ -90,10 +90,10 @@ Check("TextBox não é traduzido", nickBox is not null);
 // Special Game tabs and QR are shared by desktop and Android.
 vm.CurrentPage = vm.Game; vm.Game.Tab = 5; Scan("Stored cards");
 var originalContent = win.Content;
-foreach (var version in new[] { GameVersion.SH, GameVersion.SL })
+foreach (var version in new[] { GameVersion.SH, GameVersion.SL, GameVersion.E })
 {
     var demo = BlankSaveFile.Get(version); CoreAdapter.Activate(demo);
-    var page = new GamePageViewModel((_, _, _) => System.Threading.Tasks.Task.FromResult(true), _ => { }); page.Load(demo); page.Tab = 6;
+    var page = new GamePageViewModel((_, _, _) => System.Threading.Tasks.Task.FromResult(true), _ => { }); page.Load(demo); page.Tab = version == GameVersion.E ? 7 : 6;
     win.Content = new ContentControl { Content = page, Margin = new Thickness(16) }; Scan("Raids " + version);
     if (version == GameVersion.SL) { page.RaidRegion = page.RaidRegions.Last(); Scan("Seven-star records"); }
 }

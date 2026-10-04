@@ -1506,5 +1506,14 @@
   "Raids de {0} ativadas": "Raids in {0} activated",
   "Raids de {0} desativadas": "Raids in {0} deactivated",
   "Seed atual de {0}": "Current seed in {0}",
-  "Seed de amanhã de {0}": "Tomorrow's seed in {0}"
+  "Seed de amanhã de {0}": "Tomorrow's seed in {0}",
+  "Relógio da Gen 3": "Gen 3 clock",
+  "Relógio": "Clock",
+  "Relógio inicial": "Initial clock",
+  "Relógio decorrido": "Elapsed clock",
+  "Corrigir relógio parado": "Fix stopped clock",
+  "Avançar 1 dia": "Advance 1 day",
+  "O relógio já atingiu o limite de dias.": "The clock has reached its day limit.",
+  "O relógio da bateria do cartucho controla frutas, maré e eventos diários. Corrigir relógio parado avança o relógio decorrido para pelo menos 734 dias, como o PKHeX; não muda a hora do aparelho. Salvar grava a edição.": "The cartridge battery clock controls berries, tides and daily events. Fix stopped clock advances the elapsed clock to at least 734 days, as PKHeX does; it does not change the device time. Save writes the edit.",
+  "Jogo → Relógio aparece em Ruby, Sapphire e Emerald. Edite dias, horas, minutos e segundos dos relógios inicial e decorrido. Corrigir relógio parado aplica a correção do PKHeX, avançando o decorrido para pelo menos 734 dias; Avançar 1 dia ajuda nos eventos diários. A hora do aparelho não muda. Cada alteração pode ser desfeita na página Jogo. Salvar grava o arquivo.": "Game → Clock appears in Ruby, Sapphire and Emerald. Edit days, hours, minutes and seconds for the initial and elapsed clocks. Fix stopped clock applies PKHeX's correction by advancing the elapsed clock to at least 734 days; Advance 1 day helps with daily events. The device time stays the same. Each change can be undone in Game. Save writes the file."
 }

@@ -791,7 +791,7 @@
         <TextBlock Text="Este jogo não tem a lista de nomes das flags no PKHeX: elas aparecem só pelo número." Classes="muted" FontSize="12"
                    IsVisible="{Binding NoLabels}" TextWrapping="Wrap" />
       </StackPanel>
-      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,10">
+      <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,10" ItemSpacing="6" LineSpacing="6">
         <Button Classes="small" Classes.accent="{Binding IsFlagsTab}" Content="⚑  Flags de evento" IsVisible="{Binding HasEvents}"
                 Command="{Binding SetTabCommand}" CommandParameter="0" ToolTip.Tip="Liga/desliga: itens escondidos já pegos, treinadores vencidos, pontos de voo, eventos da história..." />
         <Button Classes="small" Classes.accent="{Binding IsWorksTab}" Content="#  Valores de evento" IsVisible="{Binding HasWorks}"
@@ -804,7 +804,8 @@
                 Command="{Binding SetTabCommand}" CommandParameter="4" ToolTip.Tip="As equipes que venceram a Liga, como o jogo guardou" />
         <Button Classes="small" Classes.accent="{Binding IsCardsTab}" Content="🎁 Cartões" IsVisible="{Binding HasCards}" Command="{Binding SetTabCommand}" CommandParameter="5" />
         <Button Classes="small" Classes.accent="{Binding IsRaidsTab}" Content="⚔ Raids" IsVisible="{Binding HasRaids}" Command="{Binding SetTabCommand}" CommandParameter="6" />
-      </StackPanel>
+        <Button Classes="small" Classes.accent="{Binding IsClockTab}" Content="⏰ Relógio" IsVisible="{Binding HasClock}" Command="{Binding SetTabCommand}" CommandParameter="7" />
+      </WrapPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8" IsVisible="{Binding ShowFilters}">
         <TextBox Text="{Binding Query}" Watermark="Buscar pelo nome ou número (ex.: surf, #120)" />
         <ComboBox Grid.Column="1" ItemsSource="{Binding Categories}" SelectedIndex="{Binding CategoryIndex}" MinWidth="190"
@@ -1049,9 +1050,34 @@
             </ScrollViewer>
           </Grid>
         </DockPanel>
+        <ScrollViewer IsVisible="{Binding IsClockTab}">
+          <StackPanel Spacing="16">
+            <TextBlock Text="{Binding ClockNote}" Classes="muted" TextWrapping="Wrap" />
+            <WrapPanel>
+              <Button Content="Corrigir relógio parado" Command="{Binding FixClockCommand}" Classes="small" Margin="0,0,8,0" />
+              <Button Content="Avançar 1 dia" Command="{Binding AdvanceClockCommand}" Classes="small" />
+            </WrapPanel>
+            <ContentControl Content="{Binding InitialClock}" />
+            <ContentControl Content="{Binding ElapsedClock}" />
+          </StackPanel>
+        </ScrollViewer>
         <TextBlock Text="Nada com esses filtros." Classes="muted" IsVisible="{Binding HasNoRows}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>
     </DockPanel>
+  </DataTemplate>
+
+  <DataTemplate DataType="vm:RtcClockViewModel">
+    <Border Classes="card" Padding="16">
+      <StackPanel Spacing="10">
+        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+        <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
+          <StackPanel Spacing="4"><TextBlock Text="Dias" Classes="muted" /><NumericUpDown Value="{Binding Day}" Minimum="0" Maximum="65535" FormatString="0" /></StackPanel>
+          <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="Horas" Classes="muted" /><NumericUpDown Value="{Binding Hour}" Minimum="0" Maximum="23" FormatString="0" /></StackPanel>
+          <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Minutos" Classes="muted" /><NumericUpDown Value="{Binding Minute}" Minimum="0" Maximum="59" FormatString="0" /></StackPanel>
+          <StackPanel Grid.Column="3" Spacing="4"><TextBlock Text="Segundos" Classes="muted" /><NumericUpDown Value="{Binding Second}" Minimum="0" Maximum="59" FormatString="0" /></StackPanel>
+        </Grid>
+      </StackPanel>
+    </Border>
   </DataTemplate>
 
   <DataTemplate DataType="vm:BatchPageViewModel">
