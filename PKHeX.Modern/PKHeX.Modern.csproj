@@ -42,7 +42,7 @@
     <EmbeddedResource Include="Assets\lang\*.json" LogicalName="lang.%(Filename).json" />
   </ItemGroup>
   <ItemGroup>
-    <!-- Fonte do tema Pixel (Pixelify Sans, SIL Open Font License 1.1: Assets/Fonts/OFL.txt) -->
+    <!-- Fonte do tema Pixel (Pixelify Sans, OFL: Assets/Fonts/OFL.txt) e simbolos/emoji do Android (Noto Sans Symbols 2 e Noto Emoji, OFL: Assets/Fonts/OFL-Noto.txt) -->
     <AvaloniaResource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
 </Project>

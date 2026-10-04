@@ -3,6 +3,18 @@
 Interface alternativa para o [PKHeX](https://github.com/kwsch/PKHeX), feita em **Avalonia + Fluent**, com tema escuro e claro e interface em **português** ou **inglês**.
 Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos originais: as regras de save, legalidade e encontros são as mesmas do PKHeX, e as atualizações do PKHeX oficial entram por merge sem conflitos.
 
+**Roda no Windows, Linux, macOS e Android.** O PKHeX original é só para Windows; aqui o mesmo app, com a mesma interface, funciona nos quatro sistemas, sem precisar instalar o .NET.
+
+| Sistema | Pacote |
+|---|---|
+| Windows 10/11 (64 bits) | `PKHeX.Modern-win-x64.zip` |
+| Linux x64 (também Steam Deck) | `PKHeX.Modern-linux-x64.zip` |
+| macOS 14+ com Apple Silicon (M1, M2...) | `PKHeX.Modern-osx-arm64.zip` |
+| macOS 14+ com Intel | `PKHeX.Modern-osx-x64.zip` |
+| Android 6+ | `PKHeX.Modern-Android.apk` |
+
+Todos estão na [versão mais recente](https://github.com/carlosmozart/PKHeX/releases/latest); veja como instalar em [Download](#download).
+
 ![Início](docs/home.png)
 
 ![Caixas e editor](docs/boxes.png)
@@ -29,9 +41,15 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | **Tema Z-A (Lumiose)** | |
 | ![Tema Z-A](docs/theme_za.png) | |
 
-Capturas da versão **0.3.8**, geradas em modo headless com saves sintéticos.
+**No Android**, com a tela deitada (a mesma interface do desktop):
+
+![PKHeX Modern no Android](docs/android.png)
+
+Capturas do desktop da versão **0.3.8**, geradas em modo headless com saves sintéticos; a do Android é de um celular de verdade.
 
 ## Download
+
+### Windows
 
 Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/carlosmozart/PKHeX/releases/latest) (as novidades de cada versão estão na página de [Releases](https://github.com/carlosmozart/PKHeX/releases)), extraia e abra o `PKHeX.Modern.exe`.
 É um único executável para Windows 10/11 (64 bits) e **não precisa do .NET instalado**. Na primeira execução ele demora alguns segundos a mais, porque extrai as bibliotecas nativas.
@@ -195,6 +213,15 @@ sai sem ícone. O executável deve aparecer em `PKHeX.Modern.Desktop/bin/publish
 do empacotamento. O empacotamento local de macOS fora de um Mac não gera `.icns`.
 
 A cada push no branch `modern-ui`, o GitHub Actions gera os quatro pacotes (aba Actions). Uma tag `modern-v*` cria a Release após os quatro builds e os testes Windows passarem. Os testes headless de Linux/macOS ainda são informativos (`continue-on-error`).
+
+APK do Android (precisa do workload `android`, do Android SDK com a plataforma 36 e do JDK 21; detalhes em [PKHeX.Modern.Android/README.md](../PKHeX.Modern.Android/README.md)):
+
+```bash
+dotnet workload install android
+dotnet build PKHeX.Modern.Android -c Release
+```
+
+O workflow `modern-android.yml` compila o APK a cada push. Rodado à mão com `signed_release=true` e `release_tag=modern-vX.Y.Z`, ele assina com a chave do projeto (secrets `ANDROID_*`) e anexa o APK à release.
 
 ## Arquitetura
 

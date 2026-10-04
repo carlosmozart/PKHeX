@@ -10,6 +10,8 @@ namespace PKHeX.Modern;
 public sealed class App : Application
 {
     public static System.Action? MobileExit { get; set; }
+    /// <summary>Atalhos de teclado na interface (coluna Ctrl+N, botao ⌨); falso no Android, que e por toque.</summary>
+    public static bool ShowShortcuts { get; set; } = true;
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -60,6 +62,7 @@ public sealed class App : Application
             var vm = new MainViewModel(settings);
             Services.CrashLog.Install(msg => vm.Status = msg);
             MainView.Documents = new Services.MobileDocuments(root);
+            ShowShortcuts = false;
             mobile.MainView = new MobileShell(vm);
         }
         base.OnFrameworkInitializationCompleted();

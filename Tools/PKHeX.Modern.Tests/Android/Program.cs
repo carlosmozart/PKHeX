@@ -97,6 +97,14 @@ foreach (var page in vm.Pages.Where(p => p != vm.SaveManager && p != vm.Batch))
 }
 vm.CurrentPage = vm.Boxes; Dispatcher.UIThread.RunJobs(); window.UpdateLayout(); AvaloniaHeadlessPlatform.ForceRenderTimerTick(3);
 window.CaptureRenderedFrame()?.Save(Path.Combine(artifactRoot, "android-landscape.png"));
+// Fontes de simbolos do Android (MainActivity.FontFallbacks): os nomes precisam achar os arquivos embutidos.
+foreach (var (family, text) in new[] { ("Noto Sans Symbols 2", "⭳⭱⌨◐"), ("Noto Emoji", "🗑💾❔🔍♂♀") })
+{
+    var tf = new Avalonia.Media.Typeface(new Avalonia.Media.FontFamily("avares://PKHeX.Modern.UI/Assets/Fonts#" + family));
+    var ok = Avalonia.Media.FontManager.Current.TryGetGlyphTypeface(tf, out var glyphs) && glyphs!.FamilyName == family;
+    var missing = ok ? string.Concat(text.EnumerateRunes().Where(r => !glyphs!.TryGetGlyph((uint)r.Value, out var g) || g == 0)) : "(fonte nao carregou)";
+    Check($"fonte embutida {family} {missing}", missing.Length == 0);
+}
 window.Close();
 Console.WriteLine(failures == 0 ? "TUDO OK" : $"{failures} falhas");
 return failures == 0 ? 0 : 1;

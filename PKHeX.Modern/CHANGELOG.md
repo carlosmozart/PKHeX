@@ -6,6 +6,18 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.8 — 2026-10-03
+
+### 📱 Android
+- Os símbolos ♂/♀ e os ícones dos botões (Criar, Importar, Excluir, Exportar...) apareciam como "≣" no Android. Agora o app traz as fontes desses símbolos (Noto Sans Symbols 2 e Noto Emoji), sem depender das fontes do celular.
+- Voltaram a funcionar no Android: clicar num resultado da busca, abrir um save pelo Save Manager, o painel do Bank, "Atualizar anexados", "Voltar" na Ajuda e a cor de destaque.
+- A lista de páginas da barra lateral não deixa mais uma linha desenhada por cima das outras ao rolar.
+- No Android não aparecem mais os atalhos de teclado (coluna Ctrl+N, botão ⌨, "(Ctrl+F)" na busca e a seção Atalhos da Ajuda).
+
+### ✨ Ajustes
+- O botão Ajuda da barra lateral ficou só com o texto, sem cortar em telas estreitas.
+- O README mostra os sistemas suportados (Windows, Linux, macOS e Android) e um print do app no celular.
+
 ## 0.4.7 — 2026-10-03
 
 ### 📱 Android

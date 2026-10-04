@@ -1,6 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:PKHeX.Modern.Views"
              xmlns:vm="using:PKHeX.Modern.ViewModels"
+             xmlns:local="using:PKHeX.Modern"
              x:Class="PKHeX.Modern.Views.MainView"
              x:DataType="vm:MainViewModel"
              Background="{DynamicResource AppBackground}"
@@ -93,9 +95,9 @@
           </ToggleButton>
           <!-- Ajuda, atalhos, claro/escuro e preferencias (tema, cor, idioma, abrir ultimo) numa linha -->
           <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="2">
-            <Button Classes="ghost small" HorizontalAlignment="Stretch" Content="❔  Ajuda" Command="{Binding OpenHelpCommand}"
+            <Button Classes="ghost small" HorizontalAlignment="Stretch" Content="Ajuda" Command="{Binding OpenHelpCommand}"
                     ToolTip.Tip="Todas as funções explicadas, o que mudou em cada versão e Sobre (F1)" />
-            <Button Grid.Column="1" Classes="ghost small" Content="⌨"
+            <Button Grid.Column="1" Classes="ghost small" Content="⌨" IsVisible="{x:Static local:App.ShowShortcuts}"
                     ToolTip.Tip="Atalhos do teclado&#10;Ctrl+F buscar · Q / E trocar página&#10;Esc voltar · Del excluir&#10;Ctrl+clique seleciona vários&#10;Ctrl+Z desfazer · Ctrl+Y refazer&#10;Ctrl+O abrir · Ctrl+S salvar" />
             <Button Grid.Column="2" Classes="ghost small" Content="◐" Command="{Binding ToggleThemeCommand}" ToolTip.Tip="Alternar tema claro/escuro" />
             <Button Grid.Column="3" x:Name="PrefsButton" Classes="ghost small" Content="⚙" ToolTip.Tip="Aparência e preferências: tema, cor de destaque, idioma e abrir o último save ao iniciar">
@@ -128,7 +130,7 @@
                       <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:AccentOptionViewModel">
                           <Button Classes="accentDot" Classes.selected="{Binding IsSelected}" Background="{Binding Brush}"
-                                  ToolTip.Tip="{Binding Name}" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SetAccentCommand}"
+                                  ToolTip.Tip="{Binding Name}" Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).SetAccentCommand}"
                                   CommandParameter="{Binding}" />
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
@@ -165,7 +167,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:SearchHitViewModel">
                   <Button Classes="ghost searchHit" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                          Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).GoToSearchHitCommand}"
+                          Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).GoToSearchHitCommand}"
                           CommandParameter="{Binding}" ToolTip.Tip="{Binding Reason}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
                       <Image Source="{Binding Sprite}" Width="28" Height="28" />
@@ -197,7 +199,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:SaveEntryViewModel">
                   <Button Classes="ghost sideSave" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
-                          Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SaveManager.OpenCommand}" CommandParameter="{Binding}"
+                          Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).SaveManager.OpenCommand}" CommandParameter="{Binding}"
                           ToolTip.Tip="{Binding Path}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                       <Border Classes="gameBadge" Width="30" Height="30" CornerRadius="6" Background="{Binding Art.Background}">
@@ -222,12 +224,17 @@
         </DockPanel>
         <ListBox Classes="nav" IsVisible="{Binding HasSave}" ItemsSource="{Binding Pages}"
                  SelectedItem="{Binding CurrentPage}" Background="Transparent">
+          <!-- Sem virtualizacao: sao poucas paginas, e no Android a linha reciclada ficava desenhada por cima ao rolar -->
+          <ListBox.ItemsPanel>
+            <ItemsPanelTemplate><StackPanel /></ItemsPanelTemplate>
+          </ListBox.ItemsPanel>
           <ListBox.ItemTemplate>
             <DataTemplate x:DataType="vm:PageViewModel">
               <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
                 <TextBlock Text="{Binding Icon}" Width="20" TextAlignment="Center" />
                 <TextBlock Grid.Column="1" Text="{Binding Title}" />
-                <TextBlock Grid.Column="2" Text="{Binding Shortcut}" Classes="muted" FontSize="10" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2" Text="{Binding Shortcut}" Classes="muted" FontSize="10" VerticalAlignment="Center"
+                           IsVisible="{x:Static local:App.ShowShortcuts}" />
               </Grid>
             </DataTemplate>
           </ListBox.ItemTemplate>
@@ -271,7 +278,7 @@
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <Button Classes="tabNew" Content="＋" Command="{Binding NewTabCommand}"
+            <Button Classes="tabNew" Content="+" Command="{Binding NewTabCommand}"
                     ToolTip.Tip="Abrir outro save numa aba nova (escolha no Save Manager, Ctrl+O ou arraste o arquivo). Ctrl+Tab troca de aba." />
           </StackPanel>
         </ScrollViewer>
@@ -318,7 +325,7 @@
           <Button Classes="small" Content="↷" FontSize="16" Padding="10,0" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" />
           <Button Classes="small good" Content="✓  Verificar legalidade" Command="{Binding CheckLegalityCommand}"
                   ToolTip.Tip="Verifica todos os Pokémon do save (caixas e equipe) e mostra o resultado" />
-          <Button Classes="small info" Content="＋  Criar PKM" Command="{Binding CreateCommand}"
+          <Button Classes="small info" Content="+  Criar PKM" Command="{Binding CreateCommand}"
                   ToolTip.Tip="Novo Pokémon no primeiro slot vazio da caixa" />
           <Button Classes="small" Content="⭳  Importar" Click="OnImportEntity"
                   ToolTip.Tip="Importa um arquivo .pk* para o slot selecionado (ou o primeiro vazio)" />

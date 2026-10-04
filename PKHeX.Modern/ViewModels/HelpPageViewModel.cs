@@ -46,9 +46,11 @@ public sealed class HelpPageViewModel : PageViewModel
     private void ApplyFilter()
     {
         var f = Normalize(_filter.Trim());
+        // Atalhos de teclado so no desktop; a secao Android so no Android.
+        var all = HelpContent.Sections.Where(s => s.Title != (App.ShowShortcuts ? "Android" : "Atalhos")).ToArray();
         Sections = f.Length == 0
-            ? HelpContent.Sections
-            : [.. HelpContent.Sections
+            ? all
+            : [.. all
                 .Select(s => Normalize($"{s.Title} {Loc.T(s.Title)}").Contains(f) ? s : s with { Items = [.. s.Items.Where(i => Normalize($"{i.Title} {i.Text} {i.Shortcut} {Loc.T(i.Title)} {Loc.T(i.Text)}").Contains(f))] })
                 .Where(s => s.Items.Count > 0)];
         Raise(nameof(Sections));

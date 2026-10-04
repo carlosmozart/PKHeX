@@ -27,6 +27,8 @@ public sealed partial class MainView : UserControl
     {
         InitializeComponent();
         _drag = new SlotDragController(this, () => VM);
+        if (!App.ShowShortcuts)
+            SearchBox.Watermark = Loc.T("🔍  Buscar");
         // Ctrl+Tab / Ctrl+Shift+Tab trocam de aba de save (em tunel: o Tab normal e consumido pela navegacao de foco).
         AddHandler(KeyDownEvent, (_, e) =>
         {

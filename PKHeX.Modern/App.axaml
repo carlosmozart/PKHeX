@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:PKHeX.Modern.Views"
              xmlns:vm="using:PKHeX.Modern.ViewModels"
              xmlns:v="using:PKHeX.Modern.Views"
              xmlns:c="using:PKHeX.Modern.Controls"
@@ -239,8 +240,8 @@
               <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Banks}" SelectedItem="{Binding SelectedBank}"
                         ToolTip.Tip="Banco (cada banco tem as suas caixas)" />
               <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
-                <Button Classes="small" Content="＋" Command="{Binding NewBankCommand}" ToolTip.Tip="Novo banco" />
-                <Button Classes="small" Content="📁＋" Command="{Binding AddFolderCommand}"
+                <Button Classes="small" Content="+" Command="{Binding NewBankCommand}" ToolTip.Tip="Novo banco" />
+                <Button Classes="small" Content="📁+" Command="{Binding AddFolderCommand}"
                         ToolTip.Tip="Usar uma pasta com arquivos .pk* como banco (ex.: a pasta de Pokémon do PKHeX). Os arquivos ficam onde estão." />
                 <Button Classes="small" Content="✎" Command="{Binding RenameBankCommand}" IsVisible="{Binding IsLocal}" ToolTip.Tip="Renomear banco" />
                 <Button Classes="small danger" Content="🗑" Command="{Binding DeleteBankCommand}" IsVisible="{Binding IsLocal}" ToolTip.Tip="Excluir banco (e todas as caixas dele)" />
@@ -255,7 +256,7 @@
               <Button Grid.Column="2" Classes="boxArrow" Content="›" FontSize="16" Command="{Binding NextBoxCommand}"
                       ToolTip.Tip="Próxima caixa (arraste um Pokémon até aqui para trocar de caixa)" />
               <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsLocal}">
-                <Button Classes="small" Content="＋ Caixa" Command="{Binding NewBoxCommand}" ToolTip.Tip="Nova caixa neste banco" />
+                <Button Classes="small" Content="+ Caixa" Command="{Binding NewBoxCommand}" ToolTip.Tip="Nova caixa neste banco" />
                 <Button Classes="small" Content="✎" Command="{Binding RenameBoxCommand}" ToolTip.Tip="Renomear caixa" />
                 <Button Classes="small danger" Content="🗑" Command="{Binding DeleteBoxCommand}" ToolTip.Tip="Excluir caixa" />
               </StackPanel>
@@ -263,7 +264,7 @@
             <WrapPanel ItemSpacing="8" LineSpacing="4" IsVisible="{Binding IsLocal}">
               <ToggleSwitch IsChecked="{Binding AttachMode}" OnContent="🔗 Anexar ao trazer" OffContent="Anexar ao trazer" FontSize="12"
                             ToolTip.Tip="Ligado: levar um Pokémon do bank para um save copia em vez de mover. O original fica no bank, ligado ao save, e Atualizar anexados traz de volta a versão do jogo (nível, golpes, evolução)." />
-              <Button Classes="small" Content="{Binding AttachedText}" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).SyncAttachedCommand}"
+              <Button Classes="small" Content="{Binding AttachedText}" Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).SyncAttachedCommand}"
                       ToolTip.Tip="Procura cada Pokémon anexado no save ligado a ele e traz a versão do jogo para o bank (de outra geração, guarda como variante)" />
             </WrapPanel>
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="4">
@@ -431,7 +432,7 @@
       </Border>
 
       <!-- Direita: save aberto (mesma caixa da pagina Caixas) -->
-      <Border Grid.Column="2" Classes="card bankPane" DataContext="{Binding $parent[Window].((vm:MainViewModel)DataContext)}" x:DataType="vm:MainViewModel">
+      <Border Grid.Column="2" Classes="card bankPane" DataContext="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext)}" x:DataType="vm:MainViewModel">
         <DockPanel>
           <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
@@ -1332,7 +1333,7 @@
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
           <Button Classes="accent small" Content="{Binding RestartText}" Command="{Binding RestartCommand}" IsVisible="{Binding IsReadyToRestart}" />
-          <Button Classes="small" Content="‹  Voltar" Command="{Binding $parent[Window].((vm:MainViewModel)DataContext).CloseHelpCommand}"
+          <Button Classes="small" Content="‹  Voltar" Command="{Binding $parent[views:MainView].((vm:MainViewModel)DataContext).CloseHelpCommand}"
                   ToolTip.Tip="Volta para onde você estava (Esc)" />
         </StackPanel>
       </Grid>

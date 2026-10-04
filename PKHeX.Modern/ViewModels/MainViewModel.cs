@@ -700,7 +700,7 @@ public sealed class MainViewModel : ViewModelBase
         int i = (OpenSaves.IndexOf(_activeTab) + delta + OpenSaves.Count) % OpenSaves.Count;
         _ = SwitchToAsync(OpenSaves[i]);
     }
-    /// <summary>"＋" das abas: vai para o Save Manager (abrir outro save cria uma aba nova).</summary>
+    /// <summary>"+" das abas: vai para o Save Manager (abrir outro save cria uma aba nova).</summary>
     public RelayCommand NewTabCommand => _newTab ??= new RelayCommand(() => { IsHelpOpen = false; CurrentPage = SaveManager; });
     private RelayCommand? _newTab;
 
