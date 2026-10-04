@@ -6,6 +6,11 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 📱 Android
+- O item Início da barra lateral também não mostra mais o atalho Ctrl+0.
+
 ## 0.4.8 — 2026-10-03
 
 ### 📱 Android

@@ -188,7 +188,7 @@
           <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
             <TextBlock Text="⌂" Width="20" TextAlignment="Center" />
             <TextBlock Grid.Column="1" Text="Início" />
-            <TextBlock Grid.Column="2" Text="Ctrl+0" Classes="muted" FontSize="10" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2" Text="Ctrl+0" Classes="muted" FontSize="10" VerticalAlignment="Center" IsVisible="{x:Static local:App.ShowShortcuts}" />
           </Grid>
         </Button>
         <!-- Sem save aberto: os saves da pasta (Save Manager) para abrir com um clique -->
