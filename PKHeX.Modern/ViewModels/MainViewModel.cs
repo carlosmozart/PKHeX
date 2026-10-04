@@ -7,7 +7,7 @@ using PKHeX.Modern.Services;
 
 namespace PKHeX.Modern.ViewModels;
 
-public sealed class MainViewModel : ViewModelBase
+public sealed partial class MainViewModel : ViewModelBase
 {
     private SaveFile? _sav;
     private SlotHistory? _history;
@@ -440,7 +440,7 @@ public sealed class MainViewModel : ViewModelBase
     public BagPageViewModel? ActionBag => !IsHelpOpen ? CurrentPage as BagPageViewModel : null;
     private void RaiseActionBar()
     {
-        foreach (var property in new[] { nameof(ShowSlotActions), nameof(ShowSaveActions), nameof(ShowSaveManagerActions), nameof(ShowEncounterActions), nameof(ShowGiftActions), nameof(ShowBankActions), nameof(ShowDexActions), nameof(ActionBag) }) Raise(property);
+        foreach (var property in new[] { nameof(ShowBoxFolderActions), nameof(ShowSlotActions), nameof(ShowSaveActions), nameof(ShowSaveManagerActions), nameof(ShowEncounterActions), nameof(ShowGiftActions), nameof(ShowBankActions), nameof(ShowDexActions), nameof(ActionBag) }) Raise(property);
     }
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
     /// <summary>Selo do jogo aberto (Pokemon da capa nas cores da versao), no cartao da barra lateral.</summary>

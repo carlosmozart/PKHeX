@@ -8,6 +8,8 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+- Caixas: exportar e importar pastas pelo botão ⋯, com conversão, confirmação, legalização do lote, recusas detalhadas e um passo de desfazer. Suporte a subpastas e seletor Android.
+
 - Editor: tipo e poder de Hidden Power na Gen 2–7, ajuste de IVs e validação de legalidade; o golpe mostra o tipo calculado.
 
 - Editor: Pokérus na aba Extras, com estado, cepa, dias e proteção do modo legal, também no Android.

@@ -320,6 +320,23 @@
         <TextBlock Text="{Binding Status}" Classes="muted" FontSize="12" VerticalAlignment="Center"
                    TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Status}" />
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+          <Button x:Name="BoxFolderButton" Classes="small" Content="⋯" IsVisible="{Binding ShowBoxFolderActions}" ToolTip.Tip="Caixas em pasta">
+            <Button.Flyout>
+              <Flyout>
+                <StackPanel Spacing="8" MaxWidth="320">
+                  <TextBlock Text="Exportar caixas" Classes="section" />
+                  <CheckBox Content="Todas as caixas (desmarque para só esta caixa)" IsChecked="{Binding ExportAllBoxes}" />
+                  <CheckBox Content="Uma subpasta por caixa" IsChecked="{Binding BoxSubfolders}" />
+                  <Button Content="Exportar caixas para pasta..." Click="OnExportBoxFolder" />
+                  <TextBlock Text="Importar caixas" Classes="section" />
+                  <CheckBox Content="Da primeira caixa (desmarque para esta caixa)" IsChecked="{Binding ImportFirstBox}" />
+                  <CheckBox Content="Limpar as caixas antes" IsChecked="{Binding ClearImportBoxes}" />
+                  <CheckBox Content="Sobrescrever slots ocupados" IsChecked="{Binding OverwriteImportSlots}" />
+                  <Button Content="Importar pasta para as caixas..." Click="OnImportBoxFolder" />
+                </StackPanel>
+              </Flyout>
+            </Button.Flyout>
+          </Button>
           <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowSlotActions}">
           <Button Classes="small" Content="↶" FontSize="16" Padding="10,0" Command="{Binding UndoCommand}" ToolTip.Tip="{Binding UndoTip}" />
           <Button Classes="small" Content="↷" FontSize="16" Padding="10,0" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" />
