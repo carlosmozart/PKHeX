@@ -8,6 +8,8 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+- Editor: Pokérus na aba Extras, com estado, cepa, dias e proteção do modo legal, também no Android.
+
 ### 📱 Android
 - A pasta de saves funciona com todos os saves da pasta escolhida. Se você escolheu a pasta antes da 0.4.10, toque em “Escolher pasta...” e escolha de novo (essas versões não guardavam a escolha).
 

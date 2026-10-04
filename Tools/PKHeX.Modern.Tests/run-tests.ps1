@@ -5,8 +5,10 @@ param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Only)
 $ErrorActionPreference = 'Stop'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $saves = Join-Path $root 'saves'
+if ($env:PKHEX_TEST_SAVES) { $saves = $env:PKHEX_TEST_SAVES }
 # nome usado pelo teste -> arquivo em saves/
 $suites = [ordered]@{
+    'Pokerus' = @{ 'fr.sav' = 'fire red.sav'; 'moon.sav' = 'moon.sav' }
     'Android' = @{}
     # Sprites do porte x PKHeX original (System.Drawing), pixel a pixel; le os saves de saves/ direto, so em memoria
     'SpriteParity' = @{}

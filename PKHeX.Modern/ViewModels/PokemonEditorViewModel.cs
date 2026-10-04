@@ -12,7 +12,7 @@ namespace PKHeX.Modern.ViewModels;
 /// Editor de um Pokemon. Trabalha sobre uma copia (Clone) e so grava no save ao clicar em "Aplicar".
 /// Para adicionar um novo campo: crie uma propriedade aqui que leia/escreva em <see cref="_pk"/> e um controle na view.
 /// </summary>
-public sealed class PokemonEditorViewModel : ViewModelBase
+public sealed partial class PokemonEditorViewModel : ViewModelBase
 {
     private PKM _pk;
     private readonly SaveFile? _sav;
@@ -49,6 +49,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             m.Changed += Refresh;
         HealPPCommand = new RelayCommand(() => { _pk.HealPP(); foreach (var m in Moves) m.RaiseAll(); _status("PP restaurado."); });
         ApplyCommand = new RelayCommand(Apply, () => CanApply);
+        GivePokerusCommand = new RelayCommand(() => SetPokerus(1, Pokerus.GetMaxDuration(1)), () => CanEditPokerus);
         MaxIVsCommand = new RelayCommand(() => _ = MaxIVsAsync());
         ClearEVsCommand = new RelayCommand(() => { foreach (var s in Stats) s.EV = 0; });
         MakeShinyCommand = new RelayCommand(MakeShiny, () => CanMakeShiny);
@@ -119,9 +120,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     private void RaiseLegalMode()
     {
-        foreach (var p in (string[])[nameof(CanApply), nameof(ShowLegalModeBlock), nameof(ApplyTip), nameof(HasContestStats), nameof(ContestNote)])
+        foreach (var p in (string[])[nameof(CanApply), nameof(ShowLegalModeBlock), nameof(ApplyTip), nameof(HasContestStats), nameof(ContestNote), nameof(CanEditPokerus), nameof(PokerusNote)])
             Raise(p);
         ApplyCommand.NotifyCanExecuteChanged();
+        GivePokerusCommand.NotifyCanExecuteChanged();
     }
 
     private void Apply()
@@ -1180,6 +1182,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         LegalityIssues = CoreAdapter.GetLegalityIssues(_pk); // ilegal: problemas; legal: avisos "Fishy"
         foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityIssues), nameof(HasLegalityIssues), nameof(HasWarnings), nameof(ShowLegalize), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
             Raise(p);
+        RefreshPokerus();
         RaiseLegalMode();
         GuardLegality();
         RefreshBalls();
