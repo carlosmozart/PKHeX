@@ -805,6 +805,7 @@
         <Button Classes="small" Classes.accent="{Binding IsCardsTab}" Content="🎁 Cartões" IsVisible="{Binding HasCards}" Command="{Binding SetTabCommand}" CommandParameter="5" />
         <Button Classes="small" Classes.accent="{Binding IsRaidsTab}" Content="⚔ Raids" IsVisible="{Binding HasRaids}" Command="{Binding SetTabCommand}" CommandParameter="6" />
         <Button Classes="small" Classes.accent="{Binding IsClockTab}" Content="⏰ Relógio" IsVisible="{Binding HasClock}" Command="{Binding SetTabCommand}" CommandParameter="7" />
+        <Button Classes="small" Classes.accent="{Binding IsRoamersTab}" Content="🗺 Errantes" IsVisible="{Binding HasRoamers}" Command="{Binding SetTabCommand}" CommandParameter="8" />
       </WrapPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8" IsVisible="{Binding ShowFilters}">
         <TextBox Text="{Binding Query}" Watermark="Buscar pelo nome ou número (ex.: surf, #120)" />
@@ -1061,9 +1062,44 @@
             <ContentControl Content="{Binding ElapsedClock}" />
           </StackPanel>
         </ScrollViewer>
+        <ScrollViewer IsVisible="{Binding IsRoamersTab}"><ContentControl Content="{Binding Roamer}" /></ScrollViewer>
         <TextBlock Text="Nada com esses filtros." Classes="muted" IsVisible="{Binding HasNoRows}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>
     </DockPanel>
+  </DataTemplate>
+
+  <DataTemplate DataType="vm:RoamerEditorViewModel">
+    <StackPanel Spacing="12" Margin="0,0,12,12">
+      <TextBlock Text="{Binding Note}" Classes="muted" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding IvBugNote}" IsVisible="{Binding HasIvBug}" TextWrapping="Wrap" Classes="muted" />
+      <WrapPanel>
+        <Button Content="Fazer reaparecer" Command="{Binding ReappearCommand}" Classes="small" Margin="0,0,8,0" />
+        <Button Content="Gerar dados legais" Command="{Binding GenerateCommand}" IsVisible="{Binding IsGen3}" Classes="small" Margin="0,0,8,0" />
+        <Button Content="Aplicar errante" Command="{Binding ApplyCommand}" IsVisible="{Binding IsGen3}" Classes="small accent" />
+      </WrapPanel>
+      <Border Classes="card" Padding="16">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Espécie" Classes="muted" /><ComboBox ItemsSource="{Binding SpeciesOptions}" SelectedItem="{Binding SpeciesName}" HorizontalAlignment="Stretch" />
+          <StackPanel IsVisible="{Binding IsGen3}" Spacing="10">
+            <CheckBox Content="Errante ativo" IsChecked="{Binding Active}" />
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+              <StackPanel Spacing="4"><TextBlock Text="Nível" Classes="muted" /><NumericUpDown Value="{Binding Level}" Minimum="1" Maximum="100" FormatString="0" /></StackPanel>
+              <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="HP atual" Classes="muted" /><NumericUpDown Value="{Binding Hp}" Minimum="0" Maximum="65535" FormatString="0" /></StackPanel>
+              <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="PID (hexadecimal)" Classes="muted" /><TextBox Text="{Binding Pid}" MaxLength="8" /></StackPanel>
+            </Grid>
+            <ItemsControl ItemsSource="{Binding IvRows}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="6" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:RoamerIvViewModel"><StackPanel Spacing="4" Margin="0,0,6,0"><TextBlock Text="{Binding Name}" Classes="muted" /><NumericUpDown Value="{Binding Value}" Minimum="0" Maximum="31" FormatString="0" /></StackPanel></DataTemplate></ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="{Binding CapturedIvs}" Classes="muted" TextWrapping="Wrap" />
+          </StackPanel>
+          <StackPanel IsVisible="{Binding IsXY}" Spacing="10">
+            <TextBlock Text="Estado do errante" Classes="muted" /><ComboBox ItemsSource="{Binding States}" SelectedIndex="{Binding StateIndex}" HorizontalAlignment="Stretch" />
+            <TextBlock Text="Número de encontros" Classes="muted" /><NumericUpDown Value="{Binding TimesEncountered}" Minimum="0" Maximum="4294967295" FormatString="0" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </StackPanel>
   </DataTemplate>
 
   <DataTemplate DataType="vm:RtcClockViewModel">

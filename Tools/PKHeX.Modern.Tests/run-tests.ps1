@@ -8,6 +8,7 @@ $saves = Join-Path $root 'saves'
 if ($env:PKHEX_TEST_SAVES) { $saves = $env:PKHEX_TEST_SAVES }
 # nome usado pelo teste -> arquivo em saves/
 $suites = [ordered]@{
+    'Roamers' = @{ 'em.sav' = 'Pokemon Emerald Version.sav'; 'sa.sav' = 'Sapphire.sav'; 'fr.sav' = 'fire red.sav'; 'y.sav' = 'Pokemon Y' }
     'Clock' = @{ 'em.sav' = 'Pokemon Emerald Version.sav'; 'sa.sav' = 'Sapphire.sav' }
     'GameHistory' = @{ 'em.sav' = 'Pokemon Emerald Version.sav'; 'or.sav' = 'Omega Ruby.sav'; 'sh.sav' = 'shield'; 'sv.sav' = 'Scarlet' }
     'Raids' = @{ 'sh.sav' = 'shield'; 'sv.sav' = 'Scarlet' }

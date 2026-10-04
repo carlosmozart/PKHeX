@@ -83,6 +83,7 @@ public sealed partial class MainViewModel : ViewModelBase
             p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
         Batch = new BatchPageViewModel(GetBatchTargets, () => _sav, ApplyBatchAsync);
         Game = new GamePageViewModel((t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true, icon: "🎮"), s => Status = s);
+        Game.IsLegalMode = () => LegalMode;
         Game.ShowCardQr = ShowCardQr;
         AddSelectedCardCommand = new RelayCommand(() =>
         {
