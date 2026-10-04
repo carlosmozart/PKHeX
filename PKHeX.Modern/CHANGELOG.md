@@ -6,21 +6,20 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.13 — 2026-10-04
 
-- Jogo: raids de Sword/Shield e Scarlet/Violet por região, seed, tipo, estrelas disponíveis, flags de Watts/LP e registros de 7 estrelas. Ativar/desativar a região pede confirmação; a seed não é pesquisada por Pokémon.
+### ✏️ Editor
+- **Pokérus** (aba Extras): sem Pokérus, infectado ou curado, “Dar Pokérus”, cepa e dias. O modo legal só permite onde o Pokérus é possível.
+- **Hidden Power** (aba Atributos, Gen 2–7): tipo e poder; escolher o tipo ajusta os IVs, e o modo legal recusa quando o Pokémon ficaria ilegal. O golpe mostra o tipo calculado.
+- **QR da Gen 7**: botão no editor gera o QR para o QR Scanner do Sun/Moon, com “Salvar imagem”. Cartões da Gen 6/7 também geram QR no formato do PKHeX.
 
-- QR: código da Gen 7 no editor, sobreposição e exportação PNG pelo seletor, sem System.Drawing. Cartões Gen 6/7 podem gerar QR no formato do PKHeX.
+### 📦 Caixas e equipe
+- **Caixas em pasta** (botão ⋯ na página Caixas): exportar esta caixa ou todas como arquivos .pk* (com subpasta por caixa, se quiser) e importar uma pasta para as caixas, com conversão de geração, oferta de legalizar o lote, lista do que foi recusado e um único Ctrl+Z.
+- **Creche** (abaixo da equipe): editar os Pokémon da creche, pôr e tirar (com desfazer), ovo esperando, experiência e semente conforme o jogo. Inclui as duas creches de Omega Ruby/Alpha Sapphire e Sword/Shield.
 
-- Equipe: creche com edição de Pokémon, depositar/retirar com desfazer, ovo pronto, experiência e seed conforme o jogo. Inclui as duas creches de OR/AS e SW/SH.
-
-- Jogo: cartões de evento armazenados, importação/exportação, inclusão do evento selecionado, exclusão e flags de recebido. Tratamento de PCD/PGT e Lock Capsule na Gen 4; registros WR7 em Let's Go.
-
-- Caixas: exportar e importar pastas pelo botão ⋯, com conversão, confirmação, legalização do lote, recusas detalhadas e um passo de desfazer. Suporte a subpastas e seletor Android.
-
-- Editor: tipo e poder de Hidden Power na Gen 2–7, ajuste de IVs e validação de legalidade; o golpe mostra o tipo calculado.
-
-- Editor: Pokérus na aba Extras, com estado, cepa, dias e proteção do modo legal, também no Android.
+### 🎮 Página Jogo
+- **Cartões de evento do save**: os Mystery Gifts que esperam ser recebidos no jogo. Importar, exportar, apagar, marcar como não recebido e “Adicionar ao save” a partir da página Eventos, com as regras de cada geração (Gen 4 a 7 e Let's Go).
+- **Raids**: tocas de Sword/Shield (Galar, Isle of Armor, Crown Tundra) e Tera Raids de Scarlet/Violet (Paldea, Kitakami, Blueberry), com ativa, tipo, estrelas, seed e registros de 7 estrelas; “Ativar todas” e “Desativar todas” pedem confirmação.
 
 ### 📱 Android
 - A pasta de saves funciona com todos os saves da pasta escolhida. Se você escolheu a pasta antes da 0.4.10, toque em “Escolher pasta...” e escolha de novo (essas versões não guardavam a escolha).
