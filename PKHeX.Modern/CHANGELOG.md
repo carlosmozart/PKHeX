@@ -6,6 +6,14 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.11 — 2026-10-03
+
+### 🔧 Preparação
+- A atualização automática passa a aceitar também o nome futuro do repositório (`carlosmozart/PKHeX-Modern`). Assim, quando o projeto for renomeado no GitHub, quem estiver nesta versão ou mais nova continua recebendo atualizações sozinho.
+
+### ⚠️ Problema conhecido
+- No Android, a pasta de saves ainda não lista todos os saves da pasta escolhida. Está sendo investigado; enquanto isso, abra o save que faltar pelo botão Abrir.
+
 ## 0.4.10 — 2026-10-03
 
 ### 🎮 Editores por jogo

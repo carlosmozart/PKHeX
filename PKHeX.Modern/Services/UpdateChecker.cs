@@ -19,6 +19,8 @@ public sealed record ReleaseInfo(Version Version, string Tag, string Name, strin
 public static class UpdateChecker
 {
     public const string Repo = "carlosmozart/PKHeX";
+    /// <summary>Nome planejado do repositorio. Ate renomear, a consulta usa <see cref="Repo"/> (que continua valendo depois, por redirecionamento).</summary>
+    public const string FutureRepo = "carlosmozart/PKHeX-Modern";
     public const string RepoUrl = "https://github.com/" + Repo + "/tree/modern-ui/PKHeX.Modern";
     public const string ReleasesUrl = "https://github.com/" + Repo + "/releases";
     private const string TagPrefix = "modern-v";

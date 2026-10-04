@@ -49,6 +49,10 @@ Check("asset Windows preservado", AutoUpdater.GetAssetName(OSPlatform.Windows, A
 Check("asset Linux", AutoUpdater.GetAssetName(OSPlatform.Linux, Architecture.X64) == "PKHeX.Modern-linux-x64.zip");
 Check("asset macOS ARM", AutoUpdater.GetAssetName(OSPlatform.OSX, Architecture.Arm64) == "PKHeX.Modern-osx-arm64.zip");
 Check("asset macOS Intel", AutoUpdater.GetAssetName(OSPlatform.OSX, Architecture.X64) == "PKHeX.Modern-osx-x64.zip");
+Check("download do repositorio atual aceito", AutoUpdater.IsReleaseDownload("https://github.com/carlosmozart/PKHeX/releases/download/modern-v1.0.0/PKHeX.Modern-win-x64.zip"));
+Check("download do repositorio renomeado aceito", AutoUpdater.IsReleaseDownload("https://github.com/carlosmozart/PKHeX-Modern/releases/download/modern-v1.0.0/PKHeX.Modern-Android.apk"));
+Check("download de outro repositorio recusado", !AutoUpdater.IsReleaseDownload("https://github.com/someone/PKHeX/releases/download/modern-v1.0.0/PKHeX.Modern-win-x64.zip")
+    && !AutoUpdater.IsReleaseDownload("https://github.com/carlosmozart/PKHeX-Modern-fake/releases/download/x.zip") && !AutoUpdater.IsReleaseDownload("https://example.com/carlosmozart/PKHeX/releases/download/x.zip"));
 Check("asset Android ARM", AutoUpdater.GetAssetName(OSPlatform.Create("Android"), Architecture.Arm64) == "PKHeX.Modern-Android.apk");
 Check("asset Android x64 (emulador)", AutoUpdater.GetAssetName(OSPlatform.Create("Android"), Architecture.X64) == "PKHeX.Modern-Android.apk");
 Check("desktop nao atualiza por instalador do Android", !AutoUpdater.InstallsByHandoff);

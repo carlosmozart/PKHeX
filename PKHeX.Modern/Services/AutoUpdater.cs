@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -15,7 +16,19 @@ public static class AutoUpdater
 {
     private const string ExecutableName = "PKHeX.Modern";
     private const string BundleName = "PKHeX Modern.app";
-    private const string DownloadPrefix = "https://github.com/" + UpdateChecker.Repo + "/releases/download/";
+    /// <summary>
+    /// So baixa releases deste repositorio. Aceita tambem o nome futuro (carlosmozart/PKHeX-Modern): depois de renomear,
+    /// o GitHub redireciona a consulta de versoes, mas os links de download passam a ter o nome novo.
+    /// </summary>
+    private static readonly string[] DownloadPrefixes =
+    [
+        "https://github.com/" + UpdateChecker.Repo + "/releases/download/",
+        "https://github.com/" + UpdateChecker.FutureRepo + "/releases/download/",
+    ];
+
+    /// <summary>O link e de um arquivo de release deste repositorio (nome atual ou futuro).</summary>
+    public static bool IsReleaseDownload(string? url)
+        => url is not null && DownloadPrefixes.Any(p => url.StartsWith(p, StringComparison.OrdinalIgnoreCase));
     private static readonly string? ProcessExecutable = Environment.ProcessPath;
     private static OSPlatform CurrentPlatform => OperatingSystem.IsAndroid() ? OSPlatform.Create("Android") : OperatingSystem.IsWindows() ? OSPlatform.Windows
         : OperatingSystem.IsLinux() ? OSPlatform.Linux : OperatingSystem.IsMacOS() ? OSPlatform.OSX : OSPlatform.Create("Unsupported");
@@ -116,7 +129,7 @@ public static class AutoUpdater
     {
         if (InstallApk is not { } install)
             throw new InvalidOperationException("o instalador do Android não está disponível");
-        if (release.AssetUrl is not { } url || !url.StartsWith(DownloadPrefix, StringComparison.OrdinalIgnoreCase))
+        if (release.AssetUrl is not { } url || !IsReleaseDownload(url))
             throw new InvalidOperationException($"a release não tem o arquivo {AndroidAsset}");
         var apk = ApkPath;
         Directory.CreateDirectory(Path.GetDirectoryName(apk)!);
@@ -135,7 +148,7 @@ public static class AutoUpdater
     /// <summary>Instala no destino indicado; o download continua restrito as releases deste repositorio.</summary>
     public static async Task InstallToAsync(ReleaseInfo release, string exe, IProgress<double>? progress = null, CancellationToken ct = default)
     {
-        if (release.AssetUrl is not { } url || !url.StartsWith(DownloadPrefix, StringComparison.OrdinalIgnoreCase))
+        if (release.AssetUrl is not { } url || !IsReleaseDownload(url))
             throw new InvalidOperationException($"a release não tem o arquivo {AssetName}");
         // Nome unico: duas instancias nao compartilham um download temporario.
         var zip = Path.Combine(Path.GetTempPath(), $"PKHeX.Modern-{Guid.NewGuid():N}.zip");
