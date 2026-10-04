@@ -79,6 +79,12 @@ public sealed partial class MainViewModel : ViewModelBase
             p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
         Batch = new BatchPageViewModel(GetBatchTargets, () => _sav, ApplyBatchAsync);
         Game = new GamePageViewModel((t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true, icon: "🎮"), s => Status = s);
+        AddSelectedCardCommand = new RelayCommand(() =>
+        {
+            if (Gifts.Selected?.Encounter is DataMysteryGift gift && Game.AddCard(gift)) CurrentPage = Game;
+        }, () => Game.HasCards && Gifts.Selected?.Encounter is DataMysteryGift);
+        Gifts.PropertyChanged += (_, _) => AddSelectedCardCommand.NotifyCanExecuteChanged();
+        Game.PropertyChanged += (_, _) => AddSelectedCardCommand.NotifyCanExecuteChanged();
         var bag = new BagPageViewModel(s => Status = s);
         AllPages = [Boxes, Party, Bank, Pokedex, new TrainerPageViewModel(), bag, Encounters, Gifts, SaveManager, Game, Search, Batch];
         // Atalhos da pagina Jogo podem dar itens (Member Card, Colorful Screws...) e liberar a Pokedex Nacional
@@ -140,6 +146,7 @@ public sealed partial class MainViewModel : ViewModelBase
     public SearchPageViewModel Search { get; }
     public BatchPageViewModel Batch { get; }
     public GamePageViewModel Game { get; }
+    public RelayCommand AddSelectedCardCommand { get; }
     public GiftDbViewModel Gifts { get; }
     /// <summary>Ajuda (F1): funcoes, novidades, Sobre e verificacao de atualizacoes.</summary>
     public HelpPageViewModel Help { get; }

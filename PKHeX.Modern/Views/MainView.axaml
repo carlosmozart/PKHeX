@@ -357,6 +357,7 @@
           </StackPanel>
           <Button Classes="accent small" Content="Usar encontro" IsVisible="{Binding ShowEncounterActions}" IsEnabled="{Binding Encounters.HasDetail}" Command="{Binding Encounters.UseCommand}" CommandParameter="{Binding Encounters.Selected}" />
           <Button Classes="accent small" Content="Usar evento" IsVisible="{Binding ShowGiftActions}" IsEnabled="{Binding Gifts.HasDetail}" Command="{Binding Gifts.UseCommand}" CommandParameter="{Binding Gifts.Selected}" />
+          <Button Classes="small" Content="Adicionar ao save" IsVisible="{Binding ShowGiftActions}" IsEnabled="{Binding Game.HasCards}" Command="{Binding AddSelectedCardCommand}" ToolTip.Tip="Guarda o cartão selecionado para receber dentro do jogo" />
           <Button Classes="small" Content="Atualizar anexados" IsVisible="{Binding ShowBankActions}" Command="{Binding SyncAttachedCommand}" />
           <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowDexActions}">
             <Button Classes="small" Content="⟳  Atualizar Pokédex" Command="{Binding Pokedex.RefreshCommand}" />

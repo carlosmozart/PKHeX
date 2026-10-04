@@ -802,6 +802,7 @@
                 Command="{Binding SetTabCommand}" CommandParameter="3" ToolTip.Tip="Eventos prontos: liberar lendários, fazer errantes voltarem, áreas do mapa..." />
         <Button Classes="small" Classes.accent="{Binding IsFameTab}" Content="★  Hall da Fama" IsVisible="{Binding HasFame}"
                 Command="{Binding SetTabCommand}" CommandParameter="4" ToolTip.Tip="As equipes que venceram a Liga, como o jogo guardou" />
+        <Button Classes="small" Classes.accent="{Binding IsCardsTab}" Content="🎁 Cartões" IsVisible="{Binding HasCards}" Command="{Binding SetTabCommand}" CommandParameter="5" />
       </StackPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8" IsVisible="{Binding ShowFilters}">
         <TextBox Text="{Binding Query}" Watermark="Buscar pelo nome ou número (ex.: surf, #120)" />
@@ -964,6 +965,30 @@
               </ItemsControl.ItemTemplate>
             </ItemsControl>
           </ScrollViewer>
+        </DockPanel>
+        <DockPanel IsVisible="{Binding IsCardsTab}">
+          <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+            <TextBlock Text="{Binding CardsNote}" Classes="muted" TextWrapping="Wrap" />
+            <WrapPanel>
+              <Button Content="Importar cartão" Command="{Binding ImportCardCommand}" Classes="small" Margin="0,0,6,0" />
+              <Button Content="Exportar cartão" Command="{Binding ExportCardCommand}" Classes="small" Margin="0,0,6,0" />
+              <Button Content="Apagar cartão" Command="{Binding DeleteCardCommand}" Classes="small danger" Margin="0,0,6,0" />
+              <Button Content="Marcar como não recebido" Command="{Binding UnusedCardCommand}" Classes="small" />
+            </WrapPanel>
+          </StackPanel>
+          <ListBox ItemsSource="{Binding CardRows}" SelectedItem="{Binding SelectedCard}" Background="Transparent">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:WonderCardRowViewModel">
+                <Grid ColumnDefinitions="68,*" ColumnSpacing="10">
+                  <Image Source="{Binding Sprite}" Width="60" Height="48" />
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Details}" Classes="muted" FontSize="12" />
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
         </DockPanel>
         <TextBlock Text="Nada com esses filtros." Classes="muted" IsVisible="{Binding HasNoRows}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>

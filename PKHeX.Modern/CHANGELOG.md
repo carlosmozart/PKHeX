@@ -8,6 +8,8 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+- Jogo: cartões de evento armazenados, importação/exportação, inclusão do evento selecionado, exclusão e flags de recebido. Tratamento de PCD/PGT e Lock Capsule na Gen 4; registros WR7 em Let's Go.
+
 - Caixas: exportar e importar pastas pelo botão ⋯, com conversão, confirmação, legalização do lote, recusas detalhadas e um passo de desfazer. Suporte a subpastas e seletor Android.
 
 - Editor: tipo e poder de Hidden Power na Gen 2–7, ajuste de IVs e validação de legalidade; o golpe mostra o tipo calculado.

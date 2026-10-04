@@ -53,6 +53,8 @@ public sealed partial class MainView : UserControl
             if (DataContext is not MainViewModel vm)
                 return;
             vm.SaveRequested += () => OnQuickSave(this, new RoutedEventArgs());
+            vm.Game.PickCardFile = PickCardFileAsync;
+            vm.Game.ExportCardFile = ExportCardFileAsync;
             // Seletores de arquivo/pasta usados pela pagina Bank (pasta externa e outro save).
             if (SaveFolder is { } saveFolder)
             {
