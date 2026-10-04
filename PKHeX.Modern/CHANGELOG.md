@@ -8,6 +8,8 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+- Jogo: raids de Sword/Shield e Scarlet/Violet por região, seed, tipo, estrelas disponíveis, flags de Watts/LP e registros de 7 estrelas. Ativar/desativar a região pede confirmação; a seed não é pesquisada por Pokémon.
+
 - QR: código da Gen 7 no editor, sobreposição e exportação PNG pelo seletor, sem System.Drawing. Cartões Gen 6/7 podem gerar QR no formato do PKHeX.
 
 - Equipe: creche com edição de Pokémon, depositar/retirar com desfazer, ovo pronto, experiência e seed conforme o jogo. Inclui as duas creches de OR/AS e SW/SH.

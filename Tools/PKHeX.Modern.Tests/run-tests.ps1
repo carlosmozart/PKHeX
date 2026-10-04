@@ -8,6 +8,7 @@ $saves = Join-Path $root 'saves'
 if ($env:PKHEX_TEST_SAVES) { $saves = $env:PKHEX_TEST_SAVES }
 # nome usado pelo teste -> arquivo em saves/
 $suites = [ordered]@{
+    'Raids' = @{ 'sh.sav' = 'shield'; 'sv.sav' = 'Scarlet' }
     'Qr' = @{ 'moon.sav' = 'moon.sav' }
     'Daycare' = @{ 'cr.sav' = 'Pokemon Crystal Version.sav'; 'em.sav' = 'Pokemon Emerald Version.sav'; 'bw.sav' = 'Pokemon - Black Version.sav' }
     'WonderCards' = @{ 'hg.sav' = 'Pokemon Heart Gold Version.sav'; 'bw.sav' = 'Pokemon - Black Version.sav'; 'or.sav' = 'Omega Ruby.sav' }
@@ -59,7 +60,9 @@ foreach ($name in $suites.Keys) {
     if ($missing) { continue }
     Write-Host "== $name ($work)" -ForegroundColor Cyan
     $proj = Join-Path $PSScriptRoot "$name\$name.csproj"
-    dotnet run -c Release --project $proj -- $work | Where-Object { $_ -notmatch 'warning' }
+    $testArgs = @($work)
+    if ($name -eq 'SpriteParity') { $testArgs += $saves }
+    dotnet run -c Release --project $proj -- @testArgs | Where-Object { $_ -notmatch 'warning' }
     if ($LASTEXITCODE -ne 0) { $failed += $name }
 }
 if ($failed.Count) { Write-Host "FALHARAM: $($failed -join ', ')" -ForegroundColor Red; exit 1 }

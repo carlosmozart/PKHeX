@@ -803,6 +803,7 @@
         <Button Classes="small" Classes.accent="{Binding IsFameTab}" Content="★  Hall da Fama" IsVisible="{Binding HasFame}"
                 Command="{Binding SetTabCommand}" CommandParameter="4" ToolTip.Tip="As equipes que venceram a Liga, como o jogo guardou" />
         <Button Classes="small" Classes.accent="{Binding IsCardsTab}" Content="🎁 Cartões" IsVisible="{Binding HasCards}" Command="{Binding SetTabCommand}" CommandParameter="5" />
+        <Button Classes="small" Classes.accent="{Binding IsRaidsTab}" Content="⚔ Raids" IsVisible="{Binding HasRaids}" Command="{Binding SetTabCommand}" CommandParameter="6" />
       </StackPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8" IsVisible="{Binding ShowFilters}">
         <TextBox Text="{Binding Query}" Watermark="Buscar pelo nome ou número (ex.: surf, #120)" />
@@ -990,6 +991,63 @@
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
+        </DockPanel>
+        <DockPanel IsVisible="{Binding IsRaidsTab}">
+          <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+            <TextBlock Text="{Binding RaidsNote}" Classes="muted" TextWrapping="Wrap" />
+            <WrapPanel>
+              <ComboBox ItemsSource="{Binding RaidRegions}" SelectedItem="{Binding RaidRegion}" MinWidth="190" Margin="0,0,8,0">
+                <ComboBox.ItemTemplate><DataTemplate x:DataType="vm:RaidRegionViewModel"><TextBlock Text="{Binding Name}" /></DataTemplate></ComboBox.ItemTemplate>
+              </ComboBox>
+              <Button Content="Ativar todas" Command="{Binding ActivateRaidsCommand}" Classes="small" Margin="0,0,8,0" />
+              <Button Content="Desativar todas" Command="{Binding DeactivateRaidsCommand}" Classes="small" />
+            </WrapPanel>
+            <StackPanel IsVisible="{Binding RaidRegion.HasSeeds}" Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="Seed atual" VerticalAlignment="Center" /><TextBox Text="{Binding RaidRegion.CurrentSeed}" Width="175" MaxLength="18" />
+              <TextBlock Text="Seed de amanhã" VerticalAlignment="Center" /><TextBox Text="{Binding RaidRegion.TomorrowSeed}" Width="175" MaxLength="18" />
+            </StackPanel>
+          </StackPanel>
+          <Grid ColumnDefinitions="200,*" ColumnSpacing="16">
+            <ListBox ItemsSource="{Binding RaidRegion.Rows}" SelectedItem="{Binding SelectedRaid}" Background="Transparent">
+              <ListBox.ItemTemplate><DataTemplate x:DataType="vm:RaidRowViewModel"><StackPanel><TextBlock Text="{Binding Title}" /><TextBlock Text="{Binding StarsText}" Classes="muted" FontSize="12" /></StackPanel></DataTemplate></ListBox.ItemTemplate>
+            </ListBox>
+            <ScrollViewer Grid.Column="1">
+              <ContentControl Content="{Binding SelectedRaid}">
+                <ContentControl.ContentTemplate>
+                  <DataTemplate x:DataType="vm:RaidRowViewModel">
+                    <StackPanel Spacing="10" Margin="0,0,12,12">
+                      <TextBlock Text="{Binding Title}" Classes="title" />
+                      <StackPanel IsVisible="{Binding IsSpawn}" Spacing="10">
+                        <CheckBox Content="Raid ativa" IsChecked="{Binding Active}" />
+                        <TextBlock Text="Tipo de raid" Classes="muted" />
+                        <ComboBox ItemsSource="{Binding Types}" SelectedIndex="{Binding TypeIndex}" HorizontalAlignment="Stretch" />
+                        <TextBlock Text="Seed (hexadecimal)" Classes="muted" /><TextBox Text="{Binding Seed}" MaxLength="18" />
+                        <StackPanel IsVisible="{Binding IsSwsh}" Spacing="10">
+                          <TextBlock Text="Hash da tabela (hexadecimal)" Classes="muted" /><TextBox Text="{Binding Hash}" MaxLength="18" />
+                          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <StackPanel Spacing="4"><TextBlock Text="Estrelas" Classes="muted" /><NumericUpDown Value="{Binding Stars}" Minimum="1" Maximum="5" FormatString="0" /></StackPanel>
+                            <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="Sorteio (1–100)" Classes="muted" /><NumericUpDown Value="{Binding Roll}" Minimum="1" Maximum="100" FormatString="0" /></StackPanel>
+                          </Grid>
+                          <CheckBox Content="Watts já coletados" IsChecked="{Binding Watts}" />
+                          <CheckBox Content="Flag de evento" IsChecked="{Binding Event}" />
+                        </StackPanel>
+                        <StackPanel IsVisible="{Binding IsSv}" Spacing="10">
+                          <TextBlock Text="{Binding Position}" Classes="muted" TextWrapping="Wrap" />
+                          <TextBlock Text="O número de estrelas depende da seed e do progresso; o tipo indica a faixa." Classes="muted" TextWrapping="Wrap" />
+                          <CheckBox Content="League Points já coletados" IsChecked="{Binding LeaguePoints}" />
+                        </StackPanel>
+                      </StackPanel>
+                      <StackPanel IsVisible="{Binding IsSeven}" Spacing="10">
+                        <TextBlock Text="Identificador do evento" Classes="muted" /><NumericUpDown Value="{Binding Identifier}" Minimum="0" Maximum="4294967295" FormatString="0" />
+                        <CheckBox Content="Capturado" IsChecked="{Binding Captured}" /><CheckBox Content="Derrotado" IsChecked="{Binding Defeated}" />
+                        <TextBlock Text="Este registro controla captura e vitória; não ativa um cristal no mapa." Classes="muted" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </StackPanel>
+                  </DataTemplate>
+                </ContentControl.ContentTemplate>
+              </ContentControl>
+            </ScrollViewer>
+          </Grid>
         </DockPanel>
         <TextBlock Text="Nada com esses filtros." Classes="muted" IsVisible="{Binding HasNoRows}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>
