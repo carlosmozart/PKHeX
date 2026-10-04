@@ -351,6 +351,10 @@
           <Button Classes="small" Content="⭱  Exportar PKM" Click="OnExportEntity" IsEnabled="{Binding CanExportEntity}"
                   ToolTip.Tip="Salva o Pokémon selecionado como arquivo .pk* (ou arraste o slot para fora da janela)" />
           </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowGameHistoryActions}">
+            <Button Classes="small" Content="↶" FontSize="16" Padding="10,0" Command="{Binding UndoCommand}" ToolTip.Tip="{Binding UndoTip}" />
+            <Button Classes="small" Content="↷" FontSize="16" Padding="10,0" Command="{Binding RedoCommand}" ToolTip.Tip="{Binding RedoTip}" />
+          </StackPanel>
           <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding ShowSaveManagerActions}">
             <Button Classes="small" Content="⟳  Atualizar" Command="{Binding SaveManager.RefreshCommand}" ToolTip.Tip="Reler saves ou backups (F5)" />
             <Button Classes="small" Content="Abrir save..." Click="OnOpen" ToolTip.Tip="Abrir um arquivo de save (Ctrl+O)" />

@@ -44,7 +44,8 @@ public sealed partial class GamePageViewModel
     public bool AddCard(DataMysteryGift gift)
     {
         if (_sav is null) return false;
-        int slot = WonderCards.Add(_sav, gift, out var reason);
+        int slot = -1; string reason = "";
+        Edit("Adicionar cartão de evento", () => slot = WonderCards.Add(_sav, gift, out reason));
         if (slot < 0) { _status("Cartão recusado: " + reason); return false; }
         RefreshCards(); SelectedCard = CardRows[slot]; Changed?.Invoke(); Tab = 5;
         _status($"Cartão adicionado na posição {slot + 1}. Salve para gravar."); return true;
@@ -60,15 +61,15 @@ public sealed partial class GamePageViewModel
     {
         if (_sav is null || SelectedCard is not { } card || card.Gift.IsEmpty) return;
         var sav = _sav;
-        if (!await _confirm("Apagar cartão?", "O cartão será removido do save. Esta edição não tem desfazer.", "Apagar") || !ReferenceEquals(_sav, sav)) return;
-        WonderCards.Delete(sav, card.Index); RefreshCards(); Changed?.Invoke(); _status("Cartão apagado. Salve para gravar.");
+        if (!await _confirm("Apagar cartão?", "O cartão será removido do save. Os botões ↶/↷ permitem desfazer e refazer.", "Apagar") || !ReferenceEquals(_sav, sav)) return;
+        Edit($"Cartão {card.Index + 1} apagado", () => WonderCards.Delete(sav, card.Index)); RefreshCards(); _status("Cartão apagado. Salve para gravar.");
     }
     public async Task UnusedCardAsync()
     {
         if (_sav is null || SelectedCard is not { } card || card.Gift is WR7 || card.Gift.IsEmpty) return;
         var sav = _sav;
         if (!await _confirm("Receber o cartão novamente?", "O cartão e sua flag de recebido serão marcados como não recebidos.", "Marcar como não recebido") || !ReferenceEquals(_sav, sav)) return;
-        WonderCards.MarkUnused(sav, card.Index); RefreshCards(); Changed?.Invoke(); _status("Cartão marcado como não recebido. Salve para gravar.");
+        Edit($"Cartão {card.Index + 1} não recebido", () => WonderCards.MarkUnused(sav, card.Index)); RefreshCards(); _status("Cartão marcado como não recebido. Salve para gravar.");
     }
 }
 

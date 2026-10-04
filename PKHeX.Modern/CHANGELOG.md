@@ -6,6 +6,11 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 🎮 Página Jogo
+- **Desfazer e refazer:** flags, valores, recordes, atalhos, Hall da Fama, cartões e raids passam a ter histórico próprio nos botões ↶/↷ da página Jogo. A dica informa a ação; operações em massa formam um passo. Até 30 passos e 64 MB de diferenças, sem reverter edições de outras páginas.
+
 ## 0.4.13 — 2026-10-04
 
 ### ✏️ Editor
