@@ -69,6 +69,7 @@ public sealed class App : Application
             Services.CrashLog.Install(msg => vm.Status = msg);
             MainView.BankFolders = bankFolders;
             MainView.Documents = new Services.MobileDocuments(root);
+            MainView.SaveFolder = new Services.MobileSaveFolder(root, MainView.Documents);
             ShowShortcuts = false;
             mobile.MainView = new MobileShell(vm);
         }

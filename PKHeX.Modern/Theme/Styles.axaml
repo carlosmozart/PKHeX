@@ -761,6 +761,13 @@
     <Setter Property="Background" Value="Transparent" />
   </Style>
 
+  <!-- Hall da Fama: Pokemon selecionado para editar -->
+  <Style Selector="Button.fameMember.selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource AccentSoft}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
   <!-- Inicio -->
   <Style Selector="Button.navHome">
     <Setter Property="Background" Value="Transparent" />

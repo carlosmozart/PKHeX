@@ -83,6 +83,23 @@ public sealed partial class SaveManagerView : UserControl
     {
         if (VM is not { } vm || TopLevel.GetTopLevel(this)?.StorageProvider is not { } storage)
             return;
+        // Android: a pasta do seletor nao tem caminho; o app le os saves dela (Services/MobileSaveFolder).
+        if (MainView.SaveFolder is { } mobile)
+        {
+            try
+            {
+                if (await mobile.ChooseAsync(storage) is null)
+                    return;
+                vm.RaiseFolder();
+                await vm.RefreshAsync();
+            }
+            catch (System.Exception ex)
+            {
+                Services.CrashLog.Write(ex);
+                vm.ReportStatus("Não foi possível usar a pasta: " + ex.Message);
+            }
+            return;
+        }
         var folders = await storage.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Pasta de saves", AllowMultiple = false });
         if (folders.FirstOrDefault()?.TryGetLocalPath() is { } path)
             vm.Folder = path;

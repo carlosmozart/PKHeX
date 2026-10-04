@@ -33,6 +33,8 @@ public sealed class MobileShell : UserControl
             // Como o MainWindow.Opened do desktop: limpa o APK de uma atualizacao anterior e verifica a release nova.
             Services.AutoUpdater.CleanupOld();
             // Traz o que mudou nas pastas externas do Bank desde a ultima abertura.
+            // Traz os saves novos ou mudados da pasta de saves.
+            _ = vm.SaveManager.RefreshAsync();
             if (MainView.BankFolders is { } folders)
                 _ = SyncBankAsync(folders, top.StorageProvider, vm);
             if (vm.Settings is { Persist: true, CheckForUpdates: true })

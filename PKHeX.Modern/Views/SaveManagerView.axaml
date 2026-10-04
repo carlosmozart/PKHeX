@@ -11,11 +11,11 @@
       <Grid ColumnDefinitions="*,Auto">
         <StackPanel Spacing="2">
           <TextBlock Text="Saves" Classes="title" />
-          <TextBlock Text="{Binding Folder}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Folder}" />
+          <TextBlock Text="{Binding FolderLabel}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FolderLabel}" />
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
           <Button Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}" ToolTip.Tip="Relê a pasta (F5)" />
-          <Button Classes="small" Content="📁  Abrir pasta" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Abre a pasta no Explorer (cria se não existir)" />
+          <Button Classes="small" Content="📁  Abrir pasta" Command="{Binding OpenFolderCommand}" ToolTip.Tip="Abre a pasta no Explorer (cria se não existir)" IsVisible="{Binding CanOpenFolder}" />
           <Button Classes="small" Content="🛟  Backups" Command="{Binding OpenBackupsCommand}" ToolTip.Tip="Lista as cópias automáticas feitas antes de salvar por cima de um save, com Restaurar" />
           <Button Classes="small" Content="Escolher pasta..." Click="OnChooseFolder" />
         </StackPanel>

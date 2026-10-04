@@ -896,39 +896,75 @@
             </ItemsControl.ItemTemplate>
           </ItemsControl>
         </ScrollViewer>
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding IsFameTab}">
-          <ItemsControl ItemsSource="{Binding FameRows}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate x:DataType="vm:FameTeamViewModel">
-                <Border Classes="card" Padding="14,10" Margin="0,0,10,8">
-                  <StackPanel Spacing="6">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                      <TextBlock Text="{Binding Date}" Classes="muted" FontSize="12" VerticalAlignment="Center" IsVisible="{Binding HasDate}" />
+        <DockPanel IsVisible="{Binding IsFameTab}">
+          <!-- Hall da Fama: registrar a equipe atual e editar o Pokemon clicado (vale na hora, como as flags) -->
+          <Border DockPanel.Dock="Top" Classes="card" Padding="14,10" Margin="0,0,10,8">
+            <StackPanel Spacing="8">
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <TextBlock Text="Clique num Pokémon para trocar espécie, apelido e nível. “Usar equipe atual” copia a equipe do save para a vitória." Classes="muted" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Classes="small accent" Content="+  Registrar equipe atual" Command="{Binding RegisterFameCommand}"
+                        ToolTip.Tip="Adiciona a equipe atual do save como uma vitória nova no Hall da Fama, como ao vencer a Liga" />
+              </Grid>
+              <Grid ColumnDefinitions="Auto,200,Auto,160,Auto,80,Auto,*,Auto" ColumnSpacing="8" IsVisible="{Binding HasFameSelection}">
+                <TextBlock Text="{Binding FameSelectionTitle}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <AutoCompleteBox Grid.Column="1" ItemsSource="{Binding SpeciesOptions}" Text="{Binding FameSpecies}" FilterMode="ContainsOrdinal"
+                                 Watermark="Espécie" MinimumPrefixLength="1" />
+                <TextBlock Grid.Column="2" Text="Apelido" VerticalAlignment="Center" IsVisible="{Binding FameHasNickname}" />
+                <TextBox Grid.Column="3" Text="{Binding FameNickname}" MaxLength="{Binding FameCaps.NicknameLength}" IsVisible="{Binding FameHasNickname}" />
+                <TextBlock Grid.Column="4" Text="Nível" VerticalAlignment="Center" IsVisible="{Binding FameHasNickname}" />
+                <NumericUpDown Grid.Column="5" Value="{Binding FameLevel}" Minimum="1" Maximum="100" FormatString="0" IsVisible="{Binding FameHasNickname}" />
+                <CheckBox Grid.Column="6" Content="Shiny" IsChecked="{Binding FameShiny}" IsVisible="{Binding FameHasShiny}" />
+                <Button Grid.Column="8" Classes="small accent" Content="Aplicar" Command="{Binding ApplyFameCommand}" />
+              </Grid>
+            </StackPanel>
+          </Border>
+          <TextBlock DockPanel.Dock="Top" Text="Nenhuma equipe no Hall da Fama ainda. Use “Registrar equipe atual” para adicionar a equipe do save."
+                     Classes="muted" TextWrapping="Wrap" Margin="4,8" IsVisible="{Binding !HasFameTeams}" />
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding FameRows}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:FameTeamViewModel">
+                  <Border Classes="card" Padding="14,10" Margin="0,0,10,8">
+                    <StackPanel Spacing="6">
+                      <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
+                        <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{Binding Date}" Classes="muted" FontSize="12" VerticalAlignment="Center" IsVisible="{Binding !CanEditDate}" />
+                        <CalendarDatePicker Grid.Column="1" SelectedDate="{Binding EditDate}" IsVisible="{Binding CanEditDate}" Width="150"
+                                            ToolTip.Tip="Data da vitória" />
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6">
+                          <Button Classes="small" Content="Usar equipe atual" Command="{Binding CopyPartyCommand}"
+                                  ToolTip.Tip="Troca os Pokémon desta vitória pelos da equipe atual do save" />
+                          <Button Classes="small danger" Content="Apagar" Command="{Binding DeleteCommand}"
+                                  ToolTip.Tip="Tira esta vitória do Hall da Fama (as seguintes sobem uma posição)" />
+                        </StackPanel>
+                      </Grid>
+                      <ItemsControl ItemsSource="{Binding Members}">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:FameMemberViewModel">
+                            <Button Classes="ghost fameMember" Classes.selected="{Binding IsSelected}" Width="112" Margin="0,0,6,0" Padding="2,4"
+                                    Command="{Binding SelectCommand}" ToolTip.Tip="{Binding Tip}">
+                              <StackPanel>
+                                <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="Uniform" HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
+                                  <TextBlock Text="★" Classes="muted" FontSize="11" IsVisible="{Binding Shiny}" />
+                                  <TextBlock Text="{Binding Level}" Classes="muted" FontSize="11" />
+                                </StackPanel>
+                              </StackPanel>
+                            </Button>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
                     </StackPanel>
-                    <ItemsControl ItemsSource="{Binding Members}">
-                      <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                      </ItemsControl.ItemsPanel>
-                      <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:FameMemberViewModel">
-                          <StackPanel Width="112" Margin="0,0,6,0" ToolTip.Tip="{Binding Tip}">
-                            <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="Uniform" HorizontalAlignment="Center" />
-                            <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13" />
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
-                              <TextBlock Text="★" Classes="muted" FontSize="11" IsVisible="{Binding Shiny}" />
-                              <TextBlock Text="{Binding Level}" Classes="muted" FontSize="11" />
-                            </StackPanel>
-                          </StackPanel>
-                        </DataTemplate>
-                      </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                  </StackPanel>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </ScrollViewer>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </DockPanel>
         <TextBlock Text="Nada com esses filtros." Classes="muted" IsVisible="{Binding HasNoRows}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>
     </DockPanel>

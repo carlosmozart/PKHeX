@@ -45,7 +45,17 @@ foreach (var file in new[] { "red.sav", "em.sav", "fr.sav", "or.sav", "moon.sav"
     var first = fame.FirstOrDefault();
     Console.WriteLine($"     [{file}] Hall da Fama: {fame.Count} equipes; primeira: {(first is null ? "-" : string.Join(", ", first.Members.Select(m => $"{m.Nickname} Nv.{m.Level}")))} {first?.Date}");
     Check($"[{file}] equipes do Hall da Fama com 1 a 6 Pokémon válidos", fame.All(t => t.Members.Count is >= 1 and <= 6 && t.Members.All(m => m.Species is > 0 and <= 1025)));
-    if (fame.Count == 0) continue;
+    if (fame.Count == 0)
+    {
+        // Hall da Fama vazio (FireRed sem a Liga): a aba aparece para registrar a equipe atual.
+        vm.Open(path); Pump();
+        vm.CurrentPage = vm.Game; vm.Game.Tab = 4; Pump();
+        Check($"[{file}] aba do Hall da Fama vazia", vm.Game.HasFame && !vm.Game.HasFameTeams && !vm.Game.HasNoRows);
+        Shot($"fame-empty-{Path.GetFileNameWithoutExtension(file)}");
+        vm.Game.RegisterFameCommand.Execute(null); Pump();
+        Check($"[{file}] primeira equipe registrada", HallOfFame.Load(Reopen(file)).Count == 1 && vm.Game.FameRows.Count == 1);
+        continue;
+    }
     vm.Open(path); Pump();
     var gf = vm.Game;
     vm.CurrentPage = gf; Pump();
@@ -53,6 +63,49 @@ foreach (var file in new[] { "red.sav", "em.sav", "fr.sav", "or.sav", "moon.sav"
     gf.Tab = 4; Pump();
     Check($"[{file}] equipes na tela com sprites", gf.FameRows.Count == fame.Count && gf.FameRows[0].Members.All(m => m.Sprite is not null));
     Shot($"fame-{Path.GetFileNameWithoutExtension(file)}");
+
+    // Edicao: troca o primeiro Pokemon da primeira equipe por Mew Nv. 50, grava e rele.
+    var original = CoreAdapter.LoadSave(path)!;
+    var caps = HallOfFame.Caps(original);
+    var target = gf.FameRows[0].Members[0];
+    target.SelectCommand.Execute(null); Pump();
+    Check($"[{file}] editor do Pokémon clicado", gf.HasFameSelection && gf.FameSpecies == GameInfo.Strings.Species[target.Member.Species]);
+    gf.FameSpecies = "Mew"; gf.FameNickname = "TESTE"; gf.FameLevel = 50;
+    gf.ApplyFameCommand.Execute(null); Pump();
+    Check($"[{file}] edição marca o save como alterado", vm.IsDirty);
+    var reread = HallOfFame.Load(Reopen(file));
+    var edited = reread.First(t => t.Index == target.TeamIndex).Members.First(m => m.Slot == target.Member.Slot);
+    Check($"[{file}] Hall da Fama editado e relido", edited.Species == 151 && (caps.NicknameLength == 0 || (edited.Nickname == "TESTE" && edited.Level == 50)),
+        $"{edited.Species} {edited.Nickname} Nv.{edited.Level}");
+    Check($"[{file}] seleção continua no Pokémon editado", gf.SelectedFameMember?.Member.Species == 151);
+
+    // Registrar a equipe atual (Moon: vira a equipe mais recente).
+    int before = gf.FameRows.Count;
+    var partySpecies = Enumerable.Range(0, original.PartyCount).Select(original.GetPartySlotAtIndex).Where(p => p.Species != 0 && !p.IsEgg).Select(p => p.Species).ToArray();
+    gf.RegisterFameCommand.Execute(null); Pump();
+    reread = HallOfFame.Load(Reopen(file));
+    // A vitoria nova entra no fim (Gen 6: primeira posicao livre, ou a ultima quando cheio); no Moon e a equipe mais recente.
+    var registered = file == "moon.sav" ? reread.First(t => t.Index == 1) : reread.MaxBy(t => t.Index)!;
+    Check($"[{file}] equipe atual registrada", registered.Members.Select(m => m.Species).SequenceEqual(partySpecies)
+        && (file == "moon.sav" || reread.Count == Math.Min(before + 1, file.StartsWith("or") ? 16 : 50)), $"{reread.Count} equipes");
+    if (caps.HasDate)
+        Check($"[{file}] vitória nova com a data de hoje", registered.When == DateTime.Today, registered.Date);
+
+    // Data (X/Y e Omega Ruby/Alpha Sapphire).
+    if (caps.HasDate)
+    {
+        var team = gf.FameRows[0];
+        team.EditDate = new DateTime(2016, 2, 27); Pump();
+        reread = HallOfFame.Load(Reopen(file));
+        Check($"[{file}] data da vitória editada", reread.First(t => t.Index == team.Index).When == new DateTime(2016, 2, 27));
+    }
+
+    // Apagar a ultima equipe.
+    int count = gf.FameRows.Count;
+    var last = gf.FameRows[^1];
+    last.DeleteCommand.Execute(null);
+    Check($"[{file}] apagar equipe", Wait(() => gf.FameRows.Count == count - 1), $"{gf.FameRows.Count}");
+    Check($"[{file}] apagada no save", HallOfFame.Load(Reopen(file)).Count == count - 1);
 }
 Check("Hall da Fama: algum save com equipes", fameTotal > 0, fameTotal.ToString());
 

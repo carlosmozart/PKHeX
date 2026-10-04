@@ -23,6 +23,9 @@ public sealed partial class MainView : UserControl
     /// </summary>
     public static MobileDocuments? Documents { get; set; }
 
+    /// <summary>Pasta de saves no Android (lida pelo seletor; os saves gravam de volta no original). Nulo no desktop.</summary>
+    public static MobileSaveFolder? SaveFolder { get; set; }
+
     /// <summary>Pastas externas do Bank no Android (copia privada sincronizada com a pasta do seletor). Nulo no desktop.</summary>
     public static MobileBankFolders? BankFolders { get; set; }
 
@@ -51,6 +54,12 @@ public sealed partial class MainView : UserControl
                 return;
             vm.SaveRequested += () => OnQuickSave(this, new RoutedEventArgs());
             // Seletores de arquivo/pasta usados pela pagina Bank (pasta externa e outro save).
+            if (SaveFolder is { } saveFolder)
+            {
+                saveFolder.IsOpen = vm.SaveManager.IsOpenPath;
+                vm.SaveManager.BeforeRefresh = () => saveFolder.SyncAsync(Storage);
+                vm.SaveManager.DescribeFolder = () => saveFolder.FolderName is { } name ? "📁 " + name : "Nenhuma pasta escolhida: toque em “Escolher pasta...”";
+            }
             if (BankFolders is { } folders)
             {
                 vm.Bank.PickFolder = async () =>

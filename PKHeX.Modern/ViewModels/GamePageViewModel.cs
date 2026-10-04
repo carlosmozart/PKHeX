@@ -33,7 +33,11 @@ public sealed class GamePageViewModel : PageViewModel
         _status = status;
         SetTabCommand = new RelayCommand(p => { if (p is string s && int.TryParse(s, out var t)) Tab = t; });
         SetVisibleCommand = new RelayCommand(p => _ = SetVisibleAsync(p is "1"));
+        RegisterFameCommand = new RelayCommand(RegisterFame, () => _sav is not null && HasFame);
+        ApplyFameCommand = new RelayCommand(ApplyFameMember, () => SelectedFameMember is not null);
     }
+
+    private SaveFile? _sav;
 
     public override string Title => "Jogo";
     public override string Icon => "🎮";
@@ -42,6 +46,10 @@ public sealed class GamePageViewModel : PageViewModel
     public override void Load(SaveFile sav)
     {
         _editors = new GameEditors(sav);
+        _sav = sav;
+        FameCaps = HallOfFame.Caps(sav);
+        SpeciesOptions = [.. Enumerable.Range(1, FameCaps.MaxSpecies).Select(i => GameInfo.Strings.Species[i])];
+        SelectedFameMember = null;
         var e = _editors;
         void Changed() => this.Changed?.Invoke();
         _flags = [.. e.Flags.Select(f => new FlagRowViewModel(f, e, Changed))];
@@ -49,7 +57,7 @@ public sealed class GamePageViewModel : PageViewModel
         _records = [.. e.Records.Select(r => new RecordRowViewModel(r, e, Changed))];
         _shortcuts = [.. e.Shortcuts.Select(s => new ShortcutRowViewModel(s, () => _ = RunShortcutAsync(s)))];
         ShortcutRows = _shortcuts;
-        FameRows = [.. e.Fame.Select(t => new FameTeamViewModel(t, sav.Context))];
+        FameRows = BuildFame(e.Fame);
         Categories = ["Todas as categorias", .. e.Flags.Select(GameEditors.CategoryOf).Concat(e.Works.Select(GameEditors.CategoryOf))
             .Where(c => c.Length > 0).Distinct().Order(StringComparer.CurrentCulture)];
         _category = 0;
@@ -169,9 +177,134 @@ public sealed class GamePageViewModel : PageViewModel
                 break;
         }
         CountText = shown == total ? $"{total} itens" : $"{shown} de {total} itens";
-        HasNoRows = shown == 0;
+        HasNoRows = shown == 0 && _tab != 4; // Hall da Fama vazio tem o proprio aviso
         foreach (var p in (string[])[nameof(FlagRows), nameof(WorkRows), nameof(RecordRows), nameof(CountText), nameof(HasNoRows)])
             Raise(p);
+    }
+
+    // Hall da Fama: as alteracoes valem na hora no save (como as flags) e marcam o save como alterado.
+    public FameCaps FameCaps { get; private set; } = new(0, false, false, 0);
+    public bool FameHasNickname => FameCaps.NicknameLength > 0;
+    public bool FameHasShiny => FameCaps.HasShiny;
+    public bool FameHasDate => FameCaps.HasDate;
+    public IReadOnlyList<string> SpeciesOptions { get; private set; } = [];
+    public bool HasFameTeams => FameRows.Count > 0;
+    public RelayCommand RegisterFameCommand { get; }
+    public RelayCommand ApplyFameCommand { get; }
+
+    private FameMemberViewModel? _selectedFame;
+    /// <summary>Pokemon do Hall da Fama em edicao (clique no Pokemon da equipe).</summary>
+    public FameMemberViewModel? SelectedFameMember
+    {
+        get => _selectedFame;
+        set
+        {
+            if (_selectedFame is not null) _selectedFame.IsSelected = false;
+            Set(ref _selectedFame, value);
+            if (value is not null)
+            {
+                value.IsSelected = true;
+                FameSpecies = GameInfo.Strings.Species[value.Member.Species];
+                FameNickname = value.Member.Nickname;
+                FameLevel = value.Member.Level > 0 ? value.Member.Level : 1;
+                FameShiny = value.Member.Shiny;
+            }
+            foreach (var p in (string[])[nameof(HasFameSelection), nameof(FameSpecies), nameof(FameNickname), nameof(FameLevel), nameof(FameShiny), nameof(FameSelectionTitle)])
+                Raise(p);
+            ApplyFameCommand.NotifyCanExecuteChanged();
+        }
+    }
+    public bool HasFameSelection => _selectedFame is not null;
+    public string FameSelectionTitle => _selectedFame is { } m ? $"{m.TeamTitle} · posição {m.Member.Slot + 1}" : "";
+    public string FameSpecies { get; set; } = "";
+    public string FameNickname { get; set; } = "";
+    public decimal? FameLevel { get; set; } = 1;
+    public bool FameShiny { get; set; }
+
+    private List<FameTeamViewModel> BuildFame(IReadOnlyList<FameTeam> teams)
+        => [.. teams.Select(t => new FameTeamViewModel(t, _sav!.Context, this))];
+
+    private void ReloadFame(int? team = null, int? slot = null)
+    {
+        if (_sav is null)
+            return;
+        FameRows = BuildFame(HallOfFame.Load(_sav));
+        Raise(nameof(FameRows));
+        Raise(nameof(HasFameTeams));
+        Raise(nameof(Summary));
+        SelectedFameMember = team is null ? null
+            : FameRows.FirstOrDefault(t => t.Index == team)?.Members.FirstOrDefault(m => m.Member.Slot == slot);
+        ApplyFilter();
+    }
+
+    private void FameChanged(string message, int? team = null, int? slot = null)
+    {
+        Changed?.Invoke();
+        ReloadFame(team, slot);
+        _status(message + " Lembre-se de salvar.");
+    }
+
+    private void ApplyFameMember()
+    {
+        if (_sav is null || _selectedFame is not { } m)
+            return;
+        var name = (FameSpecies ?? "").Trim();
+        int index = GameInfo.Strings.Species.ToList().FindIndex(s => string.Equals(s, name, StringComparison.OrdinalIgnoreCase));
+        if (index <= 0 || index > FameCaps.MaxSpecies)
+        {
+            _status($"Espécie não encontrada neste jogo: {name}.");
+            return;
+        }
+        var nickname = (FameNickname ?? "").Trim();
+        // Sem apelido: o nome da especie, em maiusculas no Gen 1-3 como nos jogos (no X/Y o servico usa o nome do jogo).
+        if (FameHasNickname && nickname.Length == 0 && !FameHasShiny)
+            nickname = GameInfo.Strings.Species[index].ToUpperInvariant();
+        if (FameHasNickname && nickname.Length > FameCaps.NicknameLength)
+            nickname = nickname[..FameCaps.NicknameLength];
+        HallOfFame.SetMember(_sav, m.TeamIndex, m.Member.Slot, (ushort)index, nickname, (int)(FameLevel ?? 1), FameShiny);
+        FameChanged($"Hall da Fama: {GameInfo.Strings.Species[index]} gravado em {m.TeamTitle}.", m.TeamIndex, m.Member.Slot);
+    }
+
+    private void RegisterFame()
+    {
+        if (_sav is null)
+            return;
+        if (_sav.PartyCount == 0)
+        {
+            _status("A equipe do save está vazia.");
+            return;
+        }
+        HallOfFame.RegisterParty(_sav);
+        FameChanged("Equipe atual registrada no Hall da Fama.");
+    }
+
+    internal async Task CopyPartyToFameAsync(FameTeamViewModel team)
+    {
+        if (_sav is null || _sav.PartyCount == 0)
+            return;
+        if (!await _confirm("Usar a equipe atual?", $"Os Pokémon de “{team.Title}” serão trocados pelos da equipe atual do save.", "Trocar"))
+            return;
+        HallOfFame.CopyParty(_sav, team.Index);
+        FameChanged($"{team.Title}: trocada pela equipe atual.");
+    }
+
+    internal async Task DeleteFameAsync(FameTeamViewModel team)
+    {
+        if (_sav is null)
+            return;
+        if (!await _confirm("Apagar equipe do Hall da Fama?", $"“{team.Title}” sai do Hall da Fama. As equipes seguintes sobem uma posição.", "Apagar"))
+            return;
+        HallOfFame.DeleteTeam(_sav, team.Index);
+        FameChanged($"{team.Title}: apagada do Hall da Fama.");
+    }
+
+    internal void SetFameDate(FameTeamViewModel team, DateTime date)
+    {
+        if (_sav is null)
+            return;
+        HallOfFame.SetDate(_sav, team.Index, date);
+        Changed?.Invoke();
+        _status($"{team.Title}: data trocada para {date:dd/MM/yyyy}. Lembre-se de salvar.");
     }
 
     /// <summary>Atalho de evento: pergunta, aplica e atualiza as flags/valores mostrados.</summary>
@@ -310,16 +443,57 @@ public sealed class ShortcutRowViewModel(GameShortcut shortcut, Action run) : Vi
 }
 
 /// <summary>Equipe do Hall da Fama na pagina Jogo.</summary>
-public sealed class FameTeamViewModel(FameTeam team, EntityContext context)
+public sealed class FameTeamViewModel : ViewModelBase
 {
-    public string Title => team.Title;
-    public string Date => team.Date;
-    public bool HasDate => team.Date.Length > 0;
-    public IReadOnlyList<FameMemberViewModel> Members { get; } = [.. team.Members.Select(m => new FameMemberViewModel(m, context))];
+    private readonly FameTeam _team;
+    private readonly GamePageViewModel _page;
+
+    public FameTeamViewModel(FameTeam team, EntityContext context, GamePageViewModel page)
+    {
+        _team = team;
+        _page = page;
+        _date = team.When;
+        Members = [.. team.Members.Select(m => new FameMemberViewModel(m, context, team, page))];
+        CopyPartyCommand = new RelayCommand(() => _ = page.CopyPartyToFameAsync(this));
+        DeleteCommand = new RelayCommand(() => _ = page.DeleteFameAsync(this));
+    }
+
+    public int Index => _team.Index;
+    public string Title => _team.Title;
+    public string Date => _team.Date;
+    public bool HasDate => _team.Date.Length > 0;
+    public bool CanEditDate => _page.FameHasDate;
+    public IReadOnlyList<FameMemberViewModel> Members { get; }
+    public RelayCommand CopyPartyCommand { get; }
+    public RelayCommand DeleteCommand { get; }
+
+    private DateTime? _date;
+    /// <summary>Data da vitoria (X/Y e Omega Ruby/Alpha Sapphire): trocar grava no save.</summary>
+    public DateTime? EditDate
+    {
+        get => _date;
+        set
+        {
+            if (value is not { } d || d.Date == _date?.Date || d.Year is < 2000 or > 2255)
+                return;
+            _date = d.Date;
+            _page.SetFameDate(this, d.Date);
+            Raise();
+        }
+    }
 }
 
-public sealed class FameMemberViewModel(FameMember member, EntityContext context)
+public sealed class FameMemberViewModel(FameMember member, EntityContext context, FameTeam team, GamePageViewModel page) : ViewModelBase
 {
+    public FameMember Member => member;
+    public int TeamIndex => team.Index;
+    public string TeamTitle => team.Title;
+    private RelayCommand? _select;
+    /// <summary>Clique no Pokemon: abre o editor acima das equipes.</summary>
+    public RelayCommand SelectCommand => _select ??= new(() => page.SelectedFameMember = this);
+    private bool _isSelected;
+    public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
+
     private Avalonia.Media.Imaging.Bitmap? _sprite;
     private bool _loaded;
     public Avalonia.Media.Imaging.Bitmap? Sprite

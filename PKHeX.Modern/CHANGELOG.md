@@ -6,6 +6,14 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.10 — 2026-10-03
+
+### 🎮 Editores por jogo
+- **Hall da Fama editável** (aba ★ da página Jogo): clique num Pokémon para trocar espécie, apelido e nível (no Sun/Moon, só a espécie); no X/Y e no Omega Ruby/Alpha Sapphire também a data da vitória e o shiny. Cada vitória ganhou “Usar equipe atual” (troca pelos Pokémon da equipe do save) e “Apagar”, e “Registrar equipe atual” adiciona a equipe do save como vitória nova, como ao vencer a Liga. A aba aparece mesmo sem nenhuma vitória ainda.
+
+### 📱 Android
+- **Pasta de saves no Android**: na página Saves, “Escolher pasta...” agora abre o seletor do Android e o app lê a pasta inteira, com subpastas, listando todos os saves como no desktop (antes, só apareciam os saves abertos um por um). “Atualizar” e a abertura do app trazem saves novos ou mudados e tiram os que sumiram. Salvar grava de volta no arquivo da pasta, com backup; um save aberto ou com alterações não salvas não é trocado pela versão da pasta. O botão “Abrir pasta” não aparece mais no Android.
+
 ## 0.4.9 — 2026-10-03
 
 ### 📱 Android

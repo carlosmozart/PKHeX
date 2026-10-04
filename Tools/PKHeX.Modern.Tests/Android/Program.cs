@@ -112,6 +112,37 @@ Check("depois de reiniciar, o acesso volta pelo bookmark", File.Exists(Path.Comb
 reopened.Remove(mirror);
 Check("remover a pasta apaga so a copia", !Directory.Exists(mirror) && remoteFolder.Files.Count >= 3);
 BankStorage.ExternalFolders = [];
+// Pasta de saves: a pasta do seletor (com subpastas) aparece na pagina Saves e cada save grava de volta no original.
+var saveRoot = Path.Combine(work, "savefolder");
+var savesTree = new FakeFolder("content://test/tree/saves", "Saves");
+savesTree.Add("main.sav", original);
+var sub = savesTree.AddFolder("Pokemon Black 2");
+sub.Add("outro.sav", original);
+var treeProvider = DispatchProxy.Create<IStorageProvider, ProviderProxy>(); ((ProviderProxy)(object)treeProvider).Folder = savesTree.Handle;
+var saveDocs = new MobileDocuments(saveRoot);
+var saveFolder = new MobileSaveFolder(saveRoot, saveDocs);
+var saveCount = Await(saveFolder.ChooseAsync(treeProvider));
+var listed = SaveLibrary.Scan(Path.Combine(saveRoot, "documents"), out _);
+Check("pasta de saves lida com subpastas", saveCount == 2 && listed.Count == 2 && saveFolder.FolderName == "Saves");
+var mainLocal = saveDocs.FolderDocuments.Single(d => d.Relative == "main.sav").Path;
+var subLocal = saveDocs.FolderDocuments.Single(d => d.Relative == "Pokemon Black 2/outro.sav").Path;
+savesTree.Get("main.sav")!.Bytes = changed;
+Wait(saveFolder.SyncAsync(treeProvider));
+Check("save mudado na pasta chega ao atualizar", File.ReadAllBytes(mainLocal).SequenceEqual(changed));
+Wait(saveDocs.SaveAsync(saveDocs.Find(mainLocal)!, original, treeProvider));
+Check("Salvar grava no arquivo da pasta", savesTree.Get("main.sav")!.Bytes.SequenceEqual(original));
+var restartedDocs = new MobileDocuments(saveRoot);
+var restartedFolder = new MobileSaveFolder(saveRoot, restartedDocs);
+File.WriteAllBytes(subLocal, changed);
+Wait(restartedDocs.SaveAsync(restartedDocs.Find(subLocal)!, changed, treeProvider));
+Check("depois de reabrir, Salvar acha o original pela pasta", sub.Get("outro.sav")!.Bytes.SequenceEqual(changed));
+File.WriteAllBytes(mainLocal, changed); // alteracao no app ainda nao salva
+savesTree.Get("main.sav")!.Bytes = [.. original.Reverse()];
+Wait(restartedFolder.SyncAsync(treeProvider));
+Check("save com alteracoes no app nao e trocado pela pasta", File.ReadAllBytes(mainLocal).SequenceEqual(changed));
+sub.Remove("outro.sav");
+Wait(restartedFolder.SyncAsync(treeProvider));
+Check("save apagado na pasta sai da lista", !File.Exists(subLocal) && restartedDocs.FolderDocuments.All(d => d.Relative != "Pokemon Black 2/outro.sav"));
 // Telefone em paisagem (S24+: 892x412 dp): a interface do desktop inteira, reduzida para caber.
 var mobile = new MobileShell(vm);
 var window = new Window { Width = 892, Height = 412, Content = mobile }; window.Show(); Dispatcher.UIThread.RunJobs();
@@ -203,9 +234,15 @@ public sealed class FakeFolder
     public string Uri { get; } public string Name { get; } public IStorageBookmarkFolder Handle { get; }
     public FakeFolder(string uri, string name) { Uri = uri; Name = name; Handle = DispatchProxy.Create<IStorageBookmarkFolder, FolderProxy>(); ((FolderProxy)(object)Handle).State = this; }
     public FakeFile Add(string name, byte[] bytes) { var f = new FakeFile(Uri + "/" + name, name, bytes) { Parent = this }; Files.Add(f); return f; }
+    public readonly List<FakeFolder> Folders = [];
+    public FakeFolder AddFolder(string name) { var f = new FakeFolder(Uri + "/" + name, name); Folders.Add(f); return f; }
     public FakeFile? Get(string name) => Files.FirstOrDefault(f => f.Name == name);
     public void Remove(string name) => Files.RemoveAll(f => f.Name == name);
-    public async IAsyncEnumerable<IStorageItem> Items() { foreach (var f in Files.ToArray()) { await Task.Yield(); yield return f.Handle; } }
+    public async IAsyncEnumerable<IStorageItem> Items()
+    {
+        foreach (var f in Files.ToArray()) { await Task.Yield(); yield return f.Handle; }
+        foreach (var d in Folders.ToArray()) { await Task.Yield(); yield return d.Handle; }
+    }
 }
 public class FolderProxy : DispatchProxy
 {
@@ -217,6 +254,8 @@ public class FolderProxy : DispatchProxy
         "GetItemsAsync" => State.Items(),
         "CreateFileAsync" => Task.FromResult<IStorageFile?>(State.Add((string)args![0]!, []).Handle),
         "GetBasicPropertiesAsync" => Task.FromResult(new StorageItemProperties()),
+        "GetFolderAsync" => Task.FromResult<IStorageFolder?>(State.Folders.FirstOrDefault(f => f.Name == (string)args![0]!)?.Handle),
+        "GetFileAsync" => Task.FromResult<IStorageFile?>(State.Get((string)args![0]!)?.Handle),
         "Dispose" => null, _ => throw new NotSupportedException(method?.Name)
     };
 }

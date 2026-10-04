@@ -70,13 +70,15 @@ public sealed class GameEditors
         Works = works;
         Shortcuts = [.. Shortcuts, .. LoadCaseShortcuts(sav)];
         Fame = HallOfFame.Load(sav);
+        HasFame = HallOfFame.IsSupported(sav);
         Records = LoadRecords();
     }
 
     public bool HasEvents => Flags.Count > 0;
     public bool HasRecords => Records.Count > 0;
     public bool HasShortcuts => Shortcuts.Count > 0;
-    public bool HasFame => Fame.Count > 0;
+    /// <summary>O jogo tem Hall da Fama (a aba aparece mesmo vazia, para registrar a equipe atual).</summary>
+    public bool HasFame { get; }
     public bool IsAvailable => HasEvents || Works.Count > 0 || HasRecords || HasShortcuts || HasFame;
     /// <summary>Equipes do Hall da Fama (so leitura).</summary>
     public IReadOnlyList<FameTeam> Fame { get; } = [];

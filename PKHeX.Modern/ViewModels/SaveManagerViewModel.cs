@@ -46,6 +46,16 @@ public sealed class SaveManagerViewModel : PageViewModel
     /// <summary>Rele um save aberto do disco (ex.: depois de restaurar um backup dele).</summary>
     public Action<string>? Reload { get; init; }
 
+    /// <summary>Antes de reler a pasta (Android: traz os saves da pasta escolhida no seletor).</summary>
+    public Func<Task>? BeforeRefresh { get; set; }
+    /// <summary>Nome mostrado da pasta (Android: o nome da pasta escolhida, nao o caminho da copia privada).</summary>
+    public Func<string>? DescribeFolder { get; set; }
+    public string FolderLabel => DescribeFolder?.Invoke() ?? Folder;
+    /// <summary>"Abrir pasta" no explorador de arquivos (nao existe no Android).</summary>
+    public bool CanOpenFolder => App.ShowShortcuts;
+    public void RaiseFolder() { Raise(nameof(Folder)); Raise(nameof(FolderLabel)); }
+    public void ReportStatus(string message) => _status(message);
+
     private bool IsOpen(string path) => IsOpenPath?.Invoke(path) ?? IsSamePath(path, _currentPath);
 
     public override string Title => "Saves";
@@ -209,6 +219,11 @@ public sealed class SaveManagerViewModel : PageViewModel
         IsLoading = true;
         Raise(nameof(IsEmpty));
         Raise(nameof(ShowLoading));
+        if (BeforeRefresh is { } before)
+        {
+            try { await before(); }
+            catch (Exception ex) { _status($"Não foi possível ler a pasta de saves: {ex.Message}"); }
+        }
         var folder = Folder;
         var (entries, skipped) = await Task.Run(() => (SaveLibrary.Scan(folder, out var s), s));
 
