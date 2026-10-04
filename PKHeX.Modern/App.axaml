@@ -806,6 +806,7 @@
         <Button Classes="small" Classes.accent="{Binding IsRaidsTab}" Content="⚔ Raids" IsVisible="{Binding HasRaids}" Command="{Binding SetTabCommand}" CommandParameter="6" />
         <Button Classes="small" Classes.accent="{Binding IsClockTab}" Content="⏰ Relógio" IsVisible="{Binding HasClock}" Command="{Binding SetTabCommand}" CommandParameter="7" />
         <Button Classes="small" Classes.accent="{Binding IsRoamersTab}" Content="🗺 Errantes" IsVisible="{Binding HasRoamers}" Command="{Binding SetTabCommand}" CommandParameter="8" />
+        <Button Classes="small" Classes.accent="{Binding IsDonutsTab}" Content="🍩 Donuts" IsVisible="{Binding HasDonuts}" Command="{Binding SetTabCommand}" CommandParameter="9" />
       </WrapPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8" IsVisible="{Binding ShowFilters}">
         <TextBox Text="{Binding Query}" Watermark="Buscar pelo nome ou número (ex.: surf, #120)" />
@@ -1063,11 +1064,49 @@
           </StackPanel>
         </ScrollViewer>
         <ScrollViewer IsVisible="{Binding IsRoamersTab}"><ContentControl Content="{Binding Roamer}" /></ScrollViewer>
+        <ScrollViewer IsVisible="{Binding IsDonutsTab}"><ContentControl Content="{Binding Donuts}" /></ScrollViewer>
         <TextBlock Text="Nada com esses filtros." Classes="muted" IsVisible="{Binding HasNoRows}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>
     </DockPanel>
   </DataTemplate>
 
+  <DataTemplate DataType="vm:DonutPocketViewModel">
+    <StackPanel Spacing="12">
+      <TextBlock Text="{Binding Note}" Classes="muted" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding Count}" />
+      <TextBlock Text="Efeito desejado" Classes="muted" />
+      <ComboBox ItemsSource="{Binding Effects}" SelectedItem="{Binding Effect}" HorizontalAlignment="Stretch" />
+      <WrapPanel ItemSpacing="8" LineSpacing="8">
+        <Button Content="Gerar donut" Command="{Binding GenerateCommand}" />
+        <Button Content="Encher com este efeito" Command="{Binding FillCommand}" />
+      </WrapPanel>
+      <TextBlock Text="Donuts guardados" Classes="muted" />
+      <ComboBox ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}" HorizontalAlignment="Stretch" />
+      <ContentControl Content="{Binding Draft}" />
+      <WrapPanel ItemSpacing="8" LineSpacing="8">
+        <Button Content="Aplicar donut" Command="{Binding ApplyCommand}" Classes="accent" />
+        <Button Content="Duplicar donut" Command="{Binding DuplicateCommand}" />
+        <Button Content="Apagar donut" Command="{Binding DeleteCommand}" />
+      </WrapPanel>
+    </StackPanel>
+  </DataTemplate>
+  <DataTemplate DataType="vm:DonutDraftViewModel">
+    <StackPanel Spacing="8">
+      <TextBlock Text="Tipo de donut" Classes="muted" />
+      <ComboBox ItemsSource="{Binding Types}" SelectedIndex="{Binding TypeIndex}" HorizontalAlignment="Stretch" />
+      <TextBlock Text="Estrelas" Classes="muted" />
+      <NumericUpDown Value="{Binding Stars}" Minimum="0" Maximum="5" FormatString="0" />
+      <TextBlock Text="{Binding Flavors}" TextWrapping="Wrap" Classes="muted" />
+      <ItemsControl ItemsSource="{Binding Berries}">
+        <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:DonutBerryViewModel"><StackPanel Spacing="4" Margin="0,0,0,6"><TextBlock Text="{Binding Name}" Classes="muted" /><ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" HorizontalAlignment="Stretch" /></StackPanel></DataTemplate></ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <Button Content="Recalcular estrelas pelas frutas" Command="{Binding RecalculateCommand}" />
+      <TextBlock Text="Poderes (até três)" Classes="muted" />
+      <ComboBox ItemsSource="{Binding Effects}" SelectedItem="{Binding Power1}" HorizontalAlignment="Stretch" />
+      <ComboBox ItemsSource="{Binding Effects}" SelectedItem="{Binding Power2}" HorizontalAlignment="Stretch" />
+      <ComboBox ItemsSource="{Binding Effects}" SelectedItem="{Binding Power3}" HorizontalAlignment="Stretch" />
+    </StackPanel>
+  </DataTemplate>
   <DataTemplate DataType="vm:RoamerEditorViewModel">
     <StackPanel Spacing="12" Margin="0,0,12,12">
       <TextBlock Text="{Binding Note}" Classes="muted" TextWrapping="Wrap" />

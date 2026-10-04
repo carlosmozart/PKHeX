@@ -9,6 +9,7 @@ Formato: "## versão — data", "### seção", "- item".
 ## Próxima versão
 
 ### 🎮 Página Jogo
+- **Donuts de Z-A:** lista, edição de frutas, estrelas e poderes, gerador por efeito, duplicação e exclusão. Encher a bolsa pede confirmação e tem um passo de desfazer.
 - **Errantes:** editor da Gen 3 e X/Y com reaparecer, dados guardados e desfazer. O modo legal valida encontros e a correlação PID/IV; Ruby/Sapphire/FireRed/LeafGreen mostram os IVs truncados pelo bug do jogo.
 - **Relógio da Gen 3:** aba para Ruby/Sapphire/Emerald com relógios inicial e decorrido, correção do relógio parado pelo método do PKHeX e avanço de um dia. Cada edição pode ser desfeita.
 - **Desfazer e refazer:** flags, valores, recordes, atalhos, Hall da Fama, cartões e raids passam a ter histórico próprio nos botões ↶/↷ da página Jogo. A dica informa a ação; operações em massa formam um passo. Até 30 passos e 64 MB de diferenças, sem reverter edições de outras páginas.

@@ -52,6 +52,7 @@ public sealed partial class GamePageViewModel : PageViewModel
         RefreshRaids();
         RefreshClock();
         RefreshRoamers();
+        RefreshDonuts();
         FameCaps = HallOfFame.Caps(sav);
         SpeciesOptions = [.. Enumerable.Range(1, FameCaps.MaxSpecies).Select(i => GameInfo.Strings.Species[i])];
         SelectedFameMember = null;
@@ -109,6 +110,7 @@ public sealed partial class GamePageViewModel : PageViewModel
             Raise(nameof(IsRaidsTab));
             Raise(nameof(IsClockTab));
             Raise(nameof(IsRoamersTab));
+            Raise(nameof(IsDonutsTab));
             Raise(nameof(ShowFilters));
             Raise(nameof(ShowCategory));
             ApplyFilter();

@@ -1,0 +1,32 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Threading;
+using PKHeX.Core;
+using PKHeX.Modern;
+using PKHeX.Modern.Services;
+using PKHeX.Modern.ViewModels;
+
+AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false }).WithInterFont().SetupWithoutStarting();
+var work = args[0]; BankStorage.Root = Path.Combine(work, "bank"); SaveBackup.Folder = Path.Combine(work, "backups"); int fails = 0, confirms = 0; bool accept = true;
+void Check(string name, bool ok) { Console.WriteLine($"{(ok ? "OK" : "FAIL")} {name}"); if (!ok) fails++; }
+var sav = (SAV9ZA)CoreAdapter.LoadSave(Path.Combine(work, "za.sav"))!; CoreAdapter.Activate(sav);
+var page = new GamePageViewModel((_, _, _) => { confirms++; return Task.FromResult(accept); }, Console.WriteLine); page.Load(sav); page.Tab = 9;
+Check("ZA oferece donuts", page.HasDonuts); var donuts = page.Donuts!; Console.WriteLine("Leitura: " + donuts.Count); var original = sav.Write().ToArray();
+donuts.GenerateCommand.Execute(null); Check("gera efeito desejado", donuts.Selected is not null && donuts.Draft!.Power1 == donuts.Effect);
+int generated = donuts.Selected!.Index; donuts.Draft!.Stars = 4; donuts.Draft.Power2 = donuts.Effects[2]; donuts.Draft.Berries[0].Selected = donuts.Draft.Berries[0].Choices[1]; donuts.ApplyCommand.Execute(null);
+Check("edita estrelas poderes e sabores", sav.Donuts.GetDonut(generated).Stars == 4 && sav.Donuts.GetDonut(generated).Flavor1 == donuts.Effects[2].Hash);
+int count = donuts.Rows.Count; donuts.DuplicateCommand.Execute(null); Check("duplica", donuts.Rows.Count == count + 1); await donuts.DeleteAsync(); Check("apaga e comprime", donuts.Rows.Count == count);
+var before = sav.Write().ToArray(); accept = false; await donuts.FillAsync(); Check("cancelar preserva bytes", sav.Write().Span.SequenceEqual(before)); accept = true;
+int steps = page.History!.Count; await donuts.FillAsync(); Check("999 donuts um passo", donuts.Rows.Count == 999 && page.History.Count == steps + 1 && confirms == 3);
+page.UndoGame(); Check("desfaz bolsa byte a byte", sav.Write().Span.SequenceEqual(before)); page.RedoGame();
+string output = Path.Combine(work, "out-za.sav"); File.WriteAllBytes(output, sav.Write().ToArray()); var read = (SAV9ZA)CoreAdapter.LoadSave(output)!;
+Check("reabre com checksums e efeito", read.ChecksumsValid && read.Donuts.GetDonut(0).Flavor0 == donuts.Effect!.Hash && DonutPocketViewModel.Occupied(read.Donuts.GetDonut(998)));
+var demo = BlankSaveFile.Get(GameVersion.ZA); CoreAdapter.Activate(demo); page.Load(demo); page.Tab = 9; page.Donuts!.GenerateCommand.Execute(null);
+var win = new Window { Content = new ContentControl { Content = page, Margin = new Thickness(16) }, Width = 948, Height = 700 }; win.Show();
+for (int i = 0; i < 10; i++) { Dispatcher.UIThread.RunJobs(); AvaloniaHeadlessPlatform.ForceRenderTimerTick(); } win.CaptureRenderedFrame()!.Save(Path.Combine(work, "donuts.png")); win.Close();
+Console.WriteLine("Captura: " + work); Console.WriteLine(fails == 0 ? "TUDO OK" : $"{fails} FALHAS"); return fails == 0 ? 0 : 1;
