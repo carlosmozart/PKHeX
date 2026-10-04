@@ -18,7 +18,7 @@ var work = Path.Combine(artifactRoot, Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(work);
 SaveBackup.Folder = Path.Combine(work, "backups"); BankStorage.Root = Path.Combine(work, "bank");
 int failures = 0;
-void Check(string label, bool ok) { Console.WriteLine((ok ? "OK " : "FAIL ") + label); if (!ok) failures++; }
+void Check(string label, bool ok, string extra = "") { Console.WriteLine((ok ? "OK " : "FAIL ") + label + (ok || extra.Length == 0 ? "" : " -> " + extra)); if (!ok) failures++; }
 void Wait(Task task)
 {
     var deadline = DateTime.UtcNow.AddSeconds(30);
@@ -124,6 +124,12 @@ var saveFolder = new MobileSaveFolder(saveRoot, saveDocs);
 var saveCount = Await(saveFolder.ChooseAsync(treeProvider));
 var listed = SaveLibrary.Scan(Path.Combine(saveRoot, "documents"), out _);
 Check("pasta de saves lida com subpastas", saveCount == 2 && listed.Count == 2 && saveFolder.FolderName == "Saves");
+Check("resumo da leitura da pasta", saveFolder.LastSummary.Contains("2 arquivo(s), 2 lido(s)"), saveFolder.LastSummary);
+var broken = savesTree.Add("quebrado.sav", original); broken.BrokenRead = true;
+var good = sub.Add("novo.sav", original);
+var withBroken = Await(saveFolder.SyncAsync(treeProvider));
+Check("arquivo com erro nao impede os outros", saveDocs.FolderDocuments.Any(d => d.Relative == "Pokemon Black 2/novo.sav") && saveFolder.LastSummary.Contains("1 com erro"), saveFolder.LastSummary);
+savesTree.Remove("quebrado.sav"); sub.Remove("novo.sav"); Wait(saveFolder.SyncAsync(treeProvider));
 var mainLocal = saveDocs.FolderDocuments.Single(d => d.Relative == "main.sav").Path;
 var subLocal = saveDocs.FolderDocuments.Single(d => d.Relative == "Pokemon Black 2/outro.sav").Path;
 savesTree.Get("main.sav")!.Bytes = changed;
@@ -193,7 +199,8 @@ public sealed class FakeFile
     public Uri Path => new(uri);
     public bool CanBookmark => true;
     public Task<string?> SaveBookmarkAsync() => Task.FromResult<string?>(uri);
-    public Task<Stream> OpenReadAsync() => Task.FromResult<Stream>(new MemoryStream(Bytes));
+    public bool BrokenRead;
+    public Task<Stream> OpenReadAsync() => BrokenRead ? Task.FromException<Stream>(new IOException("leitura negada")) : Task.FromResult<Stream>(new MemoryStream(Bytes));
     public Task<Stream> OpenWriteAsync()
     {
         if (ReadOnly) throw new IOException("somente leitura");

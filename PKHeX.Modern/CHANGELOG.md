@@ -6,6 +6,11 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.12 — 2026-10-03
+
+### 📱 Android
+- **Pasta de saves**: depois de escolher a pasta, tocar em Atualizar ou abrir o app, a barra de status mostra um resumo da leitura (quantos arquivos a pasta tem, quantos foram lidos como save, quantos foram ignorados e o primeiro erro, se houver). Um arquivo ou subpasta com erro agora é pulado sem interromper a leitura dos outros, e o erro vai para o crash.log. Isso ajuda a investigar por que alguns saves da pasta ainda não aparecem.
+
 ## 0.4.11 — 2026-10-03
 
 ### 🔧 Preparação

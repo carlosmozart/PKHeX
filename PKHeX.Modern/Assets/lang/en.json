@@ -1328,6 +1328,8 @@
  "Aplicar e continuar": "Apply and continue",
  "Abra um save pelo seletor do Android. Os documentos importados ficam disponíveis abaixo.": "Open a save with the Android picker. Imported documents are listed below.",
  "Tela e toque": "Screen and touch",
+ "Pasta {0}: {1} arquivo(s), {2} lido(s) como possível save, {3} ignorado(s) pelo tamanho.": "Folder {0}: {1} file(s), {2} read as possible saves, {3} skipped by size.",
+ "Pasta {0}: {1} arquivo(s), {2} lido(s) como possível save, {3} ignorado(s) pelo tamanho, {4} com erro (ex.: {5}).": "Folder {0}: {1} file(s), {2} read as possible saves, {3} skipped by size, {4} with errors (e.g. {5}).",
  "Não foi possível ler a pasta de saves: {0}": "Could not read the saves folder: {0}",
  "Não foi possível usar a pasta: {0}": "Could not use the folder: {0}",
  "Nenhuma pasta escolhida: toque em “Escolher pasta...”": "No folder chosen: tap “Choose folder...”",

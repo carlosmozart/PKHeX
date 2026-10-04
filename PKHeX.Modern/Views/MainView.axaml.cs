@@ -57,7 +57,11 @@ public sealed partial class MainView : UserControl
             if (SaveFolder is { } saveFolder)
             {
                 saveFolder.IsOpen = vm.SaveManager.IsOpenPath;
-                vm.SaveManager.BeforeRefresh = () => saveFolder.SyncAsync(Storage);
+                vm.SaveManager.BeforeRefresh = async () =>
+                {
+                    if (await saveFolder.SyncAsync(Storage) is not null)
+                        vm.Status = saveFolder.LastSummary;
+                };
                 vm.SaveManager.DescribeFolder = () => saveFolder.FolderName is { } name ? "📁 " + name : "Nenhuma pasta escolhida: toque em “Escolher pasta...”";
             }
             if (BankFolders is { } folders)

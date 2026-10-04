@@ -74,9 +74,12 @@ public sealed class MobileSaveFolder
         return _handle = await provider.OpenFolderBookmarkAsync(_state.Bookmark);
     }
 
+    /// <summary>Resumo da ultima leitura, para a barra de status (quantos arquivos, saves, ignorados e o primeiro erro).</summary>
+    public string LastSummary { get; private set; } = "";
+
     /// <summary>
     /// Rele a pasta: traz saves novos e mudados, tira os que sumiram. Retorna quantos saves a pasta tem
-    /// (nulo sem pasta escolhida ou sem acesso).
+    /// (nulo sem pasta escolhida). Um arquivo ou subpasta com erro e pulado (contado no resumo e gravado no crash.log).
     /// </summary>
     public async Task<int?> SyncAsync(IStorageProvider provider)
     {
@@ -90,49 +93,33 @@ public sealed class MobileSaveFolder
                 throw new IOException($"Sem acesso à pasta {_state.Name}. Escolha a pasta de novo.");
             var known = _documents.FolderDocuments.ToDictionary(d => d.Relative!, StringComparer.Ordinal);
             var seen = new HashSet<string>(StringComparer.Ordinal);
-            int count = 0;
-            await foreach (var (file, relative) in WalkAsync(folder, ""))
+            var errors = new List<string>();
+            var files = await ListAsync(folder, "", errors);
+            int count = 0, skipped = 0;
+            foreach (var (file, relative) in files)
             {
-                var props = await file.GetBasicPropertiesAsync();
-                long size = (long)(props.Size ?? 0);
-                bool zip = relative.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
-                if (size > MobileDocuments.MaxBytes || (!zip && size > 0 && size < MinSaveSize))
-                    continue;
-                seen.Add(relative);
-                count++;
-                var stamp = $"{size}:{props.DateModified?.UtcTicks}";
-                known.TryGetValue(relative, out var doc);
-                // Sem data do provedor, tamanho e data nao bastam: rele e compara o conteudo.
-                if (doc is not null && props.DateModified is not null && doc.Stamp == stamp && File.Exists(doc.Path))
+                try
                 {
-                    _documents.Attach(doc, file);
-                    continue;
+                    if (await SyncFileAsync(file, relative, known.GetValueOrDefault(relative)))
+                    {
+                        seen.Add(relative);
+                        count++;
+                    }
+                    else skipped++;
                 }
-                if (doc is not null && (HasLocalChanges(doc) || IsOpen?.Invoke(doc.Path) == true))
+                catch (Exception ex)
                 {
-                    _documents.Attach(doc, file); // alteracoes no app ainda nao salvas: Salvar avisa se o original mudou
-                    continue;
+                    // Na duvida, o save continua na lista (nao e apagado por um erro de leitura).
+                    seen.Add(relative);
+                    CrashLog.Write(ex);
+                    errors.Add($"{relative}: {ex.Message}");
                 }
-                byte[] data;
-                await using (var input = await file.OpenReadAsync())
-                    data = await MobileDocuments.ReadBoundedAsync(input);
-                if (doc is not null && File.Exists(doc.Path) && MobileDocuments.HashOf(data) == doc.Hash)
-                {
-                    _documents.Register(file, doc.Path, relative, doc.Hash, stamp); // mesmo conteudo (ex.: gravado pelo Salvar): so guarda a data nova
-                    continue;
-                }
-                var local = Path.Combine(LocalRoot, Path.Combine(relative.Split('/').Select(SafeName).ToArray()));
-                Directory.CreateDirectory(Path.GetDirectoryName(local)!);
-                await File.WriteAllBytesAsync(local, data);
-                if (props.DateModified is { } modified)
-                {
-                    try { File.SetLastWriteTimeUtc(local, modified.UtcDateTime); } catch (Exception) { }
-                }
-                _documents.Register(file, local, relative, MobileDocuments.HashOf(data), stamp);
             }
             foreach (var (relative, doc) in known)
                 if (!seen.Contains(relative) && !HasLocalChanges(doc))
                     _documents.Forget(doc);
+            LastSummary = $"Pasta {_state.Name}: {files.Count} arquivo(s), {count} lido(s) como possível save, {skipped} ignorado(s) pelo tamanho"
+                + (errors.Count > 0 ? $", {errors.Count} com erro (ex.: {errors[0]})" : "") + ".";
             return count;
         }
         finally
@@ -141,17 +128,71 @@ public sealed class MobileSaveFolder
         }
     }
 
-    private static async IAsyncEnumerable<(IStorageFile File, string Relative)> WalkAsync(IStorageFolder folder, string prefix)
+    /// <summary>Copia um arquivo da pasta (se mudou). Falso quando o tamanho mostra que nao e save.</summary>
+    private async Task<bool> SyncFileAsync(IStorageFile file, string relative, MobileDocuments.Document? doc)
     {
-        await foreach (var item in folder.GetItemsAsync())
+        var props = await file.GetBasicPropertiesAsync();
+        long size = (long)(props.Size ?? 0);
+        bool zip = relative.EndsWith(".zip", StringComparison.OrdinalIgnoreCase);
+        if (size > MobileDocuments.MaxBytes || (!zip && size > 0 && size < MinSaveSize))
+            return false;
+        var stamp = $"{size}:{props.DateModified?.UtcTicks}";
+        // Sem data do provedor, tamanho e data nao bastam: rele e compara o conteudo.
+        if (doc is not null && props.DateModified is not null && doc.Stamp == stamp && File.Exists(doc.Path))
         {
-            var name = prefix.Length == 0 ? item.Name : prefix + "/" + item.Name;
-            if (item is IStorageFile file)
-                yield return (file, name);
-            else if (item is IStorageFolder sub)
-                await foreach (var inner in WalkAsync(sub, name))
-                    yield return inner;
+            _documents.Attach(doc, file);
+            return true;
         }
+        if (doc is not null && (HasLocalChanges(doc) || IsOpen?.Invoke(doc.Path) == true))
+        {
+            _documents.Attach(doc, file); // alteracoes no app ainda nao salvas: Salvar avisa se o original mudou
+            return true;
+        }
+        byte[] data;
+        await using (var input = await file.OpenReadAsync())
+            data = await MobileDocuments.ReadBoundedAsync(input);
+        if (!zip && data.Length < MinSaveSize)
+            return false;
+        if (doc is not null && File.Exists(doc.Path) && MobileDocuments.HashOf(data) == doc.Hash)
+        {
+            _documents.Register(file, doc.Path, relative, doc.Hash, stamp); // mesmo conteudo (ex.: gravado pelo Salvar): so guarda a data nova
+            return true;
+        }
+        var local = Path.Combine(LocalRoot, Path.Combine(relative.Split('/').Select(SafeName).ToArray()));
+        Directory.CreateDirectory(Path.GetDirectoryName(local)!);
+        await File.WriteAllBytesAsync(local, data);
+        if (props.DateModified is { } modified)
+        {
+            try { File.SetLastWriteTimeUtc(local, modified.UtcDateTime); } catch (Exception) { }
+        }
+        _documents.Register(file, local, relative, MobileDocuments.HashOf(data), stamp);
+        return true;
+    }
+
+    /// <summary>Todos os arquivos da pasta e das subpastas; uma subpasta que o Android nao deixa listar e pulada.</summary>
+    private static async Task<List<(IStorageFile File, string Relative)>> ListAsync(IStorageFolder folder, string prefix, List<string> errors)
+    {
+        var result = new List<(IStorageFile, string)>();
+        var subfolders = new List<(IStorageFolder, string)>();
+        try
+        {
+            await foreach (var item in folder.GetItemsAsync())
+            {
+                var name = prefix.Length == 0 ? item.Name : prefix + "/" + item.Name;
+                if (item is IStorageFile file)
+                    result.Add((file, name));
+                else if (item is IStorageFolder sub)
+                    subfolders.Add((sub, name));
+            }
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex);
+            errors.Add($"{(prefix.Length == 0 ? "pasta escolhida" : prefix)}: {ex.Message}");
+        }
+        foreach (var (sub, name) in subfolders)
+            result.AddRange(await ListAsync(sub, name, errors));
+        return result;
     }
 
     /// <summary>Depois de reabrir o app: acha o original pelo caminho dentro da pasta escolhida.</summary>
