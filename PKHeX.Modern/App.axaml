@@ -1312,6 +1312,7 @@
     <DockPanel>
       <TextBlock DockPanel.Dock="Top" Text="Equipe" Classes="title" Margin="0,0,0,16" />
       <ScrollViewer x:Name="PartyScroll" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="16">
       <ItemsControl ItemsSource="{Binding Slots}" VerticalAlignment="Top" MaxWidth="1100" HorizontalAlignment="Stretch">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
@@ -1347,6 +1348,53 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+      <Border Classes="card" IsVisible="{Binding HasDaycare}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="🥚 Creche" Classes="section" />
+          <TextBlock Text="Clique para editar. Para pôr na creche, selecione antes um Pokémon das caixas ou da equipe." Classes="muted" TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding DaycareAreas}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:DaycareAreaViewModel">
+                <StackPanel Spacing="8" Margin="0,0,0,12">
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                  <CheckBox Content="Ovo esperando na creche" IsChecked="{Binding EggAvailable}" IsVisible="{Binding HasEgg}" />
+                  <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasSeed}">
+                    <TextBlock Text="Seed do ovo" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding Seed, UpdateSourceTrigger=LostFocus}" Width="260" MaxLength="32" FontFamily="Consolas,monospace" />
+                  </StackPanel>
+                  <ItemsControl ItemsSource="{Binding Slots}">
+                    <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:DaycareSlotViewModel">
+                        <Border Classes="card" Width="230" Margin="0,0,8,8">
+                          <StackPanel Spacing="6">
+                            <Button Command="{Binding EditCommand}" HorizontalContentAlignment="Stretch">
+                              <Grid ColumnDefinitions="60,*" ColumnSpacing="8">
+                                <Image Source="{Binding Sprite}" Width="60" Height="48" />
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                  <TextBlock Text="{Binding Level}" Classes="muted" />
+                                </StackPanel>
+                              </Grid>
+                            </Button>
+                            <StackPanel IsVisible="{Binding HasExperience}">
+                              <TextBlock Text="Experiência na creche" Classes="muted" FontSize="12" />
+                              <NumericUpDown Value="{Binding Experience}" Minimum="0" Maximum="4294967295" FormatString="0" />
+                            </StackPanel>
+                            <Button Content="Pôr na creche" Command="{Binding DepositCommand}" IsVisible="{Binding !Occupied}" Classes="small" />
+                            <Button Content="Tirar da creche" Command="{Binding WithdrawCommand}" IsVisible="{Binding Occupied}" Classes="small" />
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+      </StackPanel>
       </ScrollViewer>
     </DockPanel>
   </DataTemplate>

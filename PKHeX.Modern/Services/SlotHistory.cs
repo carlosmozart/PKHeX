@@ -15,9 +15,10 @@ public sealed class SlotHistory(SaveFile sav, int limit = 50)
     public readonly record struct Key(int Box, int Slot)
     {
         public static Key Party => new(-1, 0);
+        public static Key Daycare => new(-2, 0);
     }
 
-    private sealed record Snapshot(string Description, Key[] Keys, PKM[][] Data);
+    private sealed record Snapshot(string Description, Key[] Keys, PKM[][] Data, Daycares.SlotState[][]? Daycare);
 
     private readonly List<Snapshot> _undo = [];
     private readonly Stack<Snapshot> _redo = new();
@@ -74,16 +75,19 @@ public sealed class SlotHistory(SaveFile sav, int limit = 50)
     }
 
     private Snapshot Capture(string description, Key[] keys)
-        => new(description, keys, [.. keys.Select(k => k.Box < 0
+        => new(description, keys, [.. keys.Select(k => k.Box == -1
             ? sav.PartyData.Select(p => p.Clone()).ToArray()
-            : [sav.GetBoxSlotAtIndex(k.Box, k.Slot).Clone()])]);
+            : k.Box < -1 ? [] : new[] { sav.GetBoxSlotAtIndex(k.Box, k.Slot).Clone() })],
+            keys.Any(k => k.Box < -1) ? Daycares.Capture(sav) : null);
 
     private void Restore(Snapshot snap)
     {
+        if (snap.Daycare is { } daycare) Daycares.Restore(sav, daycare);
         for (int i = 0; i < snap.Keys.Length; i++)
         {
             var key = snap.Keys[i];
             var data = snap.Data[i];
+            if (key.Box < -1) continue;
             if (key.Box >= 0)
             {
                 sav.SetBoxSlotAtIndex(data[0].Clone(), key.Box, key.Slot, EntityImportSettings.None);

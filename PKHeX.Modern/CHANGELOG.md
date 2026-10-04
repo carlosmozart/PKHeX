@@ -8,6 +8,8 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+- Equipe: creche com edição de Pokémon, depositar/retirar com desfazer, ovo pronto, experiência e seed conforme o jogo. Inclui as duas creches de OR/AS e SW/SH.
+
 - Jogo: cartões de evento armazenados, importação/exportação, inclusão do evento selecionado, exclusão e flags de recebido. Tratamento de PCD/PGT e Lock Capsule na Gen 4; registros WR7 em Let's Go.
 
 - Caixas: exportar e importar pastas pelo botão ⋯, com conversão, confirmação, legalização do lote, recusas detalhadas e um passo de desfazer. Suporte a subpastas e seletor Android.
