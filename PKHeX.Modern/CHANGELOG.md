@@ -8,6 +8,8 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+- QR: código da Gen 7 no editor, sobreposição e exportação PNG pelo seletor, sem System.Drawing. Cartões Gen 6/7 podem gerar QR no formato do PKHeX.
+
 - Equipe: creche com edição de Pokémon, depositar/retirar com desfazer, ovo pronto, experiência e seed conforme o jogo. Inclui as duas creches de OR/AS e SW/SH.
 
 - Jogo: cartões de evento armazenados, importação/exportação, inclusão do evento selecionado, exclusão e flags de recebido. Tratamento de PCD/PGT e Lock Capsule na Gen 4; registros WR7 em Let's Go.

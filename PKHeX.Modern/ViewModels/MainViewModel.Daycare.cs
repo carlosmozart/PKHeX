@@ -19,7 +19,7 @@ public sealed partial class MainViewModel
             Daycares.Write(sav, slot.Storage, slot.Slot, pk);
             IsDirty = true; OnHistoryChanged(); Party.RefreshDaycare();
             Status = "Pokémon da creche atualizado. Salve para gravar.";
-        }, s => Status = s, sav: sav, legalMode: LegalMode) { SelectedTab = tab, Confirm = (t, m, ok) => ConfirmAsync(t, m, ok) };
+        }, s => Status = s, sav: sav, legalMode: LegalMode) { SelectedTab = tab, ShowQr = ShowPokemonQr, Confirm = (t, m, ok) => ConfirmAsync(t, m, ok) };
     }
 
     public async Task DepositDaycareAsync(DaycareSlotViewModel destination)

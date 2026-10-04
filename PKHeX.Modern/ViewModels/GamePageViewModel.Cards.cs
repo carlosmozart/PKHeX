@@ -23,11 +23,14 @@ public sealed partial class GamePageViewModel
         {
             if (!Set(ref _selectedCard, value)) return;
             Raise(nameof(CanUseCard)); Raise(nameof(ExportCardCommand)); Raise(nameof(DeleteCardCommand)); Raise(nameof(UnusedCardCommand));
+            Raise(nameof(CardQrCommand));
         }
     }
     public bool CanUseCard => SelectedCard is { Gift.IsEmpty: false };
     public Func<Task<DataMysteryGift?>>? PickCardFile { get; set; }
     public Func<DataMysteryGift, Task>? ExportCardFile { get; set; }
+    public Action<DataMysteryGift>? ShowCardQr { get; set; }
+    public RelayCommand CardQrCommand => new(() => { if (SelectedCard is { } card) ShowCardQr?.Invoke(card.Gift.Clone()); }, () => CanUseCard && SelectedCard!.Gift.Generation is 6 or 7);
     public RelayCommand ImportCardCommand => new(() => _ = ImportCardAsync());
     public RelayCommand ExportCardCommand => new(() => { if (SelectedCard is { } card && ExportCardFile is { } export) _ = export(card.Gift.Clone()); }, () => CanUseCard);
     public RelayCommand DeleteCardCommand => new(() => _ = DeleteCardAsync(), () => CanUseCard);

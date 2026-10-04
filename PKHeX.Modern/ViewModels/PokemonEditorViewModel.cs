@@ -213,6 +213,9 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
     public IReadOnlyList<string> NatureList => CoreAdapter.NatureNames;
     public IReadOnlyList<StatViewModel> Stats { get; }
     public string Location { get; }
+    public bool HasQr => _pk is PK7 && _sav?.Generation == 7;
+    public Action<PK7>? ShowQr { get; set; }
+    public RelayCommand QrCommand => new(() => { if (HasQr && _pk is PK7 pk) ShowQr?.Invoke(pk.Clone()); });
     public int MaxIV => _pk.MaxIV;
     public int MaxEV => _pk.MaxEV;
 

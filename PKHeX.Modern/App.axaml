@@ -974,6 +974,7 @@
               <Button Content="Exportar cartão" Command="{Binding ExportCardCommand}" Classes="small" Margin="0,0,6,0" />
               <Button Content="Apagar cartão" Command="{Binding DeleteCardCommand}" Classes="small danger" Margin="0,0,6,0" />
               <Button Content="Marcar como não recebido" Command="{Binding UnusedCardCommand}" Classes="small" />
+              <Button Content="QR" Command="{Binding CardQrCommand}" Classes="small" Margin="6,0,0,0" />
             </WrapPanel>
           </StackPanel>
           <ListBox ItemsSource="{Binding CardRows}" SelectedItem="{Binding SelectedCard}" Background="Transparent">

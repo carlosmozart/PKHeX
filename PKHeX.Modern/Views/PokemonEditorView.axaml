@@ -42,6 +42,7 @@
         <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="6">
           <StackPanel Orientation="Horizontal" Spacing="6">
             <TextBlock Text="{Binding SpeciesName}" Classes="title" />
+            <Button Content="QR" Classes="small" Command="{Binding QrCommand}" IsVisible="{Binding HasQr}" />
             <Button Classes="genderToggle" Content="{Binding GenderSymbol}" Click="OnGenderClick" IsEnabled="{Binding CanToggleGender}"
                     VerticalAlignment="Center" ToolTip.Tip="{Binding GenderTip}" ToolTip.ShowOnDisabled="True" />
             <Button x:Name="ShinyStar" Classes="shinyStar" Classes.on="{Binding IsShiny}" Content="{Binding ShinySymbol}"

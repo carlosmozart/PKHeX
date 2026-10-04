@@ -83,6 +83,7 @@ public sealed partial class MainViewModel : ViewModelBase
             p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
         Batch = new BatchPageViewModel(GetBatchTargets, () => _sav, ApplyBatchAsync);
         Game = new GamePageViewModel((t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true, icon: "🎮"), s => Status = s);
+        Game.ShowCardQr = ShowCardQr;
         AddSelectedCardCommand = new RelayCommand(() =>
         {
             if (Gifts.Selected?.Encounter is DataMysteryGift gift && Game.AddCard(gift)) CurrentPage = Game;
@@ -2192,7 +2193,7 @@ public sealed partial class MainViewModel : ViewModelBase
             applied?.Invoke(pk);
             RaiseSelectionChanged();
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
-        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab, Confirm = (t, m, ok) => ConfirmAsync(t, m, ok) };
+        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab, ShowQr = ShowPokemonQr, Confirm = (t, m, ok) => ConfirmAsync(t, m, ok) };
     }
 }
 
