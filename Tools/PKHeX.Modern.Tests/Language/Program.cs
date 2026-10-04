@@ -97,6 +97,7 @@ foreach (var version in new[] { GameVersion.SH, GameVersion.SL, GameVersion.E, G
     win.Content = new ContentControl { Content = page, Margin = new Thickness(16) }; Scan("Raids " + version);
     if (version == GameVersion.ZA) { page.Tab = 9; page.Donuts!.GenerateCommand.Execute(null); Scan("Donuts"); }
     if (version == GameVersion.SL) { page.RaidRegion = page.RaidRegions.Last(); Scan("Seven-star records"); }
+    if (version == GameVersion.SL) { page.Tab = 10; Scan("Fashion"); }
 }
 win.Content = originalContent; vm.ShowPokemonQr(new PK7 { Species = 25 }); Scan("QR"); vm.CloseQr();
 

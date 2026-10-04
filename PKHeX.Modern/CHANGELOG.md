@@ -9,6 +9,7 @@ Formato: "## versão — data", "### seção", "- item".
 ## Próxima versão
 
 ### 🎮 Página Jogo
+- **Roupas de Scarlet/Violet:** catálogo por categoria e gênero, busca por categoria em inglês ou ID, liberação e bloqueio individuais. Liberar todas ou uma categoria pede confirmação e pode ser desfeito. O Core não fornece nomes comerciais das peças.
 - **Donuts de Z-A:** lista, edição de frutas, estrelas e poderes, gerador por efeito, duplicação e exclusão. Encher a bolsa pede confirmação e tem um passo de desfazer.
 - **Errantes:** editor da Gen 3 e X/Y com reaparecer, dados guardados e desfazer. O modo legal valida encontros e a correlação PID/IV; Ruby/Sapphire/FireRed/LeafGreen mostram os IVs truncados pelo bug do jogo.
 - **Relógio da Gen 3:** aba para Ruby/Sapphire/Emerald com relógios inicial e decorrido, correção do relógio parado pelo método do PKHeX e avanço de um dia. Cada edição pode ser desfeita.

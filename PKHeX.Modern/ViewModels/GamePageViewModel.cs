@@ -41,7 +41,7 @@ public sealed partial class GamePageViewModel : PageViewModel
 
     public override string Title => "Jogo";
     public override string Icon => "🎮";
-    public override bool IsAvailable => _editors is null || _editors.IsAvailable;
+    public override bool IsAvailable => _editors is null || _editors.IsAvailable || HasCards || HasRaids || HasClock || HasRoamers || HasDonuts || HasFashion;
 
     public override void Load(SaveFile sav)
     {
@@ -53,6 +53,7 @@ public sealed partial class GamePageViewModel : PageViewModel
         RefreshClock();
         RefreshRoamers();
         RefreshDonuts();
+        RefreshFashion();
         FameCaps = HallOfFame.Caps(sav);
         SpeciesOptions = [.. Enumerable.Range(1, FameCaps.MaxSpecies).Select(i => GameInfo.Strings.Species[i])];
         SelectedFameMember = null;
@@ -67,7 +68,7 @@ public sealed partial class GamePageViewModel : PageViewModel
             .Where(c => c.Length > 0).Distinct().Order(StringComparer.CurrentCulture)];
         _category = 0;
         _showUnnamed = !e.HasLabels;
-        _tab = e.HasEvents ? 0 : e.WorkCount > 0 ? 1 : e.HasRecords ? 2 : e.HasShortcuts ? 3 : 4;
+        _tab = e.HasEvents ? 0 : e.WorkCount > 0 ? 1 : e.HasRecords ? 2 : e.HasShortcuts ? 3 : e.HasFame ? 4 : HasCards ? 5 : HasRaids ? 6 : HasClock ? 7 : HasRoamers ? 8 : HasDonuts ? 9 : 10;
         Raise(string.Empty);
         ApplyFilter();
     }
@@ -111,6 +112,7 @@ public sealed partial class GamePageViewModel : PageViewModel
             Raise(nameof(IsClockTab));
             Raise(nameof(IsRoamersTab));
             Raise(nameof(IsDonutsTab));
+            Raise(nameof(IsFashionTab));
             Raise(nameof(ShowFilters));
             Raise(nameof(ShowCategory));
             ApplyFilter();

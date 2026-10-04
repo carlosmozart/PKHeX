@@ -807,6 +807,7 @@
         <Button Classes="small" Classes.accent="{Binding IsClockTab}" Content="⏰ Relógio" IsVisible="{Binding HasClock}" Command="{Binding SetTabCommand}" CommandParameter="7" />
         <Button Classes="small" Classes.accent="{Binding IsRoamersTab}" Content="🗺 Errantes" IsVisible="{Binding HasRoamers}" Command="{Binding SetTabCommand}" CommandParameter="8" />
         <Button Classes="small" Classes.accent="{Binding IsDonutsTab}" Content="🍩 Donuts" IsVisible="{Binding HasDonuts}" Command="{Binding SetTabCommand}" CommandParameter="9" />
+        <Button Classes="small" Classes.accent="{Binding IsFashionTab}" Content="👕 Roupas" IsVisible="{Binding HasFashion}" Command="{Binding SetTabCommand}" CommandParameter="10" />
       </WrapPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8" IsVisible="{Binding ShowFilters}">
         <TextBox Text="{Binding Query}" Watermark="Buscar pelo nome ou número (ex.: surf, #120)" />
@@ -1065,11 +1066,24 @@
         </ScrollViewer>
         <ScrollViewer IsVisible="{Binding IsRoamersTab}"><ContentControl Content="{Binding Roamer}" /></ScrollViewer>
         <ScrollViewer IsVisible="{Binding IsDonutsTab}"><ContentControl Content="{Binding Donuts}" /></ScrollViewer>
+        <ContentControl IsVisible="{Binding IsFashionTab}" Content="{Binding Fashion}" />
         <TextBlock Text="Nada com esses filtros." Classes="muted" IsVisible="{Binding HasNoRows}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>
     </DockPanel>
   </DataTemplate>
 
+  <DataTemplate DataType="vm:FashionEditorViewModel">
+    <DockPanel LastChildFill="True">
+      <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,12">
+        <TextBlock Text="{Binding Note}" Classes="muted" TextWrapping="Wrap" />
+        <ComboBox ItemsSource="{Binding CategoryNames}" SelectedIndex="{Binding CategoryIndex}" HorizontalAlignment="Stretch" />
+        <TextBox Text="{Binding Query}" Watermark="Buscar peça por nome ou ID" />
+        <WrapPanel ItemSpacing="8" LineSpacing="8"><Button Content="Liberar todas desta categoria" Command="{Binding UnlockCategoryCommand}" /><Button Content="Liberar todas" Command="{Binding UnlockAllCommand}" /></WrapPanel>
+        <TextBlock Text="{Binding Count}" Classes="muted" />
+      </StackPanel>
+      <ListBox ItemsSource="{Binding Rows}"><ListBox.ItemTemplate><DataTemplate x:DataType="vm:FashionRowViewModel"><CheckBox Content="{Binding Name}" IsChecked="{Binding Unlocked}" /></DataTemplate></ListBox.ItemTemplate></ListBox>
+    </DockPanel>
+  </DataTemplate>
   <DataTemplate DataType="vm:DonutPocketViewModel">
     <StackPanel Spacing="12">
       <TextBlock Text="{Binding Note}" Classes="muted" TextWrapping="Wrap" />
