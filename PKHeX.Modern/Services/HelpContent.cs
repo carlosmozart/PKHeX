@@ -123,6 +123,8 @@ public static class HelpContent
         new("📱", "Android",
         [
             new("Arquivos no Android", "Abra saves e ZIPs pelo seletor do sistema. Salvar grava no original com backup privado e verifica os bytes gravados; se o original mudar em outro app, a sobrescrita é bloqueada. Salvar como exporta uma cópia. Saves importados, Bank e backups ficam no armazenamento privado e são removidos ao desinstalar."),
+            new("Atualização no Android", "Ao abrir, o app verifica se saiu uma versão nova. Ao confirmar em “Atualizar agora”, baixa o APK da release, confere o arquivo e abre o instalador do Android; na primeira vez, o Android pede para permitir instalar apps do PKHeX Modern. A instalação é por cima, sem perder saves, Bank e preferências. A verificação pode ser desligada em Ajuda › Sobre."),
+            new("Bank em pasta externa no Android", "No Bank, “Adicionar pasta” abre o seletor do Android: escolha uma pasta com arquivos .pk* (por exemplo, a de outro app ou uma pasta sincronizada). O app guarda uma cópia dela e sincroniza: ao abrir, traz o que mudou na pasta; cada Pokémon gravado ou apagado no Bank vai para a pasta na hora. Se o mesmo arquivo mudou no app e fora dele, fica a versão da pasta e a do app vai para os backups. Remover a pasta da lista não apaga nada nela."),
             new("Tela e toque", "A interface é a mesma do desktop, com a tela deitada; em celulares tudo é reduzido para caber. Toque num slot para editar. O botão Voltar do Android fecha a pergunta aberta ou volta como o Esc. Teclados externos aceitam os mesmos atalhos do desktop."),
         ]),
     ];

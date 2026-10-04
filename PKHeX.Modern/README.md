@@ -94,7 +94,7 @@ das políticas do computador. Veja as [instruções da Apple](https://support.ap
 
 ### Android
 
-Baixe **PKHeX.Modern-Android.apk** da release e abra no celular (o Android pede para permitir a instalação pelo navegador ou gerenciador de arquivos). Requer Android 6 ou mais novo. A interface é a mesma do desktop, com a tela deitada; os saves são abertos pelo seletor de arquivos do sistema, e o Salvar grava de volta no arquivo original, com backup. Ainda não há atualização automática no Android: instale o APK novo por cima.
+Baixe **PKHeX.Modern-Android.apk** da release e abra no celular (o Android pede para permitir a instalação pelo navegador ou gerenciador de arquivos). Requer Android 6 ou mais novo. A interface é a mesma do desktop, com a tela deitada; os saves são abertos pelo seletor de arquivos do sistema, e o Salvar grava de volta no arquivo original, com backup. A partir da 0.4.9, o app avisa quando sai versão nova, mostra as novidades e, ao confirmar, baixa o APK, confere o SHA-256 e abre o instalador do Android (na primeira vez, o Android pede para permitir instalar apps do PKHeX Modern). Até a 0.4.8, instale o APK novo por cima. O Bank também aceita pastas do celular (Bank › Adicionar pasta), sincronizadas nos dois sentidos.
 
 ### Atualizações e pacotes
 

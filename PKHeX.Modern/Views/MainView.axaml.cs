@@ -23,6 +23,13 @@ public sealed partial class MainView : UserControl
     /// </summary>
     public static MobileDocuments? Documents { get; set; }
 
+    /// <summary>Pastas externas do Bank no Android (copia privada sincronizada com a pasta do seletor). Nulo no desktop.</summary>
+    public static MobileBankFolders? BankFolders { get; set; }
+
+    // Varias gravacoes seguidas (mover varios Pokemon) viram uma sincronizacao so, meio segundo depois da ultima.
+    private readonly Avalonia.Threading.DispatcherTimer _bankPush = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    private readonly System.Collections.Generic.HashSet<string> _bankChanged = [];
+
     public MainView()
     {
         InitializeComponent();
@@ -44,7 +51,31 @@ public sealed partial class MainView : UserControl
                 return;
             vm.SaveRequested += () => OnQuickSave(this, new RoutedEventArgs());
             // Seletores de arquivo/pasta usados pela pagina Bank (pasta externa e outro save).
-            vm.Bank.PickFolder = async () => (await Storage.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            if (BankFolders is { } folders)
+            {
+                vm.Bank.PickFolder = async () =>
+                {
+                    try { return await folders.AddAsync(Storage); }
+                    catch (Exception ex) { await ShowErrorAsync("Não foi possível usar a pasta", ex); return null; }
+                };
+                vm.Bank.FolderRemoved = folders.Remove;
+                vm.Bank.DescribeFolder = folders.Describe;
+                BankStorage.ExternalChanged += folder => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    _bankChanged.Add(folder);
+                    _bankPush.Stop();
+                    _bankPush.Start();
+                });
+                _bankPush.Tick += async (_, _) =>
+                {
+                    _bankPush.Stop();
+                    var changed = _bankChanged.ToArray();
+                    _bankChanged.Clear();
+                    foreach (var folder in changed)
+                        await folders.PushAsync(folder, Storage);
+                };
+            }
+            else vm.Bank.PickFolder = async () => (await Storage.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 Title = "Pasta com arquivos .pk* para usar como banco",
                 AllowMultiple = false,

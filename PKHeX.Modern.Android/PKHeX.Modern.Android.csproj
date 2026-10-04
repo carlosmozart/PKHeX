@@ -6,7 +6,7 @@
     <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
     <ApplicationId>io.github.carlosmozart.pkhexmodern</ApplicationId>
     <ApplicationTitle>PKHeX Modern</ApplicationTitle>
-    <ApplicationVersion>40801</ApplicationVersion>
+    <ApplicationVersion>40901</ApplicationVersion>
     <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
     <AndroidPackageFormats>apk</AndroidPackageFormats>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>

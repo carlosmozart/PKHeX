@@ -29,6 +29,8 @@ public sealed class AppSettings
     public bool CheckForUpdates { get; set; } = true;
     /// <summary>Ao achar uma versao nova, mostrar as notas e oferecer atualizar (vale ao reiniciar o app).</summary>
     public bool AutoUpdate { get; set; } = true;
+    /// <summary>Android: a 0.4.7/0.4.8 gravavam a verificacao desligada; na primeira abertura com atualizacao, religa uma vez.</summary>
+    public bool AndroidUpdatesReady { get; set; }
     /// <summary>Idioma da interface (Services.Loc): "pt-BR" (padrao) ou "en". Vale ao reiniciar.</summary>
     public string UiLanguage { get; set; } = Loc.Portuguese;
 

@@ -6,9 +6,12 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.9 — 2026-10-03
 
 ### 📱 Android
+- **Bank em pasta externa no Android**: em Bank › Adicionar pasta, escolha uma pasta do celular com arquivos .pk* (de outro app ou sincronizada). Ela aparece como 📁 no Bank, como no desktop. O app sincroniza: ao abrir, traz o que mudou na pasta, e cada Pokémon gravado ou apagado no Bank vai para a pasta na hora. Se um arquivo mudou nos dois lados, fica a versão da pasta e a do app vai para os backups.
+- **Atualização automática no Android**: ao abrir, o app avisa quando sai versão nova e mostra as novidades. Em “Atualizar agora”, baixa o APK da release, confere o arquivo (SHA-256) e abre o instalador do Android, que instala por cima sem perder nada. Na primeira vez, o Android pede para permitir instalar apps do PKHeX Modern. Dá para desligar em Ajuda › Sobre.
+- Os links da Ajuda (releases, código, AllGenWiki) agora abrem no navegador do celular.
 - O item Início da barra lateral também não mostra mais o atalho Ctrl+0.
 
 ## 0.4.8 — 2026-10-03

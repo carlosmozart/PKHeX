@@ -25,9 +25,25 @@ public sealed class MobileShell : UserControl
         SizeChanged += (_, e) => Fit(e.NewSize);
         Loaded += (_, _) =>
         {
-            if (TopLevel.GetTopLevel(this) is { } top)
-                top.BackRequested += (_, e) => { e.Handled = true; Back(vm); };
+            if (TopLevel.GetTopLevel(this) is not { } top)
+                return;
+            top.BackRequested += (_, e) => { e.Handled = true; Back(vm); };
+            // Links (releases, wiki) pelo Android: Process.Start nao existe la.
+            Services.Links.Opener = url => { _ = top.Launcher.LaunchUriAsync(new Uri(url)); return true; };
+            // Como o MainWindow.Opened do desktop: limpa o APK de uma atualizacao anterior e verifica a release nova.
+            Services.AutoUpdater.CleanupOld();
+            // Traz o que mudou nas pastas externas do Bank desde a ultima abertura.
+            if (MainView.BankFolders is { } folders)
+                _ = SyncBankAsync(folders, top.StorageProvider, vm);
+            if (vm.Settings is { Persist: true, CheckForUpdates: true })
+                _ = vm.Help.CheckUpdatesAsync(silent: true);
         };
+    }
+
+    private static async System.Threading.Tasks.Task SyncBankAsync(Services.MobileBankFolders folders, Avalonia.Platform.Storage.IStorageProvider storage, MainViewModel vm)
+    {
+        await folders.SyncAllAsync(storage);
+        vm.Bank.Reload();
     }
 
     /// <summary>Escala usada para uma tela de <paramref name="size"/> (1 em tablets e telas grandes).</summary>

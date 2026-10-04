@@ -87,8 +87,13 @@ public static class Links
 {
     public const string AllGenWiki = "https://allgenwiki.carlosmozartbna.workers.dev/";
 
+    /// <summary>Abre o link pelo sistema quando nao ha Process.Start (Android: Launcher do Avalonia).</summary>
+    public static Func<string, bool>? Opener { get; set; }
+
     public static bool Open(string url)
     {
+        if (Opener is { } open)
+            return open(url);
         try
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });

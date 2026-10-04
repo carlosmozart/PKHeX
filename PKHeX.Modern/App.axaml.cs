@@ -46,9 +46,11 @@ public sealed class App : Application
         if (ApplicationLifetime is ISingleViewApplicationLifetime mobile)
         {
             var settings = Services.AppSettings.Load();
-            settings.CheckForUpdates = false;
-            settings.AutoUpdate = false;
-            settings.ExternalBankFolders.Clear();
+            if (!settings.AndroidUpdatesReady)
+            {
+                settings.CheckForUpdates = settings.AutoUpdate = settings.AndroidUpdatesReady = true;
+                settings.Save();
+            }
             var root = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "PKHeX.Modern");
             settings.SavesFolder = System.IO.Path.Combine(root, "documents");
             Services.SaveBackup.Folder = System.IO.Path.Combine(root, "backups");
@@ -59,8 +61,13 @@ public sealed class App : Application
             Theme.AppTheme.SetFont(settings.FontKey);
             Theme.AppTheme.Apply(Theme.AppTheme.Find(settings.ThemeKey));
             Theme.AccentTheme.Apply(Theme.AccentTheme.Find(settings.AccentColor));
-            var vm = new MainViewModel(settings);
+            // Pastas externas no Android sao copias privadas sincronizadas (Services/MobileBankFolders); caminhos de outro sistema nao valem.
+            MainViewModel? created = null;
+            var bankFolders = new Services.MobileBankFolders(root, msg => { if (created is not null) created.Status = msg; });
+            settings.ExternalBankFolders.RemoveAll(p => !bankFolders.IsMirror(p));
+            var vm = created = new MainViewModel(settings);
             Services.CrashLog.Install(msg => vm.Status = msg);
+            MainView.BankFolders = bankFolders;
             MainView.Documents = new Services.MobileDocuments(root);
             ShowShortcuts = false;
             mobile.MainView = new MobileShell(vm);

@@ -26,6 +26,7 @@ public static class AutoUpdater
     /// <summary>So ha pacotes para as arquiteturas publicadas; outras usam o link da release.</summary>
     public static string? GetAssetName(OSPlatform platform, Architecture architecture) => (platform, architecture) switch
     {
+        (var os, _) when os == OSPlatform.Create("Android") => AndroidAsset,
         (var os, Architecture.X64) when os == OSPlatform.Windows => "PKHeX.Modern-win-x64.zip",
         (var os, Architecture.X64) when os == OSPlatform.Linux => "PKHeX.Modern-linux-x64.zip",
         (var os, Architecture.Arm64) when os == OSPlatform.OSX => "PKHeX.Modern-osx-arm64.zip",
@@ -33,7 +34,22 @@ public static class AutoUpdater
         _ => null,
     };
 
-    public static bool CanSelfUpdate => CanUpdateExecutable((System.Reflection.Assembly.GetEntryAssembly()?.Location ?? typeof(AutoUpdater).Assembly.Location), ExePath,
+    /// <summary>APK universal da release (todas as arquiteturas).</summary>
+    public const string AndroidAsset = "PKHeX.Modern-Android.apk";
+
+    /// <summary>
+    /// Android: abre o instalador do sistema com o APK baixado (definido pelo MainActivity). O app nao troca o proprio
+    /// arquivo; o Android instala por cima e reabre na versao nova.
+    /// </summary>
+    public static Func<string, bool>? InstallApk { get; set; }
+
+    /// <summary>A atualizacao termina no instalador do Android, sem "reiniciar" pelo app.</summary>
+    public static bool InstallsByHandoff => OperatingSystem.IsAndroid();
+
+    /// <summary>APK baixado fica no cache do app ate a proxima abertura (o instalador precisa ler o arquivo).</summary>
+    private static string ApkPath => Path.Combine(Path.GetTempPath(), "updates", AndroidAsset);
+
+    public static bool CanSelfUpdate => InstallsByHandoff ? InstallApk is not null : CanUpdateExecutable((System.Reflection.Assembly.GetEntryAssembly()?.Location ?? typeof(AutoUpdater).Assembly.Location), ExePath,
         CurrentPlatform, RuntimeInformation.OSArchitecture);
 
     /// <summary>
@@ -56,6 +72,12 @@ public static class AutoUpdater
     /// <summary>Apaga a copia antiga deixada pela atualizacao, quando ela ja nao esta em uso.</summary>
     public static bool CleanupOld()
     {
+        if (InstallsByHandoff)
+        {
+            // Abriu de novo: o instalador ja terminou (ou foi cancelado); o APK baixado nao serve mais.
+            TryDelete(ApkPath);
+            return false;
+        }
         try
         {
             if (ExePath is not { } exe)
@@ -82,9 +104,32 @@ public static class AutoUpdater
 
     public static Task InstallAsync(ReleaseInfo release, IProgress<double>? progress = null, CancellationToken ct = default)
     {
+        if (InstallsByHandoff)
+            return InstallApkAsync(release, progress, ct);
         if (!CanSelfUpdate || ExePath is not { } exe)
             throw new InvalidOperationException("esta cópia não pode se atualizar sozinha (rodando pelo código?)");
         return InstallToAsync(release, exe, progress, ct);
+    }
+
+    /// <summary>Android: baixa o APK, confere o SHA-256 e entrega ao instalador do sistema.</summary>
+    private static async Task InstallApkAsync(ReleaseInfo release, IProgress<double>? progress, CancellationToken ct)
+    {
+        if (InstallApk is not { } install)
+            throw new InvalidOperationException("o instalador do Android não está disponível");
+        if (release.AssetUrl is not { } url || !url.StartsWith(DownloadPrefix, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"a release não tem o arquivo {AndroidAsset}");
+        var apk = ApkPath;
+        Directory.CreateDirectory(Path.GetDirectoryName(apk)!);
+        var partial = apk + ".part";
+        try
+        {
+            await DownloadAsync(url, partial, progress, ct).ConfigureAwait(false);
+            if (release.AssetDigest is { } digest) VerifySha256(partial, digest);
+            File.Move(partial, apk, true);
+        }
+        finally { TryDelete(partial); }
+        if (!install(apk))
+            throw new InvalidOperationException("o Android não abriu o instalador");
     }
 
     /// <summary>Instala no destino indicado; o download continua restrito as releases deste repositorio.</summary>

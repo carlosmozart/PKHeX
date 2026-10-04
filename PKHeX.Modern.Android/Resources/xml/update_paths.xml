@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- APK da atualizacao automatica: baixado em cache/updates e entregue ao instalador do Android -->
+<paths>
+  <cache-path name="updates" path="updates/" />
+</paths>

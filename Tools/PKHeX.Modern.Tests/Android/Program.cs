@@ -80,6 +80,38 @@ Check("ZIP exportado sem limpar pendencias", vm.Export(entry, false) && vm.IsDir
 Wait(documents.SaveAsync(zipDoc, File.ReadAllBytes(zipDoc.Path), null!));
 using (var zip = new ZipArchive(new MemoryStream(zipFile.Bytes)))
 using (var reader = new StreamReader(zip.GetEntry("notes.txt")!.Open())) Check("ZIP preserva entradas alheias", reader.ReadToEnd() == "preservar");
+// Bank em pasta externa: pasta do seletor (content://) com copia privada sincronizada.
+var pkFile = Path.Combine(work, "pika.pk5"); CoreAdapter.ExportEntity(pk, pkFile); var pkBytes = File.ReadAllBytes(pkFile);
+var remoteFolder = new FakeFolder("content://test/tree/pkm", "Meus Pokemon");
+remoteFolder.Add("a.pk5", pkBytes); remoteFolder.Add("b.pk5", pkBytes); remoteFolder.Add("notas.txt", "x"u8.ToArray());
+var folderProvider = DispatchProxy.Create<IStorageProvider, ProviderProxy>(); ((ProviderProxy)(object)folderProvider).Folder = remoteFolder.Handle;
+var statusLog = new List<string>();
+var bankFolders = new MobileBankFolders(Path.Combine(work, "private"), statusLog.Add);
+var mirror = Await(bankFolders.AddAsync(folderProvider))!;
+Check("pasta externa vira copia privada com os .pk*", bankFolders.IsMirror(mirror) && Directory.GetFiles(mirror).Select(Path.GetFileName).Order().SequenceEqual(["a.pk5", "b.pk5"]));
+Check("nome da pasta original nas mensagens", bankFolders.Describe(mirror) == "Meus Pokemon" && BankStorage.GetExternalBankName(mirror) == "📁 Meus Pokemon");
+BankStorage.ExternalFolders = [mirror];
+var extBox = new BankBox(mirror, "Caixa 1", 0);
+BankStorage.WriteSlot(extBox, 2, pk); Wait(bankFolders.PushAsync(mirror, folderProvider));
+Check("Pokemon gravado no Bank vai para a pasta", remoteFolder.Files.Count(f => f.Name.EndsWith(".pk5")) == 3);
+BankStorage.DeleteSlot(extBox, 0); Wait(bankFolders.PushAsync(mirror, folderProvider));
+Check("Pokemon apagado no Bank sai da pasta", remoteFolder.Files.All(f => f.Name != "a.pk5") && remoteFolder.Files.Any(f => f.Name == "b.pk5"));
+var changedPk = pkBytes.ToArray(); changedPk[^1] ^= 0xFF; remoteFolder.Get("b.pk5")!.Bytes = changedPk;
+remoteFolder.Add("c.pk5", pkBytes);
+Wait(bankFolders.SyncAllAsync(folderProvider));
+Check("mudanca feita fora do app chega na copia", File.ReadAllBytes(Path.Combine(mirror, "b.pk5")).SequenceEqual(changedPk) && File.Exists(Path.Combine(mirror, "c.pk5")));
+remoteFolder.Remove("c.pk5"); Wait(bankFolders.SyncAllAsync(folderProvider));
+Check("arquivo apagado fora do app sai da copia", !File.Exists(Path.Combine(mirror, "c.pk5")));
+File.WriteAllBytes(Path.Combine(mirror, "b.pk5"), pkBytes); remoteFolder.Get("b.pk5")!.Bytes = [.. changedPk.Reverse()];
+Wait(bankFolders.SyncAllAsync(folderProvider));
+Check("conflito: vale a pasta e a versao do app vai para os backups", File.ReadAllBytes(Path.Combine(mirror, "b.pk5")).SequenceEqual(changedPk.Reverse()) && statusLog.Any(m => m.Contains("backups")));
+Check("arquivos que nao sao Pokemon ficam fora", remoteFolder.Get("notas.txt") is not null && !File.Exists(Path.Combine(mirror, "notas.txt")));
+var reopened = new MobileBankFolders(Path.Combine(work, "private"), statusLog.Add);
+remoteFolder.Add("d.pk5", pkBytes); Wait(reopened.SyncAllAsync(folderProvider));
+Check("depois de reiniciar, o acesso volta pelo bookmark", File.Exists(Path.Combine(mirror, "d.pk5")));
+reopened.Remove(mirror);
+Check("remover a pasta apaga so a copia", !Directory.Exists(mirror) && remoteFolder.Files.Count >= 3);
+BankStorage.ExternalFolders = [];
 // Telefone em paisagem (S24+: 892x412 dp): a interface do desktop inteira, reduzida para caber.
 var mobile = new MobileShell(vm);
 var window = new Window { Width = 892, Height = 412, Content = mobile }; window.Show(); Dispatcher.UIThread.RunJobs();
@@ -112,7 +144,14 @@ return failures == 0 ? 0 : 1;
 public class ProviderProxy : DispatchProxy
 {
     public IStorageBookmarkFile? File;
-    protected override object? Invoke(MethodInfo? method, object?[]? args) => method?.Name == "OpenFileBookmarkAsync" ? Task.FromResult(File) : throw new NotSupportedException();
+    public IStorageBookmarkFolder? Folder;
+    protected override object? Invoke(MethodInfo? method, object?[]? args) => method?.Name switch
+    {
+        "OpenFileBookmarkAsync" => Task.FromResult(File),
+        "OpenFolderBookmarkAsync" => Task.FromResult(Folder),
+        "OpenFolderPickerAsync" => Task.FromResult<IReadOnlyList<IStorageFolder>>(Folder is null ? [] : [Folder]),
+        _ => throw new NotSupportedException(method?.Name),
+    };
 }
 public sealed class FakeFile
 {
@@ -132,7 +171,8 @@ public sealed class FakeFile
     }
     public Task<StorageItemProperties> GetBasicPropertiesAsync() => Task.FromResult(new StorageItemProperties());
     public Task<IStorageFolder?> GetParentAsync() => Task.FromResult<IStorageFolder?>(null);
-    public Task DeleteAsync() => Task.CompletedTask;
+    public FakeFolder? Parent;
+    public Task DeleteAsync() { Parent?.Files.Remove(this); return Task.CompletedTask; }
     public Task<IStorageItem?> MoveAsync(IStorageFolder folder) => Task.FromResult<IStorageItem?>(null);
     public Task ReleaseBookmarkAsync() => Task.CompletedTask;
     public void Dispose() { }
@@ -153,6 +193,30 @@ public class FileProxy : DispatchProxy
         "SaveBookmarkAsync" => State.SaveBookmarkAsync(), "GetBasicPropertiesAsync" => State.GetBasicPropertiesAsync(),
         "GetParentAsync" => State.GetParentAsync(), "DeleteAsync" => State.DeleteAsync(),
         "MoveAsync" => State.MoveAsync((IStorageFolder)args![0]!), "ReleaseBookmarkAsync" => State.ReleaseBookmarkAsync(),
+        "Dispose" => null, _ => throw new NotSupportedException(method?.Name)
+    };
+}
+
+public sealed class FakeFolder
+{
+    public readonly List<FakeFile> Files = [];
+    public string Uri { get; } public string Name { get; } public IStorageBookmarkFolder Handle { get; }
+    public FakeFolder(string uri, string name) { Uri = uri; Name = name; Handle = DispatchProxy.Create<IStorageBookmarkFolder, FolderProxy>(); ((FolderProxy)(object)Handle).State = this; }
+    public FakeFile Add(string name, byte[] bytes) { var f = new FakeFile(Uri + "/" + name, name, bytes) { Parent = this }; Files.Add(f); return f; }
+    public FakeFile? Get(string name) => Files.FirstOrDefault(f => f.Name == name);
+    public void Remove(string name) => Files.RemoveAll(f => f.Name == name);
+    public async IAsyncEnumerable<IStorageItem> Items() { foreach (var f in Files.ToArray()) { await Task.Yield(); yield return f.Handle; } }
+}
+public class FolderProxy : DispatchProxy
+{
+    public FakeFolder State = null!;
+    protected override object? Invoke(MethodInfo? method, object?[]? args) => method?.Name switch
+    {
+        "get_Name" => State.Name, "get_Path" => new Uri(State.Uri), "get_CanBookmark" => true,
+        "SaveBookmarkAsync" => Task.FromResult<string?>(State.Uri),
+        "GetItemsAsync" => State.Items(),
+        "CreateFileAsync" => Task.FromResult<IStorageFile?>(State.Add((string)args![0]!, []).Handle),
+        "GetBasicPropertiesAsync" => Task.FromResult(new StorageItemProperties()),
         "Dispose" => null, _ => throw new NotSupportedException(method?.Name)
     };
 }

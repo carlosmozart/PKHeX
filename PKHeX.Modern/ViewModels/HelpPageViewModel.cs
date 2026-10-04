@@ -146,6 +146,12 @@ public sealed class HelpPageViewModel : PageViewModel
         {
             var progress = new Progress<double>(v => DownloadProgress = v * 100);
             await AutoUpdater.InstallAsync(release, progress);
+            if (AutoUpdater.InstallsByHandoff)
+            {
+                // Android: o instalador do sistema assume daqui; o aviso volta se a instalacao for cancelada.
+                UpdateText = $"Instalador do Android aberto para a versão {UpdateChecker.Format(release.Version)}. Confirme a instalação; se o Android pedir, permita instalar apps do PKHeX Modern.";
+                return;
+            }
             IsReadyToRestart = true;
             UpdateText = $"Versão {UpdateChecker.Format(release.Version)} instalada. Reinicie o app para usar (seu trabalho não é perdido sem perguntar).";
         }

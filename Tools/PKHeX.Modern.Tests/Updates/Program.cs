@@ -49,10 +49,13 @@ Check("asset Windows preservado", AutoUpdater.GetAssetName(OSPlatform.Windows, A
 Check("asset Linux", AutoUpdater.GetAssetName(OSPlatform.Linux, Architecture.X64) == "PKHeX.Modern-linux-x64.zip");
 Check("asset macOS ARM", AutoUpdater.GetAssetName(OSPlatform.OSX, Architecture.Arm64) == "PKHeX.Modern-osx-arm64.zip");
 Check("asset macOS Intel", AutoUpdater.GetAssetName(OSPlatform.OSX, Architecture.X64) == "PKHeX.Modern-osx-x64.zip");
+Check("asset Android ARM", AutoUpdater.GetAssetName(OSPlatform.Create("Android"), Architecture.Arm64) == "PKHeX.Modern-Android.apk");
+Check("asset Android x64 (emulador)", AutoUpdater.GetAssetName(OSPlatform.Create("Android"), Architecture.X64) == "PKHeX.Modern-Android.apk");
+Check("desktop nao atualiza por instalador do Android", !AutoUpdater.InstallsByHandoff);
 Check("arquitetura sem pacote nao usa Windows", AutoUpdater.GetAssetName(OSPlatform.Linux, Architecture.Arm64) is null);
-foreach (var asset in new[] { "PKHeX.Modern-win-x64.zip", "PKHeX.Modern-linux-x64.zip", "PKHeX.Modern-osx-arm64.zip", "PKHeX.Modern-osx-x64.zip" })
+foreach (var asset in new[] { "PKHeX.Modern-win-x64.zip", "PKHeX.Modern-linux-x64.zip", "PKHeX.Modern-osx-arm64.zip", "PKHeX.Modern-osx-x64.zip", "PKHeX.Modern-Android.apk" })
 {
-    var entries = new[] { "PKHeX.Modern-win-x64.zip", "PKHeX.Modern-linux-x64.zip", "PKHeX.Modern-osx-arm64.zip", "PKHeX.Modern-osx-x64.zip" };
+    var entries = new[] { "PKHeX.Modern-win-x64.zip", "PKHeX.Modern-linux-x64.zip", "PKHeX.Modern-osx-arm64.zip", "PKHeX.Modern-osx-x64.zip", "PKHeX.Modern-Android.apk" };
     var assets = Array.ConvertAll(entries, a => new { name = a, browser_download_url = "https://github.com/carlosmozart/PKHeX/releases/download/modern-v99.0.0/" + a, digest = "sha256:abc" });
     var json = JsonSerializer.Serialize(new[] { new { tag_name = "modern-v99.0.0", name = "Teste", html_url = "https://github.com/carlosmozart/PKHeX/releases", assets } });
     var parsed = UpdateChecker.ParseLatest(json, asset)!;

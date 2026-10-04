@@ -16,9 +16,29 @@ public sealed class MainActivity : AvaloniaMainActivity<App>
     {
         base.OnCreate(savedInstanceState);
         App.MobileExit = Finish;
+        PKHeX.Modern.Services.AutoUpdater.InstallApk = InstallApk;
     }
     // Simbolos e emoji que a Inter nao tem vem de fontes embutidas (Noto, OFL): a busca na fonte de emoji do sistema
     // desenhava "≣" no lugar de ♂/♀ e dos icones dos botoes.
+    /// <summary>Abre o instalador do Android com o APK baixado (o sistema pede para permitir apps desta origem, se preciso).</summary>
+    private bool InstallApk(string path)
+    {
+        try
+        {
+            var uri = AndroidX.Core.Content.FileProvider.GetUriForFile(this, PackageName + ".updates", new Java.IO.File(path));
+            var intent = new global::Android.Content.Intent(global::Android.Content.Intent.ActionView);
+            intent.SetDataAndType(uri, "application/vnd.android.package-archive");
+            intent.AddFlags(global::Android.Content.ActivityFlags.GrantReadUriPermission | global::Android.Content.ActivityFlags.NewTask);
+            StartActivity(intent);
+            return true;
+        }
+        catch (System.Exception ex)
+        {
+            PKHeX.Modern.Services.CrashLog.Write(ex);
+            return false;
+        }
+    }
+
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder) => base.CustomizeAppBuilder(builder).WithInterFont()
         .With(new FontManagerOptions
         {

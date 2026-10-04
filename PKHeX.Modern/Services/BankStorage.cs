@@ -40,6 +40,9 @@ public static class BankStorage
     /// <summary>Pastas externas registradas (guardadas nas preferencias; o MainViewModel liga esta lista).</summary>
     public static IList<string> ExternalFolders { get; set; } = [];
 
+    /// <summary>Um arquivo de uma pasta externa foi gravado ou apagado (Android: copia a mudanca para a pasta original).</summary>
+    public static event Action<string>? ExternalChanged;
+
     /// <summary>Prefixo que identifica um banco externo na lista de bancos.</summary>
     public const string ExternalPrefix = "📁 ";
 
@@ -206,6 +209,7 @@ public static class BankStorage
             CoreAdapter.ExportEntity(pk, path);
             if (created is { } c)
                 File.SetCreationTimeUtc(path, c);
+            ExternalChanged?.Invoke(box.Folder);
             return;
         }
         Directory.CreateDirectory(box.Folder);
@@ -225,7 +229,11 @@ public static class BankStorage
     {
         if (box.IsExternal)
         {
-            GetExternalFile(box, slot)?.Delete();
+            if (GetExternalFile(box, slot) is { } extFile)
+            {
+                extFile.Delete();
+                ExternalChanged?.Invoke(box.Folder);
+            }
             return;
         }
         if (FindFile(box, slot) is { } file)

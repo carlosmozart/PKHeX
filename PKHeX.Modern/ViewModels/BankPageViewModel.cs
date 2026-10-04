@@ -85,6 +85,10 @@ public sealed class BankPageViewModel : SlotPageViewModel
     // Pastas externas
     /// <summary>Escolher uma pasta (a janela liga o seletor de pastas).</summary>
     public Func<Task<string?>>? PickFolder { get; set; }
+    /// <summary>Pasta externa saiu da lista (Android: apaga a copia privada dela).</summary>
+    public Action<string>? FolderRemoved { get; set; }
+    /// <summary>Nome mostrado da pasta (Android: o nome da pasta original, nao o caminho da copia privada).</summary>
+    public Func<string, string> DescribeFolder { get; set; } = f => f;
     public RelayCommand AddFolderCommand { get; }
     public RelayCommand RemoveFolderCommand { get; }
     /// <summary>O banco escolhido e uma pasta externa de arquivos .pk*.</summary>
@@ -109,17 +113,18 @@ public sealed class BankPageViewModel : SlotPageViewModel
         _bank = BankStorage.GetExternalBankName(folder);
         _boxIndex = 0;
         Reload();
-        _status($"Pasta {folder} adicionada como banco. Os arquivos .pk* dela aparecem em caixas de 30; o que você soltar aqui vira um arquivo novo na pasta.");
+        _status($"Pasta {DescribeFolder(folder)} adicionada como banco. Os arquivos .pk* dela aparecem em caixas de 30; o que você soltar aqui vira um arquivo novo na pasta.");
     }
 
     private async Task RemoveFolderAsync()
     {
         if (_bank is null || BankStorage.GetExternalPath(_bank) is not { } folder)
             return;
-        if (!await _confirm("Remover pasta da lista?", $"A pasta {folder} sai da lista de bancos. Os arquivos continuam lá, nada é apagado.", "Remover"))
+        if (!await _confirm("Remover pasta da lista?", $"A pasta {DescribeFolder(folder)} sai da lista de bancos. Os arquivos continuam lá, nada é apagado.", "Remover"))
             return;
         _settings.ExternalBankFolders.RemoveAll(f => string.Equals(f, folder, StringComparison.OrdinalIgnoreCase));
         _settings.Save();
+        FolderRemoved?.Invoke(folder);
         _bank = null;
         Reload();
     }
