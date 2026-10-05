@@ -243,10 +243,21 @@
                 <Border Grid.Column="1" Classes="chip" Background="{DynamicResource Good}" IsVisible="{Binding ShowLegal}"><TextBlock Text="✓ Legal" /></Border>
                 <Border Grid.Column="1" Classes="chip" Background="{DynamicResource Bad}" IsVisible="{Binding ShowIllegal}"><TextBlock Text="✕ Ilegal" /></Border>
               </Grid>
-              <ItemsControl ItemsSource="{Binding LegalityIssues}" IsVisible="{Binding HasLegalityIssues}">
+              <ItemsControl ItemsSource="{Binding LegalityGroups}" IsVisible="{Binding HasLegalityIssues}">
                 <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="x:String">
-                    <TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" FontSize="12" Margin="0,1" />
+                  <DataTemplate x:DataType="vm:LegalityGroupViewModel">
+                    <Expander Header="{Binding Header}" IsExpanded="{Binding Expanded}" HorizontalAlignment="Stretch" Foreground="{Binding SeverityBrush}">
+                      <StackPanel Spacing="6">
+                        <ItemsControl ItemsSource="{Binding Issues}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                              <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextControlForeground}" />
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Content="{Binding ActionText}" Command="{Binding Action}" IsVisible="{Binding HasAction}" Classes="small" />
+                      </StackPanel>
+                    </Expander>
                   </DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>

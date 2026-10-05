@@ -531,6 +531,37 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
     /// <summary>Golpes de reaprender so existem a partir da Gen 6.</summary>
     public bool HasRelearnMoves => _pk.Format >= 6;
     public IReadOnlyList<string> LegalityIssues { get; private set; } = [];
+    public IReadOnlyList<LegalityGroupViewModel> LegalityGroups { get; private set; } = [];
+    private RelayCommand LegalBallCommand => new(() => Fix("Bola legal", pk =>
+    {
+        var balls = CoreAdapter.GetLegalBalls(pk);
+        if (balls.Count == 0) return null;
+        pk.Ball = (byte)balls.OrderBy(b => b).First(); return true;
+    }));
+    private RelayCommand LegalRibbonsCommand => new(() => Fix("Fitas legais", pk =>
+    {
+        CoreAdapter.SetAllValidRibbons(pk); return true;
+    }));
+
+    private void RefreshLegalityGroups()
+    {
+        var previous = LegalityGroups.ToDictionary(g => g.Topic, g => g.Expanded);
+        var topics = GroupedLegality.Analyze(_pk);
+        var first = topics.FirstOrDefault(t => t.Invalid)?.Name;
+        LegalityGroups = topics.Select(t =>
+        {
+            var (action, text) = t.Name switch
+            {
+                "Golpes" => (SuggestMovesCommand, "Golpes sugeridos"),
+                "Bola" => (LegalBallCommand, "Bola legal"),
+                "Fitas e marcas" => (LegalRibbonsCommand, "Fitas legais"),
+                "Encontro" => (LegalizeCommand, "Legalizar"),
+                _ => ((RelayCommand?)null, ""),
+            };
+            return new LegalityGroupViewModel(t, previous.TryGetValue(t.Name, out var expanded) ? expanded : t.Name == first, action, text);
+        }).ToArray();
+        Raise(nameof(LegalityGroups));
+    }
     public bool HasLegalityIssues => ShowLegality && LegalityIssues.Count > 0;
     /// <summary>Legal, mas com avisos (ex.: sequencia RNG suspeita).</summary>
     public bool HasWarnings => ShowLegal && LegalityIssues.Count > 0;
@@ -1228,6 +1259,7 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
         (IsLegal, LegalityReport) = CoreAdapter.CheckLegality(_pk);
         LegalityText = IsLegal ? "Legal" : "Ilegal";
         LegalityIssues = CoreAdapter.GetLegalityIssues(_pk); // ilegal: problemas; legal: avisos "Fishy"
+        RefreshLegalityGroups();
         foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityIssues), nameof(HasLegalityIssues), nameof(HasWarnings), nameof(ShowLegalize), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
             Raise(p);
         RefreshPokerus();

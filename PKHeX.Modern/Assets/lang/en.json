@@ -1625,4 +1625,10 @@
   "Prévia da transferência": "Transfer preview",
   "Confira as mudanças antes de transferir. O save só será gravado ao salvar.": "Review the changes before transferring. The save file is only written when you save.",
   "Antes de legalizar ou transferir entre gerações, confira os valores antes e depois. ⚠ marca mudanças importantes. A confirmação aplica exatamente o candidato exibido; cancelar preserva o Pokémon. Transferências em lote mostram o resumo por campo e a lista completa. O save só muda em memória até Salvar, com desfazer nos slots.": "Before legalizing or transferring across generations, review the before and after values. ⚠ marks important changes. Confirmation applies the exact candidate shown; canceling preserves the Pokémon. Batch transfers show a summary by field and the full list. The save changes in memory until Save, with undo for slots."
+  ,"Legalidade por assunto": "Legality by topic",
+  "Nível e experiência": "Level and experience",
+  "Shiny e PID": "Shiny and PID",
+  "Bola legal": "Legal ball",
+  "Fitas legais": "Legal ribbons",
+  "O editor reúne problemas e avisos em grupos com gravidade e contagem. O primeiro grupo inválido abre sozinho. Golpes, Bola, Fitas e Encontro oferecem as correções existentes; Legalizar mostra a prévia antes de mudar. Grupos sem correção segura mostram somente os motivos.": "The editor groups issues and warnings by severity with a count. The first invalid group opens automatically. Moves, Ball, Ribbons and Encounter offer existing corrections; Legalize shows a preview before changing anything. Groups without a safe correction only show their reasons."
 }

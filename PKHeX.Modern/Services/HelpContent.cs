@@ -16,6 +16,7 @@ public static class HelpContent
     [
         new("↔", "Prévia de alterações",
         [
+            new("Legalidade por assunto", "O editor reúne problemas e avisos em grupos com gravidade e contagem. O primeiro grupo inválido abre sozinho. Golpes, Bola, Fitas e Encontro oferecem as correções existentes; Legalizar mostra a prévia antes de mudar. Grupos sem correção segura mostram somente os motivos."),
             new("Prévia de alterações", "Antes de legalizar ou transferir entre gerações, confira os valores antes e depois. ⚠ marca mudanças importantes. A confirmação aplica exatamente o candidato exibido; cancelar preserva o Pokémon. Transferências em lote mostram o resumo por campo e a lista completa. O save só muda em memória até Salvar, com desfazer nos slots."),
         ]),
         new("💾", "Saves",

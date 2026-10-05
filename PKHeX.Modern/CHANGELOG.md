@@ -9,6 +9,7 @@ Formato: "## versão — data", "### seção", "- item".
 ## Próxima versão
 
 ### ↔ Pokémon
+- **Legalidade por assunto:** os motivos aparecem em grupos por gravidade, com contagem e primeiro inválido aberto. Golpes, Bola, Fitas e Encontro têm ações de correção ligadas ao problema.
 - **Prévia de alterações:** Legalizar e transferir entre gerações mostram os campos antes e depois, com destaque para mudanças importantes. A confirmação usa o candidato exibido, sem gerar outro. Lotes mostram um resumo por campo e a lista completa.
 
 ## 0.4.15 — 2026-10-05
