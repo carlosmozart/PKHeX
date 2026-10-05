@@ -134,6 +134,7 @@ public sealed partial class MainViewModel : ViewModelBase
         Boxes.Sort = SortBoxes;
         Boxes.Prompt = PromptAsync;
         ClearMarksCommand = new RelayCommand(ClearMarks);
+        InitializeTouchCommands();
         DeleteMarkedCommand = new RelayCommand(() => _ = DeleteMarkedAsync());
         Party.SlotsLoaded = ApplySearchHighlight;
         ClearSearchCommand = new RelayCommand(() => SearchText = "");
@@ -287,6 +288,8 @@ public sealed partial class MainViewModel : ViewModelBase
             if (!Set(ref _currentPage, value))
                 return;
             Raise(nameof(ShowEditorPanel));
+            Raise(nameof(ShowTouchToolbar));
+            Raise(nameof(SelectionBoxOptions));
             Raise(nameof(IsHomeActive));
             RaiseActionBar();
             OnHistoryChanged();
@@ -1656,7 +1659,9 @@ public sealed partial class MainViewModel : ViewModelBase
     {
         ApplyMarks();
         Raise(nameof(HasMarks));
+        Raise(nameof(HasDesktopMarks));
         Raise(nameof(MarkedText));
+        Raise(nameof(MarkedCount));
         RaiseSelectionChanged();
     }
 
@@ -2123,6 +2128,7 @@ public sealed partial class MainViewModel : ViewModelBase
     /// <summary>Selecionar um slot pela interface: pergunta antes de descartar edicoes nao aplicadas.</summary>
     public async Task SelectSlotAsync(SlotViewModel slot)
     {
+        if (TouchSelectionMode && !slot.IsParty) { ToggleMark(slot, false); return; }
         ClearMarks(); // clique simples desfaz a selecao multipla
         if (slot.IsBank || slot.IsOther)
         {

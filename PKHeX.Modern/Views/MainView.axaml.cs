@@ -36,6 +36,13 @@ public sealed partial class MainView : UserControl
     public MainView()
     {
         InitializeComponent();
+        Controls.TouchHelp.Initialize();
+        AddHandler(PointerPressedEvent, (_, e) =>
+        {
+            if (e.Pointer.Type != PointerType.Touch) return;
+            VM.IsTouchUI = true;
+            Controls.TouchHelp.ObserveTouch(this);
+        }, RoutingStrategies.Tunnel);
         _drag = new SlotDragController(this, () => VM);
         if (!App.ShowShortcuts)
             SearchBox.Watermark = Loc.T("🔍  Buscar");

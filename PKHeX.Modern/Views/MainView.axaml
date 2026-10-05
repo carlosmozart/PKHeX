@@ -104,6 +104,7 @@
             <Button Grid.Column="3" x:Name="PrefsButton" Classes="ghost small" Content="⚙" ToolTip.Tip="Aparência e preferências: tema, cor de destaque, idioma e abrir o último save ao iniciar">
               <Button.Flyout>
                 <Flyout Placement="RightEdgeAlignedBottom">
+                  <ScrollViewer MaxHeight="460" HorizontalScrollBarVisibility="Disabled">
                   <StackPanel Spacing="4" Width="250" Margin="4">
                     <TextBlock Text="TEMA" Classes="section" Margin="0" />
                     <ItemsControl ItemsSource="{Binding ThemeOptions}">
@@ -148,6 +149,7 @@
                     </ItemsControl>
                     <CheckBox Content="Abrir último save ao iniciar" FontSize="12" Margin="0,8,0,0" IsChecked="{Binding OpenLastSaveOnStartup}" />
                   </StackPanel>
+                  </ScrollViewer>
                 </Flyout>
               </Button.Flyout>
             </Button>
@@ -245,6 +247,17 @@
 
     <!-- Conteudo -->
     <DockPanel Grid.Column="1" Margin="24">
+      <WrapPanel DockPanel.Dock="Top" IsVisible="{Binding ShowTouchToolbar}" ItemSpacing="6" LineSpacing="6" Margin="0,0,0,8">
+        <ToggleButton Content="☐ Selecionar" IsChecked="{Binding TouchSelectionMode}" />
+        <ComboBox ItemsSource="{Binding TouchDropOptions}" SelectedIndex="{Binding TouchDropIndex}" MinWidth="125" />
+        <controls:TouchHint Description="{Binding TouchDropTip}" />
+        <TextBlock Text="{Binding MarkedText}" VerticalAlignment="Center" IsVisible="{Binding TouchSelectionMode}" />
+        <ComboBox ItemsSource="{Binding SelectionBoxOptions}" SelectedIndex="{Binding SelectionBoxIndex}" Width="120" IsVisible="{Binding HasMarks}" />
+        <Button Content="Para a caixa" Command="{Binding MoveTouchSelectionCommand}" IsVisible="{Binding HasMarks}" />
+        <Button Content="Para o Bank" Command="{Binding BankTouchSelectionCommand}" IsVisible="{Binding HasMarks}" />
+        <Button Content="Edição em lote" Command="{Binding BatchTouchSelectionCommand}" IsVisible="{Binding HasMarks}" />
+        <Button Content="Excluir selecionados" Command="{Binding DeleteMarkedCommand}" IsVisible="{Binding HasMarks}" />
+      </WrapPanel>
       <!-- Abas dos saves abertos (cada save mantem alteracoes, desfazer, caixa e pagina) -->
       <Border DockPanel.Dock="Top" Classes="saveTabsBar" IsVisible="{Binding HasTabs}">
         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
@@ -290,7 +303,7 @@
       <ContentControl Content="{Binding Help}" IsVisible="{Binding IsHelpOpen}" />
       <ContentControl Content="{Binding CurrentPage}" IsVisible="{Binding ShowPage}" />
       <!-- Selecao multipla (Ctrl/Shift+clique): barra flutuante com o total e as acoes do grupo -->
-      <Border Classes="selectionBar" IsVisible="{Binding HasMarks}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+      <Border Classes="selectionBar" IsVisible="{Binding HasDesktopMarks}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
               ToolTip.Tip="Ctrl+clique marca ou desmarca · Shift+clique marca um intervalo · Ctrl+A marca a caixa toda · Esc desmarca">
         <StackPanel Orientation="Horizontal" Spacing="12">
           <TextBlock Text="✓" Classes="markCheck" VerticalAlignment="Center" />

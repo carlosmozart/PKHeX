@@ -40,6 +40,8 @@ public sealed class SlotDragController
     private SlotViewModel? _dragging;
     private SlotViewModel? _hoverTarget;
     private Button? _hoverArrow;
+    private readonly DispatcherTimer _hold = new() { Interval = TimeSpan.FromMilliseconds(550) };
+    private bool _touchPress, _held, _scrolling;
 
     public SlotDragController(Control window, Func<MainViewModel> vm)
     {
@@ -51,6 +53,15 @@ public sealed class SlotDragController
         window.AddHandler(DragDrop.DragOverEvent, OnDragOver);
         window.AddHandler(DragDrop.DragLeaveEvent, (_, _) => SetHover(null, null));
         window.AddHandler(DragDrop.DropEvent, OnDrop);
+        window.DetachedFromVisualTree += (_, _) => _hold.Stop();
+        _hold.Tick += (_, _) =>
+        {
+            _hold.Stop();
+            if (_pressed is not { IsParty: false } || _scrolling || _released) return;
+            _held = true;
+            _vm().TouchSelectionMode = true;
+            if (!_pressed.IsMarked) _vm().ToggleMark(_pressed, false);
+        };
         _boxHover.Tick += (_, _) =>
         {
             _boxHover.Stop();
@@ -73,6 +84,8 @@ public sealed class SlotDragController
     private void OnPressed(object? sender, PointerPressedEventArgs e)
     {
         _pressed = null;
+        _hold.Stop(); _held = false; _scrolling = false;
+        _touchPress = e.Pointer.Type == PointerType.Touch || !App.ShowShortcuts;
         if (!e.GetCurrentPoint(_window).Properties.IsLeftButtonPressed)
             return;
         if (SlotAt(e.Source) is { IsEmpty: false } slot)
@@ -81,6 +94,7 @@ public sealed class SlotDragController
             _released = false;
             _pressPoint = e.GetPosition(_window);
             _pressMods = e.KeyModifiers;
+            if (_touchPress && !slot.IsParty) _hold.Start();
         }
     }
 
@@ -88,12 +102,15 @@ public sealed class SlotDragController
     private void OnReleased(object? sender, PointerReleasedEventArgs e)
     {
         var pressed = _pressed;
+        _hold.Stop();
         _pressed = null;
         _released = true;
+        if (_scrolling) { e.Handled = true; return; }
+        if (_held && _dragging is null) { e.Handled = true; return; }
         if (pressed is null || _dragging is not null || pressed.IsParty || SlotAt(e.Source) != pressed)
             return;
         bool shift = _pressMods.HasFlag(KeyModifiers.Shift), ctrl = _pressMods.HasFlag(KeyModifiers.Control);
-        if (!shift && !ctrl || _pressMods.HasFlag(KeyModifiers.Alt))
+        if ((!shift && !ctrl && !_vm().TouchSelectionMode) || _pressMods.HasFlag(KeyModifiers.Alt))
             return;
         _vm().ToggleMark(pressed, range: shift);
         e.Handled = true; // o botao nao recebe o clique (nao abre no editor)
@@ -104,8 +121,16 @@ public sealed class SlotDragController
         if (_pressed is null || _dragging is not null)
             return;
         var d = e.GetPosition(_window) - _pressPoint;
-        if (Math.Abs(d.X) < Threshold && Math.Abs(d.Y) < Threshold)
+        var threshold = _touchPress ? 18 : Threshold;
+        if (Math.Abs(d.X) < threshold && Math.Abs(d.Y) < threshold)
             return;
+        // A finger moving before the hold is scrolling, never a drag. The scroll recognizer can take over.
+        if (_touchPress && !_held)
+        {
+            _hold.Stop(); _scrolling = true; _pressed = null;
+            return;
+        }
+        _hold.Stop();
 
         _dragging = _pressed;
         _pressed = null;
@@ -113,7 +138,7 @@ public sealed class SlotDragController
         {
             var data = new DataTransfer();
             var item = DataTransferItem.Create(SlotFormat, "slot");
-            if (await ExportTempFile(_dragging) is { } file)
+            if (!_touchPress && await ExportTempFile(_dragging) is { } file)
                 item.SetFile(file); // permite soltar no Explorer
             if (_released)
                 return; // o botao foi solto enquanto o arquivo era gravado (ex.: duplo clique rapido)
@@ -186,8 +211,8 @@ public sealed class SlotDragController
     }
 
     /// <summary>Ctrl ou Shift = copiar; Alt = sobrescrever (origem fica vazia); sem tecla = mover/trocar.</summary>
-    private static DropMode GetMode(KeyModifiers keys)
-        => keys.HasFlag(KeyModifiers.Alt) ? DropMode.Overwrite
+    private DropMode GetMode(KeyModifiers keys)
+        => _touchPress ? _vm().TouchDropMode : keys.HasFlag(KeyModifiers.Alt) ? DropMode.Overwrite
             : keys.HasFlag(KeyModifiers.Control) || keys.HasFlag(KeyModifiers.Shift) ? DropMode.Copy
             : DropMode.Move;
 
