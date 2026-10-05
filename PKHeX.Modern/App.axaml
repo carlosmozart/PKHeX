@@ -240,6 +240,7 @@
               <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Banks}" SelectedItem="{Binding SelectedBank}"
                         ToolTip.Tip="Banco (cada banco tem as suas caixas)" />
               <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                <Button Classes="small" Content="CSV" Command="{Binding ExportReportCommand}" ToolTip.Tip="Exportar relatório (CSV)" />
                 <Button Classes="small" Content="+" Command="{Binding NewBankCommand}" ToolTip.Tip="Novo banco" />
                 <Button Classes="small" Content="📁+" Command="{Binding AddFolderCommand}"
                         ToolTip.Tip="Usar uma pasta com arquivos .pk* como banco (ex.: a pasta de Pokémon do PKHeX). Os arquivos ficam onde estão." />
@@ -1543,6 +1544,7 @@
           <TextBlock Text="{Binding BoxName}" Classes="title" HorizontalAlignment="Center" />
           <TextBlock Text="{Binding BoxLabel}" Classes="muted" HorizontalAlignment="Center" />
           <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0" HorizontalAlignment="Center">
+            <Button Content="CSV" Command="{Binding ExportReportCommand}" ToolTip.Tip="Exportar relatório (CSV)" />
             <Button Content="✎ Renomear" Command="{Binding RenameCommand}" IsVisible="{Binding CanRename}" />
             <ComboBox ItemsSource="{Binding Wallpapers}" SelectedIndex="{Binding WallpaperIndex}" IsVisible="{Binding HasWallpapers}" Width="210" ToolTip.Tip="Papel de parede da caixa (salvo no jogo)" />
             <Button Content="📋 Showdown" ToolTip.Tip="Colar vários sets Showdown nos slots vazios desta caixa, ou copiar a caixa inteira no formato Showdown">

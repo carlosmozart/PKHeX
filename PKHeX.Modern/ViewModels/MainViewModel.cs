@@ -138,6 +138,8 @@ public sealed partial class MainViewModel : ViewModelBase
         ClearMarksCommand = new RelayCommand(ClearMarks);
         InitializeTouchCommands();
         InitializeShowdownTeam();
+        Boxes.ExportReportCommand = new RelayCommand(() => _ = ExportBoxReportAsync(false));
+        Bank.ExportReportCommand = new RelayCommand(() => _ = ExportBoxReportAsync(true));
         DeleteMarkedCommand = new RelayCommand(() => _ = DeleteMarkedAsync());
         Party.SlotsLoaded = ApplySearchHighlight;
         ClearSearchCommand = new RelayCommand(() => SearchText = "");

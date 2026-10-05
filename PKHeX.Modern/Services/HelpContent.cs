@@ -31,6 +31,7 @@ public static class HelpContent
         ]),
         new("📦", "Caixas e equipe",
         [
+            new("Relatório das caixas", "Em Caixas, CSV exporta equipe e todas as caixas do save aberto, com dados, IVs, EVs, golpes e legalidade. Escolha onde salvar pelo seletor do sistema; no Android, use o seletor de documentos. O relatório abre no Excel e no Google Sheets e não altera o save."),
             new("Creche", "Na página Equipe, a creche mostra os Pokémon depositados. Clique para editar e use Aplicar para gravar de volta. Pôr na creche move o Pokémon selecionado das caixas ou da equipe; Tirar da creche leva ao primeiro espaço livre das caixas. Essas operações têm desfazer. Ovo pronto, seed e experiência aparecem onde o Core oferece suporte. SW/SH mostra as duas creches e a seed; não expõe a flag de ovo pronto. As alterações vão para o arquivo com Salvar."),
             new("Caixas em pasta", "Na página Caixas, o botão ⋯ exporta esta caixa ou todas, com subpastas opcionais. A importação lê arquivos de Pokémon e Mystery Gifts, inclusive subpastas, converte para o jogo e mostra os recusados. Escolha a caixa inicial, limpeza e substituição; operações destrutivas pedem confirmação. O modo legal oferece legalizar o lote uma vez. A importação inteira é um passo de desfazer. No Android, as pastas são lidas e gravadas pelo seletor. Arquivos existentes não são substituídos na exportação."),
             new("Barra inferior contextual", "Os botões da barra inferior acompanham a página: ações de Pokémon em Caixas/Equipe; Abrir e Atualizar em Saves; Usar encontro/evento nos bancos; Atualizar anexados no Bank; Atualizar e Sincronizar na Pokédex; Aplicar mochila nos itens. Salvar permanece disponível nas páginas do save aberto. Ajuda mostra Voltar; os atalhos existentes continuam funcionando."),
@@ -85,6 +86,7 @@ public static class HelpContent
         ]),
         new("🏦", "Bank",
         [
+            new("Relatório do Bank", "No Bank, CSV exporta todas as caixas do banco escolhido, no formato original de cada Pokémon. A consulta de legalidade não troca o save aberto. O arquivo usa UTF-8 com BOM, com cabeçalhos no idioma da interface e nomes do jogo em inglês. Os arquivos do Bank permanecem intactos."),
             new("Consulta do Bank", "Toque num Pokémon para consultar seus dados, IVs, EVs, golpes e legalidade sem alterar o Bank. O painel permite exportar, copiar Showdown, ver variantes e abrir uma cópia no editor quando o save aceita o formato. Aplicar essa cópia usa um slot vazio do save; o original do Bank permanece preservado."),
             new("Bancos e caixas", "Armazenamento próprio, fora dos saves, em bancos → caixas (crie, renomeie, ordene e exclua). Os Pokémon ficam como arquivos .pk* no formato original.", "Ctrl+3"),
             new("Duas telas", "Bank à esquerda e save aberto à direita: arraste entre os dois. Ao trazer para o save, o Pokémon é convertido para a geração do jogo."),

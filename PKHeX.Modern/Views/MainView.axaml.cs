@@ -69,6 +69,20 @@ public sealed partial class MainView : UserControl
             };
             vm.Game.PickCardFile = PickCardFileAsync;
             vm.Bank.ExportDetails = ExportSelectedEntityAsync;
+            vm.SaveBoxReport = async (bytes, name) =>
+            {
+                var file = await Storage.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = Loc.T("Exportar relatório (CSV)"), SuggestedFileName = name,
+                    DefaultExtension = "csv", FileTypeChoices = [new FilePickerFileType("CSV") { Patterns = ["*.csv"] }],
+                });
+                if (file is null) return false;
+                await using var output = await file.OpenWriteAsync();
+                if (output.CanSeek) { output.Position = 0; output.SetLength(0); }
+                await output.WriteAsync(bytes);
+                await output.FlushAsync();
+                return true;
+            };
             vm.Bank.CopyDetails = async text =>
             {
                 if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)

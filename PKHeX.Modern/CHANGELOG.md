@@ -12,6 +12,7 @@ Formato: "## versão — data", "### seção", "- item".
 - **Evolução assistida:** Evoluir reúne os métodos e ramificações do jogo aberto, com sprite, requisitos e prévia cancelável. Remove a Everstone, cumpre os requisitos do Pokémon e deixa o resultado pendente até Aplicar, com desfazer e proteção do modo legal.
 
 ### 📦 Caixas e equipe
+- **Relatório CSV:** exporta equipe e caixas do save aberto ou todas as caixas do banco escolhido, com dados, IVs, EVs, golpes e legalidade, sem alterar os originais. Cabeçalhos PT/EN, UTF-8 com BOM e seletor de arquivos também no Android.
 - **Equipe Showdown:** o botão “📋 Showdown” em Equipe e em Caixas cola vários sets de uma vez nas vagas da equipe ou nos slots vazios da caixa, com uma lista de conferência antes (legal, ilegal ou fora, com o motivo) e um único desfazer. Também copia a equipe ou a caixa inteira no formato Showdown.
 
 ### 📖 Coleção

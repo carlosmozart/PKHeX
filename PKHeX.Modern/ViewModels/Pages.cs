@@ -34,6 +34,7 @@ public abstract class SlotPageViewModel(Action<SlotViewModel> select) : PageView
     /// <summary>Colar/copiar varios sets Showdown (equipe e caixas; definidos pelo MainViewModel).</summary>
     public RelayCommand? PasteShowdownCommand { get; set; }
     public RelayCommand? CopyShowdownCommand { get; set; }
+    public RelayCommand? ExportReportCommand { get; set; }
 }
 
 public sealed class BoxesPageViewModel : SlotPageViewModel
