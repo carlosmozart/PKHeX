@@ -211,7 +211,7 @@ public sealed class OtherSaveViewModel : SlotPageViewModel
             return;
         try
         {
-            var backup = SaveBackup.BeforeOverwrite(ZipSaves.FileOf(FilePath)); // save no zip: backup do zip inteiro
+            var backup = SaveBackup.BeforeOverwrite(ZipSaves.FileOf(FilePath), "Salvar", CoreAdapter.GetVersionName(Sav.Version));
             var sav = Sav;
             var path = FilePath;
             await Task.Run(() => CoreAdapter.ExportSave(sav, path));

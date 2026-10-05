@@ -1,0 +1,31 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Threading;
+using PKHeX.Core;
+using PKHeX.Modern;
+using PKHeX.Modern.Services;
+using PKHeX.Modern.ViewModels;
+using PKHeX.Modern.Views;
+AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions{UseHeadlessDrawing=false}).WithInterFont().SetupWithoutStarting();
+var work=args[0];int fails=0;SaveBackup.Folder=Path.Combine(work,"backups");BankStorage.Root=Path.Combine(work,"bank");
+void Check(string n,bool ok){Console.WriteLine($"{(ok?"OK":"FAIL")} {n}");if(!ok)fails++;}
+void Wait(Task task){for(int i=0;i<1000&&!task.IsCompleted;i++){Dispatcher.UIThread.RunJobs();System.Threading.Thread.Sleep(5);}task.GetAwaiter().GetResult();Dispatcher.UIThread.RunJobs();}
+var sav=BlankSaveFile.Get(GameVersion.B);sav.OT="TRAINER_SECRET";var path=Path.Combine(work,"Black.sav");File.WriteAllBytes(path,sav.Write().ToArray());
+var a=SaveBackup.BeforeOverwrite(path,"Salvar")!;var b=SaveBackup.BeforeOverwrite(path,"Salvar como")!;
+var backups=SaveBackup.List();Check("duas cópias e motivos",backups.Count==2&&backups.Any(x=>x.Metadata?.Reason=="Salvar")&&backups.Any(x=>x.Metadata?.Reason=="Salvar como"));
+Check("jogo tamanho hash sem treinador",backups.All(x=>x.IntegrityMatches==true&&x.Metadata?.Size==new FileInfo(path).Length&&x.Metadata?.Game.Contains("Black")==true&&!File.ReadAllText(SaveBackup.MetadataPath(x.Path)).Contains("TRAINER_SECRET")));
+var bytes=File.ReadAllBytes(a);bytes[100]^=1;File.WriteAllBytes(a,bytes);var broken=SaveBackup.List().Single(x=>x.Path==a);Check("byte alterado detectado",broken.IntegrityMatches==false);
+bool rejected=false;try{SaveBackup.Restore(broken,Path.Combine(work,"restored.sav"));}catch(InvalidOperationException){rejected=true;}Check("serviço exige confirmação",rejected);
+string? warning=null;var vm=new SaveManagerViewModel(new AppSettings{CheckForUpdates=false},_=>{},confirm:(_,message,_)=>{warning=message;return Task.FromResult(false);});
+var entry=new BackupEntryViewModel(broken,null);Wait(vm.RestoreToAsync(entry,Path.Combine(work,"restored.sav")));Check("interface avisa e permite cancelar",warning?.Contains("hash")==true&&!File.Exists(Path.Combine(work,"restored.sav")));
+SaveBackup.Restore(broken,Path.Combine(work,"restored.sav"),true);Check("restaurar mesmo assim",SHA256.HashData(File.ReadAllBytes(a)).SequenceEqual(SHA256.HashData(File.ReadAllBytes(Path.Combine(work,"restored.sav")))));
+File.Delete(SaveBackup.MetadataPath(b));Check("backup antigo listado",SaveBackup.List().Any(x=>x.Path==b&&x.Metadata==null&&x.IntegrityMatches==null));
+vm.ShowBackups=true;Wait(vm.RefreshBackupsAsync());var win=new Window{Content=new SaveManagerView{DataContext=vm},Width=1100,Height=800};win.Show();win.UpdateLayout();for(int i=0;i<10;i++){Dispatcher.UIThread.RunJobs();AvaloniaHeadlessPlatform.ForceRenderTimerTick();}win.CaptureRenderedFrame()?.Save(Path.Combine(work,"backup-metadata.png"));win.Close();
+for(int i=0;i<23;i++)SaveBackup.BeforeOverwrite(path,"Salvar");var kept=SaveBackup.List();Check("limite 20",kept.Count==20);Check("limpeza de registros",Directory.GetFiles(SaveBackup.Folder).Where(SaveBackup.IsMetadata).All(p=>File.Exists(p[..^".metadata.json".Length])));
+Console.WriteLine(fails==0?"TUDO OK":$"{fails} FALHAS");return fails==0?0:1;

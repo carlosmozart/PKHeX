@@ -8,6 +8,9 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+### 💾 Backups
+- **Motivo e integridade:** cópias novas registram operação, jogo, tamanho e SHA-256. A lista avisa quando o arquivo mudou e Restaurar permite conferir antes de prosseguir. Backups antigos continuam disponíveis; os registros acompanham a limpeza das cópias, também no armazenamento privado Android.
+
 ### 🏦 Bank
 - **Consulta somente leitura:** toque num Pokémon para ver seus dados, sprite shiny, atributos, golpes, origem e legalidade. Exporte, copie Showdown, consulte variantes ou abra uma cópia no editor de um save compatível, preservando o original.
 

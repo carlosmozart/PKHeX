@@ -991,7 +991,8 @@ public sealed partial class MainViewModel : ViewModelBase
                 editor.ApplyCommand.Execute(null);
             }
             ApplyPendingPages(); // mochila mudada na tela e ainda nao aplicada
-            var backup = SaveBackup.BeforeOverwrite(ZipSaves.FileOf(path)); // copia o arquivo antigo (ou o zip) antes de sobrescrever
+            var reason = path.Equals(CurrentSavePath, StringComparison.OrdinalIgnoreCase) ? "Salvar" : "Salvar como";
+            var backup = SaveBackup.BeforeOverwrite(ZipSaves.FileOf(path), reason, CoreAdapter.GetVersionName(_sav.Version));
             CoreAdapter.ExportSave(_sav, path);
             if (markSaved) IsDirty = false;
             var where = ZipSaves.IsZipPath(path, out _, out _) ? ZipSaves.DisplayName(path) : path;

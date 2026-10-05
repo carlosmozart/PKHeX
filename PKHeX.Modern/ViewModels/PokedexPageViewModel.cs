@@ -345,7 +345,7 @@ public sealed class PokedexPageViewModel : PageViewModel
                         return (c, v, (string?)null);
                     try
                     {
-                        SaveBackup.BeforeOverwrite(ZipSaves.FileOf(plan.Path));
+                        SaveBackup.BeforeOverwrite(ZipSaves.FileOf(plan.Path), "Sincronizar Pokédex", CoreAdapter.GetVersionName(plan.Sav.Version));
                         CoreAdapter.ExportSave(plan.Sav, plan.Path);
                         return (c, v, (string?)null);
                     }

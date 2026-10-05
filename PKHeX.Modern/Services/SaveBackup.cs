@@ -4,11 +4,14 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Security.Cryptography;
 
 namespace PKHeX.Modern.Services;
 
 /// <summary>Um backup na pasta de backups. <see cref="Source"/> = caminho do save original (null em backups antigos, sem registro).</summary>
-public sealed record BackupInfo(string Path, string SaveName, string? Source, DateTime Created);
+public sealed record BackupInfo(string Path, string SaveName, string? Source, DateTime Created,
+    BackupMetadata? Metadata = null, bool? IntegrityMatches = null);
+public sealed record BackupMetadata(string Reason, string Game, long Size, string Sha256);
 
 /// <summary>
 /// Backup automatico: antes de salvar por cima de um arquivo existente, copia o original para
@@ -25,7 +28,7 @@ public static partial class SaveBackup
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PKHeX.Modern", "backups");
 
     /// <summary>Copia o arquivo atual (se existir) antes de ser sobrescrito. Retorna o caminho do backup ou null.</summary>
-    public static string? BeforeOverwrite(string path)
+    public static string? BeforeOverwrite(string path, string reason = "Salvar", string? game = null)
     {
         if (!File.Exists(path))
             return null;
@@ -37,6 +40,7 @@ public static partial class SaveBackup
         for (int i = 2; File.Exists(backup); i++) // dois saves no mesmo segundo: nunca sobrescreve um backup
             backup = Path.Combine(Folder, $"{stamp} ({i}){ext}");
         File.Copy(path, backup);
+        WriteMetadata(backup, reason, game);
         File.SetCreationTime(backup, DateTime.Now); // File.Copy mantem as datas do save; a de criacao passa a ser a do backup
         UpdateIndex(index => index[Path.GetFileName(backup)] = Path.GetFullPath(path));
         Prune(name, ext, Path.GetFullPath(path));
@@ -50,14 +54,15 @@ public static partial class SaveBackup
             return [];
         var index = new Dictionary<string, string>(ReadIndex(), StringComparer.OrdinalIgnoreCase);
         return [.. new DirectoryInfo(Folder).GetFiles()
-            .Where(f => !f.Name.Equals(IndexFile, StringComparison.OrdinalIgnoreCase))
+            .Where(f => !f.Name.Equals(IndexFile, StringComparison.OrdinalIgnoreCase) && !IsMetadata(f.Name))
             .Select(f =>
             {
                 var m = StampPattern().Match(Path.GetFileNameWithoutExtension(f.Name));
                 var saveName = m.Success ? m.Groups["name"].Value + f.Extension : f.Name;
                 var created = m.Success && DateTime.TryParseExact(m.Groups["stamp"].Value, "yyyy-MM-dd HH-mm-ss", null,
                     System.Globalization.DateTimeStyles.None, out var d) ? d : f.CreationTime;
-                return new BackupInfo(f.FullName, saveName, index.GetValueOrDefault(f.Name), created);
+                var metadata = ReadMetadata(f.FullName);
+                return new BackupInfo(f.FullName, saveName, index.GetValueOrDefault(f.Name), created, metadata, Verify(f.FullName, metadata));
             })
             .OrderByDescending(b => b.Created)];
     }
@@ -66,11 +71,13 @@ public static partial class SaveBackup
     /// Restaura o backup em <paramref name="target"/>. O arquivo que estava la ganha um backup antes (da para voltar atras).
     /// Retorna o caminho desse novo backup (ou null se o destino nao existia).
     /// </summary>
-    public static string? Restore(BackupInfo backup, string target)
+    public static string? Restore(BackupInfo backup, string target, bool allowCorrupted = false)
     {
         if (Path.GetFullPath(target).Equals(Path.GetFullPath(backup.Path), StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("o destino é o próprio backup.");
-        var safety = BeforeOverwrite(target);
+        if (Verify(backup.Path, ReadMetadata(backup.Path)) == false && !allowCorrupted)
+            throw new InvalidOperationException("O hash do backup não confere. Confirme a restauração mesmo assim.");
+        var safety = BeforeOverwrite(target, "Restaurar backup");
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(target))!);
         File.Copy(backup.Path, target, overwrite: true);
         File.SetLastWriteTime(target, DateTime.Now);
@@ -80,6 +87,7 @@ public static partial class SaveBackup
     public static void Delete(BackupInfo backup)
     {
         File.Delete(backup.Path);
+        File.Delete(MetadataPath(backup.Path));
         UpdateIndex(index => index.Remove(Path.GetFileName(backup.Path)));
     }
 
@@ -105,7 +113,10 @@ public static partial class SaveBackup
                 .Skip(KeepPerFile)
                 .ToList();
             foreach (var f in old)
+            {
                 f.Delete();
+                File.Delete(MetadataPath(f.FullName));
+            }
             if (old.Count > 0)
                 UpdateIndex(i => { foreach (var f in old) i.Remove(f.Name); });
         }
@@ -113,6 +124,34 @@ public static partial class SaveBackup
         {
             // limpeza nao e critica
         }
+    }
+
+    public static string MetadataPath(string backup) => backup + ".metadata.json";
+    public static bool IsMetadata(string path) => path.EndsWith(".metadata.json", StringComparison.OrdinalIgnoreCase);
+
+    public static void WriteMetadata(string backup, string reason = "Salvar", string? game = null)
+    {
+        game ??= CoreAdapter.LoadSave(backup) is { } sav ? CoreAdapter.GetVersionName(sav.Version) : "Jogo desconhecido";
+        using var stream = File.OpenRead(backup);
+        var metadata = new BackupMetadata(reason, game, stream.Length, Convert.ToHexString(SHA256.HashData(stream)));
+        File.WriteAllText(MetadataPath(backup), JsonSerializer.Serialize(metadata));
+    }
+
+    public static BackupMetadata? ReadMetadata(string backup)
+    {
+        try { return JsonSerializer.Deserialize<BackupMetadata>(File.ReadAllText(MetadataPath(backup))); }
+        catch { return null; }
+    }
+
+    public static bool? Verify(string backup, BackupMetadata? metadata)
+    {
+        if (metadata is null) return null;
+        try
+        {
+            using var stream = File.OpenRead(backup);
+            return stream.Length == metadata.Size && Convert.ToHexString(SHA256.HashData(stream)).Equals(metadata.Sha256, StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
     }
 
     private static Dictionary<string, string> ReadIndex()

@@ -110,6 +110,7 @@ public sealed class MobileDocuments
         Directory.CreateDirectory(folder);
         var backup = Path.Combine(folder, $"{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}-{Path.GetFileName(doc.Path)}");
         await File.WriteAllBytesAsync(backup, original);
+        SaveBackup.WriteMetadata(backup, "Salvar");
         try { await WriteVerifiedAsync(file, bytes); }
         catch
         {
@@ -119,7 +120,7 @@ public sealed class MobileDocuments
         }
         _documents[doc.Id] = doc with { Hash = Hash(bytes) };
         Persist();
-        foreach (var old in new DirectoryInfo(folder).GetFiles().OrderByDescending(f => f.Name).Skip(20)) old.Delete();
+        PruneBackups(folder);
     }
     public async Task ExportCopyAsync(IStorageFile file, byte[] bytes)
     {
@@ -129,14 +130,16 @@ public sealed class MobileDocuments
         await using (var input = await file.OpenReadAsync()) previous = await ReadBoundedAsync(input);
         var folder = Path.Combine(_root, "document-backups", Path.GetFileName(Path.GetDirectoryName(PathFor(file)))!);
         Directory.CreateDirectory(folder);
-        await File.WriteAllBytesAsync(Path.Combine(folder, $"{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}-{Path.GetFileName(file.Name)}"), previous);
+        var backup = Path.Combine(folder, $"{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}-{Path.GetFileName(file.Name)}");
+        await File.WriteAllBytesAsync(backup, previous);
+        SaveBackup.WriteMetadata(backup, "Salvar como");
         try { await WriteVerifiedAsync(file, bytes); }
         catch
         {
             try { await WriteVerifiedAsync(file, previous); } catch { }
             throw;
         }
-        foreach (var old in new DirectoryInfo(folder).GetFiles().OrderByDescending(f => f.Name).Skip(20)) old.Delete();
+        PruneBackups(folder);
     }
     public static async Task WriteVerifiedAsync(IStorageFile file, byte[] bytes)
     {
@@ -182,6 +185,15 @@ public sealed class MobileDocuments
     public IReadOnlyList<string> Backups(Document doc)
     {
         var folder = Path.Combine(_root, "document-backups", doc.Id);
-        return Directory.Exists(folder) ? Directory.GetFiles(folder).OrderByDescending(p => p).ToArray() : [];
+        return Directory.Exists(folder) ? Directory.GetFiles(folder).Where(p => !SaveBackup.IsMetadata(p)).OrderByDescending(p => p).ToArray() : [];
+    }
+
+    private static void PruneBackups(string folder)
+    {
+        foreach (var old in new DirectoryInfo(folder).GetFiles().Where(f => !SaveBackup.IsMetadata(f.Name)).OrderByDescending(f => f.Name).Skip(20))
+        {
+            old.Delete();
+            File.Delete(SaveBackup.MetadataPath(old.FullName));
+        }
     }
 }

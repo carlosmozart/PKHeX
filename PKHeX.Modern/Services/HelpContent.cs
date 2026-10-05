@@ -27,6 +27,7 @@ public static class HelpContent
             new("Salvar", "“💾 Salvar” grava direto por cima do arquivo do save, sem abrir janela; antes, o arquivo anterior é copiado para os backups. “Salvar como...” (Ctrl+E) escolhe outro lugar.", "Ctrl+S"),
             new("Alterações não exportadas", "O aviso na barra lateral mostra quantas alterações ainda não foram salvas; clique nele para ver a lista. O app pergunta antes de abrir outro save ou fechar."),
             new("Backups", "No Save Manager, o botão “Backups” lista as cópias automáticas. “Restaurar” volta o backup para o arquivo de origem (o arquivo atual ganha um backup antes); “Restaurar como...” grava em outro lugar."),
+            new("Conferência dos backups", "Cada cópia nova guarda motivo, jogo, tamanho e SHA-256 num registro, sem treinador. A lista mostra o motivo e avisa se o hash mudou; Restaurar pergunta antes de continuar com uma cópia alterada. Backups antigos continuam disponíveis com motivo desconhecido. O limite de 20 também remove os registros. No Android, as cópias privadas recebem o mesmo registro."),
         ]),
         new("📦", "Caixas e equipe",
         [

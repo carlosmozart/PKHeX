@@ -1717,4 +1717,12 @@
   "Este Pokémon não cabe no save aberto.": "This Pokémon is incompatible with the open save.",
   "A caixa atual está cheia. Escolha uma caixa com espaço e tente de novo.": "The current box is full. Choose a box with space and try again.",
   "Cópia do Bank aberta no editor. Confira e clique em Aplicar; o original do Bank é preservado.": "Bank copy opened in the editor. Review and click Apply; the Bank original is preserved."
+  ,"Conferência dos backups": "Backup verification",
+  "Cada cópia nova guarda motivo, jogo, tamanho e SHA-256 num registro, sem treinador. A lista mostra o motivo e avisa se o hash mudou; Restaurar pergunta antes de continuar com uma cópia alterada. Backups antigos continuam disponíveis com motivo desconhecido. O limite de 20 também remove os registros. No Android, as cópias privadas recebem o mesmo registro.": "Each new copy records its reason, game, size and SHA-256 without trainer data. The list shows the reason and warns when the hash changes; Restore asks before proceeding with a modified copy. Older backups remain available with an unknown reason. Keeping 20 also removes old metadata. Android private backups receive the same metadata.",
+  "Motivo desconhecido": "Unknown reason",
+  "Jogo desconhecido": "Unknown game",
+  "⚠ Hash do backup não confere": "⚠ Backup hash mismatch",
+  "⚠ O hash do backup não confere. O arquivo pode ter sido alterado ou corrompido. Restaurar mesmo assim?": "⚠ The backup hash does not match. The file may have been modified or corrupted. Restore anyway?",
+  "Restaurar mesmo assim": "Restore anyway",
+  "O hash do backup não confere. Confirme a restauração mesmo assim.": "The backup hash does not match. Confirm restoration anyway."
 }

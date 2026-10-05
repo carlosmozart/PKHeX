@@ -183,6 +183,8 @@
                             </ItemsControl.ItemTemplate>
                           </ItemsControl>
                           <TextBlock Text="{Binding SourceText}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                          <TextBlock Text="{Binding Reason}" FontSize="12" />
+                          <TextBlock Text="{Binding Integrity}" Classes="muted" FontSize="12" />
                           <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
                             <Button Classes="small" Content="Restaurar como..." Click="OnRestoreAs"
                                     ToolTip.Tip="Escolhe onde gravar o backup (outro arquivo ou o save original)" />

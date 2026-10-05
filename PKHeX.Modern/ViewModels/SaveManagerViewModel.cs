@@ -116,14 +116,16 @@ public sealed class SaveManagerViewModel : PageViewModel
     public async Task RestoreToAsync(BackupEntryViewModel backup, string target)
     {
         bool isOpen = IsOpen(target);
+        bool corrupt = SaveBackup.Verify(backup.Info.Path, SaveBackup.ReadMetadata(backup.Info.Path)) == false;
         var message = $"“{System.IO.Path.GetFileName(target)}” volta a ser como estava em {backup.When}."
                       + (File.Exists(target) ? " O arquivo atual ganha um backup antes, então dá para voltar atrás." : "")
                       + (isOpen ? " Esse save está aberto: ele será reaberto em seguida." : "");
-        if (!await _confirm("Restaurar backup?", message, "Restaurar"))
+        if (corrupt) message = Loc.T("⚠ O hash do backup não confere. O arquivo pode ter sido alterado ou corrompido. Restaurar mesmo assim?") + "\n\n" + message;
+        if (!await _confirm("Restaurar backup?", message, corrupt ? "Restaurar mesmo assim" : "Restaurar"))
             return;
         try
         {
-            var safety = SaveBackup.Restore(backup.Info, target);
+            var safety = SaveBackup.Restore(backup.Info, target, allowCorrupted: corrupt);
             _status($"Backup de {backup.When} restaurado em {target}."
                     + (safety is not null ? $" O arquivo anterior está nos backups ({System.IO.Path.GetFileName(safety)})." : ""));
         }
@@ -342,6 +344,8 @@ public sealed class BackupEntryViewModel(BackupInfo info, SaveEntry? entry) : Vi
     public string Trainer => Entry is null ? "" : Entry.Trainer + (Entry.TrainerIsFemale ? "  ♀" : "  ♂");
     public string Details => Entry is null ? "" : $"{Entry.PlayTime} · ${Entry.Money:N0}" + (Entry.Caught > 0 ? $" · {Entry.Caught} capturados" : "");
     public string When => Info.Created.ToString("dd/MM/yyyy HH:mm:ss");
+    public string Reason => Loc.T(Info.Metadata?.Reason ?? "Motivo desconhecido");
+    public string Integrity => Info.IntegrityMatches == false ? Loc.T("⚠ Hash do backup não confere") : Info.IntegrityMatches == true ? "SHA-256 ✓" : "";
     public string SourceText => Source is null ? "Origem desconhecida (backup antigo): use “Restaurar como...”" : $"Volta para: {Source}";
 
     private IReadOnlyList<Bitmap>? _party;
