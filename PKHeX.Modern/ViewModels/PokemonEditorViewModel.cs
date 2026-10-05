@@ -273,6 +273,20 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
             _guardSuspended = false;
         }
     }
+    /// <summary>
+    /// Clique num Pokemon ilegal (pergunta do MainViewModel): legaliza e, se ficou legal, ja aplica no slot.
+    /// Retorna se aplicou; se nao der, o Pokemon fica como estava e a barra de status explica.
+    /// </summary>
+    public async Task<bool> LegalizeAndApplyAsync()
+    {
+        await LegalizeAsync();
+        if (!IsLegal || !CanApply)
+            return false;
+        Apply();
+        _status($"{SpeciesName} legalizado e gravado no slot. Ctrl+Z desfaz; lembre-se de salvar o save.");
+        return true;
+    }
+
     private void RestoreAfterFailedLegalize(PKM? restore)
     {
         if (restore is null)
@@ -1140,6 +1154,8 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
     public bool ShowLegal => ShowLegality && IsLegal;
     public bool ShowIllegal => ShowLegality && !IsLegal;
     public string LegalityText { get; private set; } = "";
+    /// <summary>Bytes do Pokemon em edicao (identifica o mesmo Pokemon para nao perguntar de novo).</summary>
+    public byte[] CurrentData => _pk.Data.ToArray();
     public string LegalityReport { get; private set; } = "";
 
     public string ExportShowdown() => CoreAdapter.ToShowdown(_pk);

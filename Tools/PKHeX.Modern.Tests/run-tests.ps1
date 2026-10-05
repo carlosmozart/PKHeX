@@ -13,6 +13,7 @@ $suites = [ordered]@{
     'Roamers' = @{ 'em.sav' = 'Pokemon Emerald Version.sav'; 'sa.sav' = 'Sapphire.sav'; 'fr.sav' = 'fire red.sav'; 'y.sav' = 'Pokemon Y' }
     'Clock' = @{ 'em.sav' = 'Pokemon Emerald Version.sav'; 'sa.sav' = 'Sapphire.sav' }
     'GameHistory' = @{ 'em.sav' = 'Pokemon Emerald Version.sav'; 'or.sav' = 'Omega Ruby.sav'; 'sh.sav' = 'shield'; 'sv.sav' = 'Scarlet' }
+    'LegalizeClick' = @{}
     'Raids' = @{ 'sh.sav' = 'shield'; 'sv.sav' = 'Scarlet' }
     'Qr' = @{ 'moon.sav' = 'moon.sav' }
     'Daycare' = @{ 'cr.sav' = 'Pokemon Crystal Version.sav'; 'em.sav' = 'Pokemon Emerald Version.sav'; 'bw.sav' = 'Pokemon - Black Version.sav' }

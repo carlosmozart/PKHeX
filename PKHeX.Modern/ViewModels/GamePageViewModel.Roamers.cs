@@ -88,7 +88,7 @@ public sealed class RoamerEditorViewModel : ViewModelBase
         if (_draft is null) return;
         var encounter = _encounters.FirstOrDefault(e => e.Species == _draft.Species);
         if (encounter is null || EncounterDatabase.ToEntity(_sav, encounter, out _) is not PK3 pk) { _status("Modo legal: espécie ou nível fora do encontro errante deste jogo."); return; }
-        _draft.PID = pk.PID; _draft.SetIVs(pk.IVs); _draft.CurrentLevel = encounter.LevelMin; pk.ResetPartyStats(); _draft.HP_Current = (ushort)pk.Stat_HPMax; Raise(string.Empty); foreach (var row in IvRows) row.Refresh();
+        _draft.PID = pk.PID; Span<int> ivs = stackalloc int[6]; pk.GetIVs(ivs); _draft.SetIVs(ivs); _draft.CurrentLevel = encounter.LevelMin; pk.ResetPartyStats(); _draft.HP_Current = (ushort)pk.Stat_HPMax; Raise(string.Empty); foreach (var row in IvRows) row.Refresh();
     }
     private void Apply()
     {

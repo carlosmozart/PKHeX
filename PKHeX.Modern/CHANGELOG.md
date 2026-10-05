@@ -6,7 +6,10 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.14 — 2026-10-04
+
+### ✨ Legalidade
+- **Legalizar ao clicar:** ao clicar num Pokémon ilegal das caixas ou da equipe, o app pergunta se você quer legalizá-lo. “Legalizar” gera o Pokémon de novo a partir de um encontro real e já grava no slot (Ctrl+Z desfaz); “Só abrir” abre no editor como antes e não pergunta de novo sobre esse Pokémon até fechar o app.
 
 ### 🎮 Página Jogo
 - **Roupas de Scarlet/Violet:** catálogo por categoria e gênero, busca por categoria em inglês ou ID, liberação e bloqueio individuais. Liberar todas ou uma categoria pede confirmação e pode ser desfeito. O Core não fornece nomes comerciais das peças.

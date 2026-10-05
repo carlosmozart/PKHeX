@@ -2075,6 +2075,32 @@ public sealed partial class MainViewModel : ViewModelBase
         if (slot != _selectedSlot && !await ConfirmDiscardEditAsync())
             return;
         SelectSlot(slot);
+        await OfferLegalizeAsync(slot);
+    }
+
+    // Pokemon ilegais que o usuario preferiu so abrir: nao pergunta de novo nesta sessao.
+    private readonly HashSet<string> _legalizeDeclined = [];
+
+    /// <summary>Clique num Pokemon ilegal: pergunta se quer legalizar; sim legaliza e grava no slot (com Ctrl+Z).</summary>
+    private async Task OfferLegalizeAsync(SlotViewModel slot)
+    {
+        if (Editor is not { ShowIllegal: true } editor || slot.IsEmpty)
+            return;
+        var key = $"{_activeTab?.Path}|{slot.Location}|{Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(editor.CurrentData))}";
+        if (_legalizeDeclined.Contains(key))
+            return;
+        var reason = editor.LegalityIssues.Count > 0 ? editor.LegalityIssues[0].TrimEnd('.') : "Ilegal";
+        if (!await ConfirmAsync("Pokémon ilegal",
+                $"{editor.SpeciesName} ({slot.Location}) não passa na verificação de legalidade: {reason}. Legalizar agora? O app gera o Pokémon de novo a partir de um encontro real do jogo, mantendo natureza, nível, item, apelido e golpes quando possível, e grava no slot (Ctrl+Z desfaz).",
+                "Legalizar", "Só abrir", icon: "✨"))
+        {
+            _legalizeDeclined.Add(key);
+            return;
+        }
+        if (Editor != editor)
+            return;
+        if (!await editor.LegalizeAndApplyAsync())
+            _legalizeDeclined.Add(key);
     }
 
     /// <summary>true = pode descartar (sem edicoes pendentes ou o usuario confirmou).</summary>
