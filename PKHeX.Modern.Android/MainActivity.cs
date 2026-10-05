@@ -27,7 +27,7 @@ public sealed class MainActivity : AvaloniaMainActivity<App>
             var intent = new global::Android.Content.Intent(global::Android.Content.Intent.ActionSend);
             intent.SetType("text/plain");
             intent.PutExtra(global::Android.Content.Intent.ExtraText, text);
-            StartActivity(global::Android.Content.Intent.CreateChooser(intent, "Compartilhar diagnóstico"));
+            StartActivity(global::Android.Content.Intent.CreateChooser(intent, PKHeX.Modern.Services.Loc.T("Compartilhar diagnóstico")));
             return true;
         };
     }

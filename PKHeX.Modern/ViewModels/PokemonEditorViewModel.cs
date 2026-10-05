@@ -295,11 +295,12 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
         var before = _pk.Clone();
         try
         {
-            var result = await Task.Run(() => EncounterDatabase.Legalize(_sav, before.Clone(), out _));
-            if (result is null) { _status("Não foi possível preparar uma versão legal."); return false; }
+            var (result, message) = await Task.Run(() => (EncounterDatabase.Legalize(_sav, before.Clone(), out var m), m));
+            if (result is null) { _status($"Legalizar: {message}."); return false; }
             if (IsCurrentEditor?.Invoke() == false) return false;
             _previewCandidate = result;
-            var details = PokemonDiff.Details(before, result);
+            // A mensagem diz de qual encontro saiu e avisa quando o resultado e suspeito (sequencia RNG que nao confere).
+            IReadOnlyList<string> details = [Loc.T("Gerado a partir de: ") + message, .. PokemonDiff.Details(before, result)];
             var accepted = await ConfirmPreview(apply ? "Pokémon ilegal" : "Prévia de alterações",
                 reason ?? "Confira o que vai mudar antes de legalizar.", "Legalizar", apply ? "Só abrir" : "Cancelar", details);
             // Do not replace edits made while the candidate was being calculated or reviewed.
@@ -308,7 +309,7 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
             _isNew = false;
             RaiseAll();
             if (apply && CanApply) Apply();
-            _status(apply ? "Pokémon legalizado. Lembre-se de salvar o save." : "Prévia aplicada ao editor. Clique em Aplicar para gravar.");
+            _status(apply ? $"Pokémon legalizado a partir de: {message}. Lembre-se de salvar o save." : $"Legalizado a partir de: {message}. Clique em Aplicar para gravar.");
             return true;
         }
         catch (Exception ex) { _status("Legalizar: " + ex.Message); return false; }
@@ -532,11 +533,12 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
     public bool HasRelearnMoves => _pk.Format >= 6;
     public IReadOnlyList<string> LegalityIssues { get; private set; } = [];
     public IReadOnlyList<LegalityGroupViewModel> LegalityGroups { get; private set; } = [];
-    private RelayCommand LegalBallCommand => new(() => Fix("Bola legal", pk =>
+    // Mesma regra da Edicao em lote (.Ball=$suggest): uma Pokebola legal que combina com a cor do Pokemon.
+    // Pegar a legal de menor numero escolhia a Master Ball (1) para quase todo selvagem.
+    private RelayCommand LegalBallCommand => new(() => Fix("Pokébola legal", pk =>
     {
-        var balls = CoreAdapter.GetLegalBalls(pk);
-        if (balls.Count == 0) return null;
-        pk.Ball = (byte)balls.OrderBy(b => b).First(); return true;
+        BallApplicator.ApplyBallLegalByColor(pk);
+        return CoreAdapter.GetLegalBalls(pk).Contains(pk.Ball) ? true : null;
     }));
     private RelayCommand LegalRibbonsCommand => new(() => Fix("Fitas legais", pk =>
     {
@@ -553,7 +555,7 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
             var (action, text) = t.Name switch
             {
                 "Golpes" => (SuggestMovesCommand, "Golpes sugeridos"),
-                "Bola" => (LegalBallCommand, "Bola legal"),
+                "Bola" => (LegalBallCommand, "Pokébola legal"),
                 "Fitas e marcas" => (LegalRibbonsCommand, "Fitas legais"),
                 "Encontro" => (LegalizeCommand, "Legalizar"),
                 _ => ((RelayCommand?)null, ""),

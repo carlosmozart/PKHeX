@@ -16,10 +16,10 @@ public sealed record BatchChange(BatchTarget Target, PKM Result, bool? WasLegal,
 }
 
 /// <summary>Acao rapida da edicao em lote: codigo proprio ou uma linha do script do PKHeX.</summary>
-public sealed record BatchAction(string Name, string Tip, Func<PKM, bool>? Apply = null, string? Script = null);
+public sealed record BatchAction(string Name, string Tip, Func<PKM, bool>? Apply = null, string? Script = null, bool Legalize = false);
 
 /// <summary>Resumo de uma execucao (pre-visualizacao ou aplicacao).</summary>
-public sealed record BatchRun(int Checked, int Matched, IReadOnlyList<BatchChange> Changes, int Errors);
+public sealed record BatchRun(int Checked, int Matched, IReadOnlyList<BatchChange> Changes, int Errors, int LegalizeFailed = 0, int Legalized = 0);
 
 /// <summary>
 /// Edicao em lote sobre o save aberto. Usa o mesmo script do Batch Editor do PKHeX
@@ -63,7 +63,8 @@ public static class BatchEditor
             return true;
         }),
         new("Golpes sugeridos", "Troca os golpes por um conjunto legal sugerido pelo PKHeX.", Script: ".Moves=$suggest"),
-        new("Bola legal", "Troca a bola por uma legal, combinando com a cor do Pokémon.", Script: ".Ball=$suggest"),
+        new("Pokébola legal", "Troca a Pokébola por uma legal, combinando com a cor do Pokémon.", Script: ".Ball=$suggest"),
+        new("Legalizar", "Gera de novo, a partir de um encontro real do jogo, os que estiverem ilegais (depois das outras ações), mantendo natureza, nível, item, apelido e golpes quando possível. Pode levar alguns segundos por Pokémon.", Legalize: true),
     ];
 
     private static bool SetMaxIVs(PKM pk)
@@ -128,8 +129,11 @@ public static class BatchEditor
 
     /// <summary>Calcula o lote sem gravar nada. Pokemon que nao mudam ficam fora de <see cref="BatchRun.Changes"/>.</summary>
     public static BatchRun Run(SaveFile sav, IEnumerable<BatchTarget> targets, IReadOnlyList<StringInstructionSet> sets,
-        IReadOnlyList<BatchAction> actions, bool includeEggs)
+        IReadOnlyList<BatchAction> actions, bool includeEggs, Action<int, int>? progress = null)
     {
+        bool legalize = actions.Any(a => a.Legalize);
+        var list = targets as IReadOnlyCollection<BatchTarget> ?? targets.ToList();
+        int done = 0, legalizeFailed = 0, legalized = 0;
         var editor = EntityBatchEditor.Instance;
         var actionScript = actions.Where(a => a.Script is not null)
             .Select(a => StringInstruction.TryParseInstruction(a.Script, out var i) ? i : null).OfType<StringInstruction>().ToList();
@@ -137,8 +141,9 @@ public static class BatchEditor
 
         int checkedCount = 0, matched = 0, errors = 0;
         var changes = new List<BatchChange>();
-        foreach (var t in targets)
+        foreach (var t in list)
         {
+            progress?.Invoke(++done, list.Count);
             var original = t.Pkm;
             if (original.Species == 0 || original.Species > sav.MaxSpeciesID || !original.Valid)
                 continue;
@@ -170,6 +175,19 @@ public static class BatchEditor
             if (actionScript.Count > 0 && editor.TryModify(pk, [], actionScript).HasFlag(ModifyResult.Error))
                 errors++;
 
+            // Legalizar fica por ultimo: o resultado final e o que precisa passar na analise.
+            if (legalize && !pk.IsEgg && CoreAdapter.IsLegal(pk) == false)
+            {
+                var result = EncounterDatabase.Legalize(sav, pk.Clone(), out _);
+                if (result is not null && CoreAdapter.IsLegal(result) == true)
+                {
+                    pk = result;
+                    legalized++;
+                }
+                else
+                    legalizeFailed++;
+            }
+
             pk.ResetPartyStats();
             pk.RefreshChecksum();
             var before = original.Clone();
@@ -179,6 +197,6 @@ public static class BatchEditor
                 continue;
             changes.Add(new BatchChange(t, pk, CoreAdapter.IsLegal(original), CoreAdapter.IsLegal(pk)));
         }
-        return new BatchRun(checkedCount, matched, changes, errors);
+        return new BatchRun(checkedCount, matched, changes, errors, legalizeFailed, legalized);
     }
 }

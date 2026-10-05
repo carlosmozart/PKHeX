@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using PKHeX.Core;
 using PKHeX.Modern.Services;
 
@@ -105,6 +106,7 @@ public sealed class BatchPageViewModel : PageViewModel
     /// <summary>Opcoes mudaram: a pre-visualizacao anterior deixa de valer.</summary>
     private void Invalidate()
     {
+        _lastRun = null;
         Error = "";
         if (Preview.Count == 0)
             return;
@@ -113,6 +115,9 @@ public sealed class BatchPageViewModel : PageViewModel
         Raise(nameof(HasPreview));
         Summary = "As opções mudaram. Clique em Pré-visualizar de novo.";
     }
+
+    /// <summary>Ultima pre-visualizacao valida: Aplicar grava exatamente esses resultados (Legalizar gera PIDs novos a cada execucao).</summary>
+    private BatchRun? _lastRun;
 
     private async Task<BatchRun?> RunAsync()
     {
@@ -146,7 +151,10 @@ public sealed class BatchPageViewModel : PageViewModel
         try
         {
             var eggs = _includeEggs;
-            return await Task.Run(() => BatchEditor.Run(sav, targets, sets, actions, eggs));
+            Action<int, int>? progress = actions.Any(a => a.Legalize)
+                ? (done, total) => Dispatcher.UIThread.Post(() => { if (IsBusy) Summary = $"Analisando {done} de {total} Pokémon (legalizar pode levar alguns segundos por Pokémon)..."; })
+                : null;
+            return await Task.Run(() => BatchEditor.Run(sav, targets, sets, actions, eggs, progress));
         }
         catch (Exception ex)
         {
@@ -170,11 +178,20 @@ public sealed class BatchPageViewModel : PageViewModel
         Raise(nameof(Preview));
         Raise(nameof(HasPreview));
         Summary = Describe(run) + (run.Changes.Count > 0 ? " Nada foi gravado ainda: clique em Aplicar." : "");
+        _lastRun = run;
+    }
+
+    /// <summary>A pre-visualizacao ainda vale se os Pokemon de origem nao mudaram desde entao.</summary>
+    private bool IsPreviewCurrent(BatchRun run)
+    {
+        var current = _targets((BatchScope)_scope).ToDictionary(t => (t.Box, t.Slot));
+        return run.Changes.All(c => current.TryGetValue((c.Target.Box, c.Target.Slot), out var t) && t.Pkm.Data.SequenceEqual(c.Target.Pkm.Data));
     }
 
     private async Task ApplyAsync()
     {
-        if (await RunAsync() is not { } run)
+        var run = _lastRun is { } last && IsPreviewCurrent(last) ? last : await RunAsync();
+        if (run is null)
         {
             Summary = "";
             return;
@@ -185,6 +202,7 @@ public sealed class BatchPageViewModel : PageViewModel
             return;
         }
         await _apply(run.Changes);
+        _lastRun = null;
         Preview = [];
         Raise(nameof(Preview));
         Raise(nameof(HasPreview));
@@ -199,6 +217,10 @@ public sealed class BatchPageViewModel : PageViewModel
             : $"{run.Matched} de {run.Checked} Pokémon passam nos filtros; {run.Changes.Count} seriam alterados.";
         if (illegal > 0)
             text += $" {illegal} ficariam ilegais (⚠).";
+        if (run.Legalized > 0)
+            text += $" {run.Legalized} legalizados.";
+        if (run.LegalizeFailed > 0)
+            text += $" {run.LegalizeFailed} não puderam ser legalizados (nenhum encontro legal deste jogo).";
         if (run.Errors > 0)
             text += $" {run.Errors} instrução(ões) não puderam ser aplicadas (propriedade que não existe nesta geração ou valor inválido).";
         return text;
@@ -238,7 +260,8 @@ public sealed class BatchChangeViewModel(BatchChange change)
     public bool IsShiny => Change.Result.IsShiny;
     public bool BecomesIllegal => Change.BecomesIllegal;
     public bool IsLegal => Change.IsLegal == true;
-    public string Diff => string.Join(" · ", BatchDiff.Describe(Change.Target.Pkm, Change.Result).DefaultIfEmpty("outros campos"));
+    public string Diff => string.Join(" · ", (Change.WasLegal == false && Change.IsLegal == true ? ["✨ legalizado"] : Array.Empty<string>())
+        .Concat(BatchDiff.Describe(Change.Target.Pkm, Change.Result).DefaultIfEmpty("outros campos")));
 }
 
 /// <summary>Resume o que mudou num Pokemon, nos campos que a interface mostra.</summary>

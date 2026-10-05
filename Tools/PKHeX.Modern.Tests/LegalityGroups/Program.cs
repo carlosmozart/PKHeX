@@ -35,8 +35,10 @@ win.UpdateLayout(); for (int i = 0; i < 12; i++) { Dispatcher.UIThread.RunJobs()
 win.CaptureRenderedFrame()?.Save(Path.Combine(work, "legality-groups.png"));
 editor.LegalityGroups.First(g => g.Topic == "Golpes").Action!.Execute(null);
 Check("correção de golpes limpa grupo", editor.LegalityGroups.All(g => g.Topic != "Golpes"));
+Check("botão chama Pokébola legal", editor.LegalityGroups.First(g => g.Topic == "Bola").ActionText == "Pokébola legal");
 editor.LegalityGroups.First(g => g.Topic == "Bola").Action!.Execute(null);
-Check("bola legal limpa grupo", editor.LegalityGroups.All(g => g.Topic != "Bola"));
+Check("Pokébola legal limpa grupo", editor.LegalityGroups.All(g => g.Topic != "Bola"));
+Check("Pokébola legal não escolhe a Master Ball", editor.Ball is { Value: not (int)Ball.Master and not 0 });
 Check("fonte intacta", pk.Move1 == 165 && pk.Ball == 26);
 Check("mapeamento completo", GroupedLegality.Topic(CheckIdentifier.RibbonMark) == "Fitas e marcas" && GroupedLegality.Topic(CheckIdentifier.Memory) == "Memórias" && GroupedLegality.Topic(CheckIdentifier.Level) == "Nível e experiência");
 win.Close(); Console.WriteLine(fails == 0 ? "TUDO OK" : $"{fails} FALHAS"); return fails == 0 ? 0 : 1;

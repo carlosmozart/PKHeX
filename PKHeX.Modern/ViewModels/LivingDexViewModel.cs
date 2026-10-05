@@ -37,7 +37,8 @@ public sealed class LivingDexViewModel : ViewModelBase
 
     public IReadOnlyList<string> TargetOptions { get; }
     private int _target = Array.IndexOf(Versions.ToArray(), GameVersion.SL);
-    public int TargetIndex { get => _target; set { if (value >= 0 && value < Versions.Count && Set(ref _target, value)) Invalidate(); } }
+    public int TargetIndex { get => _target; set { if (value >= 0 && value < Versions.Count && Set(ref _target, value)) { _targetChosen = true; Invalidate(); } } }
+    private bool _targetChosen;
     private bool _forms, _shiny, _openSource = true, _folderSource = true, _bankSource = true;
     public bool IncludeForms { get => _forms; set { if (Set(ref _forms, value)) Invalidate(); } }
     public bool ShinyOnly { get => _shiny; set { if (Set(ref _shiny, value)) Invalidate(); } }
@@ -78,6 +79,12 @@ public sealed class LivingDexViewModel : ViewModelBase
     public async Task RefreshAsync()
     {
         if (IsBusy) return;
+        // Ate o usuario escolher, o alvo acompanha o jogo do save aberto.
+        if (!_targetChosen && _activeSave() is { } active && Versions.ToList().IndexOf(active.Version) is >= 0 and var index && index != _target)
+        {
+            _target = index;
+            Raise(nameof(TargetIndex));
+        }
         IsBusy = true; var revision = _revision;
         Progress = "Lendo as fontes...";
         try

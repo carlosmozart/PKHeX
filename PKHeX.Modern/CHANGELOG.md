@@ -15,8 +15,12 @@ Formato: "## versão — data", "### seção", "- item".
 - **Compartilhar diagnóstico:** Ajuda › Sobre mostra uma prévia com versão, sistema, idioma, tema e registro recente. Android abre o compartilhamento do sistema; desktop copia o texto. Mensagens livres e dados privados são omitidos.
 
 ### ↔ Pokémon
-- **Legalidade por assunto:** os motivos aparecem em grupos por gravidade, com contagem e primeiro inválido aberto. Golpes, Bola, Fitas e Encontro têm ações de correção ligadas ao problema.
-- **Prévia de alterações:** Legalizar e transferir entre gerações mostram os campos antes e depois, com destaque para mudanças importantes. A confirmação usa o candidato exibido, sem gerar outro. Lotes mostram um resumo por campo e a lista completa.
+- **Legalidade por assunto:** os motivos aparecem em grupos por gravidade, com contagem e primeiro inválido aberto. Golpes, Pokébola, Fitas e Encontro têm ações de correção ligadas ao problema (“Pokébola legal” escolhe uma que combina com a cor do Pokémon, como na Edição em lote).
+- **Prévia de alterações:** Legalizar mostra os campos antes e depois, com destaque para mudanças importantes e o encontro de onde o Pokémon foi gerado. A confirmação usa o candidato exibido, sem gerar outro. Transferências entre gerações só pedem confirmação quando mudam algo importante (shiny, PID, IVs, natureza, treinador, apelido, Pokébola ou golpes); lotes mostram um resumo por campo e a lista completa.
+
+### ⚙ Edição em lote
+- **Legalizar em lote:** nova ação rápida “Legalizar”, que gera de novo, a partir de um encontro real do jogo, os Pokémon que estiverem ilegais (depois das outras ações), mantendo natureza, nível, item, apelido e golpes quando possível. A pré-visualização marca os legalizados (✨) e conta os que não deram; “Aplicar” grava exatamente o que foi pré-visualizado.
+- “Bola legal” passou a se chamar **“Pokébola legal”**.
 
 ## 0.4.15 — 2026-10-05
 

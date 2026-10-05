@@ -49,7 +49,7 @@ public sealed class PokedexPageViewModel : PageViewModel
     public bool ShowLivingDex
     {
         get => _livingDex;
-        set { if (Set(ref _livingDex, value) && value && LivingDex is not null) _ = LivingDex.RefreshAsync(); }
+        set { if (Set(ref _livingDex, value) && value && LivingDex is { Plan: null }) _ = LivingDex.RefreshAsync(); }
     }
     public RelayCommand ShowCollectionCommand => new(() => ShowLivingDex = false);
     public RelayCommand ShowLivingDexCommand => new(() => ShowLivingDex = true);

@@ -70,11 +70,15 @@ public sealed partial class MainViewModel : ViewModelBase
             () => [.. OpenSaves.Select(t => (t.Path, t == _activeTab && _sav is not null ? _sav : t.Sav))],
             () => _sav, OpenSearchResultAsync, (species, version) =>
             {
-                Encounters.Load(BlankSaveFile.Get(version));
-                Encounters.OnlyThisGame = true;
+                // A pagina Encontros pertence ao save aberto ("Usar" grava nele): nao troca o save dela pelo jogo alvo.
+                // "So deste jogo" so fica ligado quando o alvo e o proprio jogo do save; senao a busca mostra todos os jogos.
+                var sameGame = _sav is { } sav && (sav.Version == version || GameUtil.GetVersionsInGeneration(sav.Context, sav.Version).Contains(version));
+                Encounters.OnlyThisGame = sameGame;
                 Encounters.Species = CoreAdapter.SpeciesNames[species];
                 CurrentPage = Encounters;
                 _ = Encounters.SearchAsync();
+                if (!sameGame)
+                    Status = $"Encontros de {CoreAdapter.SpeciesNames[species]} em todos os jogos (o alvo da Living Dex, {CoreAdapter.GetVersionName(version)}, não é o jogo deste save).";
             });
         Help = new HelpPageViewModel(Settings);
         Help.PrepareDiagnostic = () => DiagnosticReport.Build(Settings, Views.MainView.SaveFolder?.LastSummary);
@@ -294,7 +298,7 @@ public sealed partial class MainViewModel : ViewModelBase
                 _ = Gifts.EnsureLoadedAsync();
             else if (value == Pokedex)
             {
-                if (Pokedex.ShowLivingDex && Pokedex.LivingDex is not null) _ = Pokedex.LivingDex.RefreshAsync();
+                if (Pokedex.ShowLivingDex && Pokedex.LivingDex is not null) { if (Pokedex.LivingDex.Plan is null) _ = Pokedex.LivingDex.RefreshAsync(); } // o plano e pesado: refaz pelo "Gerar plano"
                 else _ = Pokedex.RefreshAsync();
             }
             else if (value == Search)
@@ -1130,8 +1134,10 @@ public sealed partial class MainViewModel : ViewModelBase
                     Status = $"{name} não pode ir para {CoreAdapter.GetGameName(_sav)}: {err}";
                     return;
                 }
+                var beforeLegalize = converted;
                 (converted, legalNote) = await OfferLegalizeAsync(converted, "do bank");
-                if (!await ConfirmTransferAsync([(a, converted)])) return;
+                // Quem aceitou o Legalizar ja viu a previa das mudancas: nao pergunta de novo.
+                if (ReferenceEquals(converted, beforeLegalize) && !await ConfirmTransferAsync([(a, converted)])) return;
                 var dstInfo = CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot);
                 _history!.Record($"trazer {name} do bank", SlotHistory.KeyOf(dst.Box, dst.Slot));
                 if (CoreAdapter.ImportToSlot(_sav, dstInfo, converted) is { } error)
@@ -1219,9 +1225,14 @@ public sealed partial class MainViewModel : ViewModelBase
             return;
         }
         var legalNote = "";
+        var beforeLegalize = converted;
         if (dstSav == _sav)
             (converted, legalNote) = await OfferLegalizeAsync(converted, "do outro save");
-        if (!await ConfirmTransferAsync(back is null ? [(a, converted)] : [(a, converted), (b!, back)])) return;
+        // Quem aceitou o Legalizar ja viu a previa dele; a troca de volta (back) ainda entra na conferencia.
+        IReadOnlyList<(PKM, PKM)> review = ReferenceEquals(converted, beforeLegalize) ? [(a, converted)] : [];
+        if (back is not null)
+            review = [.. review, (b!, back)];
+        if (!await ConfirmTransferAsync(review)) return;
         if (mode != DropMode.Copy && back is null && src.IsParty && srcSav.IsPartyAllEggs(src.Slot))
         {
             Status = "A equipe precisa ter pelo menos um Pokémon (que não seja ovo).";
@@ -1313,6 +1324,8 @@ public sealed partial class MainViewModel : ViewModelBase
         if (!LegalMode)
             return (pk, $"Atenção: {name} está ilegal (dá para usar ✨ Legalizar no editor).");
         var candidate = await LegalizeOutsideAsync(pk);
+        if (ReferenceEquals(candidate.Pk, pk))
+            return candidate; // nao deu para legalizar: entra como esta, com o motivo na nota
         var legalize = await ConfirmAsync($"{name} está ilegal",
             $"{name} ({origin}) não é legal neste save. Legalizar gera de novo a partir de um encontro real de {CoreAdapter.GetGameName(_sav)}, mantendo natureza, nível, item, apelido e golpes quando possível.",
             "✨ Legalizar", "Trazer como está", details: [candidate.Note, .. PokemonDiff.Details(pk, candidate.Pk)], icon: "🛡");
@@ -1340,14 +1353,19 @@ public sealed partial class MainViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Conferencia antes de gravar uma transferencia (conversao de geracao e/ou legalizacao). So pergunta quando
+    /// muda algo que o usuario costuma querer preservar (⚠: shiny, PID, IVs, natureza, OT, apelido, Pokebola, golpes);
+    /// conversoes que so mexem em campos comuns passam direto, sem uma janela a cada arraste.
+    /// </summary>
     private Task<bool> ConfirmTransferAsync(IReadOnlyList<(PKM Before, PKM After)> pairs)
     {
-        var converted = pairs.Where(p => p.Before.GetType() != p.After.GetType()).ToArray();
-        if (converted.Length == 0) return Task.FromResult(true);
+        var changed = pairs.Where(p => PokemonDiff.HasImportantChanges(p.Before, p.After)).ToArray();
+        if (changed.Length == 0) return Task.FromResult(true);
         var message = Loc.T("Confira as mudanças antes de transferir. O save só será gravado ao salvar.");
-        if (converted.Length > 1) message += "\n" + PokemonDiff.BatchSummary(converted);
+        if (changed.Length > 1) message += "\n" + PokemonDiff.BatchSummary(changed);
         return ConfirmAsync("Prévia da transferência", message,
-            "Transferir", details: converted.Length == 1 ? PokemonDiff.Details(converted[0].Before, converted[0].After) : PokemonDiff.Batch(converted), icon: "↔", detailsExpanded: converted.Length == 1);
+            "Transferir", details: changed.Length == 1 ? PokemonDiff.Details(changed[0].Before, changed[0].After) : PokemonDiff.Batch(changed), icon: "↔", detailsExpanded: changed.Length == 1);
     }
 
     /// <summary>Soltar um arquivo .pk* sobre um slot (pergunta antes de substituir um Pokemon).</summary>
@@ -1790,17 +1808,15 @@ public sealed partial class MainViewModel : ViewModelBase
         // De fora para o save aberto (bank ou outro save): oferece o Legalizar para os que chegam ilegais (uma pergunta para o grupo).
         var legalNote = "";
         var illegal = dstSav != _sav ? [] : moving.Select((m, i) => (m, i)).Where(x => SaveOf(x.m.Key) != _sav && CoreAdapter.IsLegal(x.m.Data) == false).ToList();
-        var candidates = new Dictionary<int, (PKM Pk, string Note)>();
-        if (LegalMode)
-            foreach (var (m, i) in illegal) candidates[i] = await LegalizeOutsideAsync(m.Data);
+        // Pergunta antes de legalizar (cada um pode levar segundos); a previa das mudancas vem na conferencia logo abaixo.
         if (illegal.Count > 0 && LegalMode && await ConfirmAsync($"{illegal.Count} Pokémon ilegais",
-                $"Estes Pokémon de fora não são legais em {CoreAdapter.GetGameName(_sav)}. Legalizar gera cada um de novo a partir de um encontro real do jogo, mantendo natureza, nível, item, apelido e golpes quando possível.",
-                "✨ Legalizar", "Trazer como estão", details: PokemonDiff.Batch(illegal.Select(x => (x.m.Data, candidates[x.i].Pk))), icon: "🛡", detailsExpanded: false))
+                $"Estes Pokémon de fora não são legais em {CoreAdapter.GetGameName(_sav)}. Legalizar gera cada um de novo a partir de um encontro real do jogo, mantendo natureza, nível, item, apelido e golpes quando possível. Antes de gravar, você confere o que muda.",
+                "✨ Legalizar", "Trazer como estão", details: [.. illegal.Select(x => x.m.Name)], icon: "🛡"))
         {
             int ok = 0;
             foreach (var (m, i) in illegal)
             {
-                var (pk, _) = candidates[i];
+                var (pk, _) = await LegalizeOutsideAsync(m.Data);
                 if (CoreAdapter.IsLegal(pk) == true)
                     ok++;
                 moving[i] = (m.Key, pk, m.Name);

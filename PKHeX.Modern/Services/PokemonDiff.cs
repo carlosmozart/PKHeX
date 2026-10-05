@@ -35,6 +35,9 @@ public static class PokemonDiff
         _ => false,
     };
 
+    /// <summary>Muda algo que o usuario costuma querer preservar (⚠)? A conferencia de transferencia so pergunta nesse caso.</summary>
+    public static bool HasImportantChanges(PKM before, PKM after) => Compare(before, after).Any(c => c.Important);
+
     public static IReadOnlyList<string> Details(PKM before, PKM after)
     {
         var changes = Compare(before, after);

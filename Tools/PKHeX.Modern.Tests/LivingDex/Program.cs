@@ -81,5 +81,9 @@ dex.FilterIndex = 3; dex.Selected = dex.Rows.First(); Shot("living-dex-duplicate
 dex.FilterIndex = 1; dex.Selected = dex.Rows.First(); Shot("living-dex-missing");
 dex.Selected.FindCommand.Execute(null);
 Check("link abre Encontros", vm.CurrentPage == vm.Encounters && vm.Encounters.Species == "Bulbasaur");
+object? encSav = null;
+for (var type = vm.Encounters.GetType(); type is not null && encSav is null; type = type.BaseType)
+    encSav = type.GetProperty("Sav", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(vm.Encounters);
+Check("Encontros continua no save aberto (Usar grava nele)", ReferenceEquals(encSav, vm.ActiveTab!.Sav));
 var after = Hashes(); Check("SHA-256 de todos os arquivos intacto", hashes.Count == after.Count && hashes.All(p => after.TryGetValue(p.Key, out var h) && h == p.Value));
 win.Close(); Console.WriteLine(fails == 0 ? "TUDO OK" : $"{fails} FALHAS"); return fails == 0 ? 0 : 1;

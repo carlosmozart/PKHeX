@@ -57,6 +57,9 @@ var gen3 = new PK3 { Species = 25, Version = GameVersion.FR, OriginalTrainerName
 var gen4 = CoreAdapter.ConvertForSave(BlankSaveFile.Get(GameVersion.Pt), gen3, out _);
 Check("Gen 3 → 4: formato", gen4 is PK4);
 Check("Gen 3 → 4: encontro", gen4 is not null && PokemonDiff.Compare(gen3, gen4).Any(c => c.Field is "Local do encontro" or "Data do encontro" or "Nível do encontro"));
+Check("Gen 3 → 4 sem mudança importante não pede confirmação", gen4 is not null && !PokemonDiff.HasImportantChanges(gen3, gen4));
+var shinyLost = gen3.Clone(); shinyLost.PID ^= 0x10000;
+Check("mudança de PID pede confirmação", PokemonDiff.HasImportantChanges(gen3, shinyLost));
 
 var sav = BlankSaveFile.Get(GameVersion.B); sav.OT = "DEMO"; CoreAdapter.Activate(sav);
 var good = EncounterDatabase.SearchEncounters(sav, 25, true).Where(e => e.Species == 25)

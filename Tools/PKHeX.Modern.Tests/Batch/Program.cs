@@ -27,6 +27,8 @@ var black = BlankSaveFile.Get(GameVersion.B); black.OT = "Demo"; CoreAdapter.Act
 int n = 0;
 foreach (ushort sp in new ushort[] { 495, 498, 501, 25 }) black.SetBoxSlotAtIndex(Make(black, sp), 0, n++);
 black.SetBoxSlotAtIndex(Make(black, 570), 1, 0);
+// Ilegal para o "Legalizar": Lillipup com nível de encontro impossível
+var broken = Make(black, 506); broken.MetLevel = 99; broken.RefreshChecksum(); black.SetBoxSlotAtIndex(broken, 2, 0);
 black.SetPartySlotAtIndex(Make(black, 504), 0);
 var path = Path.Combine(work, "Black.sav"); File.WriteAllBytes(path, black.Write().ToArray());
 
@@ -127,6 +129,24 @@ int ivBefore = Ivs();
 b.ApplyCommand.Execute(null);
 Check("IVs máximos aplicados no Zorua", Wait(() => vm.Status.Contains("alterados")) && ivBefore < 186 && Ivs() == 186, $"{ivBefore} {vm.Status}");
 Shot("batch");
+
+// Legalizar em lote: só o ilegal muda, e Aplicar grava exatamente o que foi pré-visualizado
+foreach (var a in b.Actions) a.IsChecked = false;
+b.Script = "";
+Check("ação Pokébola legal (sem o nome antigo)", b.Actions.Any(a => a.Name == "Pokébola legal") && b.Actions.All(a => a.Name != "Bola legal"));
+Check("Lillipup quebrado está ilegal", CoreAdapter.IsLegal(CoreAdapter.GetBoxSlot(Sav(), 2, 0)) == false);
+b.Actions.First(a => a.Name == "Legalizar").IsChecked = true;
+b.ScopeIndex = (int)BatchScope.AllBoxes;
+b.PreviewCommand.Execute(null);
+Check("pré-visualização: só o ilegal é legalizado", Wait(() => !b.IsBusy && b.Preview.Count == 1, 60000) && b.Preview[0].Name == "Lillipup" && b.Preview[0].Diff.Contains("legalizado"), b.Summary);
+Pump(20);
+Check("resumo final não é sobrescrito pelo progresso", b.Summary.Contains("1 legalizados"), b.Summary);
+uint previewedPid = b.Preview.Count == 1 ? b.Preview[0].Change.Result.PID : 0;
+b.ApplyCommand.Execute(null);
+Check("legalizar em lote grava o Pokémon legal", Wait(() => CoreAdapter.IsLegal(CoreAdapter.GetBoxSlot(Sav(), 2, 0)) == true, 60000), vm.Status);
+Check("Aplicar grava exatamente o pré-visualizado (sem gerar de novo)", CoreAdapter.GetBoxSlot(Sav(), 2, 0).PID == previewedPid);
+vm.UndoCommand.Execute(null); Pump();
+Check("Ctrl+Z desfaz o legalizar em lote", CoreAdapter.IsLegal(CoreAdapter.GetBoxSlot(Sav(), 2, 0)) == false);
 
 Console.WriteLine(fails == 0 ? "TUDO OK" : $"{fails} FALHAS");
 return fails == 0 ? 0 : 1;
