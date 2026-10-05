@@ -31,6 +31,9 @@ public abstract class SlotPageViewModel(Action<SlotViewModel> select) : PageView
     /// <summary>Chamado depois que os slots sao recarregados (a busca global reaplica o destaque).</summary>
     public Action? SlotsLoaded { get; set; }
     public RelayCommand SelectSlotCommand { get; } = new(p => { if (p is SlotViewModel s) select(s); });
+    /// <summary>Colar/copiar varios sets Showdown (equipe e caixas; definidos pelo MainViewModel).</summary>
+    public RelayCommand? PasteShowdownCommand { get; set; }
+    public RelayCommand? CopyShowdownCommand { get; set; }
 }
 
 public sealed class BoxesPageViewModel : SlotPageViewModel

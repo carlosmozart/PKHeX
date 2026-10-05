@@ -6,7 +6,7 @@ using PKHeX.Core;
 namespace PKHeX.Modern.Services;
 
 public sealed record LivingDexRow(ushort Species, byte Form, string Name, DbEntry? Candidate,
-    bool CandidateLegal, IReadOnlyList<DbEntry> Duplicates, int Box, int Slot)
+    bool CandidateLegal, IReadOnlyList<DbEntry> Others, int Box, int Slot)
 {
     public bool Missing => Candidate is null;
 }
@@ -15,7 +15,7 @@ public sealed record LivingDexPlan(IReadOnlyList<LivingDexRow> Rows)
 {
     public int Owned => Rows.Count(r => !r.Missing);
     public int Missing => Rows.Count - Owned;
-    public int Duplicates => Rows.Sum(r => r.Duplicates.Count);
+    public int Others => Rows.Sum(r => r.Others.Count);
 }
 
 /// <summary>Read-only national-order plan. Candidates are indexed once instead of rescanning for every species.</summary>
@@ -68,6 +68,7 @@ public static class LivingDexPlanner
                 .ThenByDescending(e => e.Pkm.Version == target.Version).ThenByDescending(e => e.Pkm.CurrentLevel)
                 .ThenBy(e => e.Source.Id, StringComparer.Ordinal).ThenBy(e => e.Box).ThenBy(e => e.Slot).ToArray());
         var rows = new List<LivingDexRow>();
+        int perBox = Math.Max(1, target.BoxSlotCount); // 30 na maioria; 20 na Gen 1/2
         for (ushort sp = 1; sp <= target.MaxSpeciesID; sp++)
         {
             if (!target.Personal.IsSpeciesInGame(sp)) continue;
@@ -85,7 +86,7 @@ public static class LivingDexPlanner
                     if (!string.IsNullOrWhiteSpace(label)) name += " · " + label;
                 }
                 rows.Add(new(sp, form, name, best, best is not null && legalities.TryGetValue(best, out var legal) && legal,
-                    candidates?.Skip(1).ToArray() ?? [], rows.Count / 30 + 1, rows.Count % 30 + 1));
+                    candidates?.Skip(1).ToArray() ?? [], rows.Count / perBox + 1, rows.Count % perBox + 1));
             }
         }
         return new(rows);

@@ -127,10 +127,11 @@ public sealed class SearchPageViewModel : PageViewModel
         Raise(nameof(HasNoResults));
         try
         {
-            var open = _openSaves();
+            // Copias tiradas aqui, na thread da interface: a leitura em segundo plano nao disputa o save com o editor.
+            var open = _openSaves().Select(s => (s.Path, Sav: s.Sav.Clone())).ToArray();
             var folder = _settings.SavesFolder ?? SaveLibrary.DefaultFolder;
             BankStorage.ExternalFolders = _settings.ExternalBankFolders;
-            _all = await Task.Run(() => PokemonDatabase.Build(open, folder, _cache));
+            _all = await Task.Run(() => PokemonDatabase.Build(open, folder, _cache, readOnly: true)); // pesquisar nao cria bancos nem caixas
 
             var keep = _source > 0 && _source <= _sources.Count ? _sources[_source - 1].Id : null;
             _sources = [.. _all.Select(e => e.Source).DistinctBy(s => s.Id)];

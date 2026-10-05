@@ -621,6 +621,8 @@ public static class CoreAdapter
     {
         if (!ShowdownParsing.TryParseAnyLanguage(text, out var set) || set.Species == 0)
             return "Texto Showdown inválido.";
+        if (set.Species > pk.MaxSpeciesID) // o formato cortaria o numero e trocaria a especie (Sprigatito → Genesect na Gen 5)
+            return $"{(set.Species < SpeciesNames.Count ? SpeciesNames[set.Species] : "Esta espécie")} não existe neste jogo.";
         pk.ApplySetDetails(set);
         return set.InvalidLines.Count == 0 ? null : $"{set.InvalidLines.Count} linha(s) ignorada(s).";
     }

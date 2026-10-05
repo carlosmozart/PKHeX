@@ -51,6 +51,16 @@ public sealed class SlotHistory(SaveFile sav, int limit = 50)
             _undo.RemoveAt(_undo.Count - 1);
     }
 
+    /// <summary>Volta os slots do ultimo registro e o descarta, sem refazer (uma operacao em lote que falhou no meio).</summary>
+    public void Rollback()
+    {
+        if (!CanUndo)
+            return;
+        var snap = _undo[^1];
+        _undo.RemoveAt(_undo.Count - 1);
+        Restore(snap);
+    }
+
     /// <summary>Desfaz a ultima alteracao. Retorna a descricao ou null.</summary>
     public string? Undo()
     {

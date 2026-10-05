@@ -50,11 +50,13 @@ var plan = LivingDexPlanner.Build(entries, black, false, false, legal);
 var patrat = plan.Rows.Single(r => r.Species == 504);
 Check("contagem", plan.Owned == 3 && plan.Missing == plan.Rows.Count - 3 && plan.Rows.Count == 649);
 Check("legal > nativo > nível", patrat.Candidate is { Source.IsBank: true } && patrat.Candidate.Pkm.CurrentLevel == 15 && patrat.CandidateLegal);
-Check("duplicados", patrat.Duplicates.Count == 3 && plan.Duplicates == 3);
+Check("outros exemplares", patrat.Others.Count == 3 && plan.Others == 3);
 var withoutBank = LivingDexPlanner.Build(entries.Where(e => !e.Source.IsBank).ToArray(), black, false, false, legal);
 Check("nativo precede nível estrangeiro", withoutBank.Rows.Single(r => r.Species == 504).Candidate?.Source.Version == GameVersion.B);
 Check("faltantes", plan.Rows.Single(r => r.Species == 1).Missing);
 Check("30 por caixa em ordem nacional", plan.Rows[0].Box == 1 && plan.Rows[0].Slot == 1 && plan.Rows[30].Box == 2 && plan.Rows[30].Slot == 1);
+var crystal = LivingDexPlanner.Build([], BlankSaveFile.Get(GameVersion.C), false, false, new Dictionary<DbEntry, bool>());
+Check("Gen 2 usa 20 por caixa", crystal.Rows[19].Box == 1 && crystal.Rows[19].Slot == 20 && crystal.Rows[20].Box == 2 && crystal.Rows[20].Slot == 1);
 Check("filtro shiny", LivingDexPlanner.Build(entries, black, false, true, legal).Owned == 0);
 var forms = LivingDexPlanner.Build([], BlankSaveFile.Get(GameVersion.SW), true, false, new Dictionary<DbEntry, bool>());
 Check("formas presentes, sem formas de batalha", forms.Rows.Any(r => r.Species == 201) == PersonalTable.SWSH.IsSpeciesInGame(201)
@@ -75,7 +77,7 @@ bool Wait(Func<bool> done)
     var sw = Stopwatch.StartNew(); while (!done() && sw.ElapsedMilliseconds < 60000) { Pump(); System.Threading.Thread.Sleep(10); } Pump(); return done();
 }
 Check("plano em segundo plano", Wait(() => !dex.IsBusy && dex.Plan is not null), dex.Progress);
-Check("interface conta fontes abertas e Bank", dex.Plan?.Owned == 3 && dex.Plan.Duplicates == 3);
+Check("interface conta fontes abertas e Bank", dex.Plan?.Owned == 3 && dex.Plan.Others == 3);
 void Shot(string name) { win.UpdateLayout(); for (int i = 0; i < 15; i++) Pump(); win.CaptureRenderedFrame()?.Save(Path.Combine(work, name + ".png")); }
 dex.FilterIndex = 3; dex.Selected = dex.Rows.First(); Shot("living-dex-duplicates");
 dex.FilterIndex = 1; dex.Selected = dex.Rows.First(); Shot("living-dex-missing");

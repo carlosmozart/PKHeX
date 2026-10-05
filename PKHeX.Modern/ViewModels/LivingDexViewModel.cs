@@ -54,7 +54,7 @@ public sealed class LivingDexViewModel : ViewModelBase
     public string Summary { get => _summary; private set => Set(ref _summary, value); }
     public LivingDexPlan? Plan { get; private set; }
     public IReadOnlyList<LivingDexRowViewModel> Rows { get; private set; } = [];
-    public IReadOnlyList<string> FilterOptions { get; } = ["Todas as entradas", "Faltando", "Com candidato", "Com duplicados"];
+    public IReadOnlyList<string> FilterOptions { get; } = ["Todas as entradas", "Faltando", "Com candidato", "Com outros exemplares"];
     private int _filter;
     public int FilterIndex { get => _filter; set { if (Set(ref _filter, value)) Filter(); } }
     private string _search = "";
@@ -71,7 +71,7 @@ public sealed class LivingDexViewModel : ViewModelBase
     }
     private void Filter()
     {
-        Rows = _rows.Where(r => (_filter == 0 || _filter == 1 && r.Row.Missing || _filter == 2 && !r.Row.Missing || _filter == 3 && r.Row.Duplicates.Count > 0)
+        Rows = _rows.Where(r => (_filter == 0 || _filter == 1 && r.Row.Missing || _filter == 2 && !r.Row.Missing || _filter == 3 && r.Row.Others.Count > 0)
             && ($"{r.Row.Species} {r.Row.Name}".Contains(Search, StringComparison.OrdinalIgnoreCase))).ToArray();
         Raise(nameof(Rows));
     }
@@ -117,8 +117,8 @@ public sealed class LivingDexViewModel : ViewModelBase
                 new RelayCommand(() => _find(r.Species, version)),
                 r.Candidate is null ? null : new RelayCommand(() => _ = _open(r.Candidate)))).ToArray();
             Summary = forms
-                ? $"{plan.Owned} de {plan.Rows.Count} entradas · {plan.Missing} faltando · {plan.Duplicates} duplicados"
-                : $"{plan.Owned} de {plan.Rows.Count} espécies · {plan.Missing} faltando · {plan.Duplicates} duplicados";
+                ? $"{plan.Owned} de {plan.Rows.Count} entradas · {plan.Missing} faltando · {plan.Others} outros exemplares"
+                : $"{plan.Owned} de {plan.Rows.Count} espécies · {plan.Missing} faltando · {plan.Others} outros exemplares";
             Selected = null; Filter(); Progress = "Plano pronto. Nenhum Pokémon foi movido.";
         }
         catch (Exception ex) { Progress = "Não foi possível planejar: " + ex.Message; }
@@ -134,9 +134,9 @@ public sealed class LivingDexRowViewModel(LivingDexRow row, RelayCommand find, R
     public string Location => row.Candidate is null ? Loc.T("Faltando") : row.Candidate.Source.Name + " · " + row.Candidate.Where;
     public string Status => row.Candidate is null ? Loc.T("Sem candidato") : Loc.T(row.CandidateLegal ? "✓ Candidato legal" : "⚠ Candidato ilegal");
     public string BoxPlan => string.Format(Loc.T("Caixa {0} · slot {1}"), row.Box, row.Slot);
-    public IReadOnlyList<string> DuplicateLocations => row.Duplicates.Select(d => d.Source.Name + " · " + d.Where).ToArray();
-    public bool HasDuplicates => row.Duplicates.Count > 0;
-    public string DuplicateSummary => string.Format(Loc.T("Duplicados que sobram: {0}"), row.Duplicates.Count);
+    public IReadOnlyList<string> OtherLocations => row.Others.Select(d => d.Source.Name + " · " + d.Where).ToArray();
+    public bool HasOthers => row.Others.Count > 0;
+    public string OthersSummary => string.Format(Loc.T("Outros exemplares: {0}"), row.Others.Count);
     public RelayCommand FindCommand => find;
     public RelayCommand? OpenCommand => open;
     public bool CanOpen => open is not null;

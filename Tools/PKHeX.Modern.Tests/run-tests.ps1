@@ -10,6 +10,7 @@ if ($env:PKHEX_TEST_SAVES) { $saves = $env:PKHEX_TEST_SAVES }
 $suites = [ordered]@{
     'EditorAnalysis' = @{ 'sv.sav' = 'Scarlet' }
     'BackupMetadata' = @{}
+    'ShowdownTeam' = @{}
     'Touch' = @{}
     'ThemePicker' = @{}
     'BankDetails' = @{}

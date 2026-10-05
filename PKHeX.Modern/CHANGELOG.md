@@ -6,6 +6,17 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 📦 Caixas e equipe
+- **Equipe Showdown:** o botão “📋 Showdown” em Equipe e em Caixas cola vários sets de uma vez nas vagas da equipe ou nos slots vazios da caixa, com uma lista de conferência antes (legal, ilegal ou fora, com o motivo) e um único desfazer. Também copia a equipe ou a caixa inteira no formato Showdown.
+
+### 📖 Coleção
+- **Living Dex:** o plano usa o número de slots por caixa do jogo alvo (20 na Gen 1/2, em vez de sempre 30), e os demais Pokémon da mesma espécie aparecem como “outros exemplares”, sem sugerir que são cópias.
+
+### 🔧 Correções
+- **Pesquisa:** lê uma cópia dos saves abertos (não disputa o save com o editor enquanto busca) e não cria mais bancos e caixas vazios no Bank.
+
 ## 0.4.16 — 2026-10-05
 
 ### ⚙️ Desempenho e diagnóstico

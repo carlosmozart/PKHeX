@@ -583,7 +583,7 @@
         <StackPanel Spacing="4">
           <TextBlock Text="Living Dex" Classes="title" />
           <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" />
-          <TextBlock Text="Plano de caixas em ordem nacional, com 30 slots por caixa. Esta tela só planeja; não move Pokémon." Classes="muted" FontSize="12" TextWrapping="Wrap" />
+          <TextBlock Text="Plano de caixas em ordem nacional, com o número de slots por caixa do jogo alvo. Esta tela só planeja; não move Pokémon." Classes="muted" FontSize="12" TextWrapping="Wrap" />
         </StackPanel>
         <Button Grid.Column="1" Content="Gerar plano" Command="{Binding GenerateCommand}" Classes="accent" VerticalAlignment="Top" />
       </Grid>
@@ -629,8 +629,8 @@
               <TextBlock Text="{Binding Status}" />
               <Button Content="Abrir candidato" Command="{Binding OpenCommand}" IsVisible="{Binding CanOpen}" />
               <Button Content="Onde obter (Encontros)" Command="{Binding FindCommand}" IsVisible="{Binding Missing}" />
-              <TextBlock Text="{Binding DuplicateSummary}" FontWeight="SemiBold" />
-              <ItemsControl ItemsSource="{Binding DuplicateLocations}" IsVisible="{Binding HasDuplicates}">
+              <TextBlock Text="{Binding OthersSummary}" FontWeight="SemiBold" />
+              <ItemsControl ItemsSource="{Binding OtherLocations}" IsVisible="{Binding HasOthers}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="x:String"><TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" Margin="0,3" /></DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -1545,6 +1545,14 @@
           <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0" HorizontalAlignment="Center">
             <Button Content="✎ Renomear" Command="{Binding RenameCommand}" IsVisible="{Binding CanRename}" />
             <ComboBox ItemsSource="{Binding Wallpapers}" SelectedIndex="{Binding WallpaperIndex}" IsVisible="{Binding HasWallpapers}" Width="210" ToolTip.Tip="Papel de parede da caixa (salvo no jogo)" />
+            <Button Content="📋 Showdown" ToolTip.Tip="Colar vários sets Showdown nos slots vazios desta caixa, ou copiar a caixa inteira no formato Showdown">
+              <Button.Flyout>
+                <MenuFlyout>
+                  <MenuItem Header="⇩ Colar equipe nos slots vazios" Command="{Binding PasteShowdownCommand}" />
+                  <MenuItem Header="⇧ Copiar a caixa (Showdown)" Command="{Binding CopyShowdownCommand}" />
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
           </StackPanel>
         </StackPanel>
         <Button Grid.Column="2" Classes="boxArrow" Content="›" FontSize="18" Command="{Binding NextBoxCommand}"
@@ -1602,7 +1610,17 @@
   <!-- Equipe -->
   <DataTemplate DataType="vm:PartyPageViewModel">
     <DockPanel>
-      <TextBlock DockPanel.Dock="Top" Text="Equipe" Classes="title" Margin="0,0,0,16" />
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+        <TextBlock Text="Equipe" Classes="title" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Content="📋 Showdown" VerticalAlignment="Center" ToolTip.Tip="Colar uma equipe Showdown nas vagas da equipe, ou copiar a equipe inteira no formato Showdown">
+          <Button.Flyout>
+            <MenuFlyout>
+              <MenuItem Header="⇩ Colar equipe nas vagas" Command="{Binding PasteShowdownCommand}" />
+              <MenuItem Header="⇧ Copiar a equipe (Showdown)" Command="{Binding CopyShowdownCommand}" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+      </Grid>
       <ScrollViewer x:Name="PartyScroll" HorizontalScrollBarVisibility="Disabled">
       <StackPanel Spacing="16">
       <ItemsControl ItemsSource="{Binding Slots}" VerticalAlignment="Top" MaxWidth="1100" HorizontalAlignment="Stretch">

@@ -137,6 +137,7 @@ public sealed partial class MainViewModel : ViewModelBase
         Boxes.Prompt = PromptAsync;
         ClearMarksCommand = new RelayCommand(ClearMarks);
         InitializeTouchCommands();
+        InitializeShowdownTeam();
         DeleteMarkedCommand = new RelayCommand(() => _ = DeleteMarkedAsync());
         Party.SlotsLoaded = ApplySearchHighlight;
         ClearSearchCommand = new RelayCommand(() => SearchText = "");
