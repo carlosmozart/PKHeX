@@ -14,6 +14,10 @@ public static class HelpContent
 {
     public static IReadOnlyList<HelpSection> Sections { get; } =
     [
+        new("↔", "Prévia de alterações",
+        [
+            new("Prévia de alterações", "Antes de legalizar ou transferir entre gerações, confira os valores antes e depois. ⚠ marca mudanças importantes. A confirmação aplica exatamente o candidato exibido; cancelar preserva o Pokémon. Transferências em lote mostram o resumo por campo e a lista completa. O save só muda em memória até Salvar, com desfazer nos slots."),
+        ]),
         new("💾", "Saves",
         [
             new("Abrir um save", "Clique em “Abrir save...”, arraste o arquivo para a janela ou passe o caminho pela linha de comando. Sem save aberto, a barra lateral lista os saves da pasta do Save Manager em “Seus saves” (um clique abre) e “↺ Último” reabre o save anterior; para fazer isso sozinho, marque “Abrir último save ao iniciar” no ⚙ da barra lateral.", "Ctrl+O"),

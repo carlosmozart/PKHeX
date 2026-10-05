@@ -6,6 +6,11 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### ↔ Pokémon
+- **Prévia de alterações:** Legalizar e transferir entre gerações mostram os campos antes e depois, com destaque para mudanças importantes. A confirmação usa o candidato exibido, sem gerar outro. Lotes mostram um resumo por campo e a lista completa.
+
 ## 0.4.15 — 2026-10-05
 
 ### ⬆ Atualização

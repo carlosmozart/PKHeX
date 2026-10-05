@@ -34,6 +34,7 @@ public sealed class ConfirmDialogViewModel : ViewModelBase
     /// <summary>Linhas extras (ex.: lista de Pokemon com problema), exibidas numa lista rolavel.</summary>
     public IReadOnlyList<string> Details { get; }
     public bool HasDetails => Details.Count > 0;
+    public bool DetailsExpanded { get; init; } = true;
     /// <summary>Simbolo grande ao lado do titulo (✓, ⚠...).</summary>
     public string Icon { get; }
     public bool HasIcon => Icon.Length > 0;

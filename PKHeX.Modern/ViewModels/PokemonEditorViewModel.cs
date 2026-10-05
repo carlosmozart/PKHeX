@@ -64,7 +64,7 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
         HTMemory = _pk is IMemoryHT ? new MemoryViewModel(() => _pk, false, Refresh) : null;
         AddAllRibbonsCommand = new RelayCommand(() => { CoreAdapter.SetAllValidRibbons(_pk); RaiseAll(); _status(LegalityStatus("Fitas legais adicionadas")); });
         RemoveAllRibbonsCommand = new RelayCommand(() => { CoreAdapter.RemoveAllRibbons(_pk); RaiseAll(); _status(LegalityStatus("Fitas removidas")); });
-        LegalizeCommand = new RelayCommand(() => _ = LegalizeAsync(), () => !IsLegalizing);
+        LegalizeCommand = new RelayCommand(() => _ = PreviewLegalizeAsync(false), () => !IsLegalizing);
         SuggestMovesCommand = new RelayCommand(() => Fix("Golpes sugeridos", pk => CoreAdapter.SuggestMoves(pk)));
         SuggestRelearnCommand = new RelayCommand(() => Fix("Golpes de reaprender", pk => CoreAdapter.SuggestRelearnMoves(pk)));
         SuggestMetCommand = new RelayCommand(() => Fix("Encontro sugerido", pk => _sav is null ? CoreAdapter.SuggestMetData(pk) : EncounterDatabase.SuggestMet(_sav, pk), "nenhum encontro possível para esta espécie neste jogo"));
@@ -279,12 +279,40 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
     /// </summary>
     public async Task<bool> LegalizeAndApplyAsync()
     {
-        await LegalizeAsync();
-        if (!IsLegal || !CanApply)
-            return false;
-        Apply();
-        _status($"{SpeciesName} legalizado e gravado no slot. Ctrl+Z desfaz; lembre-se de salvar o save.");
-        return true;
+        return await PreviewLegalizeAsync(true);
+    }
+
+    public Func<string, string, string, string, IReadOnlyList<string>, Task<bool>>? ConfirmPreview { get; init; }
+    public Func<bool>? IsCurrentEditor { get; init; }
+    private PKM? _previewCandidate;
+    /// <summary>A copy of the candidate currently awaiting confirmation; changing it cannot alter the operation.</summary>
+    public PKM? PreviewCandidate => _previewCandidate?.Clone();
+
+    public async Task<bool> PreviewLegalizeAsync(bool apply, string? reason = null)
+    {
+        if (_sav is null || IsLegalizing || ConfirmPreview is null) return false;
+        IsLegalizing = true;
+        var before = _pk.Clone();
+        try
+        {
+            var result = await Task.Run(() => EncounterDatabase.Legalize(_sav, before.Clone(), out _));
+            if (result is null) { _status("Não foi possível preparar uma versão legal."); return false; }
+            if (IsCurrentEditor?.Invoke() == false) return false;
+            _previewCandidate = result;
+            var details = PokemonDiff.Details(before, result);
+            var accepted = await ConfirmPreview(apply ? "Pokémon ilegal" : "Prévia de alterações",
+                reason ?? "Confira o que vai mudar antes de legalizar.", "Legalizar", apply ? "Só abrir" : "Cancelar", details);
+            // Do not replace edits made while the candidate was being calculated or reviewed.
+            if (!accepted || IsCurrentEditor?.Invoke() == false || !_pk.Data.SequenceEqual(before.Data)) return false;
+            _pk = result;
+            _isNew = false;
+            RaiseAll();
+            if (apply && CanApply) Apply();
+            _status(apply ? "Pokémon legalizado. Lembre-se de salvar o save." : "Prévia aplicada ao editor. Clique em Aplicar para gravar.");
+            return true;
+        }
+        catch (Exception ex) { _status("Legalizar: " + ex.Message); return false; }
+        finally { _previewCandidate = null; IsLegalizing = false; }
     }
 
     private void RestoreAfterFailedLegalize(PKM? restore)

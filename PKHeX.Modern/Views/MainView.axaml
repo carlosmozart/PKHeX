@@ -419,7 +419,8 @@
           </StackPanel>
           <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
           <TextBox x:Name="DialogInput" Text="{Binding Input}" IsVisible="{Binding HasInput}" />
-          <Border Classes="dialogDetails" IsVisible="{Binding HasDetails}">
+          <Expander Header="Detalhes" IsExpanded="{Binding DetailsExpanded, Mode=OneWay}" IsVisible="{Binding HasDetails}" HorizontalAlignment="Stretch">
+          <Border Classes="dialogDetails">
             <ScrollViewer MaxHeight="300">
               <ItemsControl ItemsSource="{Binding Details}">
                 <ItemsControl.ItemTemplate>
@@ -430,6 +431,7 @@
               </ItemsControl>
             </ScrollViewer>
           </Border>
+          </Expander>
           <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
             <Button Content="{Binding CancelText}" Command="{Binding CancelCommand}" ToolTip.Tip="Esc" IsVisible="{Binding HasCancel}" />
             <Button Classes="accent" Content="{Binding ConfirmText}" Command="{Binding ConfirmCommand}" ToolTip.Tip="Enter" />

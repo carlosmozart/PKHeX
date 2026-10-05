@@ -613,13 +613,21 @@ public sealed partial class MainViewModel : ViewModelBase
 
     /// <summary>Mostra uma pergunta dentro da janela e espera a resposta (true = confirmar).</summary>
     public async Task<bool> ConfirmAsync(string title, string message, string confirmText, string cancelText = "Cancelar", bool isDanger = false,
-        IReadOnlyList<string>? details = null, string icon = "")
+        IReadOnlyList<string>? details = null, string icon = "", bool detailsExpanded = true)
     {
         Dialog?.Complete(false); // so uma pergunta por vez
-        var dialog = new ConfirmDialogViewModel(title, message, confirmText, cancelText, isDanger, details, icon);
+        var dialog = new ConfirmDialogViewModel(title, message, confirmText, cancelText, isDanger, details, icon) { DetailsExpanded = detailsExpanded };
         Dialog = dialog;
         try { return await dialog.Result; }
         finally { if (Dialog == dialog) Dialog = null; }
+    }
+
+    private async Task<bool> ConfirmEditorPreviewAsync(string title, string message, string confirmText, string cancelText, IReadOnlyList<string> details)
+    {
+        var editor = Editor;
+        var sav = _sav;
+        var confirmed = await ConfirmAsync(title, message, confirmText, cancelText, details: details, icon: "✨");
+        return confirmed && Editor == editor && _sav == sav;
     }
 
     /// <summary>Pergunta com campo de texto; retorna o texto (sem espacos nas pontas) ou null se cancelar/vazio.</summary>
@@ -1074,6 +1082,7 @@ public sealed partial class MainViewModel : ViewModelBase
                     Status = $"Não dá para trocar: {dst.Title} não pode ir para o save ({err}). Solte num slot vazio do bank.";
                     return;
                 }
+                if (back is not null && !await ConfirmTransferAsync([(b!, back)])) return;
                 var srcInfo = CoreAdapter.GetSlotInfo(_sav, src.Box, src.Slot);
                 if (mode != DropMode.Copy && back is null && src.IsParty && _sav.IsPartyAllEggs(src.Slot))
                 {
@@ -1105,6 +1114,7 @@ public sealed partial class MainViewModel : ViewModelBase
                     return;
                 }
                 (converted, legalNote) = await OfferLegalizeAsync(converted, "do bank");
+                if (!await ConfirmTransferAsync([(a, converted)])) return;
                 var dstInfo = CoreAdapter.GetSlotInfo(_sav, dst.Box, dst.Slot);
                 _history!.Record($"trazer {name} do bank", SlotHistory.KeyOf(dst.Box, dst.Slot));
                 if (CoreAdapter.ImportToSlot(_sav, dstInfo, converted) is { } error)
@@ -1194,6 +1204,7 @@ public sealed partial class MainViewModel : ViewModelBase
         var legalNote = "";
         if (dstSav == _sav)
             (converted, legalNote) = await OfferLegalizeAsync(converted, "do outro save");
+        if (!await ConfirmTransferAsync(back is null ? [(a, converted)] : [(a, converted), (b!, back)])) return;
         if (mode != DropMode.Copy && back is null && src.IsParty && srcSav.IsPartyAllEggs(src.Slot))
         {
             Status = "A equipe precisa ter pelo menos um Pokémon (que não seja ovo).";
@@ -1284,12 +1295,13 @@ public sealed partial class MainViewModel : ViewModelBase
         var name = CoreAdapter.SpeciesNames[pk.Species];
         if (!LegalMode)
             return (pk, $"Atenção: {name} está ilegal (dá para usar ✨ Legalizar no editor).");
+        var candidate = await LegalizeOutsideAsync(pk);
         var legalize = await ConfirmAsync($"{name} está ilegal",
             $"{name} ({origin}) não é legal neste save. Legalizar gera de novo a partir de um encontro real de {CoreAdapter.GetGameName(_sav)}, mantendo natureza, nível, item, apelido e golpes quando possível.",
-            "✨ Legalizar", "Trazer como está", details: [.. CoreAdapter.GetLegalityIssues(pk)], icon: "🛡");
+            "✨ Legalizar", "Trazer como está", details: [candidate.Note, .. PokemonDiff.Details(pk, candidate.Pk)], icon: "🛡");
         if (!legalize)
             return (pk, $"Atenção: {name} entrou ilegal.");
-        return await LegalizeOutsideAsync(pk);
+        return candidate;
     }
 
     private async Task<(PKM Pk, string Note)> LegalizeOutsideAsync(PKM pk)
@@ -1309,6 +1321,16 @@ public sealed partial class MainViewModel : ViewModelBase
         {
             return (pk, $"Erro ao legalizar {name} ({ex.Message}); entrou como estava.");
         }
+    }
+
+    private Task<bool> ConfirmTransferAsync(IReadOnlyList<(PKM Before, PKM After)> pairs)
+    {
+        var converted = pairs.Where(p => p.Before.GetType() != p.After.GetType()).ToArray();
+        if (converted.Length == 0) return Task.FromResult(true);
+        var message = Loc.T("Confira as mudanças antes de transferir. O save só será gravado ao salvar.");
+        if (converted.Length > 1) message += "\n" + PokemonDiff.BatchSummary(converted);
+        return ConfirmAsync("Prévia da transferência", message,
+            "Transferir", details: converted.Length == 1 ? PokemonDiff.Details(converted[0].Before, converted[0].After) : PokemonDiff.Batch(converted), icon: "↔", detailsExpanded: converted.Length == 1);
     }
 
     /// <summary>Soltar um arquivo .pk* sobre um slot (pergunta antes de substituir um Pokemon).</summary>
@@ -1751,14 +1773,17 @@ public sealed partial class MainViewModel : ViewModelBase
         // De fora para o save aberto (bank ou outro save): oferece o Legalizar para os que chegam ilegais (uma pergunta para o grupo).
         var legalNote = "";
         var illegal = dstSav != _sav ? [] : moving.Select((m, i) => (m, i)).Where(x => SaveOf(x.m.Key) != _sav && CoreAdapter.IsLegal(x.m.Data) == false).ToList();
+        var candidates = new Dictionary<int, (PKM Pk, string Note)>();
+        if (LegalMode)
+            foreach (var (m, i) in illegal) candidates[i] = await LegalizeOutsideAsync(m.Data);
         if (illegal.Count > 0 && LegalMode && await ConfirmAsync($"{illegal.Count} Pokémon ilegais",
                 $"Estes Pokémon de fora não são legais em {CoreAdapter.GetGameName(_sav)}. Legalizar gera cada um de novo a partir de um encontro real do jogo, mantendo natureza, nível, item, apelido e golpes quando possível.",
-                "✨ Legalizar", "Trazer como estão", details: [.. illegal.Select(x => x.m.Name)], icon: "🛡"))
+                "✨ Legalizar", "Trazer como estão", details: PokemonDiff.Batch(illegal.Select(x => (x.m.Data, candidates[x.i].Pk))), icon: "🛡", detailsExpanded: false))
         {
             int ok = 0;
             foreach (var (m, i) in illegal)
             {
-                var (pk, _) = await LegalizeOutsideAsync(m.Data);
+                var (pk, _) = candidates[i];
                 if (CoreAdapter.IsLegal(pk) == true)
                     ok++;
                 moving[i] = (m.Key, pk, m.Name);
@@ -1767,6 +1792,8 @@ public sealed partial class MainViewModel : ViewModelBase
         }
         else if (illegal.Count > 0)
             legalNote = $" Atenção: {illegal.Count} entraram ilegais.";
+
+        if (!await ConfirmTransferAsync(moving.Select(m => (originals[m.Key], m.Data)).ToArray())) return;
 
         // 2) Onde cabe: slots livres da caixa de destino (os que estao saindo dela contam como livres).
         HashSet<int> freed = copy ? [] : moving.Where(m => InTarget(m.Key)).Select(m => m.Key.Slot).ToHashSet();
@@ -2093,16 +2120,8 @@ public sealed partial class MainViewModel : ViewModelBase
         if (_legalizeDeclined.Contains(key))
             return;
         var reason = editor.LegalityIssues.Count > 0 ? editor.LegalityIssues[0].TrimEnd('.') : "Ilegal";
-        if (!await ConfirmAsync("Pokémon ilegal",
-                $"{editor.SpeciesName} ({slot.Location}) não passa na verificação de legalidade: {reason}. Legalizar agora? O app gera o Pokémon de novo a partir de um encontro real do jogo, mantendo natureza, nível, item, apelido e golpes quando possível, e grava no slot (Ctrl+Z desfaz).",
-                "Legalizar", "Só abrir", icon: "✨"))
-        {
-            _legalizeDeclined.Add(key);
-            return;
-        }
-        if (Editor != editor)
-            return;
-        if (!await editor.LegalizeAndApplyAsync())
+        if (!await editor.PreviewLegalizeAsync(true,
+                $"{editor.SpeciesName} ({slot.Location}): {reason}. " + Loc.T("Confira o que vai mudar antes de legalizar.")))
             _legalizeDeclined.Add(key);
     }
 
@@ -2165,6 +2184,7 @@ public sealed partial class MainViewModel : ViewModelBase
             return;
 
         // A copia anexada ja esta neste save: a variante entra no lugar dela.
+        if (!await ConfirmTransferAsync([(variant.Pk, pk)])) return;
         var id = BankLinks.IdOf(original);
         SlotViewModel? target = null;
         string where;
@@ -2220,7 +2240,8 @@ public sealed partial class MainViewModel : ViewModelBase
         // Slot vazio: abre o editor com um Pokemon em branco para permitir criar/colar Showdown.
         var source = generated ?? (slot.IsEmpty ? CoreAdapter.CreateBlank(_sav) : slot.Pkm);
         var tab = Editor?.SelectedTab ?? 0;
-        Editor = new PokemonEditorViewModel(source, slot.Location, pk =>
+        PokemonEditorViewModel? nextEditor = null;
+        nextEditor = new PokemonEditorViewModel(source, slot.Location, pk =>
         {
             if (CoreAdapter.IsEmpty(pk))
             {
@@ -2236,7 +2257,9 @@ public sealed partial class MainViewModel : ViewModelBase
             applied?.Invoke(pk);
             RaiseSelectionChanged();
             Status = $"{CoreAdapter.SpeciesNames[pk.Species]} gravado em {slot.Location}. Lembre-se de exportar o save.";
-        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab, ShowQr = ShowPokemonQr, Confirm = (t, m, ok) => ConfirmAsync(t, m, ok) };
+        }, s => Status = s, isNew: generated is null && slot.IsEmpty, pendingApply: generated is not null, sav: _sav, legalMode: Settings.LegalMode) { SelectedTab = tab, ShowQr = ShowPokemonQr, Confirm = (t, m, ok) => ConfirmAsync(t, m, ok),
+            ConfirmPreview = ConfirmEditorPreviewAsync, IsCurrentEditor = () => Editor == nextEditor };
+        Editor = nextEditor;
     }
 }
 
