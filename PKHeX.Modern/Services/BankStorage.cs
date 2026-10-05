@@ -72,12 +72,13 @@ public static class BankStorage
 
     // Bancos
     /// <summary>Bancos existentes (cria o "Principal" com uma caixa se ainda nao houver nenhum).</summary>
-    public static IReadOnlyList<string> GetBanks()
+    public static IReadOnlyList<string> GetBanks(bool create = true)
     {
-        Directory.CreateDirectory(Root);
+        if (!create && !Directory.Exists(Root)) return [];
+        if (create) Directory.CreateDirectory(Root);
         var banks = Directory.GetDirectories(Root).Select(Path.GetFileName).OfType<string>()
             .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase).ToList();
-        if (banks.Count == 0)
+        if (banks.Count == 0 && create)
         {
             CreateBank(DefaultBank);
             banks.Add(DefaultBank);
@@ -114,7 +115,7 @@ public static class BankStorage
     public static void DeleteBank(string bank) => Directory.Delete(Path.Combine(Root, bank), recursive: true);
 
     // Caixas
-    public static IReadOnlyList<BankBox> GetBoxes(string bank)
+    public static IReadOnlyList<BankBox> GetBoxes(string bank, bool create = true)
     {
         if (IsExternalBank(bank))
         {
@@ -125,12 +126,13 @@ public static class BankStorage
                 .Select(i => new BankBox(path, $"Arquivos {(i * SlotsPerBox) + 1}–{(i + 1) * SlotsPerBox}", i))];
         }
         var dir = Path.Combine(Root, bank);
-        Directory.CreateDirectory(dir);
+        if (!create && !Directory.Exists(dir)) return [];
+        if (create) Directory.CreateDirectory(dir);
         var boxes = Directory.GetDirectories(dir)
             .Select(d => new BankBox(d, StripOrder(Path.GetFileName(d))))
             .OrderBy(b => Path.GetFileName(b.Folder), StringComparer.Ordinal)
             .ToList();
-        if (boxes.Count == 0)
+        if (boxes.Count == 0 && create)
         {
             CreateBox(bank, "Caixa 1");
             return GetBoxes(bank);

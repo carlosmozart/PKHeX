@@ -44,6 +44,15 @@ public sealed class PokedexPageViewModel : PageViewModel
     }
 
     public override string Title => "Pokédex";
+    public LivingDexViewModel? LivingDex { get; set; }
+    private bool _livingDex;
+    public bool ShowLivingDex
+    {
+        get => _livingDex;
+        set { if (Set(ref _livingDex, value) && value && LivingDex is not null) _ = LivingDex.RefreshAsync(); }
+    }
+    public RelayCommand ShowCollectionCommand => new(() => ShowLivingDex = false);
+    public RelayCommand ShowLivingDexCommand => new(() => ShowLivingDex = true);
     public override string Icon => "📖";
 
     public override void Load(SaveFile sav)

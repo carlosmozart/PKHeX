@@ -10,6 +10,7 @@ namespace PKHeX.Modern.Services;
 public sealed record DbSource(string Id, string Name, GameVersion Version, bool IsOpen, string? Bank = null)
 {
     public bool IsBank => Bank is not null;
+    public SaveFile? Save { get; init; }
 }
 
 /// <summary>Um Pokemon encontrado, com os textos ja montados para filtrar rapido.</summary>
@@ -78,12 +79,16 @@ public static class PokemonDatabase
     /// <param name="folder">Pasta do Save Manager (saves fechados); null = nenhuma.</param>
     /// <param name="cache">Saves da pasta ja lidos (caminho → data + save), reaproveitados enquanto o arquivo nao mudar.</param>
     public static List<DbEntry> Build(IReadOnlyList<(string Path, SaveFile Sav)> open, string? folder,
-        Dictionary<string, (DateTime Write, SaveFile Sav)> cache, bool includeBank = true)
+        Dictionary<string, (DateTime Write, SaveFile Sav)> cache, bool includeBank = true, bool readOnly = false, Action<int>? sourceProgress = null)
     {
         var list = new List<DbEntry>();
+        int sourcesRead = 0;
         var openPaths = new HashSet<string>(open.Select(o => Normalize(o.Path)), StringComparer.OrdinalIgnoreCase);
         foreach (var (path, sav) in open)
-            AddSave(list, new DbSource(path, $"{CoreAdapter.GetGameName(sav)} · {sav.OT} (aberto)", sav.Version, true), sav);
+        {
+            AddSave(list, new DbSource(path, $"{CoreAdapter.GetGameName(sav)} · {sav.OT} (aberto)", sav.Version, true) { Save = sav }, sav);
+            sourceProgress?.Invoke(++sourcesRead);
+        }
 
         if (folder is not null && Directory.Exists(folder))
         {
@@ -101,8 +106,9 @@ public static class PokemonDatabase
                 {
                     if (openPaths.Contains(Normalize(path)))
                         continue; // o aberto entra com as alteracoes da aba
-                    AddSave(list, new DbSource(path, $"{CoreAdapter.GetGameName(sav)} · {sav.OT}", sav.Version, false), sav);
+                    AddSave(list, new DbSource(path, $"{CoreAdapter.GetGameName(sav)} · {sav.OT}", sav.Version, false) { Save = sav }, sav);
                 }
+                sourceProgress?.Invoke(++sourcesRead);
             }
             foreach (var gone in cache.Keys.Where(k => !seen.Contains(ZipSaves.FileOf(k))).ToList())
                 cache.Remove(gone);
@@ -110,10 +116,10 @@ public static class PokemonDatabase
 
         if (includeBank)
         {
-            foreach (var bank in BankStorage.GetBanks().Concat(BankStorage.ExternalFolders.Select(BankStorage.GetExternalBankName)))
+            foreach (var bank in BankStorage.GetBanks(create: !readOnly).Concat(BankStorage.ExternalFolders.Select(BankStorage.GetExternalBankName)))
             {
                 var source = new DbSource("bank:" + bank, $"Bank › {bank}", GameVersion.Any, false, bank);
-                var boxes = BankStorage.GetBoxes(bank);
+                var boxes = BankStorage.GetBoxes(bank, create: !readOnly);
                 for (int b = 0; b < boxes.Count; b++)
                 {
                     PKM?[] data;
@@ -122,6 +128,7 @@ public static class PokemonDatabase
                         if (data[i] is { Species: > 0 } pk)
                             list.Add(new DbEntry(source, pk, $"{boxes[b].Name} · {i + 1}", b, i));
                 }
+                sourceProgress?.Invoke(++sourcesRead);
             }
         }
         return list;

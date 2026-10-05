@@ -532,8 +532,78 @@
   </DataTemplate>
 
   <!-- Pokedex centralizada: todos os saves da pasta + save aberto + bank -->
+  <DataTemplate DataType="vm:LivingDexViewModel">
+    <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="8">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <StackPanel Spacing="4">
+          <TextBlock Text="Living Dex" Classes="title" />
+          <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" />
+          <TextBlock Text="Plano de caixas em ordem nacional, com 30 slots por caixa. Esta tela só planeja; não move Pokémon." Classes="muted" FontSize="12" TextWrapping="Wrap" />
+        </StackPanel>
+        <Button Grid.Column="1" Content="Gerar plano" Command="{Binding GenerateCommand}" Classes="accent" VerticalAlignment="Top" />
+      </Grid>
+      <WrapPanel Grid.Row="1" ItemSpacing="12" LineSpacing="8" IsEnabled="{Binding !IsBusy}">
+        <StackPanel Spacing="4"><TextBlock Text="Jogo alvo" /><ComboBox ItemsSource="{Binding TargetOptions}" SelectedIndex="{Binding TargetIndex}" MinWidth="180" /></StackPanel>
+        <CheckBox Content="Incluir formas" IsChecked="{Binding IncludeForms}" />
+        <CheckBox Content="Só shiny" IsChecked="{Binding ShinyOnly}" />
+        <CheckBox Content="Saves abertos" IsChecked="{Binding IncludeOpen}" />
+        <CheckBox Content="Pasta de saves" IsChecked="{Binding IncludeFolder}" />
+        <CheckBox Content="Bank" IsChecked="{Binding IncludeBank}" />
+      </WrapPanel>
+      <StackPanel Grid.Row="2" Spacing="5">
+        <TextBlock Text="{Binding Progress}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+        <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="5" />
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+          <TextBox Text="{Binding Search}" Watermark="Buscar por nome ou número" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding FilterOptions}" SelectedIndex="{Binding FilterIndex}" MinWidth="170" />
+        </Grid>
+      </StackPanel>
+      <Grid Grid.Row="3" ColumnDefinitions="*,12,280">
+        <ListBox Classes="plainRows" ItemsSource="{Binding Rows}" SelectedItem="{Binding Selected}">
+          <ListBox.ItemTemplate>
+            <DataTemplate x:DataType="vm:LivingDexRowViewModel">
+              <Border Classes="card" Margin="0,0,0,6" Padding="10">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                  <StackPanel Spacing="3">
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Location}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Status}" Classes="muted" FontSize="11" />
+                  </StackPanel>
+                  <TextBlock Grid.Column="1" Text="{Binding BoxPlan}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <Border Grid.Column="2" Classes="card" IsVisible="{Binding HasSelection}">
+          <ScrollViewer>
+            <StackPanel DataContext="{Binding Selected}" x:DataType="vm:LivingDexRowViewModel" Spacing="10">
+              <TextBlock Text="{Binding Title}" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding BoxPlan}" />
+              <TextBlock Text="{Binding Location}" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Status}" />
+              <Button Content="Abrir candidato" Command="{Binding OpenCommand}" IsVisible="{Binding CanOpen}" />
+              <Button Content="Onde obter (Encontros)" Command="{Binding FindCommand}" IsVisible="{Binding Missing}" />
+              <TextBlock Text="{Binding DuplicateSummary}" FontWeight="SemiBold" />
+              <ItemsControl ItemsSource="{Binding DuplicateLocations}" IsVisible="{Binding HasDuplicates}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="x:String"><TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" Margin="0,3" /></DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </ScrollViewer>
+        </Border>
+      </Grid>
+    </Grid>
+  </DataTemplate>
   <DataTemplate DataType="vm:PokedexPageViewModel">
-    <Grid ColumnDefinitions="*,16,320">
+    <Grid RowDefinitions="Auto,*">
+      <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+        <Button Content="Coleção" Command="{Binding ShowCollectionCommand}" Classes.accent="{Binding !ShowLivingDex}" />
+        <Button Content="Living Dex" Command="{Binding ShowLivingDexCommand}" Classes.accent="{Binding ShowLivingDex}" />
+      </StackPanel>
+      <ContentControl Grid.Row="1" Content="{Binding LivingDex}" IsVisible="{Binding ShowLivingDex}" />
+    <Grid Grid.Row="1" ColumnDefinitions="*,16,320" IsVisible="{Binding !ShowLivingDex}">
       <DockPanel>
         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
           <StackPanel Spacing="2">
@@ -686,6 +756,7 @@
           </ScrollViewer>
         </Panel>
       </Border>
+    </Grid>
     </Grid>
   </DataTemplate>
 

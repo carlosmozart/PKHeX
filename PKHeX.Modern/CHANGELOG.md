@@ -8,6 +8,9 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+### 📖 Coleção
+- **Planejador de Living Dex:** nova seção na Pokédex, com jogo alvo, formas, shiny e fontes. Mostra contagem, melhores candidatos, duplicados, faltantes e um plano nacional de 30 slots por caixa. A leitura tem progresso; nenhum Pokémon é movido e nenhum save é gravado.
+
 ### 📋 Diagnóstico
 - **Compartilhar diagnóstico:** Ajuda › Sobre mostra uma prévia com versão, sistema, idioma, tema e registro recente. Android abre o compartilhamento do sistema; desktop copia o texto. Mensagens livres e dados privados são omitidos.
 

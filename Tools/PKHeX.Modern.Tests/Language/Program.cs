@@ -77,6 +77,15 @@ foreach (var page in vm.Pages)
     }
 }
 vm.CurrentPage = vm.Pokedex; vm.Pokedex.RefreshAsync().GetAwaiter().GetResult(); Scan("Pokédex");
+var living = vm.Pokedex.LivingDex!;
+living.TargetIndex = Array.IndexOf(LivingDexViewModel.Versions.ToArray(), GameVersion.B);
+vm.Pokedex.ShowLivingDex = true;
+var plannerWait = System.Diagnostics.Stopwatch.StartNew();
+while (living.IsBusy && plannerWait.ElapsedMilliseconds < 30000) { Pump(2); System.Threading.Thread.Sleep(10); }
+Check("Living Dex terminou", living.Plan is not null);
+living.Selected = living.Rows.FirstOrDefault(r => r.CanOpen);
+Scan("Living Dex");
+vm.Pokedex.ShowLivingDex = false;
 // Novidades (aba 1) e o changelog: fica em portugues, com um aviso; so a aba Funcoes e Sobre sao conferidas.
 vm.OpenHelp(); foreach (var t in new[] { 0, 2 }) { vm.Help.SelectedTab = t; Scan("Help " + t); }
 win.CaptureRenderedFrame()?.Save(Path.Combine(work, "help_en.png"));

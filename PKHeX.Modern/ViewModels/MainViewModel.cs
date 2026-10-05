@@ -66,6 +66,16 @@ public sealed partial class MainViewModel : ViewModelBase
             () => [.. OpenSaves.Select(t => (t.Path, t == _activeTab && _sav is not null ? _sav : t.Sav))], OpenSearchResultAsync);
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
+        Pokedex.LivingDex = new LivingDexViewModel(Settings,
+            () => [.. OpenSaves.Select(t => (t.Path, t == _activeTab && _sav is not null ? _sav : t.Sav))],
+            () => _sav, OpenSearchResultAsync, (species, version) =>
+            {
+                Encounters.Load(BlankSaveFile.Get(version));
+                Encounters.OnlyThisGame = true;
+                Encounters.Species = CoreAdapter.SpeciesNames[species];
+                CurrentPage = Encounters;
+                _ = Encounters.SearchAsync();
+            });
         Help = new HelpPageViewModel(Settings);
         Help.PrepareDiagnostic = () => DiagnosticReport.Build(Settings, Views.MainView.SaveFolder?.LastSummary);
         Help.ConfirmDiagnostic = text => ConfirmAsync("Compartilhar diagnóstico", "Confira o texto antes de compartilhar. Mensagens livres e dados de saves são omitidos para proteger sua privacidade.",
@@ -283,7 +293,10 @@ public sealed partial class MainViewModel : ViewModelBase
             else if (value == Gifts)
                 _ = Gifts.EnsureLoadedAsync();
             else if (value == Pokedex)
-                _ = Pokedex.RefreshAsync(); // rele sempre: o save aberto e o bank podem ter mudado
+            {
+                if (Pokedex.ShowLivingDex && Pokedex.LivingDex is not null) _ = Pokedex.LivingDex.RefreshAsync();
+                else _ = Pokedex.RefreshAsync();
+            }
             else if (value == Search)
                 _ = Search.RefreshAsync();
         }
