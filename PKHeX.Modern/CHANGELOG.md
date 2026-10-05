@@ -6,7 +6,7 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.16 — 2026-10-05
 
 ### ⚙️ Desempenho e diagnóstico
 - **Editor:** estado, relatório, avisos e grupos de legalidade compartilham uma análise por atualização.
