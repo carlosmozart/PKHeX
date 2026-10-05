@@ -68,6 +68,15 @@ public sealed partial class MainView : UserControl
                 return true;
             };
             vm.Game.PickCardFile = PickCardFileAsync;
+            vm.Bank.ExportDetails = ExportSelectedEntityAsync;
+            vm.Bank.CopyDetails = async text =>
+            {
+                if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)
+                {
+                    await clipboard.SetTextAsync(text);
+                    vm.Status = "Set Showdown copiado.";
+                }
+            };
             vm.Game.ExportCardFile = ExportCardFileAsync;
             vm.SaveQrImage = SaveQrImageAsync;
             // Seletores de arquivo/pasta usados pela pagina Bank (pasta externa e outro save).
@@ -359,6 +368,9 @@ public sealed partial class MainView : UserControl
     }
 
     private async void OnExportEntity(object? sender, RoutedEventArgs e)
+        => await ExportSelectedEntityAsync();
+
+    private async Task ExportSelectedEntityAsync()
     {
         try
         {

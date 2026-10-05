@@ -234,6 +234,7 @@
           </StackPanel>
           <Panel>
           <DockPanel IsVisible="{Binding ShowBank}">
+          <ContentControl DockPanel.Dock="Bottom" Content="{Binding Details}" IsVisible="{Binding HasDetails}" MaxHeight="250" Margin="0,8,0,0" />
           <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
               <TextBlock Text="BANCO" Classes="section" Margin="0" VerticalAlignment="Center" />
@@ -529,6 +530,50 @@
       </Border>
     </Grid>
     </UserControl>
+  </DataTemplate>
+
+  <DataTemplate DataType="vm:BankDetailsViewModel">
+    <Border Classes="card" Padding="10">
+      <DockPanel>
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+          <TextBlock Text="Consulta do Bank · somente leitura" FontWeight="SemiBold" TextWrapping="Wrap" />
+          <Button Grid.Column="1" Content="✕" Classes="ghost small" Command="{Binding CloseCommand}" />
+        </Grid>
+        <WrapPanel DockPanel.Dock="Top" ItemSpacing="4" LineSpacing="4" Margin="0,0,0,6">
+          <Button Content="Abrir no editor" Classes="small" Command="{Binding OpenCommand}" IsEnabled="{Binding CanOpen}" />
+          <Button Content="Exportar .pk*" Classes="small" Command="{Binding ExportCommand}" />
+          <Button Content="Ver variantes" Classes="small" Command="{Binding VariantsCommand}" IsVisible="{Binding HasVariants}" />
+          <Button Content="Copiar Showdown" Classes="small" Command="{Binding CopyCommand}" />
+        </WrapPanel>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="6">
+            <Grid ColumnDefinitions="70,*" ColumnSpacing="8">
+              <Image Source="{Binding Sprite}" Height="64" Stretch="Uniform" />
+              <StackPanel Grid.Column="1" Spacing="2">
+                <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" TextWrapping="Wrap" />
+                <TextBlock><Run Text="{Binding Nickname}" /></TextBlock>
+                <TextBlock Text="{Binding Location}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding LegalityText}" />
+              </StackPanel>
+            </Grid>
+            <ItemsControl ItemsSource="{Binding Fields}">
+              <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:BankDetailField">
+                <Grid ColumnDefinitions="140,*" ColumnSpacing="6"><TextBlock Text="{Binding Label}" Classes="muted" /><TextBlock Grid.Column="1" TextWrapping="Wrap"><Run Text="{Binding Value}" /></TextBlock></Grid>
+              </DataTemplate></ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="Golpes" FontWeight="SemiBold" />
+            <ItemsControl ItemsSource="{Binding Moves}" />
+            <TextBlock Text="IVs (HP / Atk / Def / SpA / SpD / Spe)" />
+            <TextBlock Text="{Binding IVs}" />
+            <c:StatRadar Height="140" Values="{Binding RadarValues}" Labels="{Binding StatLabels}" Fill="{DynamicResource Accent}" GridBrush="{DynamicResource CardBorder}" LabelBrush="{DynamicResource TextMuted}" />
+            <TextBlock Text="EVs (HP / Atk / Def / SpA / SpD / Spe)" />
+            <TextBlock Text="{Binding EVs}" />
+            <TextBlock Text="{Binding Folder}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding LegalityReport}" FontSize="11" TextWrapping="Wrap" />
+          </StackPanel>
+        </ScrollViewer>
+      </DockPanel>
+    </Border>
   </DataTemplate>
 
   <!-- Pokedex centralizada: todos os saves da pasta + save aberto + bank -->

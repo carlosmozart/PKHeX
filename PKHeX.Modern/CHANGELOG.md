@@ -8,6 +8,9 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+### 🏦 Bank
+- **Consulta somente leitura:** toque num Pokémon para ver seus dados, sprite shiny, atributos, golpes, origem e legalidade. Exporte, copie Showdown, consulte variantes ou abra uma cópia no editor de um save compatível, preservando o original.
+
 ### 🎨 Preferências
 - **Prévia dos temas:** os quatro temas aparecem em cartões com miniaturas reais das caixas e do cabeçalho do editor, renderizadas pelo Avalonia e guardadas em cache para claro e escuro.
 - **Papel de parede das caixas:** escolha Normal, Suave ou Desligado para facilitar a leitura dos slots. A preferência é preservada e não altera o papel de parede do jogo.

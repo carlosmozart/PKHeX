@@ -14,6 +14,11 @@ namespace PKHeX.Modern.ViewModels;
 /// </summary>
 public sealed class BankPageViewModel : SlotPageViewModel
 {
+    private BankDetailsViewModel? _details;
+    public BankDetailsViewModel? Details { get => _details; set { if (Set(ref _details, value)) Raise(nameof(HasDetails)); } }
+    public bool HasDetails => Details is not null;
+    public Func<Task>? ExportDetails { get; set; }
+    public Func<string, Task>? CopyDetails { get; set; }
     private readonly Func<string, string, string, Task<string?>> _prompt;
     private readonly Func<string, string, string, Task<bool>> _confirm;
     private readonly Action<string> _status;
@@ -294,6 +299,7 @@ public sealed class BankPageViewModel : SlotPageViewModel
 
     public void LoadBox()
     {
+        Details = null;
         Slots.Clear();
         if (Variants.Count > 0)
             ShowVariants(null); // a selecao some junto com os slots

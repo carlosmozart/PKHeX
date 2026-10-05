@@ -85,6 +85,7 @@ public static class HelpContent
         ]),
         new("🏦", "Bank",
         [
+            new("Consulta do Bank", "Toque num Pokémon para consultar seus dados, IVs, EVs, golpes e legalidade sem alterar o Bank. O painel permite exportar, copiar Showdown, ver variantes e abrir uma cópia no editor quando o save aceita o formato. Aplicar essa cópia usa um slot vazio do save; o original do Bank permanece preservado."),
             new("Bancos e caixas", "Armazenamento próprio, fora dos saves, em bancos → caixas (crie, renomeie, ordene e exclua). Os Pokémon ficam como arquivos .pk* no formato original.", "Ctrl+3"),
             new("Duas telas", "Bank à esquerda e save aberto à direita: arraste entre os dois. Ao trazer para o save, o Pokémon é convertido para a geração do jogo."),
             new("Outro save", "Troque o painel esquerdo para “💾 Outro save” e mova Pokémon entre dois jogos (com conversão). Seleção múltipla funciona nos dois lados; o outro save tem ↶/↷ próprios no painel. Clique em “Salvar este save” para gravar."),

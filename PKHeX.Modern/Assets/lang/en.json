@@ -1700,4 +1700,21 @@
   "Muda só a exibição; o papel de parede do jogo é preservado.": "Only changes the display; the game's wallpaper is preserved.",
   "Prévia dos temas e papel de parede": "Theme previews and wallpaper",
   "No ⚙, os cartões mostram miniaturas dos quatro temas renderizadas pelo próprio app, no modo claro ou escuro atual. Toque para aplicar. Papel de parede das caixas tem Normal, Suave e Desligado; a escolha fica salva e muda somente a exibição, sem alterar o papel de parede guardado no jogo.": "In ⚙, cards show previews of all four themes rendered by the app in the current light or dark mode. Tap to apply. Box wallpaper has Normal, Soft and Disabled options; the choice is saved and only changes the display, preserving the wallpaper stored in the game."
+  ,"Consulta do Bank": "Bank details",
+  "Toque num Pokémon para consultar seus dados, IVs, EVs, golpes e legalidade sem alterar o Bank. O painel permite exportar, copiar Showdown, ver variantes e abrir uma cópia no editor quando o save aceita o formato. Aplicar essa cópia usa um slot vazio do save; o original do Bank permanece preservado.": "Tap a Pokémon to inspect its details, IVs, EVs, moves and legality without modifying Bank. Export, copy Showdown, view variants or open a copy in the editor when the save accepts its format. Applying the copy uses an empty slot in the save and preserves the Bank original.",
+  "Consulta do Bank · somente leitura": "Bank details · read only",
+  "Abrir no editor": "Open in editor",
+  "Exportar .pk*": "Export .pk*",
+  "Ver variantes": "View variants",
+  "Copiar Showdown": "Copy Showdown",
+  "✓ Legal": "✓ Legal",
+  "⚠ Ilegal": "⚠ Illegal",
+  "Pokébola": "Poké Ball",
+  "Treinador de origem": "Original trainer",
+  "IVs (HP / Atk / Def / SpA / SpD / Spe)": "IVs (HP / Atk / Def / SpA / SpD / Spe)",
+  "EVs (HP / Atk / Def / SpA / SpD / Spe)": "EVs (HP / Atk / Def / SpA / SpD / Spe)",
+  "Set Showdown copiado.": "Showdown set copied.",
+  "Este Pokémon não cabe no save aberto.": "This Pokémon is incompatible with the open save.",
+  "A caixa atual está cheia. Escolha uma caixa com espaço e tente de novo.": "The current box is full. Choose a box with space and try again.",
+  "Cópia do Bank aberta no editor. Confira e clique em Aplicar; o original do Bank é preservado.": "Bank copy opened in the editor. Review and click Apply; the Bank original is preserved."
 }

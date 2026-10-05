@@ -2141,6 +2141,7 @@ public sealed partial class MainViewModel : ViewModelBase
             slot.IsSelected = true;
             RaiseSelectionChanged();
             Bank.ShowVariants(slot);
+            InspectBank(slot);
             return;
         }
         if (slot != _selectedSlot && !await ConfirmDiscardEditAsync())
