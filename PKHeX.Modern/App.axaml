@@ -1709,6 +1709,7 @@
                 <StackPanel Spacing="8">
                   <TextBlock Text="PKHeX Modern" FontSize="18" FontWeight="Bold" />
                   <TextBlock Text="{Binding VersionText}" Classes="muted" />
+                  <Button Classes="small" Content="{Binding DiagnosticButtonText}" Command="{Binding DiagnosticCommand}" />
                   <TextBlock TextWrapping="Wrap" Text="Interface em português para o PKHeX, feita por Carlos Mozart. Por baixo é o mesmo PKHeX.Core (de Kaphotics e colaboradores), com as mesmas regras de save, legalidade e encontros." />
                   <WrapPanel ItemSpacing="6" LineSpacing="6">
                     <Button Classes="small" Content="🔗  Código no GitHub" Command="{Binding OpenRepoCommand}" />

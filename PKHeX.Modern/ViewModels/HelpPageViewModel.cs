@@ -27,6 +27,7 @@ public sealed class HelpPageViewModel : PageViewModel
         OpenWikiCommand = new RelayCommand(() => Links.Open(Links.AllGenWiki));
         HideOverlayCommand = new RelayCommand(() => { OverlayHidden = true; _demoCts?.Cancel(); });
         DemoAnimationCommand = new RelayCommand(() => _ = DemoAsync(), () => !IsDownloading && !IsDemo);
+        DiagnosticCommand = new RelayCommand(() => _ = ShareDiagnosticAsync(), () => !IsPreparingDiagnostic);
         ApplyFilter();
     }
 
@@ -72,6 +73,29 @@ public sealed class HelpPageViewModel : PageViewModel
 
     // Sobre
     public string VersionText => $"Versão {UpdateChecker.CurrentText}";
+    public RelayCommand DiagnosticCommand { get; }
+    public string DiagnosticButtonText => App.ShowShortcuts ? "📋 Copiar diagnóstico" : "📋 Compartilhar diagnóstico";
+    public Func<string>? PrepareDiagnostic { get; set; }
+    public Func<string, Task<bool>>? ConfirmDiagnostic { get; set; }
+    public Func<string, Task<bool>>? SendDiagnostic { get; set; }
+    public Action<string>? DiagnosticStatus { get; set; }
+    private bool _preparingDiagnostic;
+    public bool IsPreparingDiagnostic { get => _preparingDiagnostic; private set { Set(ref _preparingDiagnostic, value); DiagnosticCommand.NotifyCanExecuteChanged(); } }
+
+    public async Task ShareDiagnosticAsync()
+    {
+        if (IsPreparingDiagnostic) return;
+        IsPreparingDiagnostic = true;
+        try
+        {
+            var text = await Task.Run(() => PrepareDiagnostic?.Invoke() ?? DiagnosticReport.Build(_settings));
+            if (ConfirmDiagnostic is null || !await ConfirmDiagnostic(text)) return;
+            var sent = SendDiagnostic is not null && await SendDiagnostic(text);
+            DiagnosticStatus?.Invoke(sent ? "Diagnóstico preparado para compartilhar." : "Não foi possível compartilhar o diagnóstico.");
+        }
+        catch (Exception ex) { DiagnosticStatus?.Invoke("Diagnóstico: " + ex.Message); }
+        finally { IsPreparingDiagnostic = false; }
+    }
     public RelayCommand OpenReleasesCommand { get; }
     public RelayCommand OpenRepoCommand { get; }
     public RelayCommand OpenWikiCommand { get; }

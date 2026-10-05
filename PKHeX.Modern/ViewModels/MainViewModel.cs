@@ -67,6 +67,10 @@ public sealed partial class MainViewModel : ViewModelBase
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
         Help = new HelpPageViewModel(Settings);
+        Help.PrepareDiagnostic = () => DiagnosticReport.Build(Settings, Views.MainView.SaveFolder?.LastSummary);
+        Help.ConfirmDiagnostic = text => ConfirmAsync("Compartilhar diagnóstico", "Confira o texto antes de compartilhar. Mensagens livres e dados de saves são omitidos para proteger sua privacidade.",
+            App.ShowShortcuts ? "Copiar" : "Compartilhar", details: text.Split(Environment.NewLine), icon: "📋");
+        Help.DiagnosticStatus = s => Status = s;
         // Animacao da atualizacao: a equipe do save aberto anda em fila sobre a barra.
         Controls.UpdateAnimation.Walkers = () => _sav is not { } sav ? []
             : [.. Enumerable.Range(0, sav.PartyCount).Select(sav.GetPartySlotAtIndex).Where(p => p.Species != 0 && !p.IsEgg).Select(p => (p.Species, p.IsShiny))];

@@ -10,6 +10,7 @@ if ($env:PKHEX_TEST_SAVES) { $saves = $env:PKHEX_TEST_SAVES }
 $suites = [ordered]@{
     'ChangePreview' = @{}
     'LegalityGroups' = @{}
+    'Diagnostics' = @{}
     'Fashion' = @{ 'sv.sav' = 'Scarlet' }
     'Donuts' = @{ 'za.sav' = 'ZA.sav' }
     'Roamers' = @{ 'em.sav' = 'Pokemon Emerald Version.sav'; 'sa.sav' = 'Sapphire.sav'; 'fr.sav' = 'fire red.sav'; 'y.sav' = 'Pokemon Y' }

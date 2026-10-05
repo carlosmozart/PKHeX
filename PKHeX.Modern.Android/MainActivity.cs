@@ -3,6 +3,7 @@ using Android.Content.PM;
 using Avalonia;
 using Avalonia.Android;
 using Avalonia.Media;
+using AndroidBuild = global::Android.OS.Build;
 
 namespace PKHeX.Modern.Android;
 
@@ -19,6 +20,16 @@ public sealed class MainActivity : AvaloniaMainActivity<App>
         base.OnCreate(savedInstanceState);
         App.MobileExit = Finish;
         PKHeX.Modern.Services.AutoUpdater.InstallApk = InstallApk;
+        PKHeX.Modern.Services.DiagnosticReport.PlatformDescription = () =>
+            $"Android {AndroidBuild.VERSION.Release} · API {(int)AndroidBuild.VERSION.SdkInt} · {AndroidBuild.Manufacturer} {AndroidBuild.Model}";
+        PKHeX.Modern.Services.DiagnosticReport.ShareText = text =>
+        {
+            var intent = new global::Android.Content.Intent(global::Android.Content.Intent.ActionSend);
+            intent.SetType("text/plain");
+            intent.PutExtra(global::Android.Content.Intent.ExtraText, text);
+            StartActivity(global::Android.Content.Intent.CreateChooser(intent, "Compartilhar diagnóstico"));
+            return true;
+        };
     }
     // Simbolos e emoji que a Inter nao tem vem de fontes embutidas (Noto, OFL): a busca na fonte de emoji do sistema
     // desenhava "≣" no lugar de ♂/♀ e dos icones dos botoes.

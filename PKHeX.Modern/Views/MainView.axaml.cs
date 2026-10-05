@@ -53,6 +53,13 @@ public sealed partial class MainView : UserControl
             if (DataContext is not MainViewModel vm)
                 return;
             vm.SaveRequested += () => OnQuickSave(this, new RoutedEventArgs());
+            vm.Help.SendDiagnostic = async text =>
+            {
+                if (!App.ShowShortcuts) return DiagnosticReport.ShareText?.Invoke(text) == true;
+                if (TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard) return false;
+                await clipboard.SetTextAsync(text);
+                return true;
+            };
             vm.Game.PickCardFile = PickCardFileAsync;
             vm.Game.ExportCardFile = ExportCardFileAsync;
             vm.SaveQrImage = SaveQrImageAsync;

@@ -8,6 +8,9 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+### 📋 Diagnóstico
+- **Compartilhar diagnóstico:** Ajuda › Sobre mostra uma prévia com versão, sistema, idioma, tema e registro recente. Android abre o compartilhamento do sistema; desktop copia o texto. Mensagens livres e dados privados são omitidos.
+
 ### ↔ Pokémon
 - **Legalidade por assunto:** os motivos aparecem em grupos por gravidade, com contagem e primeiro inválido aberto. Golpes, Bola, Fitas e Encontro têm ações de correção ligadas ao problema.
 - **Prévia de alterações:** Legalizar e transferir entre gerações mostram os campos antes e depois, com destaque para mudanças importantes. A confirmação usa o candidato exibido, sem gerar outro. Lotes mostram um resumo por campo e a lista completa.
