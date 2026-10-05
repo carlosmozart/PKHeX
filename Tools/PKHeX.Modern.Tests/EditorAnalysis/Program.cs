@@ -1,0 +1,28 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using Avalonia;
+using Avalonia.Headless;
+using PKHeX.Core;
+using PKHeX.Modern;
+using PKHeX.Modern.Services;
+using PKHeX.Modern.ViewModels;
+AppBuilder.Configure<App>().UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions{UseHeadlessDrawing=false}).WithInterFont().SetupWithoutStarting();
+var work=args[0];BankStorage.Root=Path.Combine(work,"bank");SaveBackup.Folder=Path.Combine(work,"backups");
+var sav=CoreAdapter.LoadSave(Path.Combine(work,"sv.sav"))!;CoreAdapter.Activate(sav);
+var pk=EntitySearch.ReadAll(sav).First(e=>e.Box>=0&&e.Pkm.Species!=0).Pkm.Clone();
+var editor=new PokemonEditorViewModel(pk,"DEMO",_=>{},_=>{},sav:sav,legalMode:false);
+var refresh=typeof(PokemonEditorViewModel).GetMethod("Refresh",BindingFlags.NonPublic|BindingFlags.Instance)!;
+for(int i=0;i<10;i++)refresh.Invoke(editor,null);
+int analyses=0;
+typeof(PokemonEditorViewModel).GetProperty("AnalyzeLegality",BindingFlags.NonPublic|BindingFlags.Instance)!.SetValue(editor,(Func<PKM,LegalityAnalysis>)(p=>{analyses++;return new LegalityAnalysis(p);}));
+var samples=new double[7];for(int round=0;round<samples.Length;round++){var sw=Stopwatch.StartNew();for(int i=0;i<100;i++)refresh.Invoke(editor,null);samples[round]=sw.Elapsed.TotalMilliseconds/100;}
+Array.Sort(samples);Console.WriteLine($"Scarlet Refresh mediana: {samples[3]:F3} ms (7 x 100; 10 aquecimentos)");
+bool ok=analyses==700;
+Console.WriteLine($"{(ok?"OK":"FAIL")} uma análise por atualização: {analyses}");
+var analysis=new LegalityAnalysis(pk);
+ok &= editor.IsLegal==analysis.Valid&&editor.LegalityReport==analysis.Report()&&editor.LegalityIssues.SequenceEqual(CoreAdapter.GetLegalityIssues(pk))&&editor.LegalityGroups.Select(g=>g.Topic).SequenceEqual(GroupedLegality.Analyze(pk).Select(g=>g.Name));
+Console.WriteLine($"{(ok?"OK":"FAIL")} resultados iguais à análise original");
+return ok?0:1;

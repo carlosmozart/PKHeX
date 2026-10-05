@@ -1269,10 +1269,13 @@ public static class CoreAdapter
     /// "Fishy" (que o relatorio resumido do Core omite). Lista vazia = legal e sem avisos.
     /// </summary>
     public static IReadOnlyList<string> GetLegalityIssues(PKM pk, int max = 4)
+        => GetLegalityIssues(pk, null, max);
+
+    public static IReadOnlyList<string> GetLegalityIssues(PKM pk, LegalityAnalysis? analysis, int max = 4)
     {
         try
         {
-            var la = new LegalityAnalysis(pk);
+            var la = analysis ?? new LegalityAnalysis(pk);
             var ctx = LegalityLocalizationContext.Create(la, GameInfo.CurrentLanguage);
             var invalid = new List<string>();
             var fishy = new List<string>();

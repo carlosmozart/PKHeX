@@ -15,8 +15,10 @@ namespace PKHeX.Modern.ViewModels;
 public sealed class BankPageViewModel : SlotPageViewModel
 {
     private BankDetailsViewModel? _details;
-    public BankDetailsViewModel? Details { get => _details; set { if (Set(ref _details, value)) Raise(nameof(HasDetails)); } }
+    public BankDetailsViewModel? Details { get => _details; set { if (Set(ref _details, value)) { Raise(nameof(HasDetails)); Raise(nameof(ShowSelectors)); } } }
     public bool HasDetails => Details is not null;
+    public bool ShowSelectors => App.ShowShortcuts || !HasDetails;
+    public double DetailsMaxHeight => App.ShowShortcuts ? 250 : 200;
     public Func<Task>? ExportDetails { get; set; }
     public Func<string, Task>? CopyDetails { get; set; }
     private readonly Func<string, string, string, Task<string?>> _prompt;

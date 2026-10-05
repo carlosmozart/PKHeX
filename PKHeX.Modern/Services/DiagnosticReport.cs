@@ -7,13 +7,15 @@ using System.Text.RegularExpressions;
 
 namespace PKHeX.Modern.Services;
 
+public sealed record SaveFolderCounts(int Files, int Read, int Ignored, int Errors);
+
 /// <summary>Only diagnostic metadata and sanitized stack traces. No save data is read or exported.</summary>
 public static class DiagnosticReport
 {
     public static Func<string>? PlatformDescription { get; set; }
     public static Func<string, bool>? ShareText { get; set; }
 
-    public static string Build(AppSettings settings, string? folderSummary = null, string? logPath = null,
+    public static string Build(AppSettings settings, SaveFolderCounts? folderCounts = null, string? logPath = null,
         IEnumerable<string>? privateNames = null)
     {
         var secrets = (privateNames ?? []).Append(Environment.UserName).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().ToArray();
@@ -24,12 +26,12 @@ public static class DiagnosticReport
             Loc.T("Idioma") + ": " + settings.UiLanguage,
             Loc.T("Tema") + $": {settings.ThemeKey ?? "default"} · " + Loc.T(settings.DarkTheme ? "Escuro" : "Claro"),
         };
-        if (!string.IsNullOrWhiteSpace(folderSummary))
+        if (folderCounts is { } counts)
         {
-            // LastSummary contains a folder name and may contain an example filename and exception.
-            // Keep only aggregate counts, so trainer names embedded in filenames cannot leak.
-            var counts = Regex.Match(folderSummary, @"\d+ arquivo\(s\), \d+ lido\(s\) como possível save, \d+ ignorado\(s\) pelo tamanho(?:, \d+ com erro)?");
-            lines.Add(Loc.T("Pasta de saves") + ": " + (counts.Success ? Loc.T(counts.Value) : Loc.T("Resumo indisponível")));
+            // Structured aggregates never contain filenames, trainer names or provider error messages.
+            var summary = $"{counts.Files} arquivo(s), {counts.Read} lido(s) como possível save, {counts.Ignored} ignorado(s) pelo tamanho"
+                + (counts.Errors > 0 ? $", {counts.Errors} com erro" : "");
+            lines.Add(Loc.T("Pasta de saves") + ": " + Loc.T(summary));
         }
         lines.Add(Loc.T("Registro recente (mensagens e dados privados omitidos)"));
         try

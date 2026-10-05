@@ -234,8 +234,7 @@
           </StackPanel>
           <Panel>
           <DockPanel IsVisible="{Binding ShowBank}">
-          <ContentControl DockPanel.Dock="Bottom" Content="{Binding Details}" IsVisible="{Binding HasDetails}" MaxHeight="250" Margin="0,8,0,0" />
-          <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
+          <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10" IsVisible="{Binding ShowSelectors}">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
               <TextBlock Text="BANCO" Classes="section" Margin="0" VerticalAlignment="Center" />
               <ComboBox Grid.Column="1" HorizontalAlignment="Stretch" ItemsSource="{Binding Banks}" SelectedItem="{Binding SelectedBank}"
@@ -289,6 +288,7 @@
             </Grid>
           </StackPanel>
           <!-- Variantes do anexado selecionado (versao de cada jogo de outra geracao) -->
+          <ContentControl DockPanel.Dock="Bottom" Content="{Binding Details}" IsVisible="{Binding HasDetails}" MaxHeight="{Binding DetailsMaxHeight}" Margin="0,8,0,0" />
           <Border DockPanel.Dock="Bottom" Classes="variantsPanel" IsVisible="{Binding HasVariants}">
             <StackPanel Spacing="6">
               <TextBlock Text="{Binding VariantsTitle}" Classes="section" Margin="0" TextTrimming="CharacterEllipsis" />
@@ -568,7 +568,7 @@
             <c:StatRadar Height="140" Values="{Binding RadarValues}" Labels="{Binding StatLabels}" Fill="{DynamicResource Accent}" GridBrush="{DynamicResource CardBorder}" LabelBrush="{DynamicResource TextMuted}" />
             <TextBlock Text="EVs (HP / Atk / Def / SpA / SpD / Spe)" />
             <TextBlock Text="{Binding EVs}" />
-            <TextBlock Text="{Binding Folder}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
+            <TextBlock Classes="muted" FontSize="11" TextWrapping="Wrap"><Run Text="{Binding Folder}" /></TextBlock>
             <TextBlock Text="{Binding LegalityReport}" FontSize="11" TextWrapping="Wrap" />
           </StackPanel>
         </ScrollViewer>

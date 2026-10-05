@@ -21,7 +21,7 @@ void Wait(Func<bool> done){var sw=Stopwatch.StartNew();while(!done()&&sw.Elapsed
 var sav=BlankSaveFile.Get(GameVersion.B); sav.OT="DEMO";
 var path=Path.Combine(work,"Black.sav");File.WriteAllBytes(path,sav.Write().ToArray());
 var pk=new PK5{Species=25,Version=GameVersion.B,CurrentLevel=42,Nature=Nature.Modest,Nickname="Sparky",IsNicknamed=true,OriginalTrainerName="DEMO",Ability=9,Ball=4,IV_HP=31,EV_ATK=4,Move1=85};pk.SetShiny();
-var box=BankStorage.GetBoxes(BankStorage.GetBanks()[0])[0];BankStorage.WriteSlot(box,0,pk);
+var box=BankStorage.GetBoxes(BankStorage.GetBanks()[0])[0];BankStorage.WriteSlot(box,0,pk);BankStorage.WriteSlot(box,1,new PK9{Species=25,Version=GameVersion.SL,CurrentLevel=42});
 var vm=new MainViewModel(new AppSettings{CheckForUpdates=false});var win=new MainWindow{DataContext=vm,Width=1440,Height=950};win.Show();vm.Open(path);vm.CurrentPage=vm.Bank;Pump();
 var files=Directory.EnumerateFiles(BankStorage.Root,"*",SearchOption.AllDirectories).ToDictionary(p=>p,p=>Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))));
 var trainer=typeof(ParseSettings).GetProperty("ActiveTrainer",BindingFlags.Static|BindingFlags.NonPublic)!;
@@ -34,9 +34,17 @@ Check("contexto ativo preservado",ReferenceEquals(beforeTrainer,trainer.GetValue
 string? copied=null;vm.Bank.CopyDetails=text=>{copied=text;return System.Threading.Tasks.Task.CompletedTask;};detail.CopyCommand.Execute(null);Check("Showdown do original",copied==CoreAdapter.ToShowdown(pk));
 var exportPath=Path.Combine(work,"export.pk5");vm.Bank.ExportDetails=()=>{vm.ExportEntity(exportPath);return System.Threading.Tasks.Task.CompletedTask;};detail.ExportCommand.Execute(null);Check("exportação mantém formato",File.Exists(exportPath)&&File.ReadAllBytes(exportPath).Length==pk.SIZE_PARTY&&CoreAdapter.LoadEntityFile(sav,exportPath)?.Species==25);
 win.UpdateLayout();for(int i=0;i<12;i++)Pump();win.CaptureRenderedFrame()?.Save(Path.Combine(work,"bank-details.png"));
+win.Close(); App.ShowShortcuts=false;vm.IsTouchUI=true;
+var mobileSelect=vm.SelectSlotAsync(vm.Bank.Slots[0]);Wait(()=>mobileSelect.IsCompleted);
+var phone=new Avalonia.Controls.Window{Width=892,Height=412,Content=new MobileShell(vm)};phone.Show();phone.UpdateLayout();for(int i=0;i<12;i++)Pump();phone.CaptureRenderedFrame()?.Save(Path.Combine(work,"bank-details-mobile.png"));
+Check("caminho privado oculto no Android",!vm.Bank.Details!.Folder.Contains(work));
+Check("consulta mobile libera espaço",!vm.Bank.ShowSelectors&&vm.Bank.DetailsMaxHeight==200);
 detail.OpenCommand.Execute(null);Wait(()=>vm.Editor is not null||vm.Dialog is not null);
 while(vm.Dialog is{} dialog){dialog.Complete(true);Pump();}
 Check("abrir cópia sem aplicar",vm.Editor?.SpeciesName=="Pikachu"&&!vm.IsDirty&&vm.ActiveTab!.Sav.GetBoxSlotAtIndex(0,0).Species==0);
 var after=Directory.EnumerateFiles(BankStorage.Root,"*",SearchOption.AllDirectories).ToDictionary(p=>p,p=>Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))));
 Check("SHA-256 do Bank intacto",files.Count==after.Count&&files.All(f=>after.TryGetValue(f.Key,out var hash)&&hash==f.Value));
-win.Close();Console.WriteLine(fails==0?"TUDO OK":$"{fails} FALHAS");return fails==0?0:1;
+vm.CurrentPage=vm.Bank;var futureSelect=vm.SelectSlotAsync(vm.Bank.Slots[1]);Wait(()=>futureSelect.IsCompleted);Check("consulta geração futura sem conversão",vm.Bank.Details?.Species==25&&vm.Bank.Details.CanOpen==false);
+var view=((MobileShell)phone.Content!).View;var picker=(Avalonia.Platform.Storage.FilePickerFileType)typeof(MainView).GetProperty("ExportEntityFileType",BindingFlags.NonPublic|BindingFlags.Instance)!.GetValue(view)!;
+Check("seletor exporta formato original futuro",picker.Patterns!.SequenceEqual(new[]{"*.pk9"}));
+phone.Close();Console.WriteLine(fails==0?"TUDO OK":$"{fails} FALHAS");return fails==0?0:1;

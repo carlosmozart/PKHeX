@@ -76,6 +76,7 @@ public sealed class MobileSaveFolder
 
     /// <summary>Resumo da ultima leitura, para a barra de status (quantos arquivos, saves, ignorados e o primeiro erro).</summary>
     public string LastSummary { get; private set; } = "";
+    public SaveFolderCounts? LastCounts { get; private set; }
 
     /// <summary>
     /// Rele a pasta: traz saves novos e mudados, tira os que sumiram. Retorna quantos saves a pasta tem
@@ -118,6 +119,7 @@ public sealed class MobileSaveFolder
             foreach (var (relative, doc) in known)
                 if (!seen.Contains(relative) && !HasLocalChanges(doc))
                     _documents.Forget(doc);
+            LastCounts = new(files.Count, count, skipped, errors.Count);
             LastSummary = $"Pasta {_state.Name}: {files.Count} arquivo(s), {count} lido(s) como possível save, {skipped} ignorado(s) pelo tamanho"
                 + (errors.Count > 0 ? $", {errors.Count} com erro (ex.: {errors[0]})" : "") + ".";
             return count;

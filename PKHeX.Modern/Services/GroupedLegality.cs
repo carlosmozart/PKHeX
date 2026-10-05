@@ -10,11 +10,11 @@ public sealed record LegalityTopic(string Name, bool Invalid, IReadOnlyList<stri
 /// <summary>Groups structured Core checks, including current and relearn move slots.</summary>
 public static class GroupedLegality
 {
-    public static IReadOnlyList<LegalityTopic> Analyze(PKM pk)
+    public static IReadOnlyList<LegalityTopic> Analyze(PKM pk, LegalityAnalysis? analysis = null)
     {
         try
         {
-            var la = new LegalityAnalysis(pk);
+            var la = analysis ?? new LegalityAnalysis(pk);
             var ctx = LegalityLocalizationContext.Create(la, GameInfo.CurrentLanguage);
             var items = new List<(string Name, bool Invalid, string Text)>();
             foreach (var c in la.Results)

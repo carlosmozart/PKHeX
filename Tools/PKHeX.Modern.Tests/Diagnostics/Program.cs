@@ -22,7 +22,7 @@ File.WriteAllLines(log, Enumerable.Range(0, 60).SelectMany(i => new[]
     $"   at Demo.Read(String path) in C:\\Users\\{Environment.UserName}\\TRAINER_SECRET\\Save.cs:line {i}",
 }));
 var settings = new AppSettings { CheckForUpdates = false, ThemeKey = "pixel", UiLanguage = "pt-BR" };
-var text = DiagnosticReport.Build(settings, "Pasta TRAINER_SECRET: 60 arquivo(s), 40 lido(s) como possível save, 20 ignorado(s) pelo tamanho, 2 com erro (ex.: TRAINER_SECRET.sav)", log, ["TRAINER_SECRET"]);
+var text = DiagnosticReport.Build(settings, new SaveFolderCounts(60,40,20,2), log, ["TRAINER_SECRET"]);
 Check("versão incluída", text.Contains(UpdateChecker.CurrentText));
 Check("idioma e tema", text.Contains("pt-BR") && text.Contains("pixel"));
 Check("últimas 50 linhas", text.Contains("12:00:59") && !text.Contains("12:00:01") && text.Split("System.IO.IOException").Length == 26);

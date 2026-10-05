@@ -378,7 +378,7 @@ public sealed partial class MainView : UserControl
             {
                 Title = "Exportar Pokémon",
                 SuggestedFileName = VM.SuggestedEntityFileName,
-                FileTypeChoices = [EntityFileType],
+                FileTypeChoices = [ExportEntityFileType],
             });
             await WriteAsync(file, path => { VM.ExportEntity(path); return File.Exists(path); }, "Não foi possível exportar");
         }
@@ -391,5 +391,10 @@ public sealed partial class MainView : UserControl
     private FilePickerFileType EntityFileType => new("Pokémon")
     {
         Patterns = [.. VM.EntityExtensions.Select(x => $"*.{x}")],
+    };
+
+    private FilePickerFileType ExportEntityFileType => new("Pokémon")
+    {
+        Patterns = ["*" + Path.GetExtension(VM.SuggestedEntityFileName)],
     };
 }

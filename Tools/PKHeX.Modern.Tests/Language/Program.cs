@@ -49,10 +49,10 @@ var pt = new Regex(@"[ãõçâêôáíóúàé]|\b(de|da|não|para|com|uma|os|em
 var gameWords = new Regex(@"Pok[ée]\w*|Poké", RegexOptions.IgnoreCase);
 bool IsPortuguese(string t) => pt.IsMatch(gameWords.Replace(t, ""));
 var missing = new SortedDictionary<string, string>();
-void Scan(string page)
+void Scan(string page, Control? popup = null)
 {
     Pump(20); win.UpdateLayout(); Pump(5);
-    foreach (var v in win.GetVisualDescendants())
+    foreach (var v in win.GetVisualDescendants().Concat(popup?.GetVisualDescendants() ?? []))
     {
         var texts = new List<string?>();
         if (v is TextBlock tb && tb.IsEffectivelyVisible) texts.Add(tb.Text);
@@ -109,6 +109,15 @@ foreach (var version in new[] { GameVersion.SH, GameVersion.SL, GameVersion.E, G
     if (version == GameVersion.SL) { page.Tab = 10; Scan("Fashion"); }
 }
 win.Content = originalContent; vm.ShowPokemonQr(new PK7 { Species = 25 }); Scan("QR"); vm.CloseQr();
+
+// New preference cards, touch toolbar, Bank consultation and backup metadata.
+BankStorage.WriteSlot(BankStorage.GetBoxes(BankStorage.GetBanks()[0])[0],0,new PK5{Species=25,Version=GameVersion.B,CurrentLevel=42,OriginalTrainerName="DEMO"});
+vm.Bank.Reload();vm.CurrentPage=vm.Bank;vm.SelectSlotAsync(vm.Bank.Slots[0]).GetAwaiter().GetResult();Scan("Bank consultation");
+SaveBackup.BeforeOverwrite(path,"Salvar como");vm.CurrentPage=vm.SaveManager;vm.SaveManager.ShowBackups=true;
+var backupsTask=vm.SaveManager.RefreshBackupsAsync();while(!backupsTask.IsCompleted){Pump(1);System.Threading.Thread.Sleep(5);}Scan("Backup metadata");
+var prefs=win.GetVisualDescendants().OfType<Button>().Single(b=>b.Name=="PrefsButton");prefs.Flyout!.ShowAt(prefs);Scan("Theme preferences",(prefs.Flyout as Flyout)?.Content as Control);prefs.Flyout.Hide();
+App.ShowShortcuts=false;vm.IsTouchUI=true;vm.CurrentPage=vm.Boxes;vm.TouchSelectionMode=true;Scan("Touch selection");
+prefs.Flyout.ShowAt(prefs);Scan("Touch preferences",(prefs.Flyout as Flyout)?.Content as Control);prefs.Flyout.Hide();
 
 File.WriteAllLines(Path.Combine(work, "missing.txt"), missing.Select(m => $"{m.Value}\t{m.Key.Replace("\n", "\n")}"));
 Console.WriteLine($"Textos em português na tela: {missing.Count} (lista em {Path.Combine(work, "missing.txt")})");

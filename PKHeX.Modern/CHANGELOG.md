@@ -8,6 +8,10 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+### ⚙️ Desempenho e diagnóstico
+- **Editor:** estado, relatório, avisos e grupos de legalidade compartilham uma análise por atualização.
+- **Diagnóstico da pasta:** as contagens passam como dados, sem depender do idioma do resumo e sem incluir nomes de arquivos.
+
 ### 💾 Backups
 - **Motivo e integridade:** cópias novas registram operação, jogo, tamanho e SHA-256. A lista avisa quando o arquivo mudou e Restaurar permite conferir antes de prosseguir. Backups antigos continuam disponíveis; os registros acompanham a limpeza das cópias, também no armazenamento privado Android.
 

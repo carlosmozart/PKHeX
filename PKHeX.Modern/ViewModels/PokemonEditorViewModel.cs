@@ -545,10 +545,10 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
         CoreAdapter.SetAllValidRibbons(pk); return true;
     }));
 
-    private void RefreshLegalityGroups()
+    private void RefreshLegalityGroups(LegalityAnalysis analysis)
     {
         var previous = LegalityGroups.ToDictionary(g => g.Topic, g => g.Expanded);
-        var topics = GroupedLegality.Analyze(_pk);
+        var topics = GroupedLegality.Analyze(_pk, analysis);
         var first = topics.FirstOrDefault(t => t.Invalid)?.Name;
         LegalityGroups = topics.Select(t =>
         {
@@ -1238,6 +1238,8 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
         LegalizeOrRestore(before);
     }
 
+    internal Func<PKM, LegalityAnalysis> AnalyzeLegality { get; set; } = pk => new LegalityAnalysis(pk);
+
     private void Refresh()
     {
         Raise(nameof(FriendshipEvolutions));
@@ -1258,10 +1260,21 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
         Types = [.. System.Linq.Enumerable.Select(CoreAdapter.GetTypes(_pk), t => new TypeChip(t.Name, t.Argb))];
         foreach (var p in (string[])[nameof(RadarValues), nameof(StatTotal), nameof(EVTotal), nameof(IVTotal), nameof(EVSummary), nameof(IVSummary), nameof(Types), nameof(GenderSymbol), nameof(SpeciesName), nameof(SelectedSpeciesName), nameof(MoveOptions)])
             Raise(p);
-        (IsLegal, LegalityReport) = CoreAdapter.CheckLegality(_pk);
+        try
+        {
+            var analysis = AnalyzeLegality(_pk);
+            (IsLegal, LegalityReport) = (analysis.Valid, analysis.Report());
+            LegalityIssues = CoreAdapter.GetLegalityIssues(_pk, analysis);
+            RefreshLegalityGroups(analysis);
+        }
+        catch (Exception ex)
+        {
+            (IsLegal, LegalityReport) = (false, ex.Message);
+            LegalityIssues = [ex.Message];
+            LegalityGroups = [new LegalityGroupViewModel(new LegalityTopic("Outros", true, [ex.Message]), true, null, "")];
+            Raise(nameof(LegalityGroups));
+        }
         LegalityText = IsLegal ? "Legal" : "Ilegal";
-        LegalityIssues = CoreAdapter.GetLegalityIssues(_pk); // ilegal: problemas; legal: avisos "Fishy"
-        RefreshLegalityGroups();
         foreach (var p in (string[])[nameof(Sprite), nameof(IsLegal), nameof(ShowLegality), nameof(ShowLegal), nameof(ShowIllegal), nameof(LegalityIssues), nameof(HasLegalityIssues), nameof(HasWarnings), nameof(ShowLegalize), nameof(LegalityText), nameof(LegalityReport), nameof(AbilityName), nameof(IsShiny), nameof(PID), nameof(EncryptionConstant)])
             Raise(p);
         RefreshPokerus();

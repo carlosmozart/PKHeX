@@ -1725,4 +1725,9 @@
   "⚠ O hash do backup não confere. O arquivo pode ter sido alterado ou corrompido. Restaurar mesmo assim?": "⚠ The backup hash does not match. The file may have been modified or corrupted. Restore anyway?",
   "Restaurar mesmo assim": "Restore anyway",
   "O hash do backup não confere. Confirme a restauração mesmo assim.": "The backup hash does not match. Confirm restoration anyway."
+  ,"Atualização da legalidade": "Legality updates",
+  "O estado, o relatório, os avisos e os grupos de problemas usam a mesma análise a cada atualização do editor, mantendo as informações consistentes.": "The status, report, warnings and issue groups share one analysis on each editor update, keeping their information consistent."
+  ,"Salvar como": "Save as",
+  "Restaurar backup": "Restore backup"
+  ,"Sincronizar Pokédex": "Synchronize Pokédex"
 }

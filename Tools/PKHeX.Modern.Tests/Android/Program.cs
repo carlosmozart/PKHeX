@@ -125,6 +125,7 @@ var saveCount = Await(saveFolder.ChooseAsync(treeProvider));
 var listed = SaveLibrary.Scan(Path.Combine(saveRoot, "documents"), out _);
 Check("pasta de saves lida com subpastas", saveCount == 2 && listed.Count == 2 && saveFolder.FolderName == "Saves");
 Check("resumo da leitura da pasta", saveFolder.LastSummary.Contains("2 arquivo(s), 2 lido(s)"), saveFolder.LastSummary);
+Check("contagens estruturadas da pasta", saveFolder.LastCounts == new SaveFolderCounts(2,2,0,0));
 var broken = savesTree.Add("quebrado.sav", original); broken.BrokenRead = true;
 var good = sub.Add("novo.sav", original);
 var withBroken = Await(saveFolder.SyncAsync(treeProvider));
