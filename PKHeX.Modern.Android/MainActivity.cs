@@ -9,7 +9,9 @@ namespace PKHeX.Modern.Android;
 [Activity(Label = "PKHeX Modern", Theme = "@style/MyTheme.NoActionBar", MainLauncher = true, Exported = true,
     // Paisagem: a interface e a mesma do desktop (barra lateral, paginas e editor lado a lado).
     ScreenOrientation = ScreenOrientation.SensorLandscape,
-    ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
+    ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode
+        // Controle ou teclado Bluetooth conectando nao reinicia o app (perderia a edicao em andamento).
+        | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.Navigation)]
 public sealed class MainActivity : AvaloniaMainActivity<App>
 {
     protected override void OnCreate(global::Android.OS.Bundle? savedInstanceState)

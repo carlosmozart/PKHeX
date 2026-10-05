@@ -51,7 +51,9 @@ public static class UpdateChecker
     public static ReleaseInfo? ParseLatest(string json, string? assetName)
     {
         using var doc = JsonDocument.Parse(json);
-        ReleaseInfo? best = null;
+        // A release mais nova pode ainda nao ter o pacote desta plataforma (o APK assinado sobe minutos depois da tag):
+        // entao vale a mais nova que tem o pacote, e so sem nenhuma usa a mais nova (aviso com link).
+        ReleaseInfo? best = null, bestWithAsset = null;
         foreach (var r in doc.RootElement.EnumerateArray())
         {
             if (r.TryGetProperty("draft", out var d) && d.GetBoolean())
@@ -62,8 +64,6 @@ public static class UpdateChecker
             if (!tag.StartsWith(TagPrefix, StringComparison.OrdinalIgnoreCase) || !Version.TryParse(tag[TagPrefix.Length..], out var v))
                 continue;
             v = Normalize(v);
-            if (best is not null && v <= best.Version)
-                continue;
             DateTimeOffset? published = r.TryGetProperty("published_at", out var pa) && pa.ValueKind == JsonValueKind.String
                 && DateTimeOffset.TryParse(pa.GetString(), out var dt) ? dt : null;
             string? assetUrl = null, assetDigest = null;
@@ -77,10 +77,14 @@ public static class UpdateChecker
                     assetDigest = a.TryGetProperty("digest", out var dg) && dg.ValueKind == JsonValueKind.String ? dg.GetString() : null;
                 }
             }
-            best = new ReleaseInfo(v, tag, r.GetProperty("name").GetString() ?? tag, r.GetProperty("html_url").GetString() ?? ReleasesUrl, published,
+            var info = new ReleaseInfo(v, tag, r.GetProperty("name").GetString() ?? tag, r.GetProperty("html_url").GetString() ?? ReleasesUrl, published,
                 assetUrl, assetDigest, r.TryGetProperty("body", out var body) && body.ValueKind == JsonValueKind.String ? body.GetString() : null);
+            if (best is null || v > best.Version)
+                best = info;
+            if (assetUrl is not null && (bestWithAsset is null || v > bestWithAsset.Version))
+                bestWithAsset = info;
         }
-        return best;
+        return bestWithAsset ?? best;
     }
 }
 

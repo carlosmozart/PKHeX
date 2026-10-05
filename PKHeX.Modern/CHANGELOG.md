@@ -6,6 +6,18 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## 0.4.15 — 2026-10-05
+
+### ⬆ Atualização
+- **Animação da atualização:** enquanto a versão nova baixa, uma fileira de Pokébolas cinzas ganha cor (Poké, Great, Ultra... até a Master Ball nos 100%) e a equipe do save aberto anda em fila sobre a barra — de vez em quando um deles aparece shiny. “Continuar usando” esconde o painel e o download segue. Para ver sem precisar de versão nova: Ajuda › Sobre › “✨ Ver animação”.
+- **Atualizar estando algumas versões atrás:** se a versão mais nova ainda não tiver o pacote do seu sistema (o APK do Android sobe alguns minutos depois), o app oferece a mais recente que já tem, em vez de dar erro.
+
+### 💾 Backups
+- **Backups separados por save:** saves de pastas diferentes com o mesmo nome (como o “main” do Switch) agora têm cada um o seu limite de 20 backups; antes um podia apagar os backups do outro.
+
+### 📱 Android
+- Conectar um controle ou teclado Bluetooth não reinicia mais o app (nem perde a edição em andamento).
+
 ## 0.4.14 — 2026-10-04
 
 ### ✨ Legalidade

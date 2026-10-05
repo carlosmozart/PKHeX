@@ -17,7 +17,7 @@ public sealed record BackupInfo(string Path, string SaveName, string? Source, Da
 /// </summary>
 public static partial class SaveBackup
 {
-    /// <summary>Quantos backups manter por nome de arquivo.</summary>
+    /// <summary>Quantos backups manter por save (caminho de origem; nome do arquivo nos backups antigos, sem registro).</summary>
     private const int KeepPerFile = 20;
     private const string IndexFile = "index.json";
 
@@ -39,7 +39,7 @@ public static partial class SaveBackup
         File.Copy(path, backup);
         File.SetCreationTime(backup, DateTime.Now); // File.Copy mantem as datas do save; a de criacao passa a ser a do backup
         UpdateIndex(index => index[Path.GetFileName(backup)] = Path.GetFullPath(path));
-        Prune(name, ext);
+        Prune(name, ext, Path.GetFullPath(path));
         return backup;
     }
 
@@ -87,19 +87,27 @@ public static partial class SaveBackup
     [GeneratedRegex(@"^(?<name>.+) (?<stamp>\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})( \(\d+\))?$")]
     private static partial Regex StampPattern();
 
-    /// <summary>Apaga os backups mais antigos desse save, mantendo os <see cref="KeepPerFile"/> mais recentes.</summary>
-    private static void Prune(string name, string ext)
+    /// <summary>
+    /// Apaga os backups mais antigos desse save, mantendo os <see cref="KeepPerFile"/> mais recentes. Saves de pastas
+    /// diferentes com o mesmo nome (ex.: "main" do Switch) tem limites separados: conta so os backups com a mesma
+    /// origem no indice (e os antigos sem origem registrada, que podem ser dele).
+    /// </summary>
+    private static void Prune(string name, string ext, string source)
     {
         try
         {
+            var index = new Dictionary<string, string>(ReadIndex(), StringComparer.OrdinalIgnoreCase);
             var old = new DirectoryInfo(Folder).GetFiles($"{name} ????-??-?? ??-??-??*{ext}")
+                .Where(f => StampPattern().Match(Path.GetFileNameWithoutExtension(f.Name)) is { Success: true } m
+                    && m.Groups["name"].Value.Equals(name, StringComparison.OrdinalIgnoreCase))
+                .Where(f => !index.TryGetValue(f.Name, out var from) || from.Equals(source, StringComparison.OrdinalIgnoreCase))
                 .OrderByDescending(f => f.CreationTimeUtc)
                 .Skip(KeepPerFile)
                 .ToList();
             foreach (var f in old)
                 f.Delete();
             if (old.Count > 0)
-                UpdateIndex(index => { foreach (var f in old) index.Remove(f.Name); });
+                UpdateIndex(i => { foreach (var f in old) i.Remove(f.Name); });
         }
         catch
         {

@@ -76,6 +76,31 @@ public static class SpriteService
         });
     }
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<byte, AvaloniaBitmap?> GrayBalls = new();
+
+    /// <summary>Icone da bola em cinza e meio apagado (bolas ainda "vazias" da animacao de atualizacao).</summary>
+    public static AvaloniaBitmap? GetGrayBallSprite(byte ball)
+    {
+        if (ball == 0)
+            return null;
+        return GrayBalls.GetOrAdd(ball, static b =>
+        {
+            try
+            {
+                var img = SpriteUtil.GetBallSprite(b).Clone();
+                var px = img.Pixels;
+                for (int i = 0; i + 3 < px.Length; i += 4)
+                {
+                    int y = (px[i] * 29 + px[i + 1] * 150 + px[i + 2] * 77) >> 8;
+                    px[i] = px[i + 1] = px[i + 2] = (byte)(96 + y / 3);
+                    px[i + 3] = (byte)(px[i + 3] * 3 / 5);
+                }
+                return ToAvalonia(img, PixelScale);
+            }
+            catch { return null; }
+        });
+    }
+
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<(int, EntityContext), AvaloniaBitmap?> Items = new();
 
     /// <summary>

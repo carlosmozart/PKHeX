@@ -1726,6 +1726,8 @@
                   </StackPanel>
                   <WrapPanel ItemSpacing="6" LineSpacing="6">
                     <Button Classes="small" Content="⟳  Verificar agora" Command="{Binding CheckUpdatesCommand}" />
+                    <Button Classes="small" Content="✨  Ver animação" Command="{Binding DemoAnimationCommand}"
+                            ToolTip.Tip="Mostra a animação da atualização com um progresso de mentira (nada é baixado)" />
                     <Button Classes="accent small" Content="⬇  Atualizar agora" Command="{Binding InstallUpdateCommand}" IsVisible="{Binding ShowInstallButton}" />
                     <Button Classes="accent small" Content="{Binding RestartText}" Command="{Binding RestartCommand}" IsVisible="{Binding IsReadyToRestart}" />
                     <Button Classes="small" Content="{Binding LatestButtonText}" Command="{Binding OpenLatestCommand}" IsVisible="{Binding ShowLinkBanner}"

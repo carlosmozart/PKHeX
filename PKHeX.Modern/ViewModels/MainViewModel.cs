@@ -67,6 +67,9 @@ public sealed partial class MainViewModel : ViewModelBase
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
         Help = new HelpPageViewModel(Settings);
+        // Animacao da atualizacao: a equipe do save aberto anda em fila sobre a barra.
+        Controls.UpdateAnimation.Walkers = () => _sav is not { } sav ? []
+            : [.. Enumerable.Range(0, sav.PartyCount).Select(sav.GetPartySlotAtIndex).Where(p => p.Species != 0 && !p.IsEgg).Select(p => (p.Species, p.IsShiny))];
         Help.ReviewUpdate = release => Dialog is not null ? Task.FromResult(false) : ConfirmAsync(
             $"Nova versão {UpdateChecker.Format(release.Version)}",
             Help.CanSelfUpdate ? $"Você está na {UpdateChecker.CurrentText}. Confira as novidades antes de baixar e instalar. A versão nova vale ao reiniciar."

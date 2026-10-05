@@ -66,6 +66,16 @@ foreach (var asset in new[] { "PKHeX.Modern-win-x64.zip", "PKHeX.Modern-linux-x6
     Check("API seleciona " + asset, parsed.AssetUrl!.EndsWith(asset) && parsed.AssetDigest == "sha256:abc");
     Check("API sem pacote oferece link", UpdateChecker.ParseLatest(json, null)!.AssetUrl is null);
 }
+{
+    // A mais nova ainda sem o APK (sobe minutos depois): oferece a anterior que tem, em vez de falhar.
+    var apk = "PKHeX.Modern-Android.apk";
+    var json = JsonSerializer.Serialize(new object[] {
+        new { tag_name = "modern-v99.0.1", name = "Nova", html_url = "x", assets = Array.Empty<object>() },
+        new { tag_name = "modern-v99.0.0", name = "Anterior", html_url = "x", assets = new[] { new { name = apk, browser_download_url = "https://github.com/carlosmozart/PKHeX/releases/download/modern-v99.0.0/" + apk } } } });
+    var parsed = UpdateChecker.ParseLatest(json, apk)!;
+    Check("release nova sem APK oferece a anterior com APK", parsed.Tag == "modern-v99.0.0" && parsed.AssetUrl is not null);
+    Check("sem pacote nenhum fica com a mais nova", UpdateChecker.ParseLatest(json, "outro.zip")!.Tag == "modern-v99.0.1");
+}
 Check("dotnet run nao se atualiza", !AutoUpdater.CanSelfUpdate);
 Check("arquivo unico Windows", AutoUpdater.CanUpdateExecutable("", Path.Combine(args[0], "PKHeX.Modern.exe"), OSPlatform.Windows, Architecture.X64));
 Check("exe renomeado no Windows ainda se atualiza", AutoUpdater.CanUpdateExecutable("", Path.Combine(args[0], "PKHeX.Modern (1).exe"), OSPlatform.Windows, Architecture.X64));

@@ -25,6 +25,8 @@ public sealed class HelpPageViewModel : PageViewModel
         OpenReleasesCommand = new RelayCommand(() => Links.Open(UpdateChecker.ReleasesUrl));
         OpenRepoCommand = new RelayCommand(() => Links.Open(UpdateChecker.RepoUrl));
         OpenWikiCommand = new RelayCommand(() => Links.Open(Links.AllGenWiki));
+        HideOverlayCommand = new RelayCommand(() => { OverlayHidden = true; _demoCts?.Cancel(); });
+        DemoAnimationCommand = new RelayCommand(() => _ = DemoAsync(), () => !IsDownloading && !IsDemo);
         ApplyFilter();
     }
 
@@ -104,7 +106,60 @@ public sealed class HelpPageViewModel : PageViewModel
     public bool IsDownloading { get => _isDownloading; private set { Set(ref _isDownloading, value); RaiseUpdateState(); } }
     private double _downloadProgress;
     /// <summary>0-100.</summary>
-    public double DownloadProgress { get => _downloadProgress; private set { Set(ref _downloadProgress, value); Raise(nameof(DownloadText)); } }
+    public double DownloadProgress { get => _downloadProgress; private set { Set(ref _downloadProgress, value); Raise(nameof(DownloadText)); Raise(nameof(AnimationProgress)); Raise(nameof(OverlayText)); } }
+
+    // Painel da animacao (Pokebolas ganhando cor e a equipe andando) por cima do app enquanto baixa
+    public RelayCommand HideOverlayCommand { get; }
+    public RelayCommand DemoAnimationCommand { get; }
+    private bool _overlayHidden;
+    /// <summary>"Continuar usando": esconde o painel; o download segue e o progresso continua na barra lateral.</summary>
+    public bool OverlayHidden { get => _overlayHidden; private set { Set(ref _overlayHidden, value); RaiseOverlay(); } }
+    private bool _isDemo;
+    public bool IsDemo { get => _isDemo; private set { Set(ref _isDemo, value); RaiseOverlay(); DemoAnimationCommand.NotifyCanExecuteChanged(); } }
+    private double _demoProgress;
+    private System.Threading.CancellationTokenSource? _demoCts;
+    public bool ShowUpdateOverlay => !OverlayHidden && (IsDownloading || IsDemo || IsReadyToRestart);
+    public double AnimationProgress => IsDemo ? _demoProgress : IsReadyToRestart ? 100 : DownloadProgress;
+    public bool AnimationDone => AnimationProgress >= 100;
+    public string OverlayText => IsDemo
+        ? (_demoProgress >= 100 ? "Pronto! (demonstração: nada foi baixado)" : $"Demonstração da atualização... {_demoProgress:0}%")
+        : IsReadyToRestart ? $"Pronto! A versão {(Latest is { } l ? UpdateChecker.Format(l.Version) : "")} está instalada." : DownloadText;
+    public string OverlayHint => IsReadyToRestart && !IsDemo
+        ? "Reinicie para usar a versão nova (o app pergunta antes se houver alterações não salvas)."
+        : "Pode continuar usando o app: o download segue em segundo plano.";
+
+    private void RaiseOverlay()
+    {
+        foreach (var p in (string[])[nameof(ShowUpdateOverlay), nameof(AnimationProgress), nameof(AnimationDone), nameof(OverlayText), nameof(OverlayHint)])
+            Raise(p);
+    }
+
+    /// <summary>Roda a animacao com um progresso falso (Ajuda › Sobre), para ver sem precisar de uma versao nova.</summary>
+    private async Task DemoAsync()
+    {
+        _demoCts = new System.Threading.CancellationTokenSource();
+        var token = _demoCts.Token;
+        _demoProgress = 0;
+        OverlayHidden = false;
+        IsDemo = true;
+        try
+        {
+            while (_demoProgress < 100 && !token.IsCancellationRequested)
+            {
+                await Task.Delay(120);
+                _demoProgress = Math.Min(100, _demoProgress + 1 + Random.Shared.NextDouble() * 2);
+                RaiseOverlay();
+            }
+            if (!token.IsCancellationRequested)
+                await Task.Delay(3500, token);
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            IsDemo = false;
+            OverlayHidden = false;
+        }
+    }
     public string DownloadText => Latest is { } l ? $"Baixando a {UpdateChecker.Format(l.Version)}... {DownloadProgress:0}%" : "";
     private bool _isReadyToRestart;
     /// <summary>A versao nova ja esta instalada; vale ao reiniciar.</summary>
@@ -122,6 +177,8 @@ public sealed class HelpPageViewModel : PageViewModel
             Raise(p);
         InstallUpdateCommand.NotifyCanExecuteChanged();
         OpenLatestCommand.NotifyCanExecuteChanged();
+        DemoAnimationCommand?.NotifyCanExecuteChanged();
+        RaiseOverlay();
     }
 
     /// <summary>Baixa e instala a release mais nova. Se falhar, o aviso continua com o link para baixar manualmente.</summary>
@@ -140,6 +197,8 @@ public sealed class HelpPageViewModel : PageViewModel
             Links.Open(release.Url);
             return;
         }
+        _demoCts?.Cancel();
+        OverlayHidden = false;
         IsDownloading = true;
         DownloadProgress = 0;
         try

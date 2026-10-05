@@ -3,6 +3,7 @@
              xmlns:views="using:PKHeX.Modern.Views"
              xmlns:vm="using:PKHeX.Modern.ViewModels"
              xmlns:local="using:PKHeX.Modern"
+             xmlns:controls="using:PKHeX.Modern.Controls"
              x:Class="PKHeX.Modern.Views.MainView"
              x:DataType="vm:MainViewModel"
              Background="{DynamicResource AppBackground}"
@@ -373,6 +374,22 @@
                   ToolTip.Tip="Grava por cima do arquivo do save, sem abrir janela (Ctrl+S). O arquivo anterior vai para os backups antes. Para escolher outro lugar, use “Salvar como...” (Ctrl+E)." />
         </StackPanel>
       </Grid>
+    </Border>
+
+    <!-- Atualizacao: Pokebolas ganhando cor e a equipe andando sobre a barra ("Continuar usando" esconde) -->
+    <Border Grid.ColumnSpan="3" Grid.RowSpan="2" Classes="dialogBackdrop" IsVisible="{Binding Help.ShowUpdateOverlay}">
+      <Border Classes="card dialog" Width="560" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Spacing="12">
+          <TextBlock Text="{Binding Help.OverlayText}" Classes="title" TextWrapping="Wrap" />
+          <controls:UpdateAnimation Progress="{Binding Help.AnimationProgress}" Margin="0,4" />
+          <TextBlock Text="{Binding Help.OverlayHint}" Classes="muted" TextWrapping="Wrap" />
+          <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Content="Continuar usando" Command="{Binding Help.HideOverlayCommand}" />
+            <Button Classes="accent" Content="{Binding Help.RestartText}" Command="{Binding Help.RestartCommand}"
+                    IsVisible="{Binding Help.IsReadyToRestart}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
     </Border>
 
     <!-- Pergunta dentro da janela (ConfirmAsync): cobre tudo e bloqueia cliques ate responder -->
