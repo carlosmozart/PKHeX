@@ -24,7 +24,7 @@ Formato: "## versão — data", "### seção", "- item".
 
 ### 📱 Toque no Android
 - **Seleção por toque:** caixas e Bank têm o modo “☐ Selecionar”, também aberto por toque longo, com contagem e ações para o grupo. Sair do modo limpa as marcas.
-- **Dicas acessíveis:** botões ⓘ mostram as descrições de preferências, ações rápidas e cabeçalhos de Jogo. O arraste por toque só começa depois de manter o dedo parado; listas usam inércia e indicador de rolagem visível.
+- **Dicas sem mouse:** toque e segure um botão para ver a descrição dele sem executá-lo; os cartões de tema e o modo de arraste têm ⓘ. O arraste por toque só começa depois de manter o dedo parado; listas usam inércia e indicador de rolagem visível.
 
 ### 📖 Coleção
 - **Planejador de Living Dex:** nova seção na Pokédex, com jogo alvo, formas, shiny e fontes. Mostra contagem, melhores candidatos, duplicados, faltantes e um plano nacional de 30 slots por caixa. A leitura tem progresso; nenhum Pokémon é movido e nenhum save é gravado.

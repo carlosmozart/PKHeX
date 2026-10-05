@@ -261,7 +261,7 @@
     <!-- Conteudo -->
     <DockPanel Grid.Column="1" Margin="24">
       <WrapPanel DockPanel.Dock="Top" IsVisible="{Binding ShowTouchToolbar}" ItemSpacing="6" LineSpacing="6" Margin="0,0,0,8">
-        <ToggleButton Content="☐ Selecionar" IsChecked="{Binding TouchSelectionMode}" />
+        <ToggleButton Content="☐ Selecionar" IsChecked="{Binding TouchSelectionMode}" ToolTip.Tip="Liga a seleção por toque: cada toque marca ou desmarca um Pokémon, em vez de abrir o editor." />
         <ComboBox ItemsSource="{Binding TouchDropOptions}" SelectedIndex="{Binding TouchDropIndex}" MinWidth="125" />
         <controls:TouchHint Description="{Binding TouchDropTip}" />
         <TextBlock Text="{Binding MarkedText}" VerticalAlignment="Center" IsVisible="{Binding TouchSelectionMode}" />

@@ -67,7 +67,25 @@ var prefs = shell.View.FindControl<Button>("PrefsButton")!; prefs.Flyout!.ShowAt
 var flyoutContent = ((Flyout)prefs.Flyout).Content as Control;
 Check("descrições disponíveis sem hover", flyoutContent!.GetVisualDescendants().OfType<TouchHint>().Any());
 phone.UpdateLayout(); for (int i=0;i<8;i++) Pump(); phone.CaptureRenderedFrame()?.Save(Path.Combine(work, "touch-preferences.png")); prefs.Flyout.Hide();
-vm.CurrentPage = vm.Game; Pump();
-Check("cabeçalhos de Jogo com informação", phone.GetVisualDescendants().OfType<TouchHint>().Any());
+vm.CurrentPage = vm.Boxes; Pump(); phone.UpdateLayout(); Pump();
+var toggle = phone.GetVisualDescendants().OfType<Avalonia.Controls.Primitives.ToggleButton>().First(t => t.IsEffectivelyVisible && t.Content as string == "☐ Selecionar");
+var tp = toggle.TranslatePoint(new Point(toggle.Bounds.Width / 2, toggle.Bounds.Height / 2), phone)!.Value;
+phone.MouseDown(tp, MouseButton.Left);
+using (var stop = new System.Threading.CancellationTokenSource(650)) Dispatcher.UIThread.MainLoop(stop.Token);
+phone.MouseUp(tp, MouseButton.Left); Pump();
+Check("toque longo num botão mostra a descrição sem executar", TouchHelp.LastDescription?.Contains("seleção por toque") == true && !vm.TouchSelectionMode);
+phone.MouseDown(tp, MouseButton.Left); phone.MouseUp(tp, MouseButton.Left); Pump(); // o primeiro toque fecha a explicação
+phone.MouseDown(tp, MouseButton.Left); phone.MouseUp(tp, MouseButton.Left); Pump();
+Check("toque curto continua executando", vm.TouchSelectionMode); vm.TouchSelectionMode = false;
+Check("botões sem ⓘ automático", !phone.GetVisualDescendants().OfType<Button>().Any(x => x is not TouchHint && x.ContentTemplate is not null && x.GetVisualDescendants().OfType<TouchHint>().Any()));
+// Segurar e arrastar um slot: a seleção ligada pelo próprio toque longo é desfeita (o próximo toque abre o editor).
+phone.UpdateLayout(); Pump();
+var held = phone.GetVisualDescendants().OfType<Button>().First(x => x.DataContext == vm.Boxes.Slots.First(s => !s.IsEmpty));
+var hp = held.TranslatePoint(new Point(held.Bounds.Width / 2, 12), phone)!.Value;
+phone.MouseDown(hp, MouseButton.Left);
+using (var stop = new System.Threading.CancellationTokenSource(650)) Dispatcher.UIThread.MainLoop(stop.Token);
+phone.MouseMove(hp + new Vector(40, 0)); Pump();
+Check("segurar e arrastar não deixa a seleção ligada", !vm.TouchSelectionMode && vm.MarkedCount == 0);
+phone.MouseUp(hp + new Vector(40, 0), MouseButton.Left); Pump();
 Check("listas com inércia e barra visível", phone.GetVisualDescendants().OfType<ScrollViewer>().Where(s => s.IsVisible).All(s => ScrollViewer.GetIsScrollInertiaEnabled(s) && !s.AllowAutoHide));
 phone.Close(); Console.WriteLine(fails == 0 ? "TUDO OK" : $"{fails} FALHAS"); return fails == 0 ? 0 : 1;

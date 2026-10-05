@@ -1694,7 +1694,7 @@
   "Substitui o Pokémon do destino e esvazia a origem. No save, pode ser desfeito.": "Replaces the destination Pokémon and clears the source. Changes in the save can be undone.",
   "Move para o destino; se ocupado, troca os dois Pokémon. No save, pode ser desfeito.": "Moves to the destination; if occupied, swaps the two Pokémon. Changes in the save can be undone.",
   "Selecionar e arrastar por toque": "Select and drag by touch",
-  "Nas caixas e no Bank, toque em “☐ Selecionar” para marcar vários slots sem teclado. Um toque longo também liga a seleção; sair do modo limpa as marcas. Com o grupo marcado, escolha a caixa de destino, envie ao Bank, exclua ou abra a Edição em lote. O modo Mover/Copiar/Sobrescrever vale para o arraste; mantenha o dedo parado antes de arrastar para não confundir com rolagem. Botões ⓘ mostram as dicas de preferências, ações e páginas sem passar o mouse.": "In boxes and Bank, tap “☐ Select” to mark several slots without a keyboard. A long press also enables selection; leaving the mode clears the marks. With a group selected, choose the destination box, send it to Bank, delete it or open Batch editing. Move/Copy/Overwrite applies to dragging; hold your finger still before dragging to distinguish it from scrolling. ⓘ buttons show explanations for preferences, actions and pages without hovering."
+  "Nas caixas e no Bank, toque em “☐ Selecionar” para marcar vários slots sem teclado. Um toque longo também liga a seleção; sair do modo limpa as marcas. Com o grupo marcado, escolha a caixa de destino, envie ao Bank, exclua ou abra a Edição em lote. O modo Mover/Copiar/Sobrescrever vale para o arraste; mantenha o dedo parado antes de arrastar para não confundir com rolagem. Toque e segure um botão para ver o que ele faz, sem executá-lo; nos temas e no modo de arraste há também um ⓘ.": "In boxes and Bank, tap “☐ Select” to mark several slots without a keyboard. A long press also enables selection; leaving the mode clears the marks. With a group selected, choose the destination box, send it to Bank, delete it or open Batch editing. Move/Copy/Overwrite applies to dragging; hold your finger still before dragging to distinguish it from scrolling. Touch and hold a button to see what it does without running it; theme cards and the drag mode also have an ⓘ."
   ,"Suave": "Soft",
   "PAPEL DE PAREDE DAS CAIXAS": "BOX WALLPAPER",
   "Muda só a exibição; o papel de parede do jogo é preservado.": "Only changes the display; the game's wallpaper is preserved.",
@@ -1729,5 +1729,6 @@
   "O estado, o relatório, os avisos e os grupos de problemas usam a mesma análise a cada atualização do editor, mantendo as informações consistentes.": "The status, report, warnings and issue groups share one analysis on each editor update, keeping their information consistent."
   ,"Salvar como": "Save as",
   "Restaurar backup": "Restore backup"
-  ,"Sincronizar Pokédex": "Synchronize Pokédex"
+  ,"Sincronizar Pokédex": "Synchronize Pokédex",
+  "Liga a seleção por toque: cada toque marca ou desmarca um Pokémon, em vez de abrir o editor.": "Turns on touch selection: each tap marks or unmarks a Pokémon instead of opening the editor."
 }

@@ -41,7 +41,7 @@ public sealed class SlotDragController
     private SlotViewModel? _hoverTarget;
     private Button? _hoverArrow;
     private readonly DispatcherTimer _hold = new() { Interval = TimeSpan.FromMilliseconds(550) };
-    private bool _touchPress, _held, _scrolling;
+    private bool _touchPress, _held, _scrolling, _holdStartedSelection;
 
     public SlotDragController(Control window, Func<MainViewModel> vm)
     {
@@ -59,6 +59,7 @@ public sealed class SlotDragController
             _hold.Stop();
             if (_pressed is not { IsParty: false } || _scrolling || _released) return;
             _held = true;
+            _holdStartedSelection = !_vm().TouchSelectionMode;
             _vm().TouchSelectionMode = true;
             if (!_pressed.IsMarked) _vm().ToggleMark(_pressed, false);
         };
@@ -131,6 +132,10 @@ public sealed class SlotDragController
             return;
         }
         _hold.Stop();
+        // Hold then move = drag this Pokemon. If the hold itself turned the selection on, undo it, so the
+        // next tap opens the editor again; a selection the user already had keeps dragging the whole group.
+        if (_held && _holdStartedSelection)
+            _vm().TouchSelectionMode = false;
 
         _dragging = _pressed;
         _pressed = null;
