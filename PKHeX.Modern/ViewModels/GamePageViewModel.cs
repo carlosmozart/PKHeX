@@ -41,22 +41,26 @@ public sealed partial class GamePageViewModel : PageViewModel
 
     public override string Title => "Jogo";
     public override string Icon => "🎮";
-    public override bool IsAvailable => _editors is null || _editors.IsAvailable;
+    public override bool IsAvailable => _editors is null || _editors.IsAvailable || HasCards || HasRaids || HasClock || HasRoamers || HasDonuts || HasFashion;
 
     public override void Load(SaveFile sav)
     {
         _editors = new GameEditors(sav);
+        if (!ReferenceEquals(_sav, sav)) History = new GameHistory(sav);
         _sav = sav;
         RefreshCards();
         RefreshRaids();
+        RefreshClock();
+        RefreshRoamers();
+        RefreshDonuts();
+        RefreshFashion();
         FameCaps = HallOfFame.Caps(sav);
         SpeciesOptions = [.. Enumerable.Range(1, FameCaps.MaxSpecies).Select(i => GameInfo.Strings.Species[i])];
         SelectedFameMember = null;
         var e = _editors;
-        void Changed() => this.Changed?.Invoke();
-        _flags = [.. e.Flags.Select(f => new FlagRowViewModel(f, e, Changed))];
-        _works = [.. e.Works.Select(w => new WorkRowViewModel(w, e, Changed))];
-        _records = [.. e.Records.Select(r => new RecordRowViewModel(r, e, Changed))];
+        _flags = [.. e.Flags.Select(f => new FlagRowViewModel(f, e, Edit))];
+        _works = [.. e.Works.Select(w => new WorkRowViewModel(w, e, Edit))];
+        _records = [.. e.Records.Select(r => new RecordRowViewModel(r, e, Edit))];
         _shortcuts = [.. e.Shortcuts.Select(s => new ShortcutRowViewModel(s, () => _ = RunShortcutAsync(s)))];
         ShortcutRows = _shortcuts;
         FameRows = BuildFame(e.Fame);
@@ -64,7 +68,7 @@ public sealed partial class GamePageViewModel : PageViewModel
             .Where(c => c.Length > 0).Distinct().Order(StringComparer.CurrentCulture)];
         _category = 0;
         _showUnnamed = !e.HasLabels;
-        _tab = e.HasEvents ? 0 : e.WorkCount > 0 ? 1 : e.HasRecords ? 2 : e.HasShortcuts ? 3 : 4;
+        _tab = e.HasEvents ? 0 : e.WorkCount > 0 ? 1 : e.HasRecords ? 2 : e.HasShortcuts ? 3 : e.HasFame ? 4 : HasCards ? 5 : HasRaids ? 6 : HasClock ? 7 : HasRoamers ? 8 : HasDonuts ? 9 : 10;
         Raise(string.Empty);
         ApplyFilter();
     }
@@ -105,6 +109,10 @@ public sealed partial class GamePageViewModel : PageViewModel
             Raise(nameof(IsFameTab));
             Raise(nameof(IsCardsTab));
             Raise(nameof(IsRaidsTab));
+            Raise(nameof(IsClockTab));
+            Raise(nameof(IsRoamersTab));
+            Raise(nameof(IsDonutsTab));
+            Raise(nameof(IsFashionTab));
             Raise(nameof(ShowFilters));
             Raise(nameof(ShowCategory));
             ApplyFilter();
@@ -265,7 +273,7 @@ public sealed partial class GamePageViewModel : PageViewModel
             nickname = GameInfo.Strings.Species[index].ToUpperInvariant();
         if (FameHasNickname && nickname.Length > FameCaps.NicknameLength)
             nickname = nickname[..FameCaps.NicknameLength];
-        HallOfFame.SetMember(_sav, m.TeamIndex, m.Member.Slot, (ushort)index, nickname, (int)(FameLevel ?? 1), FameShiny);
+        Edit($"Hall da Fama: {GameInfo.Strings.Species[index]} em {m.TeamTitle}", () => HallOfFame.SetMember(_sav, m.TeamIndex, m.Member.Slot, (ushort)index, nickname, (int)(FameLevel ?? 1), FameShiny));
         FameChanged($"Hall da Fama: {GameInfo.Strings.Species[index]} gravado em {m.TeamTitle}.", m.TeamIndex, m.Member.Slot);
     }
 
@@ -278,7 +286,7 @@ public sealed partial class GamePageViewModel : PageViewModel
             _status("A equipe do save está vazia.");
             return;
         }
-        HallOfFame.RegisterParty(_sav);
+        Edit("Registrar equipe no Hall da Fama", () => HallOfFame.RegisterParty(_sav));
         FameChanged("Equipe atual registrada no Hall da Fama.");
     }
 
@@ -286,9 +294,10 @@ public sealed partial class GamePageViewModel : PageViewModel
     {
         if (_sav is null || _sav.PartyCount == 0)
             return;
-        if (!await _confirm("Usar a equipe atual?", $"Os Pokémon de “{team.Title}” serão trocados pelos da equipe atual do save.", "Trocar"))
+        var sav = _sav;
+        if (!await _confirm("Usar a equipe atual?", $"Os Pokémon de “{team.Title}” serão trocados pelos da equipe atual do save.", "Trocar") || !ReferenceEquals(sav, _sav))
             return;
-        HallOfFame.CopyParty(_sav, team.Index);
+        Edit($"Hall da Fama: trocar {team.Title}", () => HallOfFame.CopyParty(_sav, team.Index));
         FameChanged($"{team.Title}: trocada pela equipe atual.");
     }
 
@@ -296,9 +305,10 @@ public sealed partial class GamePageViewModel : PageViewModel
     {
         if (_sav is null)
             return;
-        if (!await _confirm("Apagar equipe do Hall da Fama?", $"“{team.Title}” sai do Hall da Fama. As equipes seguintes sobem uma posição.", "Apagar"))
+        var sav = _sav;
+        if (!await _confirm("Apagar equipe do Hall da Fama?", $"“{team.Title}” sai do Hall da Fama. As equipes seguintes sobem uma posição.", "Apagar") || !ReferenceEquals(sav, _sav))
             return;
-        HallOfFame.DeleteTeam(_sav, team.Index);
+        Edit($"Hall da Fama: apagar {team.Title}", () => HallOfFame.DeleteTeam(_sav, team.Index));
         FameChanged($"{team.Title}: apagada do Hall da Fama.");
     }
 
@@ -306,7 +316,7 @@ public sealed partial class GamePageViewModel : PageViewModel
     {
         if (_sav is null)
             return;
-        HallOfFame.SetDate(_sav, team.Index, date);
+        Edit($"Hall da Fama: data de {team.Title}", () => HallOfFame.SetDate(_sav, team.Index, date));
         Changed?.Invoke();
         _status($"{team.Title}: data trocada para {date:dd/MM/yyyy}. Lembre-se de salvar.");
     }
@@ -314,12 +324,13 @@ public sealed partial class GamePageViewModel : PageViewModel
     /// <summary>Atalho de evento: pergunta, aplica e atualiza as flags/valores mostrados.</summary>
     private async Task RunShortcutAsync(GameShortcut s)
     {
-        if (!await _confirm(s.Name, s.Description + " As flags e valores do evento são alterados no save; exporte uma cópia antes, se tiver dúvida.", "Aplicar"))
+        var sav = _sav;
+        if (!await _confirm(s.Name, s.Description + " As flags e valores do evento são alterados no save; exporte uma cópia antes, se tiver dúvida.", "Aplicar") || !ReferenceEquals(sav, _sav))
             return;
         try
         {
             BeforeShortcut?.Invoke();
-            s.Apply();
+            Edit($"Atalho: {s.Name}", s.Apply);
         }
         catch (Exception ex)
         {
@@ -344,19 +355,19 @@ public sealed partial class GamePageViewModel : PageViewModel
             return;
         }
         var verb = value ? "Ativar" : "Desativar";
+        var sav = _sav;
         if (!await _confirm($"{verb} {rows.Count} flags",
                 $"{verb} as {rows.Count} flags mostradas pelo filtro atual? Flags de história fora de ordem podem travar eventos do jogo; prefira itens escondidos, pontos de voo e treinadores. Exporte uma cópia do save antes, se tiver dúvida.",
-                verb))
+                verb) || !ReferenceEquals(sav, _sav))
             return;
-        foreach (var f in rows)
-            f.IsSet = value;
+        Edit($"{verb} mostradas ({rows.Count} flags)", () => { foreach (var f in rows) f.IsSet = value; });
         _status($"{rows.Count} flags {(value ? "ativadas" : "desativadas")}. Lembre-se de salvar.");
         if (_onlySet)
             ApplyFilter();
     }
 }
 
-public sealed class FlagRowViewModel(GameFlag flag, GameEditors editors, Action changed) : ViewModelBase
+public sealed class FlagRowViewModel(GameFlag flag, GameEditors editors, Action<string, Action> edit) : ViewModelBase
 {
     public int Index => flag.Index;
     public string Number => flag.Code ?? $"#{flag.Index:0000}";
@@ -373,8 +384,7 @@ public sealed class FlagRowViewModel(GameFlag flag, GameEditors editors, Action 
         {
             if (value == IsSet)
                 return;
-            editors.SetFlag(flag.Index, value);
-            changed();
+            edit($"Flag {Number} {(value ? "ligada" : "desligada")}", () => editors.SetFlag(flag.Index, value));
             Raise();
         }
     }
@@ -384,13 +394,13 @@ public sealed class WorkRowViewModel : ViewModelBase
 {
     private readonly GameWork _work;
     private readonly GameEditors _editors;
-    private readonly Action _changed;
+    private readonly Action<string, Action> _edit;
 
-    public WorkRowViewModel(GameWork work, GameEditors editors, Action changed)
+    public WorkRowViewModel(GameWork work, GameEditors editors, Action<string, Action> edit)
     {
         _work = work;
         _editors = editors;
-        _changed = changed;
+        _edit = edit;
         Options = [.. work.Options.Where(o => !o.IsCustom).Select(o => new WorkOption(o.Name, o.Value))];
     }
 
@@ -414,8 +424,7 @@ public sealed class WorkRowViewModel : ViewModelBase
         {
             if (value is null || (long)value == Value)
                 return;
-            _editors.SetWork(_work.Index, (long)value);
-            _changed();
+            _edit($"Valor {Number}", () => _editors.SetWork(_work.Index, (long)value));
             Raise();
             Raise(nameof(SelectedOption));
         }
@@ -523,7 +532,7 @@ public sealed record WorkOption(string Name, ushort Value)
     public override string ToString() => $"{Name} ({Value})";
 }
 
-public sealed class RecordRowViewModel(GameRecord record, GameEditors editors, Action changed) : ViewModelBase
+public sealed class RecordRowViewModel(GameRecord record, GameEditors editors, Action<string, Action> edit) : ViewModelBase
 {
     public int Id => record.Id;
     public string Number => $"#{record.Id:000}";
@@ -538,8 +547,7 @@ public sealed class RecordRowViewModel(GameRecord record, GameEditors editors, A
         {
             if (value is null || (long)value == Value)
                 return;
-            editors.SetRecord(record, (long)value);
-            changed();
+            edit($"Recorde {Number}", () => editors.SetRecord(record, (long)value));
             Raise();
         }
     }

@@ -83,6 +83,7 @@ public sealed partial class MainViewModel : ViewModelBase
             p => _ = OpenAsync(p), () => Settings.RecentSaves, () => _activeTab is { } t ? FullPath(t.Path) : null) { Pages = () => Pages };
         Batch = new BatchPageViewModel(GetBatchTargets, () => _sav, ApplyBatchAsync);
         Game = new GamePageViewModel((t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true, icon: "🎮"), s => Status = s);
+        Game.IsLegalMode = () => LegalMode;
         Game.ShowCardQr = ShowCardQr;
         AddSelectedCardCommand = new RelayCommand(() =>
         {
@@ -103,6 +104,7 @@ public sealed partial class MainViewModel : ViewModelBase
         };
         foreach (var page in AllPages)
             page.Changed = () => IsDirty = true;
+        Game.HistoryChanged = OnHistoryChanged;
         Boxes.SlotsLoaded = () => { ApplySearchHighlight(); ApplyMarks(); };
         Bank.SlotsLoaded = ApplyMarks;
         OtherSave.SlotsLoaded = ApplyMarks;
@@ -120,17 +122,17 @@ public sealed partial class MainViewModel : ViewModelBase
         CheckLegalityCommand = new RelayCommand(() => _ = CheckLegalityAsync(), () => HasSave && !_checkingLegality);
         CreateCommand = new RelayCommand(CreateInFirstEmpty, () => HasSave);
         DeleteCommand = new RelayCommand(() => _ = DeleteSelectedAsync(), () => CanExportEntity || HasMarks);
-        UndoCommand = new RelayCommand(Undo, () => _history?.CanUndo == true);
+        UndoCommand = new RelayCommand(Undo, () => CurrentPage == Game ? Game.History?.CanUndo == true : _history?.CanUndo == true);
         ShowPendingCommand = new RelayCommand(() => _ = ShowPendingAsync());
-        RedoCommand = new RelayCommand(Redo, () => _history?.CanRedo == true);
+        RedoCommand = new RelayCommand(Redo, () => CurrentPage == Game ? Game.History?.CanRedo == true : _history?.CanRedo == true);
     }
 
     public RelayCommand CheckLegalityCommand { get; }
     public RelayCommand UndoCommand { get; }
     public RelayCommand DeleteCommand { get; }
     public RelayCommand RedoCommand { get; }
-    public string UndoTip => _history?.UndoDescription is { } d ? $"Desfazer: {d} (Ctrl+Z)" : "Nada para desfazer (Ctrl+Z)";
-    public string RedoTip => _history?.RedoDescription is { } d ? $"Refazer: {d} (Ctrl+Y)" : "Nada para refazer (Ctrl+Y)";
+    public string UndoTip => (CurrentPage == Game ? Game.History?.UndoDescription : _history?.UndoDescription) is { } d ? $"Desfazer: {d} (Ctrl+Z)" : "Nada para desfazer (Ctrl+Z)";
+    public string RedoTip => (CurrentPage == Game ? Game.History?.RedoDescription : _history?.RedoDescription) is { } d ? $"Refazer: {d} (Ctrl+Y)" : "Nada para refazer (Ctrl+Y)";
     public RelayCommand CreateCommand { get; }
 
     /// <summary>Slot selecionado com Pokemon (para Exportar PKM).</summary>
@@ -266,6 +268,7 @@ public sealed partial class MainViewModel : ViewModelBase
             Raise(nameof(ShowEditorPanel));
             Raise(nameof(IsHomeActive));
             RaiseActionBar();
+            OnHistoryChanged();
             if (value == Home)
                 Home.Refresh(); // a equipe e os numeros podem ter mudado
             else if (value == SaveManager)
@@ -443,6 +446,7 @@ public sealed partial class MainViewModel : ViewModelBase
     /// <summary>Painel do editor: some nas paginas de lista (Saves, Encontros, Eventos), que usam a largura toda.</summary>
     public bool ShowEditorPanel => HasSave && CurrentPage != Home && CurrentPage != SaveManager && CurrentPage != Encounters && CurrentPage != Gifts && CurrentPage != Bank && CurrentPage != Pokedex && CurrentPage != Search && CurrentPage != Batch && CurrentPage is not (BagPageViewModel or TrainerPageViewModel or GamePageViewModel) && !IsHelpOpen;
     public bool ShowSlotActions => HasSave && !IsHelpOpen && (CurrentPage == Boxes || CurrentPage == Party);
+    public bool ShowGameHistoryActions => HasSave && !IsHelpOpen && CurrentPage == Game;
     public bool ShowSaveActions => HasSave && !IsHelpOpen;
     public bool ShowSaveManagerActions => !IsHelpOpen && (!HasSave || CurrentPage == SaveManager);
     public bool ShowEncounterActions => HasSave && !IsHelpOpen && CurrentPage == Encounters;
@@ -452,7 +456,7 @@ public sealed partial class MainViewModel : ViewModelBase
     public BagPageViewModel? ActionBag => !IsHelpOpen ? CurrentPage as BagPageViewModel : null;
     private void RaiseActionBar()
     {
-        foreach (var property in new[] { nameof(ShowBoxFolderActions), nameof(ShowSlotActions), nameof(ShowSaveActions), nameof(ShowSaveManagerActions), nameof(ShowEncounterActions), nameof(ShowGiftActions), nameof(ShowBankActions), nameof(ShowDexActions), nameof(ActionBag) }) Raise(property);
+        foreach (var property in new[] { nameof(ShowGameHistoryActions), nameof(ShowBoxFolderActions), nameof(ShowSlotActions), nameof(ShowSaveActions), nameof(ShowSaveManagerActions), nameof(ShowEncounterActions), nameof(ShowGiftActions), nameof(ShowBankActions), nameof(ShowDexActions), nameof(ActionBag) }) Raise(property);
     }
     public string GameName => _sav is null ? "Nenhum save aberto" : CoreAdapter.GetGameName(_sav);
     /// <summary>Selo do jogo aberto (Pokemon da capa nas cores da versao), no cartao da barra lateral.</summary>
@@ -1911,6 +1915,11 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private void Undo()
     {
+        if (CurrentPage == Game)
+        {
+            if (Game.UndoGame() is { } description) { RefreshSlots(); Status = $"Desfeito: {description}."; }
+            return;
+        }
         if (_history?.Undo() is not { } what)
             return;
         IsDirty = true;
@@ -1921,6 +1930,11 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private void Redo()
     {
+        if (CurrentPage == Game)
+        {
+            if (Game.RedoGame() is { } description) { RefreshSlots(); Status = $"Refeito: {description}."; }
+            return;
+        }
         if (_history?.Redo() is not { } what)
             return;
         IsDirty = true;
