@@ -1539,7 +1539,8 @@
       </Border>
       <ScrollViewer x:Name="BoxScroll" HorizontalScrollBarVisibility="Disabled">
         <Border Classes="card" Padding="12" MaxWidth="1100" VerticalAlignment="Top">
-          <Border.Background><ImageBrush Source="{Binding Wallpaper}" Stretch="UniformToFill" Opacity="0.25" /></Border.Background>
+          <Grid>
+          <Image x:Name="BoxWallpaperImage" Source="{Binding Wallpaper}" Stretch="UniformToFill" Opacity="{Binding WallpaperOpacity}" IsHitTestVisible="False" />
           <ItemsControl ItemsSource="{Binding Slots}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
@@ -1547,6 +1548,7 @@
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
           </ItemsControl>
+          </Grid>
         </Border>
       </ScrollViewer>
     </DockPanel>

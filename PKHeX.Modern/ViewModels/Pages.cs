@@ -62,6 +62,9 @@ public sealed class BoxesPageViewModel : SlotPageViewModel
     public bool HasWallpapers => Wallpapers.Count > 0;
     public IReadOnlyList<string> Wallpapers { get; private set; } = [];
     public Avalonia.Media.Imaging.Bitmap? Wallpaper { get; private set; }
+    private int _wallpaperIntensity;
+    public int WallpaperIntensity { get => _wallpaperIntensity; set { if (Set(ref _wallpaperIntensity, value)) Raise(nameof(WallpaperOpacity)); } }
+    public double WallpaperOpacity => WallpaperIntensity switch { 1 => 0.10, 2 => 0, _ => 0.25 };
     public RelayCommand RenameCommand => new(async () =>
     {
         if (_sav is not IBoxDetailName names || Prompt is null) return;

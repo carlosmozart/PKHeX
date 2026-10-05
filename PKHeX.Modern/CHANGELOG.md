@@ -8,6 +8,10 @@ Formato: "## versão — data", "### seção", "- item".
 
 ## Próxima versão
 
+### 🎨 Preferências
+- **Prévia dos temas:** os quatro temas aparecem em cartões com miniaturas reais das caixas e do cabeçalho do editor, renderizadas pelo Avalonia e guardadas em cache para claro e escuro.
+- **Papel de parede das caixas:** escolha Normal, Suave ou Desligado para facilitar a leitura dos slots. A preferência é preservada e não altera o papel de parede do jogo.
+
 ### 📱 Toque no Android
 - **Seleção por toque:** caixas e Bank têm o modo “☐ Selecionar”, também aberto por toque longo, com contagem e ações para o grupo. Sair do modo limpa as marcas.
 - **Dicas acessíveis:** botões ⓘ mostram as descrições de preferências, ações rápidas e cabeçalhos de Jogo. O arraste por toque só começa depois de manter o dedo parado; listas usam inércia e indicador de rolagem visível.

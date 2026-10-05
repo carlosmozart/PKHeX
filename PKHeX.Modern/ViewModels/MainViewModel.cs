@@ -34,6 +34,7 @@ public sealed partial class MainViewModel : ViewModelBase
         {
             Settings.DarkTheme = App.ToggleTheme();
             Settings.Save();
+            foreach (var option in ThemeOptions) option.RefreshPreview();
         });
         Party = new PartyPageViewModel(s => _ = SelectSlotAsync(s));
         Party.EditDaycare = EditDaycareAsync;
@@ -41,6 +42,7 @@ public sealed partial class MainViewModel : ViewModelBase
         Party.WithdrawDaycare = WithdrawDaycareAsync;
         Party.DaycareStatus = s => Status = s;
         Boxes = new BoxesPageViewModel(s => _ = SelectSlotAsync(s)) { Party = Party };
+        Boxes.WallpaperIntensity = WallpaperIntensityIndex;
         // Registro de paginas: a ordem aqui e a ordem na barra lateral.
         SaveManager = new SaveManagerViewModel(Settings, p => _ = OpenAsync(p), (t, m, ok) => ConfirmAsync(t, m, ok, isDanger: true), s => Status = s)
         {
@@ -2324,6 +2326,8 @@ public sealed class ThemeOptionViewModel(Theme.AppThemePreset preset, bool selec
     public bool IsSelected { get => _isSelected; set { if (Set(ref _isSelected, value)) Raise(nameof(Header)); } }
     public string Header => (IsSelected ? "✓  " : "     ") + Loc.T(Preset.Name);
     public string Tip => Loc.T(Preset.Description);
+    public Avalonia.Media.Imaging.RenderTargetBitmap Preview => Theme.ThemePreview.Get(Preset, App.Current?.RequestedThemeVariant != Avalonia.Styling.ThemeVariant.Light);
+    public void RefreshPreview() => Raise(nameof(Preview));
     public RelayCommand SelectCommand { get; } = select;
 }
 
