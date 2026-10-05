@@ -160,82 +160,30 @@
             </StackPanel>
           </Border>
 
-          <!-- Evoluir por item: so aparece para especies que evoluem com pedras e afins -->
-          <Border Classes="card" IsVisible="{Binding HasItemEvolutions}">
+          <Border Classes="card" IsVisible="{Binding HasEvolutions}">
             <StackPanel Spacing="8">
-              <TextBlock Text="EVOLUÇÃO POR ITEM" Classes="section" Margin="0" />
-              <ItemsControl ItemsSource="{Binding ItemEvolutions}">
-                <ItemsControl.ItemsPanel>
-                  <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="vm:ItemEvolutionOption">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                      <Button Classes="small info" Content="{Binding Label, StringFormat='💎  {0}'}" Command="{Binding Command}"
-                              IsEnabled="{Binding !IsBlocked}" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" />
-                      <TextBlock Grid.Column="1" Text="{Binding Requirement}" Classes="muted" FontSize="12"
-                                 VerticalAlignment="Center" TextWrapping="Wrap" />
-                    </Grid>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
+              <TextBlock Text="Evoluir" Classes="section" Margin="0" />
+              <TextBlock Text="Escolha o resultado para conferir a prévia. A Everstone é removida ao evoluir." Classes="muted" FontSize="12" TextWrapping="Wrap" />
+              <ScrollViewer MaxHeight="300" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Evolutions}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:EvolutionRowViewModel">
+                      <Button Command="{Binding Command}" IsEnabled="{Binding !IsBlocked}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Margin="0,0,0,6">
+                        <Grid ColumnDefinitions="56,*" ColumnSpacing="10" MinHeight="64">
+                          <Image Source="{Binding Sprite}" Width="48" Height="48" />
+                          <StackPanel Grid.Column="1" Spacing="3">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding Requirement}" TextWrapping="Wrap" FontSize="12" />
+                            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Classes="muted" FontSize="12" />
+                          </StackPanel>
+                        </Grid>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
             </StackPanel>
           </Border>
-
-          <!-- Evoluir por troca: so aparece para especies que evoluem assim -->
-          <Border Classes="card" IsVisible="{Binding HasFriendshipEvolutions}">
-            <StackPanel Spacing="8">
-              <TextBlock Text="EVOLUÇÃO POR FELICIDADE" Classes="section" Margin="0" />
-              <ItemsControl ItemsSource="{Binding FriendshipEvolutions}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="vm:FriendshipEvolutionOption">
-                    <StackPanel Spacing="4" Margin="0,0,0,6">
-                      <Button Classes="small info" Content="{Binding Label, StringFormat='♥  {0}'}" Command="{Binding Command}" IsEnabled="{Binding !IsBlocked}" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" />
-                      <TextBlock Text="{Binding Requirement}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
-                    </StackPanel>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <TextBlock Text="A felicidade aumenta até o mínimo necessário. Dia/noite é simulado pelo botão escolhido; os demais requisitos precisam ser cumpridos." Classes="muted" FontSize="11" TextWrapping="Wrap" />
-            </StackPanel>
-          </Border>
-          <Border Classes="card" IsVisible="{Binding HasBeautyEvolutions}">
-            <StackPanel Spacing="8">
-              <TextBlock Text="EVOLUÇÃO POR BELEZA" Classes="section" Margin="0" />
-              <ItemsControl ItemsSource="{Binding BeautyEvolutions}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="vm:ItemEvolutionOption">
-                    <StackPanel Spacing="4">
-                      <Button Classes="small info" Content="{Binding Label}" Command="{Binding Command}" IsEnabled="{Binding !IsBlocked}" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" />
-                      <TextBlock Text="{Binding Requirement}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
-                    </StackPanel>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <TextBlock Text="Beauty é um atributo de concurso, separado da felicidade. O botão sobe o Beauty até o mínimo (com o Sheen legal) e tira a Everstone; nos jogos sem concursos, só vale se o Pokémon veio de um jogo que tem." Classes="muted" FontSize="11" TextWrapping="Wrap" />
-            </StackPanel>
-          </Border>
-          <Border Classes="card" IsVisible="{Binding HasTradeEvolutions}">
-            <StackPanel Spacing="8">
-              <TextBlock Text="EVOLUÇÃO POR TROCA" Classes="section" Margin="0" />
-              <ItemsControl ItemsSource="{Binding TradeEvolutions}">
-                <ItemsControl.ItemsPanel>
-                  <ItemsPanelTemplate><StackPanel Spacing="6" /></ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate x:DataType="vm:TradeEvolutionOption">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                      <Button Classes="small info" Content="{Binding Label, StringFormat='🔄  {0}'}" Command="{Binding Command}"
-                              IsEnabled="{Binding !IsBlocked}" ToolTip.Tip="{Binding Tooltip}" ToolTip.ShowOnDisabled="True" />
-                      <TextBlock Grid.Column="1" Text="{Binding Requirement}" Classes="muted" FontSize="12"
-                                 VerticalAlignment="Center" TextWrapping="Wrap" />
-                    </Grid>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-            </StackPanel>
-          </Border>
-
           <Border Classes="card" IsVisible="{Binding ShowLegality}">
             <StackPanel Spacing="8">
               <Grid ColumnDefinitions="*,Auto">

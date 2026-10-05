@@ -1242,6 +1242,7 @@ public sealed partial class PokemonEditorViewModel : ViewModelBase
 
     private void Refresh()
     {
+        RefreshEvolutions();
         Raise(nameof(FriendshipEvolutions));
         Raise(nameof(HasFriendshipEvolutions));
         Raise(nameof(BeautyEvolutions));

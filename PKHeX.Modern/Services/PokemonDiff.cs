@@ -82,6 +82,13 @@ public static class PokemonDiff
         {
             ["Espécie/forma"] = (Form(), false),
             ["Nível"] = (pk.CurrentLevel.ToString(), false),
+            ["Gênero"] = (CoreAdapter.GetGenderSymbol(pk), false),
+            ["Felicidade"] = (pk.CurrentFriendship.ToString(), false),
+            ["Carinho"] = (pk is IAffection affection ? (pk.CurrentHandler == 0 ? affection.OriginalTrainerAffection : affection.HandlingTrainerAffection).ToString() : "—", false),
+            ["Beauty"] = (pk is IContestStatsReadOnly contest ? contest.ContestBeauty.ToString() : "—", false),
+            ["Sheen"] = (pk is IContestStatsReadOnly sheen ? sheen.ContestSheen.ToString() : "—", false),
+            ["Contador de evolução"] = (pk is IFormArgument argument ? argument.FormArgument.ToString() : "—", false),
+            ["Parceiro de troca"] = (pk.HandlingTrainerName, false),
             ["Natureza"] = (pk.Format >= 3 ? Name(s.natures, (int)pk.Nature) : "—", true),
             ["Menta"] = (pk.Format >= 8 ? Name(s.natures, (int)pk.StatAlignment) : "—", true),
             ["Habilidade"] = (pk.Format >= 3 ? Name(s.abilitylist, pk.Ability) : "—", false),
