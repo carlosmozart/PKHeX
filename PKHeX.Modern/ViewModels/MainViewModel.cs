@@ -51,6 +51,7 @@ public sealed partial class MainViewModel : ViewModelBase
         };
         SaveManager.PropertyChanged += (_, e) =>
         {
+            if (e.PropertyName == nameof(SaveManagerViewModel.Entries)) { Search?.InvalidateSources(); Pokedex?.LivingDex?.InvalidateSources(); }
             if (e.PropertyName == nameof(SaveManagerViewModel.HasEntries))
                 Raise(nameof(ShowSidebarSaves));
         };
@@ -66,6 +67,8 @@ public sealed partial class MainViewModel : ViewModelBase
             (t, m, ok, details) => ConfirmAsync(t, m, ok, details: details, icon: "📖"), s => Status = s);
         Search = new SearchPageViewModel(Settings,
             () => [.. OpenSaves.Select(t => (t.Path, t == _activeTab && _sav is not null ? _sav : t.Sav))], OpenSearchResultAsync);
+        Search.ShowComparison = details => ConfirmAsync("Comparar anexados", "Confira as diferenças entre os dados vinculados.", "OK", cancelText: "", details: details);
+        Search.IsPageActive = () => CurrentPage == Search;
         Encounters = new EncounterDbViewModel(UseEncounter);
         Gifts = new GiftDbViewModel(UseEncounter);
         Pokedex.LivingDex = new LivingDexViewModel(Settings,
@@ -571,6 +574,8 @@ public sealed partial class MainViewModel : ViewModelBase
     private void InvalidateSearch()
     {
         _searchIndex = null;
+        Search?.InvalidateSources();
+        Pokedex?.LivingDex?.InvalidateSources();
         if (HasSearch)
         {
             _searchTimer.Stop();
@@ -603,7 +608,19 @@ public sealed partial class MainViewModel : ViewModelBase
         {
             CurrentPage = Bank;
             Bank.SelectedBank = bank;
-            Bank.BoxIndex = entry.Box;
+            var boxes = BankStorage.GetBoxes(bank, create: false);
+            int foundBox = -1, foundSlot = -1;
+            for (int b = 0; b < boxes.Count && foundBox < 0; b++)
+                for (int s = 0; s < BankStorage.SlotsPerBox; s++)
+                {
+                    bool found = entry.Box == -2 ? BankStorage.ReadSlot(boxes[b], s) is { } pk && BankLinks.IdOf(pk) == BankLinks.IdOf(entry.Pkm)
+                        : entry.EntityFile is { } file ? string.Equals(BankStorage.GetSlotFile(boxes[b], s), file, StringComparison.OrdinalIgnoreCase)
+                        : b == entry.Box && s == entry.Slot;
+                    if (found) { foundBox = b; foundSlot = s; break; }
+                }
+            if (foundBox < 0) { Status = "A origem ou o destino mudou. Refazer a prévia é necessário."; return; }
+            Bank.BoxIndex = foundBox;
+            if (foundSlot < Bank.Slots.Count) await SelectSlotAsync(Bank.Slots[foundSlot]);
             Status = $"{entry.Source.Name} · {entry.Where}";
             return;
         }
@@ -613,7 +630,7 @@ public sealed partial class MainViewModel : ViewModelBase
             return;
         }
         await OpenAsync(entry.Source.Id);
-        if (_activeTab is { } tab && string.Equals(FullPath(tab.Path), FullPath(entry.Source.Id), StringComparison.OrdinalIgnoreCase))
+        if (_activeTab is { } tab && StoredPokemon.SameSource(tab.Path, entry.Source.Id))
             await GoToSlotAsync(entry.Box, entry.Slot);
     }
 
@@ -762,8 +779,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private SaveTabViewModel? FindTab(string path)
     {
-        var full = FullPath(path);
-        return OpenSaves.FirstOrDefault(t => string.Equals(FullPath(t.Path), full, StringComparison.OrdinalIgnoreCase));
+        return OpenSaves.FirstOrDefault(t => StoredPokemon.SameSource(t.Path, path));
     }
 
     private static string FullPath(string path) => ZipSaves.IsZipPath(path, out var zip, out var entry)
@@ -863,6 +879,8 @@ public sealed partial class MainViewModel : ViewModelBase
     /// <summary>Carrega uma aba nas paginas: ela passa a ser "o save aberto".</summary>
     private void ActivateTab(SaveTabViewModel tab)
     {
+        Pokedex.LivingDex?.InvalidateSources();
+        Search.InvalidateSources();
         _activeTab = tab;
         tab.IsActive = true;
         CoreAdapter.Activate(tab.Sav); // legalidade, sprites e listas do PKHeX passam a ser deste save

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
 using Avalonia.Threading;
 using PKHeX.Core;
 using PKHeX.Modern.Services;
@@ -9,14 +10,17 @@ using PKHeX.Modern.Services;
 namespace PKHeX.Modern.ViewModels;
 
 /// <summary>Collection snapshots are read on a worker; Core context checks run in small UI chunks.</summary>
-public sealed class LivingDexViewModel : ViewModelBase
+public sealed partial class LivingDexViewModel : ViewModelBase
 {
     private readonly AppSettings _settings;
     private readonly Func<IReadOnlyList<(string Path, SaveFile Sav)>> _openSaves;
     private readonly Func<SaveFile?> _activeSave;
     private readonly Func<DbEntry, Task> _open;
     private readonly Action<ushort, GameVersion> _find;
-    private readonly Dictionary<string, (DateTime Write, SaveFile Sav)> _cache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly CollectionSources _reader = new();
+    private CancellationTokenSource? _reading;
+    public RelayCommand CancelReadCommand => new(() => _reading?.Cancel());
+    public void InvalidateSources() { _reader.Invalidate(); _reading?.Cancel(); Invalidate(); }
     private IReadOnlyList<LivingDexRowViewModel> _rows = [];
     public static IReadOnlyList<GameVersion> Versions { get; } =
     [GameVersion.RD, GameVersion.GN, GameVersion.YW, GameVersion.GD, GameVersion.SI, GameVersion.C,
@@ -31,6 +35,7 @@ public sealed class LivingDexViewModel : ViewModelBase
         Func<SaveFile?> activeSave, Func<DbEntry, Task> open, Action<ushort, GameVersion> find)
     {
         _settings = settings; _openSaves = openSaves; _activeSave = activeSave; _open = open; _find = find;
+        BankStorage.CollectionChanged += () => { if (Dispatcher.UIThread.CheckAccess()) InvalidateSources(); else Dispatcher.UIThread.Post(InvalidateSources); };
         GenerateCommand = new RelayCommand(() => _ = RefreshAsync(), () => !IsBusy);
         TargetOptions = Versions.Select(CoreAdapter.GetVersionName).ToArray();
     }
@@ -86,23 +91,22 @@ public sealed class LivingDexViewModel : ViewModelBase
             Raise(nameof(TargetIndex));
         }
         IsBusy = true; var revision = _revision;
+        _reading = new CancellationTokenSource();
         Progress = "Lendo as fontes...";
         try
         {
             var version = Versions[TargetIndex]; var forms = IncludeForms; var shiny = ShinyOnly;
-            var open = IncludeOpen ? _openSaves().Select(s => (s.Path, Sav: s.Sav.Clone())).ToArray() : [];
+            var open = IncludeOpen ? _openSaves() : [];
             var folder = IncludeFolder ? _settings.SavesFolder ?? SaveLibrary.DefaultFolder : null;
             var bank = IncludeBank;
-            var (entries, target) = await Task.Run(() =>
-            {
-                var data = PokemonDatabase.Build(open, folder, _cache, bank, readOnly: true,
-                    sourceProgress: n => Dispatcher.UIThread.Post(() => Progress = $"Lendo fontes: {n}"));
-                return (data, BlankSaveFile.Get(version));
-            });
+            var entries = await _reader.ReadAsync(open, folder, bank, _reading.Token,
+                n => Dispatcher.UIThread.Post(() => { if (IsBusy) Progress = $"Lendo fontes: {n}"; }));
+            var target = BlankSaveFile.Get(version);
             var eligible = entries.Where(e => LivingDexPlanner.Eligible(e, target, shiny)).ToArray();
             var legalities = new Dictionary<DbEntry, bool>();
             for (int start = 0; start < eligible.Length; start += 8)
             {
+                _reading.Token.ThrowIfCancellationRequested();
                 if (revision != _revision) return;
                 // Context is always restored before yielding back to Avalonia.
                 for (int i = start; i < Math.Min(start + 8, eligible.Length); i++)
@@ -113,21 +117,26 @@ public sealed class LivingDexViewModel : ViewModelBase
             var plan = await Task.Run(() => LivingDexPlanner.Build(entries, target, forms, shiny, legalities));
             if (revision != _revision) return;
             Plan = plan; Raise(nameof(Plan));
+            var audit = DuplicateAudit.Build(entries);
             _rows = plan.Rows.Select(r => new LivingDexRowViewModel(r,
                 new RelayCommand(() => _find(r.Species, version)),
-                r.Candidate is null ? null : new RelayCommand(() => _ = _open(r.Candidate)))).ToArray();
+                r.Candidate is null ? null : new RelayCommand(() => _ = _open(r.Candidate)),
+                r.Candidate is not null ? audit.Labels.GetValueOrDefault(r.Candidate.LocationId, "") : "")).ToArray();
             Summary = forms
                 ? $"{plan.Owned} de {plan.Rows.Count} entradas · {plan.Missing} faltando · {plan.Others} outros exemplares"
                 : $"{plan.Owned} de {plan.Rows.Count} espécies · {plan.Missing} faltando · {plan.Others} outros exemplares";
             Selected = null; Filter(); Progress = "Plano pronto. Nenhum Pokémon foi movido.";
+            if (_reader.Errors.Count > 0) Progress += Loc.T(" · Fontes incompletas: ") + _reader.Errors.Count;
         }
+        catch (OperationCanceledException) { Plan = null; _rows = []; Filter(); Progress = "Leitura cancelada. Atualize para obter um resultado completo."; }
         catch (Exception ex) { Progress = "Não foi possível planejar: " + ex.Message; }
         finally { IsBusy = false; }
     }
 }
 
-public sealed class LivingDexRowViewModel(LivingDexRow row, RelayCommand find, RelayCommand? open)
+public sealed class LivingDexRowViewModel(LivingDexRow row, RelayCommand find, RelayCommand? open, string label = "")
 {
+    public string AuditLabel => label;
     public LivingDexRow Row => row;
     public string Title => $"#{row.Species:0000} {row.Name}";
     public bool Missing => row.Missing;

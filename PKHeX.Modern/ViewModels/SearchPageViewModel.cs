@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
+using Avalonia.Threading;
 using Avalonia.Media.Imaging;
 using PKHeX.Core;
 using PKHeX.Modern.Services;
@@ -13,12 +15,22 @@ namespace PKHeX.Modern.ViewModels;
 /// com filtros (texto, origem, shiny, geracao, nivel, IVs, natureza, bola) e ordenacao. Clicar num resultado abre
 /// o save e vai ate o slot (ou abre a caixa do bank).
 /// </summary>
-public sealed class SearchPageViewModel : PageViewModel
+public sealed partial class SearchPageViewModel : PageViewModel
 {
     private readonly AppSettings _settings;
     private readonly Func<IReadOnlyList<(string Path, SaveFile Sav)>> _openSaves;
     private readonly Func<DbEntry, Task> _open;
-    private readonly Dictionary<string, (DateTime Write, SaveFile Sav)> _cache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly CollectionSources _reader = new();
+    private CancellationTokenSource? _reading;
+    private bool _retryRead;
+    public Func<bool>? IsPageActive { get; set; }
+    public RelayCommand CancelReadCommand => new(() => { _retryRead = false; _reading?.Cancel(); });
+    public void InvalidateSources()
+    {
+        _reader.Invalidate(); _reading?.Cancel(); _all = []; _auditResult = null; _retryRead = true;
+        Summary = "Dados alterados. Atualize a consulta."; Raise(nameof(Summary)); ApplyFilter();
+        if (!IsBusy && IsPageActive?.Invoke() == true) { _retryRead = false; _ = RefreshAsync(); }
+    }
     private List<DbEntry> _all = [];
 
     /// <param name="openSaves">Saves abertos nas abas (com as alteracoes nao salvas).</param>
@@ -28,6 +40,7 @@ public sealed class SearchPageViewModel : PageViewModel
         _settings = settings;
         _openSaves = openSaves;
         _open = open;
+        BankStorage.CollectionChanged += () => { if (Dispatcher.UIThread.CheckAccess()) InvalidateSources(); else Dispatcher.UIThread.Post(InvalidateSources); };
         RefreshCommand = new RelayCommand(() => _ = RefreshAsync(), () => !IsBusy);
         ClearCommand = new RelayCommand(ClearFilters);
         OpenCommand = new RelayCommand(p => { if (p is DbResultViewModel r) _ = _open(r.Entry); });
@@ -122,16 +135,22 @@ public sealed class SearchPageViewModel : PageViewModel
         if (IsBusy)
             return;
         IsBusy = true;
+        _retryRead = false;
+        _reading = new CancellationTokenSource();
         Summary = "Lendo saves e bank...";
         Raise(nameof(Summary));
         Raise(nameof(HasNoResults));
         try
         {
             // Copias tiradas aqui, na thread da interface: a leitura em segundo plano nao disputa o save com o editor.
-            var open = _openSaves().Select(s => (s.Path, Sav: s.Sav.Clone())).ToArray();
+            var open = _openSaves();
             var folder = _settings.SavesFolder ?? SaveLibrary.DefaultFolder;
             BankStorage.ExternalFolders = _settings.ExternalBankFolders;
-            _all = await Task.Run(() => PokemonDatabase.Build(open, folder, _cache, readOnly: true)); // pesquisar nao cria bancos nem caixas
+            var loaded = (await _reader.ReadAsync(open, folder, true, _reading.Token,
+                n => Dispatcher.UIThread.Post(() => { if (IsBusy) { Summary = $"Lendo fontes: {n}"; Raise(nameof(Summary)); } }))).ToList();
+            var audit = await Task.Run(() => DuplicateAudit.Build(loaded, _reading.Token), _reading.Token);
+            _reading.Token.ThrowIfCancellationRequested();
+            _all = loaded; _auditResult = audit;
 
             var keep = _source > 0 && _source <= _sources.Count ? _sources[_source - 1].Id : null;
             _sources = [.. _all.Select(e => e.Source).DistinctBy(s => s.Id)];
@@ -142,7 +161,12 @@ public sealed class SearchPageViewModel : PageViewModel
 
             int saves = _sources.Count(s => !s.IsBank), banks = _sources.Count(s => s.IsBank);
             Summary = $"{_all.Count} Pokémon em {saves} save(s)" + (banks > 0 ? $" e {banks} banco(s) do bank" : "");
+            if (_reader.Errors.Count > 0) Summary += Loc.T(" · Fontes incompletas: ") + _reader.Errors.Count;
             Raise(nameof(Summary));
+        }
+        catch (OperationCanceledException)
+        {
+            _all = []; _auditResult = null; Summary = "Leitura cancelada. Atualize para obter um resultado completo."; Raise(nameof(Summary));
         }
         catch (Exception ex)
         {
@@ -153,11 +177,13 @@ public sealed class SearchPageViewModel : PageViewModel
         {
             IsBusy = false;
             ApplyFilter();
+            if (_retryRead && IsPageActive?.Invoke() == true) { _retryRead = false; _ = RefreshAsync(); }
         }
     }
 
     private void ApplyFilter()
     {
+        UpdateDuplicates();
         var source = _source > 0 && _source <= _sources.Count ? _sources[_source - 1] : null;
         var words = _query.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var nature = _nature > 0 ? NatureOptions[_nature] : null;

@@ -810,6 +810,11 @@
   <!-- Pesquisa: todos os Pokemon dos saves abertos, da pasta e do bank -->
   <DataTemplate DataType="vm:SearchPageViewModel">
     <DockPanel>
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+        <Button Content="Pesquisa" Command="{Binding ShowSearchCommand}" />
+        <Button Content="Duplicados" Command="{Binding ShowDuplicatesCommand}" />
+        <Button Content="Cancelar leitura" Command="{Binding CancelReadCommand}" IsVisible="{Binding IsBusy}" />
+      </StackPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
         <StackPanel Spacing="2">
           <TextBlock Text="Pesquisa" Classes="title" />
@@ -827,7 +832,7 @@
                   ToolTip.Tip="Procurar em tudo ou só num save (ou num banco do bank)" />
         <ComboBox Grid.Column="2" ItemsSource="{Binding SortOptions}" SelectedIndex="{Binding SortIndex}" MinWidth="170" />
       </Grid>
-      <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8" ItemSpacing="8" LineSpacing="8">
+      <WrapPanel DockPanel.Dock="Top" IsVisible="{Binding ShowSearch}" Margin="0,0,0,8" ItemSpacing="8" LineSpacing="8">
         <ComboBox ItemsSource="{Binding ShinyOptions}" SelectedIndex="{Binding ShinyIndex}" MinWidth="130" />
         <ComboBox ItemsSource="{Binding IvOptions}" SelectedIndex="{Binding IvIndex}" MinWidth="150"
                   ToolTip.Tip="IV perfeito = 31 (15 na Gen 1 e 2)" />
@@ -841,7 +846,7 @@
         </StackPanel>
         <CheckBox Content="Incluir ovos" IsChecked="{Binding IncludeEggs}" VerticalAlignment="Center" />
       </WrapPanel>
-      <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,0,10">
+      <Grid DockPanel.Dock="Top" IsVisible="{Binding ShowSearch}" ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,0,10">
         <ItemsControl ItemsSource="{Binding Generations}" VerticalAlignment="Center">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
@@ -857,7 +862,7 @@
         </ItemsControl>
         <TextBlock Grid.Column="1" Text="{Binding CountText}" Classes="muted" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" />
       </Grid>
-      <Panel>
+      <Panel IsVisible="{Binding ShowSearch}">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
           <!-- Lista virtualizada: so as linhas visiveis sao montadas -->
           <ItemsRepeater ItemsSource="{Binding Results}">
@@ -897,6 +902,50 @@
         <TextBlock Text="Lendo saves e bank..." Classes="muted" IsVisible="{Binding IsBusy}" HorizontalAlignment="Center" VerticalAlignment="Center" />
         <TextBlock Text="Nenhum Pokémon com esses filtros." Classes="muted" IsVisible="{Binding HasNoResults}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>
+      <Grid IsVisible="{Binding ShowDuplicates}" RowDefinitions="Auto,*">
+        <TextBlock Text="{Binding DuplicateSummary}" Classes="muted" TextWrapping="Wrap" />
+        <ScrollViewer Grid.Row="1" IsVisible="{Binding ShowDuplicateList}">
+          <ItemsControl ItemsSource="{Binding DuplicateGroups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:DuplicateGroupViewModel">
+                <Button Command="{Binding SelectCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Margin="0,0,0,6">
+                  <StackPanel Spacing="4"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" /><TextBlock Text="{Binding Category}" /><TextBlock Text="{Binding Count}" Classes="muted" /></StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+        <DockPanel Grid.Row="1" IsVisible="{Binding HasDuplicateDetail}">
+          <Button DockPanel.Dock="Top" Content="Voltar aos grupos" Command="{Binding BackDuplicatesCommand}" HorizontalAlignment="Left" />
+          <ScrollViewer>
+            <StackPanel DataContext="{Binding SelectedDuplicate}" x:DataType="vm:DuplicateGroupViewModel" Spacing="8">
+              <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+              <TextBlock Text="{Binding Category}" />
+              <Button Content="Comparar" Command="{Binding CompareCommand}" IsVisible="{Binding CanCompare}" HorizontalAlignment="Left" />
+              <ItemsControl ItemsSource="{Binding Children}" IsVisible="{Binding HasChildren}">
+                <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:DuplicateGroupViewModel">
+                  <Button Command="{Binding SelectCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Margin="0,0,0,6">
+                    <StackPanel><TextBlock Text="{Binding Title}" /><TextBlock Text="{Binding Count}" /></StackPanel>
+                  </Button>
+                </DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <ItemsControl ItemsSource="{Binding Members}" IsVisible="{Binding ShowMembers}">
+                <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:DuplicateMemberViewModel">
+                  <Border Classes="card" Margin="0,0,0,6"><Grid ColumnDefinitions="56,*" ColumnSpacing="10">
+                    <Image Source="{Binding Sprite}" Width="48" Height="48" />
+                    <StackPanel Grid.Column="1" Spacing="4">
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Location}" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Details}" Classes="muted" TextWrapping="Wrap" />
+                      <Button Content="Ir ao local" Command="{Binding OpenCommand}" HorizontalAlignment="Left" />
+                    </StackPanel>
+                  </Grid></Border>
+                </DataTemplate></ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </ScrollViewer>
+        </DockPanel>
+      </Grid>
     </DockPanel>
   </DataTemplate>
 

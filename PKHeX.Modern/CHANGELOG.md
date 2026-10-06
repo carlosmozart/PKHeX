@@ -6,6 +6,11 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 🔎 Pesquisa
+- **Auditoria de duplicados:** cópias idênticas por dados armazenados, agrupamento de backups por par de arquivos e anexados/variantes registrados no Bank, com comparação e navegação somente leitura. Leitura cancelável, incluindo alterações não salvas.
+
 ## 0.4.18 — 2026-10-06
 
 ### 📱 Android

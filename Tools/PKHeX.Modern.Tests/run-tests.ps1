@@ -9,6 +9,7 @@ if ($env:PKHEX_TEST_SAVES) { $saves = $env:PKHEX_TEST_SAVES }
 # nome usado pelo teste -> arquivo em saves/
 $suites = [ordered]@{
     'CollectionSources' = @{}
+    'DuplicateAudit' = @{}
     'Evolution' = @{}
     'BoxReport' = @{}
     'EditorAnalysis' = @{ 'sv.sav' = 'Scarlet' }
@@ -82,7 +83,9 @@ foreach ($name in $suites.Keys) {
     $proj = Join-Path $PSScriptRoot "$name\$name.csproj"
     $testArgs = @($work)
     if ($name -eq 'SpriteParity') { $testArgs += $saves }
-    dotnet run -c Release --project $proj -- @testArgs | Where-Object { $_ -notmatch 'warning' }
+    $restoreArgs = @()
+    if ($env:PKHEX_TEST_NO_RESTORE -eq '1') { $restoreArgs = @('--no-restore') }
+    dotnet run @restoreArgs -c Release --project $proj -- @testArgs | Where-Object { $_ -notmatch 'warning' }
     if ($LASTEXITCODE -ne 0) { $failed += $name }
 }
 if ($failed.Count) { Write-Host "FALHARAM: $($failed -join ', ')" -ForegroundColor Red; exit 1 }
