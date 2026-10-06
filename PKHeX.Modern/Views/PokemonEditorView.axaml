@@ -162,9 +162,9 @@
 
           <Border Classes="card" IsVisible="{Binding HasEvolutions}">
             <StackPanel Spacing="8">
-              <TextBlock Text="Evoluir" Classes="section" Margin="0" />
+              <TextBlock Text="EVOLUIR" Classes="section" Margin="0" />
               <TextBlock Text="Escolha o resultado para conferir a prévia. A Everstone é removida ao evoluir." Classes="muted" FontSize="12" TextWrapping="Wrap" />
-              <ScrollViewer MaxHeight="300" HorizontalScrollBarVisibility="Disabled">
+              <!-- Sem rolagem própria: o painel do editor já rola (rolagem dentro de rolagem atrapalha o toque) -->
                 <ItemsControl ItemsSource="{Binding Evolutions}">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:EvolutionRowViewModel">
@@ -181,7 +181,6 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-              </ScrollViewer>
             </StackPanel>
           </Border>
           <Border Classes="card" IsVisible="{Binding ShowLegality}">

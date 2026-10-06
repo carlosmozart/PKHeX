@@ -132,7 +132,7 @@ void Pump() { for (int i = 0; i < 10; i++) { Dispatcher.UIThread.RunJobs(); Aval
 var desktop = new PKHeX.Modern.Views.MainWindow { DataContext = vm, Width = 1440, Height = 1000 }; desktop.Show(); Pump(); desktop.CaptureRenderedFrame()?.Save(Path.Combine(work, "evolution-desktop.png")); desktop.Hide();
 App.ShowShortcuts = false;
 var phone = new Avalonia.Controls.Window { Width = 892, Height = 412, Content = new PKHeX.Modern.Views.MobileShell(vm) }; phone.Show(); Pump();
-var heading = phone.GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "Evoluir");
+var heading = phone.GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == "EVOLUIR");
 heading.GetVisualAncestors().OfType<ScrollViewer>().First().Offset = new Vector(0, 500); Pump();
 phone.CaptureRenderedFrame()?.Save(Path.Combine(work, "evolution-mobile.png")); phone.Close();
 Console.WriteLine(fails == 0 ? "TUDO OK" : $"{fails} FALHAS"); return fails == 0 ? 0 : 1;
