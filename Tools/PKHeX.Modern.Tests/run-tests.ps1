@@ -8,6 +8,7 @@ $saves = Join-Path $root 'saves'
 if ($env:PKHEX_TEST_SAVES) { $saves = $env:PKHEX_TEST_SAVES }
 # nome usado pelo teste -> arquivo em saves/
 $suites = [ordered]@{
+    'CollectionSources' = @{}
     'Evolution' = @{}
     'BoxReport' = @{}
     'EditorAnalysis' = @{ 'sv.sav' = 'Scarlet' }

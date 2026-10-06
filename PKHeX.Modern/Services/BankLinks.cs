@@ -69,6 +69,7 @@ public static class BankLinks
         Directory.CreateDirectory(BankStorage.Root);
         File.WriteAllText(IndexFile, JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true }));
         _ids = [.. list.Select(l => l.Id)];
+        BankStorage.NotifyCollectionChanged();
     }
 
     /// <summary>Esquece a lista em memoria (testes trocam a pasta do bank).</summary>

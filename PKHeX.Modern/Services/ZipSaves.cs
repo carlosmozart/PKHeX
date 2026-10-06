@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Threading;
 using PKHeX.Core;
 
 namespace PKHeX.Modern.Services;
@@ -64,7 +65,7 @@ public static class ZipSaves
     }
 
     /// <summary>Todos os saves reconhecidos dentro de um zip, com o caminho "zip|entrada".</summary>
-    public static IEnumerable<(string Path, SaveFile Sav)> ReadAll(string zip)
+    public static IEnumerable<(string Path, SaveFile Sav)> ReadAll(string zip, CancellationToken token = default, Action<string>? readError = null)
     {
         var found = new List<(string, SaveFile)>();
         try
@@ -72,6 +73,7 @@ public static class ZipSaves
             using var archive = ZipFile.OpenRead(zip);
             foreach (var entry in archive.Entries)
             {
+                token.ThrowIfCancellationRequested();
                 if (entry.FullName.EndsWith('/') || entry.Length == 0 || entry.Length > MaxEntrySize)
                     continue;
                 var path = Combine(zip, entry.FullName);
@@ -79,9 +81,10 @@ public static class ZipSaves
                     found.Add((path, sav));
             }
         }
-        catch
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
         {
-            // zip corrompido ou em uso: ignora
+            readError?.Invoke(zip + ": " + ex.Message);
         }
         return found;
     }

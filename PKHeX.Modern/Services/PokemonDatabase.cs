@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using PKHeX.Core;
 
 namespace PKHeX.Modern.Services;
@@ -51,6 +52,8 @@ public sealed class DbEntry
     /// <summary>Posicao: caixa (-1 = equipe) e slot no save; no bank, indice da caixa do banco e slot.</summary>
     public int Box { get; }
     public int Slot { get; }
+    public string? EntityFile { get; init; }
+    public string LocationId => EntityFile is { } file ? Path.GetFullPath(file) : Source.Id + "|" + Box + "|" + Slot;
 
     public string Species { get; }
     public string Nickname { get; }
@@ -79,34 +82,37 @@ public static class PokemonDatabase
     /// <param name="folder">Pasta do Save Manager (saves fechados); null = nenhuma.</param>
     /// <param name="cache">Saves da pasta ja lidos (caminho → data + save), reaproveitados enquanto o arquivo nao mudar.</param>
     public static List<DbEntry> Build(IReadOnlyList<(string Path, SaveFile Sav)> open, string? folder,
-        Dictionary<string, (DateTime Write, SaveFile Sav)> cache, bool includeBank = true, bool readOnly = false, Action<int>? sourceProgress = null)
+        Dictionary<string, (DateTime Write, SaveFile Sav)> cache, bool includeBank = true, bool readOnly = false, Action<int>? sourceProgress = null,
+        CancellationToken cancellationToken = default, Action<string>? readError = null)
     {
         var list = new List<DbEntry>();
         int sourcesRead = 0;
-        var openPaths = new HashSet<string>(open.Select(o => Normalize(o.Path)), StringComparer.OrdinalIgnoreCase);
+        var openPaths = new HashSet<string>(open.Select(o => Normalize(o.Path)), StringComparer.Ordinal);
         foreach (var (path, sav) in open)
         {
-            AddSave(list, new DbSource(path, $"{CoreAdapter.GetGameName(sav)} · {sav.OT} (aberto)", sav.Version, true) { Save = sav }, sav);
+            cancellationToken.ThrowIfCancellationRequested();
+            AddSave(list, new DbSource(path, $"{CoreAdapter.GetGameName(sav)} · {sav.OT} (aberto)", sav.Version, true) { Save = sav }, sav, cancellationToken, readError);
             sourceProgress?.Invoke(++sourcesRead);
         }
 
         if (folder is not null && Directory.Exists(folder))
         {
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var file in SafeFiles(folder))
+            var seen = new HashSet<string>(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+            foreach (var file in SafeFiles(folder, readError))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 DateTime write;
                 try { write = File.GetLastWriteTimeUtc(file); } catch { continue; }
                 IEnumerable<(string Path, SaveFile Sav)> saves;
                 if (file.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                    saves = ReadCached(cache, seen, file, write, () => ZipSaves.ReadAll(file).ToList());
+                    saves = ReadCached(cache, seen, file, write, () => ZipSaves.ReadAll(file, cancellationToken, readError).ToList());
                 else
                     saves = ReadCached(cache, seen, file, write, () => PokedexService.TryRead(file) is { } s ? [(file, s)] : []);
                 foreach (var (path, sav) in saves)
                 {
                     if (openPaths.Contains(Normalize(path)))
                         continue; // o aberto entra com as alteracoes da aba
-                    AddSave(list, new DbSource(path, $"{CoreAdapter.GetGameName(sav)} · {sav.OT}", sav.Version, false) { Save = sav }, sav);
+                    AddSave(list, new DbSource(path, $"{CoreAdapter.GetGameName(sav)} · {sav.OT}", sav.Version, false) { Save = sav }, sav, cancellationToken, readError);
                 }
                 sourceProgress?.Invoke(++sourcesRead);
             }
@@ -122,11 +128,12 @@ public static class PokemonDatabase
                 var boxes = BankStorage.GetBoxes(bank, create: !readOnly);
                 for (int b = 0; b < boxes.Count; b++)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     PKM?[] data;
-                    try { data = BankStorage.ReadBox(boxes[b]); } catch { continue; }
+                    try { data = BankStorage.ReadBox(boxes[b]); } catch (Exception ex) { readError?.Invoke(boxes[b].Folder + ": " + ex.Message); continue; }
                     for (int i = 0; i < data.Length; i++)
                         if (data[i] is { Species: > 0 } pk)
-                            list.Add(new DbEntry(source, pk, $"{boxes[b].Name} · {i + 1}", b, i));
+                            list.Add(new DbEntry(source, pk, $"{boxes[b].Name} · {i + 1}", b, i) { EntityFile = BankStorage.GetSlotFile(boxes[b], i) });
                 }
                 sourceProgress?.Invoke(++sourcesRead);
             }
@@ -139,7 +146,7 @@ public static class PokemonDatabase
         string file, DateTime write, Func<List<(string, SaveFile)>> read)
     {
         seen.Add(file);
-        var hits = cache.Where(kv => string.Equals(ZipSaves.FileOf(kv.Key), file, StringComparison.OrdinalIgnoreCase)).ToList();
+        var hits = cache.Where(kv => StoredPokemon.SameSource(ZipSaves.FileOf(kv.Key), file)).ToList();
         if (hits.Count > 0 && hits.All(h => h.Value.Write == write))
             return hits.Select(h => (h.Key, h.Value.Sav)).ToList();
         foreach (var h in hits)
@@ -150,13 +157,13 @@ public static class PokemonDatabase
         return saves;
     }
 
-    private static IEnumerable<string> SafeFiles(string folder)
+    private static IEnumerable<string> SafeFiles(string folder, Action<string>? error)
     {
         try { return Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList(); }
-        catch { return []; }
+        catch (Exception ex) { error?.Invoke(folder + ": " + ex.Message); return []; }
     }
 
-    private static void AddSave(List<DbEntry> list, DbSource source, SaveFile sav)
+    private static void AddSave(List<DbEntry> list, DbSource source, SaveFile sav, CancellationToken token, Action<string>? error)
     {
         try
         {
@@ -166,19 +173,19 @@ public static class PokemonDatabase
                         list.Add(new DbEntry(source, pk, $"Equipe · {i + 1}", -1, i));
             for (int b = 0; b < sav.BoxCount; b++)
             {
+                token.ThrowIfCancellationRequested();
                 var boxName = CoreAdapter.GetBoxName(sav, b);
                 for (int i = 0; i < sav.BoxSlotCount; i++)
                     if (sav.GetBoxSlotAtIndex(b, i) is { Species: > 0 } pk)
                         list.Add(new DbEntry(source, pk, $"{boxName} · {i + 1}", b, i));
             }
         }
-        catch
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
         {
-            // save com caixas ilegiveis: fica com o que deu para ler
+            error?.Invoke(source.Id + ": " + ex.Message);
         }
     }
 
-    private static string Normalize(string path) => ZipSaves.IsZipPath(path, out var zip, out var entry)
-        ? ZipSaves.Combine(Path.GetFullPath(zip), entry)
-        : Path.GetFullPath(path);
+    private static string Normalize(string path) => StoredPokemon.Normalize(path);
 }

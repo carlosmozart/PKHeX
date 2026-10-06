@@ -42,6 +42,8 @@ public static class BankStorage
 
     /// <summary>Um arquivo de uma pasta externa foi gravado ou apagado (Android: copia a mudanca para a pasta original).</summary>
     public static event Action<string>? ExternalChanged;
+    public static event Action? CollectionChanged;
+    internal static void NotifyCollectionChanged() => CollectionChanged?.Invoke();
 
     /// <summary>Prefixo que identifica um banco externo na lista de bancos.</summary>
     public const string ExternalPrefix = "📁 ";
@@ -76,7 +78,7 @@ public static class BankStorage
     {
         if (!create && !Directory.Exists(Root)) return [];
         if (create) Directory.CreateDirectory(Root);
-        var banks = Directory.GetDirectories(Root).Select(Path.GetFileName).OfType<string>()
+        var banks = Directory.GetDirectories(Root).Select(Path.GetFileName).OfType<string>().Where(n => !n.StartsWith('.'))
             .OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase).ToList();
         if (banks.Count == 0 && create)
         {
@@ -88,6 +90,7 @@ public static class BankStorage
 
     public static string? CreateBank(string name)
     {
+        NotifyCollectionChanged();
         name = CleanName(name);
         if (name.Length == 0)
             return "Nome inválido.";
@@ -101,6 +104,7 @@ public static class BankStorage
 
     public static string? RenameBank(string bank, string newName)
     {
+        NotifyCollectionChanged();
         newName = CleanName(newName);
         if (newName.Length == 0)
             return "Nome inválido.";
@@ -112,7 +116,7 @@ public static class BankStorage
     }
 
     /// <summary>Apaga o banco inteiro, com todas as caixas e Pokemon (a interface pede confirmacao antes).</summary>
-    public static void DeleteBank(string bank) => Directory.Delete(Path.Combine(Root, bank), recursive: true);
+    public static void DeleteBank(string bank) { Directory.Delete(Path.Combine(Root, bank), recursive: true); NotifyCollectionChanged(); }
 
     // Caixas
     public static IReadOnlyList<BankBox> GetBoxes(string bank, bool create = true)
@@ -142,6 +146,7 @@ public static class BankStorage
 
     public static string? CreateBox(string bank, string name)
     {
+        NotifyCollectionChanged();
         name = CleanName(name);
         if (name.Length == 0)
             return "Nome inválido.";
@@ -154,6 +159,7 @@ public static class BankStorage
 
     public static string? RenameBox(BankBox box, string newName)
     {
+        NotifyCollectionChanged();
         newName = CleanName(newName);
         if (newName.Length == 0)
             return "Nome inválido.";
@@ -165,7 +171,7 @@ public static class BankStorage
         return null;
     }
 
-    public static void DeleteBox(BankBox box) => Directory.Delete(box.Folder, recursive: true);
+    public static void DeleteBox(BankBox box) { Directory.Delete(box.Folder, recursive: true); NotifyCollectionChanged(); }
 
     // Slots
     /// <summary>Le os 30 slots da caixa (null = vazio). Arquivos ilegiveis sao ignorados.</summary>
@@ -195,9 +201,13 @@ public static class BankStorage
         => box.IsExternal ? GetExternalFile(box, slot) is { } f ? ReadEntity(f.FullName) : null
             : FindFile(box, slot) is { } file ? ReadEntity(file) : null;
 
+    public static string? GetSlotFile(BankBox box, int slot)
+        => box.IsExternal ? GetExternalFile(box, slot)?.FullName : FindFile(box, slot);
+
     /// <summary>Grava o Pokemon no slot, no formato original dele (substitui o que houver).</summary>
     public static void WriteSlot(BankBox box, int slot, PKM pk)
     {
+        CollectionChanged?.Invoke();
         if (box.IsExternal)
         {
             // Pasta externa: nome no padrao do PKHeX. Substituindo, o arquivo novo herda a posicao do antigo.
@@ -229,6 +239,7 @@ public static class BankStorage
     /// </summary>
     public static void DeleteSlot(BankBox box, int slot)
     {
+        CollectionChanged?.Invoke();
         if (box.IsExternal)
         {
             if (GetExternalFile(box, slot) is { } extFile)
