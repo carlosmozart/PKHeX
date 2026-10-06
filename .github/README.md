@@ -31,10 +31,12 @@ O PKHeX original é só para Windows. O PKHeX Modern roda nos quatro sistemas, s
 - **Caixas, equipe e editor lado a lado**, com arrastar e soltar, desfazer/refazer, busca global (Ctrl+F) e verificação de legalidade do save inteiro.
 - **Save Manager**: todos os saves da pasta com o selo de cada jogo, saves dentro de .zip (JKSV), backups automáticos antes de salvar e restauração.
 - **Bank local** em bancos e caixas, pastas de `.pk*` como banco e um segundo save aberto para trocar Pokémon entre jogos, com conversão de geração.
-- **Pokédex centralizada** juntando todos os saves e o bank, com living dex, shiny dex, formas e gêneros.
+- **Pokédex centralizada** juntando todos os saves e o bank, com living dex, shiny dex, formas e gêneros, e um **planejador de Living Dex** que organiza as caixas do save com prévia e um único desfazer.
+- **Pesquisa em todos os saves e no bank**, com **auditoria de duplicados** (cópias idênticas, backups e anexados) e **Edição em lote** (inclusive legalizar vários de uma vez).
 - **Banco de encontros e eventos** para gerar Pokémon legais a partir de encontros reais e Mystery Gifts.
 - **Página Jogo**: flags e valores de evento com nome, recordes, atalhos de eventos (lendários de novo, itens, títulos) e Hall da Fama editável.
-- **Evoluções sem segundo jogo**: por troca, felicidade e beleza (Feebas), mantendo o Pokémon legal.
+- **Evolução assistida**: uma lista com todas as evoluções da espécie no jogo (nível, item, troca, felicidade, beleza, golpe, local...), com o requisito, prévia e sem precisar de um segundo jogo.
+- **Equipe Showdown e relatório CSV**: cole ou copie a equipe ou a caixa inteira no formato Showdown e exporte o save ou o bank para planilha.
 - **Android** com a mesma interface do desktop, em paisagem: saves e pastas pelo seletor do sistema, gravando de volta no arquivo original.
 
 ![Caixas e editor](/PKHeX.Modern/docs/boxes.png)

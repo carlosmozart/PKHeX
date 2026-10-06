@@ -125,6 +125,7 @@ o download no navegador.
 - Ao trazer para o save, o Pokémon é **convertido para a geração do jogo** (ex.: um Pokémon da Gen 4 vai para Black como Gen 5); se não der, o app avisa e nada muda.
 - **Pastas externas** (botão 📁＋): qualquer pasta com arquivos `.pk*` (ex.: a pasta de Pokémon do PKHeX) vira um banco, sem mover os arquivos.
 - **Outro save**: no lugar do bank, abra um segundo save e arraste Pokémon entre os dois jogos (com conversão de geração), inclusive em grupo; o outro save tem desfazer/refazer próprio e "Salvar este save" grava com backup.
+- **Consulta do Bank**: tocar num Pokémon mostra dados, IVs/EVs, golpes e legalidade sem alterar o bank, com exportar, copiar Showdown e abrir uma cópia no editor.
 - **Pokémon anexado**: com "🔗 Anexar ao trazer", o bank guarda o original e o save recebe uma cópia; "Atualizar anexados" traz a versão do jogo de volta (de outra geração, como variante).
 
 **Pokédex centralizada**
@@ -132,6 +133,7 @@ o download no navegador.
 - Mostra o que você **possui** (caixas, equipe e bank), o que foi **capturado** ou **visto** em cada jogo e os **shiny**.
 - Filtros por situação (faltando para a living dex ou shiny dex, alpha...), geração, tipo e fonte; detalhes de onde está cada Pokémon, com **Ir** para abrir no editor.
 - **Formas e gêneros** como entradas próprias (Vulpix de Alola, Unown A–?, Pyroar ♀...), para living dex completa.
+- **Planejador de Living Dex**: escolha o jogo alvo, formas e shiny e veja o melhor candidato de cada espécie entre saves e bank, os faltantes e outros exemplares. **Aplicar** organiza as caixas do save aberto em ordem nacional, com prévia exata (movimentos, cópias de fora, ocupantes realocados), slots protegidos respeitados e um único desfazer.
 - **Sincronizar com o save aberto**: registra na Pokédex do jogo aberto o que foi capturado nos outros saves e o que você tem guardado.
 
 **Caixas e equipe**
@@ -143,6 +145,13 @@ o download no navegador.
 - **Seleção múltipla**: Ctrl+clique marca, Shift+clique marca um intervalo, Ctrl+A a caixa toda; arraste um marcado para mover o grupo (para outra caixa ou para o bank) ou use Delete para excluir todos.
 - **Ordenar caixas** por Pokédex, nome, nível, shiny, tipo, IVs ou data de captura, só a caixa aberta ou todas (também no bank).
 - **Desfazer/refazer** (Ctrl+Z / Ctrl+Y) e **Excluir** (Delete).
+- **Equipe Showdown** (botão 📋 Showdown em Equipe e Caixas): cola vários sets de uma vez nas vagas da equipe ou nos slots vazios da caixa, com conferência de cada set antes e um único desfazer; também copia a equipe ou a caixa inteira.
+- **Relatório CSV** das caixas e do bank (espécie, nível, shiny, natureza, IVs, EVs, golpes, treinador, legalidade), para abrir no Excel ou no Google Sheets.
+
+**Pesquisa e Edição em lote**
+- **Pesquisa** em todos os saves da pasta, nos abertos e no bank, com filtros e **Ir** até o Pokémon.
+- **Duplicados**: cópias idênticas byte a byte entre saves e bank, backups resumidos por par de arquivos e anexados do bank, só para consulta.
+- **Edição em lote**: ações rápidas (nível 100, Pokébola legal, **Legalizar**...) ou comandos do PKHeX, com prévia antes de aplicar e um único desfazer.
 
 **Editor de Pokémon** (abas: Visão geral, Atributos, Golpes, Encontro, Treinador, Extras)
 - Espécie, item e golpes com **busca enquanto digita**; na lista de golpes, os que o Pokémon aprende ficam no topo, em verde.
@@ -158,10 +167,7 @@ o download no navegador.
 - **Verificar legalidade** (barra inferior): confere o save inteiro e mostra o resultado numa janela.
 - **Legalidade** no editor: lista os problemas e avisos e oferece correções de um clique, inclusive **Legalizar**, que gera o Pokémon de novo a partir de um encontro real do jogo (PID/IV corretos, inclusive shiny) mantendo natureza, nível, item, apelido e golpes.
 - **Modo legal** (chave na barra lateral, ligado por padrão): o editor só oferece opções legais (golpes que o Pokémon aprende, bolas permitidas para o encontro, espécies do jogo), desfaz na hora qualquer mudança que deixaria o Pokémon ilegal (explicando o motivo) e só deixa **Aplicar** um Pokémon legal. Habilidade, forma e Tera Type só listam o que é legal; em vez de mexer em local e nível, a aba Encontro oferece **Trocar encontro** (gera de novo a partir de um encontro real escolhido); "Tornar shiny" fica bloqueado em encontros com shiny lock e, nos outros, gera de novo já shiny. Trocar a espécie, a forma ou colar um set Showdown legaliza automaticamente. Pokémon **de fora** (arquivo `.pk*`, bank ou outro save) que chega ilegal ao save aberto ganha a opção **✨ Legalizar** ou **Trazer como está**. Desligado, vale qualquer valor.
-- **Evoluir por troca** (Kadabra, Onix + Metal Coat, Shelmet/Karrablast...), sem precisar de um segundo jogo; da Gen 6 em diante registra o parceiro de troca para o Pokémon continuar legal.
-- A troca pode ser simulada sem o item exigido no jogo; se estiver segurando o item correto, ele é consumido. No modo legal, o resultado é validado antes de substituir a edição.
-- **Evoluir por felicidade**: o botão cumpre os requisitos do jogo: sobe a felicidade (ou o carinho do Sylveon na Gen 6/7) até o mínimo, tira a Everstone, simula a subida de nível e oferece dia/noite quando necessário. No modo legal, só aceita a evolução após validar o resultado.
-- **Feebas → Milotic**: o botão sobe o Beauty até 170 (com o Sheen ajustado para continuar legal), tira a Everstone e evolui. BDSP usa Beauty; Z-A usa troca. A troca pode ser simulada sem Prism Scale; se estiver segurando o item, ele é consumido.
+- **Evolução assistida**: na Visão geral, “Evoluir” lista todas as evoluções da espécie no jogo aberto (nível, item, troca, felicidade, Beauty, golpe conhecido, local, dia/noite, parceiro na equipe...), inclusive ramificações como Eevee e Tyrogue, com o requisito e o motivo quando bloqueada. Escolher mostra a prévia do que muda; o app cumpre os requisitos do próprio Pokémon (sobe nível, felicidade ou Beauty, tira a Everstone, registra o parceiro de troca), sem precisar de um segundo jogo, e a evolução fica pendente até Aplicar. No modo legal, um resultado ilegal é bloqueado.
 - Colar e copiar no formato **Showdown**.
 
 **Bancos**

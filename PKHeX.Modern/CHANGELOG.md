@@ -6,7 +6,7 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.19 — 2026-10-06
 
 ### 🔎 Pesquisa
 - **Auditoria de duplicados:** cópias idênticas por dados armazenados, agrupamento de backups por par de arquivos (ZIP ou pastas de saves com muitos Pokémon iguais) e anexados/variantes registrados no Bank, com comparação e navegação somente leitura. Leitura cancelável, incluindo alterações não salvas.

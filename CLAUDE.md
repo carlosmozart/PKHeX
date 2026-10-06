@@ -48,7 +48,7 @@ O usuário delega levas de funções ao Codex com enunciados `TAREFA-CODEX-FUNCO
 - **Como o Codex trabalha:** numa worktree e branch próprios (`modern-features-N`), sem push, merge ou release. Ao terminar, escreve um `RELATORIO-CODEX-FUNCOES-N.md`.
 - **O papel do Claude:** revisar o branch, corrigir, juntar ao `modern-ui`, atualizar o `CONTINUAR.md` e publicar.
 - **Formato do enunciado:** siga o das anteriores (regras do projeto, ordem das funções, testes obrigatórios, "fora desta tarefa", entrega).
-- **Próxima tarefa:** a sexta leva, `TAREFA-CODEX-FUNCOES-6.md` (auditoria de duplicados e aplicar o plano da Living Dex).
+- **Próxima tarefa:** nenhuma leva pendente; a sexta (`TAREFA-CODEX-FUNCOES-6.md`, auditoria de duplicados e aplicar a Living Dex) saiu na 0.4.19. As worktrees das levas antigas foram apagadas depois de juntadas.
 
 ## Pendências em aberto (06/10/2026)
 
