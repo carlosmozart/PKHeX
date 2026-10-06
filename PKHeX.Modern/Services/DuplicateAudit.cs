@@ -17,6 +17,9 @@ public sealed record DuplicateAuditResult(IReadOnlyList<DuplicateGroup> Groups, 
 
 public static class DuplicateAudit
 {
+    /// <summary>Identical Pokemon two saves must share to be shown as versions of the same save.</summary>
+    public const int SameSaveThreshold = 10;
+
     public static DuplicateAuditResult Build(IReadOnlyList<DbEntry> entries, CancellationToken token = default)
     {
         var identical = new List<DuplicateGroup>();
@@ -38,25 +41,40 @@ public static class DuplicateAudit
             }
         }
         var pairs = new Dictionary<string, (string Title, List<DuplicateGroup> Groups)>();
-        var pairedLocations = new HashSet<string>();
+        // The backup side of each pair: it stays inside the pair summary and leaves the loose groups.
+        var hidden = new HashSet<string>();
+        static DbSource[] SavesOf(DuplicateGroup g) => g.Entries.Where(e => !e.Source.IsBank).Select(e => e.Source).DistinctBy(s => s.Id).OrderBy(s => s.Id, StringComparer.Ordinal).ToArray();
+        static string PairKey(DbSource a, DbSource b) => a.Id + "\n" + b.Id;
+        static bool IsZip(DbSource s) => ZipSaves.IsZipPath(s.Id, out _, out _);
+        // Two saves sharing many identical Pokemon are versions of the same save (zip backups, or Switch "main" folders
+        // copied by date): summarize them as one pair instead of hundreds of loose groups.
+        var shared = new Dictionary<string, int>();
         foreach (var group in identical)
         {
-            var sources = group.Entries.Where(e => !e.Source.IsBank).Select(e => e.Source).DistinctBy(s => s.Id).OrderBy(s => s.Id, StringComparer.Ordinal).ToArray();
+            var sources = SavesOf(group);
+            for (int a = 0; a < sources.Length; a++)
+                for (int b = a + 1; b < sources.Length; b++)
+                    shared[PairKey(sources[a], sources[b])] = shared.GetValueOrDefault(PairKey(sources[a], sources[b])) + 1;
+        }
+        foreach (var group in identical)
+        {
+            var sources = SavesOf(group);
             for (int a = 0; a < sources.Length; a++)
                 for (int b = a + 1; b < sources.Length; b++)
                 {
-                    if (!ZipSaves.IsZipPath(sources[a].Id, out _, out _) && !ZipSaves.IsZipPath(sources[b].Id, out _, out _)) continue;
-                    string key = sources[a].Id + "\n" + sources[b].Id;
+                    string key = PairKey(sources[a], sources[b]);
+                    if (!IsZip(sources[a]) && !IsZip(sources[b]) && shared[key] < SameSaveThreshold) continue;
                     if (!pairs.TryGetValue(key, out var pair)) pair = (ZipSaves.DisplayName(sources[a].Id) + " ↔ " + ZipSaves.DisplayName(sources[b].Id), []);
                     var members = group.Entries.Where(e => e.Source.Id == sources[a].Id || e.Source.Id == sources[b].Id).ToArray();
                     pair.Groups.Add(group with { Entries = members });
-                    foreach (var member in members) pairedLocations.Add(member.LocationId);
+                    // The zip copy is the backup; between two plain saves, the second (by path) is.
+                    var backup = IsZip(sources[b]) || !IsZip(sources[a]) ? sources[b] : sources[a];
+                    foreach (var member in members.Where(m => m.Source.Id == backup.Id)) hidden.Add(member.LocationId);
                     pairs[key] = pair;
                 }
         }
         var groups = pairs.Values.Select(p => new DuplicateGroup("Backups", p.Title, p.Groups.SelectMany(g => g.Entries).DistinctBy(e => e.LocationId).ToArray(), p.Groups)).ToList();
-        groups.AddRange(identical.Select(g => g.Entries.Any(e => pairedLocations.Contains(e.LocationId))
-            ? g with { Entries = g.Entries.Where(e => !ZipSaves.IsZipPath(e.Source.Id, out _, out _)).ToArray() } : g).Where(g => g.Entries.Count > 1));
+        groups.AddRange(identical.Select(g => g with { Entries = g.Entries.Where(e => !hidden.Contains(e.LocationId)).ToArray() }).Where(g => g.Entries.Count > 1));
 
         // IdOf is only used after a persisted Bank link establishes the relationship.
         foreach (var link in BankLinks.All)

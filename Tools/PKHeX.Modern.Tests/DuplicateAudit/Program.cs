@@ -23,6 +23,13 @@ var path=Path.Combine(folder,"Black.sav");File.WriteAllBytes(path,save.Write().T
 var src1=new DbSource(path,"Black",GameVersion.B,true){Save=save};var src2=new DbSource(Path.Combine(work,"Other.sav"),"Other",GameVersion.B,false){Save=save.Clone()};
 var a=new DbEntry(src1,pk,"Box 1 · 1",0,0);var b=new DbEntry(src2,pk.Clone(),"Box 1 · 1",0,0);
 var result=DuplicateAudit.Build([a,b]);Check("two saves one identical group",result.Groups.Count==1&&result.Groups[0].Entries.Count==2);
+// Two plain saves (e.g. Switch "main" copied into dated folders) sharing many identical Pokemon: one pair, no loose groups.
+var many=Enumerable.Range(0,12).Select(i=>{var p=pk.Clone();p.PID=(uint)(1000+i);p.EncryptionConstant=p.PID;p.RefreshChecksum();return p;}).ToArray();
+var dayA=new DbSource(Path.Combine(work,"2026-10-01","main"),"Black A",GameVersion.B,false);var dayB=new DbSource(Path.Combine(work,"2026-10-02","main"),"Black B",GameVersion.B,false);
+var folderPairs=DuplicateAudit.Build([..many.Select((p,i)=>new DbEntry(dayA,p,$"Box 1 · {i+1}",0,i)),..many.Select((p,i)=>new DbEntry(dayB,p.Clone(),$"Box 1 · {i+1}",0,i))]);
+Check("folder copies collapsed into one pair",folderPairs.Groups.Count==1&&folderPairs.Groups[0].IsBackupPair&&folderPairs.Groups[0].Children!.Count==12);
+var few=DuplicateAudit.Build([..many.Take(3).Select((p,i)=>new DbEntry(dayA,p,$"Box 1 · {i+1}",0,i)),..many.Take(3).Select((p,i)=>new DbEntry(dayB,p.Clone(),$"Box 1 · {i+1}",0,i))]);
+Check("few shared Pokemon stay as loose groups",few.Groups.Count==3&&few.Groups.All(g=>!g.IsBackupPair));
 var different=pk.Clone();different.IV_ATK=11;Check("two different Pikachu no group",DuplicateAudit.Build([a,new(src2,different,"Box 1",0,0)]).Groups.Count==0);
 var zip=Path.Combine(folder,"backup.zip");using(var z=ZipFile.Open(zip,ZipArchiveMode.Create)){var e=z.CreateEntry("main");using var s=e.Open();s.Write(File.ReadAllBytes(path));}
 var data=PokemonDatabase.Build([(path,save.Clone())],folder,new(),includeBank:false,readOnly:true);
