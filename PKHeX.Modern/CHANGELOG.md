@@ -6,7 +6,7 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.18 — 2026-10-06
 
 ### 📱 Android
 - **Tela cheia:** o app esconde a barra de status e a de navegação, ganhando espaço na tela. Deslizar da borda mostra as barras por um momento; o recorte da câmera continua livre.
