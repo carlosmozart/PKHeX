@@ -30,7 +30,28 @@ public sealed class MainActivity : AvaloniaMainActivity<App>
             StartActivity(global::Android.Content.Intent.CreateChooser(intent, PKHeX.Modern.Services.Loc.T("Compartilhar diagnóstico")));
             return true;
         };
+        EnterFullscreen();
     }
+
+    // Tela cheia (modo imersivo): sem barra de status e de navegacao; deslizar da borda mostra as duas por um tempo.
+    // O recorte da camera continua de fora (modo padrao do Android em paisagem), entao nada fica embaixo dele.
+    private void EnterFullscreen()
+    {
+        if (Window is not { } window)
+            return;
+        var controller = AndroidX.Core.View.WindowCompat.GetInsetsController(window, window.DecorView);
+        controller.SystemBarsBehavior = AndroidX.Core.View.WindowInsetsControllerCompat.BehaviorShowTransientBarsBySwipe;
+        controller.Hide(AndroidX.Core.View.WindowInsetsCompat.Type.SystemBars());
+    }
+
+    // Seletor de arquivos, instalador e outras janelas do sistema mostram as barras de novo: esconde ao voltar.
+    public override void OnWindowFocusChanged(bool hasFocus)
+    {
+        base.OnWindowFocusChanged(hasFocus);
+        if (hasFocus)
+            EnterFullscreen();
+    }
+
     // Simbolos e emoji que a Inter nao tem vem de fontes embutidas (Noto, OFL): a busca na fonte de emoji do sistema
     // desenhava "≣" no lugar de ♂/♀ e dos icones dos botoes.
     /// <summary>Abre o instalador do Android com o APK baixado (o sistema pede para permitir apps desta origem, se preciso).</summary>
