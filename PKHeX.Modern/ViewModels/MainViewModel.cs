@@ -86,6 +86,8 @@ public sealed partial class MainViewModel : ViewModelBase
                     Status = $"Encontros de {CoreAdapter.SpeciesNames[species]} em todos os jogos (o alvo da Living Dex, {CoreAdapter.GetVersionName(version)}, não é o jogo deste save).";
             });
         Help = new HelpPageViewModel(Settings);
+        Pokedex.LivingDex.LegalMode = () => LegalMode;
+        Pokedex.LivingDex.ApplyPlan = ApplyLivingDexAsync;
         Help.PrepareDiagnostic = () => DiagnosticReport.Build(Settings, Views.MainView.SaveFolder?.LastCounts);
         Help.ConfirmDiagnostic = text => ConfirmAsync("Compartilhar diagnóstico", "Confira o texto antes de compartilhar. Mensagens livres e dados de saves são omitidos para proteger sua privacidade.",
             App.ShowShortcuts ? "Copiar" : "Compartilhar", details: text.Split(Environment.NewLine), icon: "📋");

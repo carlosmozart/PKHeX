@@ -61,10 +61,11 @@ public static class LivingDexPlanner
     }
 
     public static LivingDexPlan Build(IReadOnlyList<DbEntry> entries, SaveFile target, bool includeForms, bool shinyOnly,
-        IReadOnlyDictionary<DbEntry, bool> legalities)
+        IReadOnlyDictionary<DbEntry, bool> legalities, string? destinationPath = null)
     {
         var indexed = entries.Where(e => Eligible(e, target, shinyOnly)).GroupBy(e => (e.Pkm.Species, Form: includeForms ? e.Pkm.Form : (byte)0))
             .ToDictionary(g => g.Key, g => g.OrderByDescending(e => legalities.TryGetValue(e, out var legal) && legal)
+                .ThenByDescending(e => destinationPath is not null && !e.Source.IsBank && StoredPokemon.SameSource(destinationPath, e.Source.Id))
                 .ThenByDescending(e => e.Pkm.Version == target.Version).ThenByDescending(e => e.Pkm.CurrentLevel)
                 .ThenBy(e => e.Source.Id, StringComparer.Ordinal).ThenBy(e => e.Box).ThenBy(e => e.Slot).ToArray());
         var rows = new List<LivingDexRow>();

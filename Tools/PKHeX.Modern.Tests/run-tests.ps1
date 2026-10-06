@@ -10,6 +10,7 @@ if ($env:PKHEX_TEST_SAVES) { $saves = $env:PKHEX_TEST_SAVES }
 $suites = [ordered]@{
     'CollectionSources' = @{}
     'DuplicateAudit' = @{}
+    'LivingDexApply' = @{}
     'Evolution' = @{}
     'BoxReport' = @{}
     'EditorAnalysis' = @{ 'sv.sav' = 'Scarlet' }

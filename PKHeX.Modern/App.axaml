@@ -584,9 +584,12 @@
         <StackPanel Spacing="4">
           <TextBlock Text="Living Dex" Classes="title" />
           <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" />
-          <TextBlock Text="Plano de caixas em ordem nacional, com o número de slots por caixa do jogo alvo. Esta tela só planeja; não move Pokémon." Classes="muted" FontSize="12" TextWrapping="Wrap" />
+          <TextBlock Text="Plano de caixas em ordem nacional, com o número de slots por caixa do jogo alvo. Use a prévia para organizar as caixas do save aberto." Classes="muted" FontSize="12" TextWrapping="Wrap" />
         </StackPanel>
-        <Button Grid.Column="1" Content="Gerar plano" Command="{Binding GenerateCommand}" Classes="accent" VerticalAlignment="Top" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+ <Button Content="Gerar plano" Command="{Binding GenerateCommand}" />
+ <Button Content="Cancelar leitura" Command="{Binding CancelReadCommand}" IsVisible="{Binding IsBusy}" />
+</StackPanel>
       </Grid>
       <WrapPanel Grid.Row="1" ItemSpacing="12" LineSpacing="8" IsEnabled="{Binding !IsBusy}">
         <StackPanel Spacing="4"><TextBlock Text="Jogo alvo" /><ComboBox ItemsSource="{Binding TargetOptions}" SelectedIndex="{Binding TargetIndex}" MinWidth="180" /></StackPanel>
@@ -597,6 +600,18 @@
         <CheckBox Content="Bank" IsChecked="{Binding IncludeBank}" />
       </WrapPanel>
       <StackPanel Grid.Row="2" Spacing="5">
+ <WrapPanel ItemSpacing="8" LineSpacing="4">
+  <TextBlock Text="Primeira caixa" VerticalAlignment="Center" />
+  <NumericUpDown Value="{Binding FirstBox}" Minimum="1" Maximum="100" Width="100" FormatString="0" />
+  <CheckBox Content="Reservar o lugar dos faltantes" IsChecked="{Binding ReserveMissing}" />
+  <Button Content="Prévia da aplicação" Command="{Binding PreviewApplicationCommand}" IsEnabled="{Binding !IsBusy}" ToolTip.Tip="Conferir movimentos, cópias e realocações no save aberto, sem gravar." />
+  <Button Content="Aplicar plano" Command="{Binding ApplyPlanCommand}" IsEnabled="{Binding CanApplyPlan}" ToolTip.Tip="Aplicar exatamente a prévia em memória. Desfazer reverte o lote inteiro." />
+ </WrapPanel>
+ <Expander Header="Conferir posições da prévia">
+  <ScrollViewer MaxHeight="220"><ItemsControl ItemsSource="{Binding ApplicationDetails}">
+   <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,3" /></DataTemplate></ItemsControl.ItemTemplate>
+  </ItemsControl></ScrollViewer>
+ </Expander>
         <TextBlock Text="{Binding Progress}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
         <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="5" />
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -613,7 +628,7 @@
                   <StackPanel Spacing="3">
                     <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
                     <TextBlock Text="{Binding Location}" Classes="muted" FontSize="12" TextWrapping="Wrap" />
-                    <TextBlock Text="{Binding Status}" Classes="muted" FontSize="11" />
+                    <TextBlock Text="{Binding Status}" Classes="muted" FontSize="11" /><TextBlock Text="{Binding AuditLabel}" Classes="muted" FontSize="11" TextWrapping="Wrap" />
                   </StackPanel>
                   <TextBlock Grid.Column="1" Text="{Binding BoxPlan}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
                 </Grid>
@@ -812,8 +827,8 @@
     <DockPanel>
       <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
         <Button Content="Pesquisa" Command="{Binding ShowSearchCommand}" />
-        <Button Content="Duplicados" Command="{Binding ShowDuplicatesCommand}" />
-        <Button Content="Cancelar leitura" Command="{Binding CancelReadCommand}" IsVisible="{Binding IsBusy}" />
+        <Button Content="Duplicados" Command="{Binding ShowDuplicatesCommand}" ToolTip.Tip="Consultar cópias idênticas e vínculos registrados, sem alterar as fontes." />
+        <Button Content="Cancelar leitura" Command="{Binding CancelReadCommand}" IsVisible="{Binding IsBusy}" ToolTip.Tip="Interromper a leitura e descartar o resultado incompleto." />
       </StackPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
         <StackPanel Spacing="2">

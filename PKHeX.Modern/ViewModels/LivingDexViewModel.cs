@@ -71,6 +71,8 @@ public sealed partial class LivingDexViewModel : ViewModelBase
     private int _revision;
     private void Invalidate()
     {
+        ApplicationPreview = null; Raise(nameof(ApplicationPreview)); Raise(nameof(CanApplyPlan));
+        ApplicationDetails = []; Raise(nameof(ApplicationDetails));
         _revision++; Plan = null; _rows = []; Selected = null; Filter();
         Summary = "Opções alteradas. Gere o plano novamente."; Raise(nameof(Plan));
     }
@@ -114,10 +116,13 @@ public sealed partial class LivingDexViewModel : ViewModelBase
                 Progress = $"Conferindo candidatos: {Math.Min(start + 8, eligible.Length)} de {eligible.Length}";
                 await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
             }
-            var plan = await Task.Run(() => LivingDexPlanner.Build(entries, target, forms, shiny, legalities));
+            var destination = _activeSave() is { } destinationSave && destinationSave.Version == version
+                ? _openSaves().FirstOrDefault(s => ReferenceEquals(s.Sav, destinationSave)).Path : null;
+            var plan = await Task.Run(() => LivingDexPlanner.Build(entries, target, forms, shiny, legalities, destination));
             if (revision != _revision) return;
             Plan = plan; Raise(nameof(Plan));
-            var audit = DuplicateAudit.Build(entries);
+            var audit = await Task.Run(() => DuplicateAudit.Build(entries, _reading.Token), _reading.Token);
+            if (revision != _revision) return;
             _rows = plan.Rows.Select(r => new LivingDexRowViewModel(r,
                 new RelayCommand(() => _find(r.Species, version)),
                 r.Candidate is null ? null : new RelayCommand(() => _ = _open(r.Candidate)),
