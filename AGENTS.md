@@ -1,6 +1,6 @@
-# PKHeX Modern: instruções para o Claude
+# PKHeX Modern: instruções para o Codex
 
-Este arquivo reúne o que o Claude sabia do projeto e do usuário (antes guardado só na memória da conta), para qualquer conta ou PC continuar do mesmo jeito. O estado detalhado e as armadilhas técnicas ficam em `PKHeX.Modern/CONTINUAR.md` e `PKHeX.Modern/ROADMAP.md`. **Leia os dois antes de trabalhar** e confira os commits recentes, porque o trabalho é feito em mais de um PC e em sessões diferentes.
+Este arquivo reúne o que o Codex sabia do projeto e do usuário (antes guardado só na memória da conta), para qualquer conta ou PC continuar do mesmo jeito. O estado detalhado e as armadilhas técnicas ficam em `PKHeX.Modern/CONTINUAR.md` e `PKHeX.Modern/ROADMAP.md`. **Leia os dois antes de trabalhar** e confira os commits recentes, porque o trabalho é feito em mais de um PC e em sessões diferentes.
 
 ## Projeto
 
@@ -44,11 +44,11 @@ Este arquivo reúne o que o Claude sabia do projeto e do usuário (antes guardad
 
 ## Trabalho com o Codex
 
-O usuário delega levas de funções ao Codex com enunciados `TAREFA-CODEX-FUNCOES-N.md` na raiz do repositório. Depois que a leva é revisada, juntada e publicada, o enunciado, a worktree e a branch são apagados (o histórico fica no Git e no CHANGELOG).
+O usuário delega levas de funções ao Codex com enunciados `TAREFA-CODEX-FUNCOES-N.md` na raiz do repositório. Depois que a leva é revisada, juntada e publicada, o enunciado, a worktree e a branch são apagados.
 - **Como o Codex trabalha:** numa worktree e branch próprios (`modern-features-N`), sem push, merge ou release. Ao terminar, escreve um `RELATORIO-CODEX-FUNCOES-N.md`.
-- **O papel do Claude:** revisar o branch, corrigir, juntar ao `modern-ui`, atualizar o `CONTINUAR.md` e publicar.
+- **O papel do Codex:** revisar o branch, corrigir, juntar ao `modern-ui`, atualizar o `CONTINUAR.md` e publicar.
 - **Formato do enunciado:** siga o das anteriores (regras do projeto, ordem das funções, testes obrigatórios, "fora desta tarefa", entrega).
-- **Próxima tarefa:** nenhuma leva pendente; a sexta (auditoria de duplicados e aplicar a Living Dex) saiu na 0.4.19. A próxima leva será a sétima (`TAREFA-CODEX-FUNCOES-7.md`).
+- **Próxima tarefa:** nenhuma leva pendente; a sexta (auditoria de duplicados e aplicar a Living Dex) saiu na 0.4.19. A próxima será a sétima (`TAREFA-CODEX-FUNCOES-7.md`), quando o usuário pedir.
 
 ## Pendências em aberto (06/10/2026)
 

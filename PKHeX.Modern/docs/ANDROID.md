@@ -191,7 +191,7 @@ externo, identidade definitiva e responsável pela chave de assinatura.
 - [.NET: dependências Android/JDK](https://learn.microsoft.com/en-us/dotnet/android/getting-started/installation/dependencies)
 - [Android: Storage Access Framework](https://developer.android.com/training/data-storage/shared/documents-files)
 
-O código da etapa A fica em Tools/PKHeX.Modern.AndroidPoc e referencia somente Core
+O código da etapa A ficava em Tools/PKHeX.Modern.AndroidPoc (removido na 0.4.19, substituído pelo PKHeX.Modern.Android) e referenciava somente Core
 entre os projetos do repositório. Ele não edita saves, não importa ZIPs e não usa
 saves pessoais. O resultado real de build/testes fica no relatório local.
 
