@@ -6,7 +6,7 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.17 — 2026-10-05
 
 ### ✏️ Editor
 - **Evolução assistida:** Evoluir reúne os métodos e ramificações do jogo aberto, com sprite, requisitos e prévia cancelável. Remove a Everstone, cumpre os requisitos do Pokémon e deixa o resultado pendente até Aplicar, com desfazer e proteção do modo legal.
