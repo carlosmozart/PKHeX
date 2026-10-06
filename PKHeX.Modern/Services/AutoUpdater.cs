@@ -17,16 +17,16 @@ public static class AutoUpdater
     private const string ExecutableName = "PKHeX.Modern";
     private const string BundleName = "PKHeX Modern.app";
     /// <summary>
-    /// So baixa releases deste repositorio. Aceita tambem o nome futuro (carlosmozart/PKHeX-Modern): depois de renomear,
-    /// o GitHub redireciona a consulta de versoes, mas os links de download passam a ter o nome novo.
+    /// So baixa releases deste repositorio. Aceita tambem o nome antigo (carlosmozart/PKHeX), que o GitHub
+    /// redireciona para o novo.
     /// </summary>
     private static readonly string[] DownloadPrefixes =
     [
         "https://github.com/" + UpdateChecker.Repo + "/releases/download/",
-        "https://github.com/" + UpdateChecker.FutureRepo + "/releases/download/",
+        "https://github.com/" + UpdateChecker.OldRepo + "/releases/download/",
     ];
 
-    /// <summary>O link e de um arquivo de release deste repositorio (nome atual ou futuro).</summary>
+    /// <summary>O link e de um arquivo de release deste repositorio (nome atual ou antigo).</summary>
     public static bool IsReleaseDownload(string? url)
         => url is not null && DownloadPrefixes.Any(p => url.StartsWith(p, StringComparison.OrdinalIgnoreCase));
     private static readonly string? ProcessExecutable = Environment.ProcessPath;

@@ -6,6 +6,14 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 📱 Android
+- **Tela cheia:** o app esconde a barra de status e a de navegação, ganhando espaço na tela. Deslizar da borda mostra as barras por um momento; o recorte da câmera continua livre.
+
+### 🔗 Projeto
+- **Novo endereço:** o repositório agora se chama [PKHeX-Modern](https://github.com/carlosmozart/PKHeX-Modern). Os links antigos continuam funcionando (o GitHub redireciona) e a atualização automática segue normal.
+
 ## 0.4.17 — 2026-10-05
 
 ### ✏️ Editor

@@ -13,7 +13,7 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | macOS 14+ com Intel | `PKHeX.Modern-osx-x64.zip` |
 | Android 6+ | `PKHeX.Modern-Android.apk` |
 
-Todos estão na [versão mais recente](https://github.com/carlosmozart/PKHeX/releases/latest); veja como instalar em [Download](#download).
+Todos estão na [versão mais recente](https://github.com/carlosmozart/PKHeX-Modern/releases/latest); veja como instalar em [Download](#download).
 
 ![Início](docs/home.png)
 
@@ -51,7 +51,7 @@ Capturas do desktop da versão **0.3.8**, geradas em modo headless com saves sin
 
 ### Windows
 
-Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/carlosmozart/PKHeX/releases/latest) (as novidades de cada versão estão na página de [Releases](https://github.com/carlosmozart/PKHeX/releases)), extraia e abra o `PKHeX.Modern.exe`.
+Baixe o `PKHeX.Modern-win-x64.zip` da [versão mais recente](https://github.com/carlosmozart/PKHeX-Modern/releases/latest) (as novidades de cada versão estão na página de [Releases](https://github.com/carlosmozart/PKHeX-Modern/releases)), extraia e abra o `PKHeX.Modern.exe`.
 É um único executável para Windows 10/11 (64 bits) e **não precisa do .NET instalado**. Na primeira execução ele demora alguns segundos a mais, porque extrai as bibliotecas nativas.
 
 > O Windows pode mostrar o aviso do SmartScreen, porque o executável não é assinado. Clique em "Mais informações" e "Executar assim mesmo".
