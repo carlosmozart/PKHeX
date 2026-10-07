@@ -128,6 +128,9 @@ public static class EncounterDatabase
         try
         {
             var temp = enc.ConvertToPKM(sav, criteria);
+            // Roamer de RS/FRLG: o Core sempre escolhe IVs zerados; sorteia como o jogo.
+            if (RoamerIVs3.IsTruncated(enc) && temp is PK3 roamer)
+                RoamerIVs3.Reroll(roamer, criteria);
             var pk = EntityConverter.ConvertToType(temp, sav.PKMType, out var result);
             if (pk is null)
             {

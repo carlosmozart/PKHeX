@@ -666,32 +666,34 @@
       <ContentControl Grid.Row="1" Content="{Binding LivingDex}" IsVisible="{Binding ShowLivingDex}" />
     <Grid Grid.Row="1" ColumnDefinitions="*,16,320" IsVisible="{Binding !ShowLivingDex}">
       <DockPanel>
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+        <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,10">
           <StackPanel Spacing="2">
             <TextBlock Text="Pokédex" Classes="title" />
             <TextBlock Text="{Binding Summary}" Classes="muted" FontSize="12" />
           </StackPanel>
-          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Top">
+          <WrapPanel ItemSpacing="6" LineSpacing="6">
+            <ToggleButton Content="◉  Só o save aberto" IsChecked="{Binding OnlyOpenSave}" IsEnabled="{Binding HasOpenSave}" Padding="10,4" FontSize="12"
+                          ToolTip.Tip="Mostra só a Pokédex do save aberto: o que ele viu, capturou e tem guardado, sem misturar com os outros saves nem com o bank" />
             <Button Classes="small info" Content="⇄  Sincronizar com o save aberto" Command="{Binding SyncCommand}"
                     ToolTip.Tip="Marca na Pokédex do save aberto o que foi capturado/visto nos outros saves e o que você tem guardado (caixas e bank)" />
             <Button Classes="small" Content="⇄  Sincronizar todos os saves" Command="{Binding SyncAllCommand}"
                     ToolTip.Tip="Registra em cada save da pasta (e no aberto) o que foi capturado ou visto nos outros e o que está guardado nas caixas/bank. Os saves fechados são gravados na hora, com backup." />
             <Button Classes="small" Content="⟳  Atualizar" Command="{Binding RefreshCommand}"
                     ToolTip.Tip="Relê os saves da pasta, o save aberto e o bank" />
-          </StackPanel>
-        </Grid>
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" Margin="0,0,0,8">
-          <TextBox Text="{Binding Search}" Watermark="Buscar por nome ou número (ex.: pika, 25)" />
-          <ComboBox Grid.Column="1" ItemsSource="{Binding StatusOptions}" SelectedIndex="{Binding StatusIndex}" MinWidth="200"
+          </WrapPanel>
+        </StackPanel>
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="3*,2*,1.4*,2*" ColumnSpacing="8" Margin="0,0,0,8">
+          <TextBox Text="{Binding Search}" Watermark="Buscar por nome ou número (ex.: pika, 25)" MinWidth="0" />
+          <ComboBox Grid.Column="1" ItemsSource="{Binding StatusOptions}" SelectedIndex="{Binding StatusIndex}" HorizontalAlignment="Stretch" MinWidth="0"
                     ToolTip.Tip="Situação: possuída (está numa caixa, equipe ou no bank), capturada/vista (pela Pokédex dos saves)" />
-          <ComboBox Grid.Column="2" ItemsSource="{Binding TypeOptions}" SelectedIndex="{Binding TypeIndex}" MinWidth="130" />
-          <ComboBox Grid.Column="3" ItemsSource="{Binding SourceOptions}" SelectedIndex="{Binding SourceIndex}" MinWidth="200" MaxWidth="280"
+          <ComboBox Grid.Column="2" ItemsSource="{Binding TypeOptions}" SelectedIndex="{Binding TypeIndex}" HorizontalAlignment="Stretch" MinWidth="0" />
+          <ComboBox Grid.Column="3" ItemsSource="{Binding SourceOptions}" SelectedIndex="{Binding SourceIndex}" HorizontalAlignment="Stretch" MinWidth="0"
                     ToolTip.Tip="Contar tudo junto ou só um save (ou só o bank)" />
         </Grid>
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,0,8">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="10" Margin="0,0,0,8">
           <ItemsControl ItemsSource="{Binding Generations}" VerticalAlignment="Center">
             <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="4" /></ItemsPanelTemplate>
+              <ItemsPanelTemplate><WrapPanel ItemSpacing="4" LineSpacing="4" /></ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate x:DataType="vm:GenerationFilterViewModel">
@@ -1968,7 +1970,11 @@
     <DockPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
         <TextBlock Text="Mochila" Classes="title" />
-        <Button Grid.Column="1" Classes="accent" Content="Gravar mochila" Command="{Binding SaveCommand}" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+          <Button Content="◎  Todos os TMs" Command="{Binding GiveAllTMsCommand}"
+                  ToolTip.Tip="Põe todos os TMs do jogo no bolso de TMs, com 99 de cada, sem tirar o que já está lá (HMs e TRs do mesmo bolso também entram)" />
+          <Button Classes="accent" Content="Gravar mochila" Command="{Binding SaveCommand}" />
+        </StackPanel>
       </Grid>
       <ListBox DockPanel.Dock="Top" Classes="tabs" ItemsSource="{Binding Pouches}" SelectedItem="{Binding SelectedPouch}"
                Margin="0,0,0,12" Background="Transparent">

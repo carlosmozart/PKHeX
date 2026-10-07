@@ -255,9 +255,7 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
         try
         {
             _bag = CoreAdapter.GetBag(sav);
-            bool editable = CoreAdapter.IsBagItemIdEditable(sav);
-            foreach (var p in _bag.Pouches)
-                Pouches.Add(new PouchViewModel(_bag, p, editable, CoreAdapter.GetItemNames(sav), sav.Context, sav.Version, OnItemChanged));
+            FillPouches(sav, _bag);
         }
         catch (Exception ex)
         {
@@ -265,6 +263,49 @@ public sealed class BagPageViewModel(Action<string> status) : PageViewModel
         }
         SelectedPouch = Pouches.FirstOrDefault();
         Raise(nameof(IsAvailable));
+        GiveAllTMsCommand.NotifyCanExecuteChanged();
+    }
+
+    private void FillPouches(SaveFile sav, PlayerBag bag)
+    {
+        bool editable = CoreAdapter.IsBagItemIdEditable(sav);
+        foreach (var p in bag.Pouches)
+            Pouches.Add(new PouchViewModel(bag, p, editable, CoreAdapter.GetItemNames(sav), sav.Context, sav.Version, OnItemChanged));
+    }
+
+    /// <summary>Todos os TMs (e HMs/TRs do mesmo bolso) na quantidade maxima, sem apagar o que ja estava la.</summary>
+    public RelayCommand GiveAllTMsCommand => _giveAllTMs ??= new(GiveAllTMs, () => _bag?.Pouches.Any(p => p.Type == InventoryType.TMHMs) == true);
+    private RelayCommand? _giveAllTMs;
+
+    private void GiveAllTMs()
+    {
+        if (_sav is null || _bag is null)
+            return;
+        int given = 0, full = 0;
+        foreach (var pouch in _bag.Pouches.Where(p => p.Type == InventoryType.TMHMs))
+        {
+            foreach (var id in pouch.GetAllItems())
+            {
+                if (id == 0 || !_bag.IsLegal(pouch.Type, id, 1))
+                    continue;
+                if (pouch.GiveItem(_bag, id, 1) < 0)
+                    full++;
+                else
+                    given++;
+            }
+            // 99 de cada (ou o maximo do jogo, se for menor: na Gen 5+ o TM nao se gasta e fica 1), em ordem numerica.
+            foreach (var item in pouch.Items.Where(i => i.Index != 0))
+                item.Count = _bag.Clamp(pouch.Type, item.Index, 99);
+            pouch.SortByIndex();
+        }
+        var index = SelectedPouch is { } sel ? Pouches.IndexOf(sel) : 0;
+        Pouches.Clear();
+        FillPouches(_sav, _bag);
+        SelectedPouch = Pouches.FirstOrDefault(p => p.Name == nameof(InventoryType.TMHMs)) ?? Pouches.ElementAtOrDefault(index);
+        OnItemChanged();
+        status(full > 0
+            ? $"{given} TM(s) na mochila, com 99 de cada; {full} não couberam (bolso cheio). Grave a mochila e salve o save para manter."
+            : $"{given} TM(s) na mochila, com 99 de cada. Grave a mochila e salve o save para manter.");
     }
 
     /// <summary>Mexeu num item: o save passa a ter alteracoes pendentes (antes, o Salvar gravava sem a mochila).</summary>

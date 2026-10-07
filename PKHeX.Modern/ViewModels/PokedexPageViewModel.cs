@@ -114,8 +114,31 @@ public sealed class PokedexPageViewModel : PageViewModel
 
     public IReadOnlyList<string> SourceOptions { get; private set; } = ["Tudo (saves + bank)"];
     private int _source;
-    public int SourceIndex { get => _source; set { if (value >= 0 && Set(ref _source, value)) ApplyFilter(); } }
+    public int SourceIndex
+    {
+        get => _source;
+        set
+        {
+            if (value < 0 || !Set(ref _source, value))
+                return;
+            Raise(nameof(OnlyOpenSave));
+            ApplyFilter();
+        }
+    }
     private DexSource? Source => _source > 0 && _source <= _sources.Count ? _sources[_source - 1] : null;
+
+    /// <summary>Le so a Pokedex do save aberto, sem misturar com os outros saves nem com o bank.</summary>
+    public bool OnlyOpenSave
+    {
+        get => Source is { IsOpenSave: true };
+        set
+        {
+            var open = _sources.ToList().FindIndex(s => s.IsOpenSave);
+            SourceIndex = value && open >= 0 ? open + 1 : 0;
+            Raise(nameof(OnlyOpenSave));
+        }
+    }
+    public bool HasOpenSave => _sources.Any(s => s.IsOpenSave);
 
     private string _search = "";
     public string Search { get => _search; set { if (Set(ref _search, value ?? "")) ApplyFilter(); } }
@@ -184,6 +207,8 @@ public sealed class PokedexPageViewModel : PageViewModel
             Raise(nameof(SourceOptions));
             _source = keep is null ? 0 : Math.Max(0, sources.ToList().FindIndex(s => s.Id == keep) + 1);
             Raise(nameof(SourceIndex));
+            Raise(nameof(OnlyOpenSave));
+            Raise(nameof(HasOpenSave));
 
             _speciesCards = Reuse(_speciesCards, data.Species);
             _formCards = Reuse(_formCards, data.Forms);

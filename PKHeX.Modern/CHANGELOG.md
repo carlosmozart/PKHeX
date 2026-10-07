@@ -6,6 +6,18 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 📖 Pokédex
+- **Só o save aberto:** um botão na Pokédex mostra só o que o save aberto viu, capturou e tem guardado, sem misturar com os outros saves nem com o bank.
+
+### 🎒 Mochila
+- **Todos os TMs:** um botão põe todos os TMs do jogo no bolso de TMs, com 99 de cada e em ordem numérica, sem tirar o que já estava lá.
+
+### 🐛 Correções
+- **Roamers da Gen 3:** Entei, Raikou e Suicune de FireRed/LeafGreen e Latias/Latios de Ruby/Sapphire gerados em Encontros vinham sempre com IVs zerados. Agora os IVs são sorteados como no jogo, que por um bug só guarda PS 0-31 e Ataque 0-7.
+- **Pokédex em janelas pequenas:** os botões, a busca, os filtros e as gerações se ajustam à largura, sem cortar o título nem o campo de busca.
+
 ## 0.4.19 — 2026-10-06
 
 ### 🔎 Pesquisa
