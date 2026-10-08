@@ -59,6 +59,7 @@ jobs:
           name: PKHeX.Modern-Android
           path: delivery/PKHeX.Modern-Android.apk
           if-no-files-found: error
+          retention-days: 3 # Cada APK tem ~100 MB; a release assinada fica na Release, nao aqui.
 
   release:
     if: ${{ inputs.signed_release && inputs.release_tag != '' }}
