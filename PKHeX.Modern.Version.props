@@ -1,4 +1,4 @@
 <Project>
   <!-- Versao do PKHeX Modern (desktop e Android). Atualize junto com a tag modern-vX.Y.Z e o ApplicationVersion do Android. -->
-  <PropertyGroup><Version>0.4.20</Version></PropertyGroup>
+  <PropertyGroup><Version>0.4.21</Version></PropertyGroup>
 </Project>

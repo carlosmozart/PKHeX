@@ -6,7 +6,7 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.21 — 2026-10-08
 
 ### 🎮 Jogo
 - **Battle Frontier:** nova aba em Emerald, Platinum e HeartGold/SoulSilver (e a Battle Tower de Diamond/Pearl), com BP, Frontier Pass e símbolos de prata/ouro (Emerald), impressões de cada instalação (Gen 4) e as sequências de cada instalação, modo e nível, inclusive trocas da Factory, CP do Castle e a série em andamento.
