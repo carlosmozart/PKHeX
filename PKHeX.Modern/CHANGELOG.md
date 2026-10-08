@@ -6,7 +6,7 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.20 — 2026-10-07
 
 ### 📖 Pokédex
 - **Só o save aberto:** um botão na Pokédex mostra só o que o save aberto viu, capturou e tem guardado, sem misturar com os outros saves nem com o bank.
