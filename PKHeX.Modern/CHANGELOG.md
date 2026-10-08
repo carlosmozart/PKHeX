@@ -6,6 +6,14 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 🎮 Jogo
+- **Battle Frontier:** nova aba em Emerald, Platinum e HeartGold/SoulSilver (e a Battle Tower de Diamond/Pearl), com BP, Frontier Pass e símbolos de prata/ouro (Emerald), impressões de cada instalação (Gen 4) e as sequências de cada instalação, modo e nível, inclusive trocas da Factory, CP do Castle e a série em andamento.
+- **Pokétch e Pokéwalker:** liberar os aplicativos do Pokétch e escolher o da tela (Diamond/Pearl/Platinum); watts, passos e rotas do Pokéwalker (HeartGold/SoulSilver).
+- **Medalhas do Pokéathlon:** as cinco medalhas de cada uma das 493 espécies, com busca, filtro de incompletas e “Todas as medalhas”.
+- **Base secreta:** em Ruby/Sapphire/Emerald, edita o dono de cada base e mostra a equipe dela; em Omega Ruby/Alpha Sapphire, edita textos, nível e bandeiras da sua base, dá todas as decorações e apaga bases de outros jogadores.
+
 ## 0.4.20 — 2026-10-07
 
 ### 📖 Pokédex

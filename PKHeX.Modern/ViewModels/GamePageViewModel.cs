@@ -41,7 +41,7 @@ public sealed partial class GamePageViewModel : PageViewModel
 
     public override string Title => "Jogo";
     public override string Icon => "🎮";
-    public override bool IsAvailable => _editors is null || _editors.IsAvailable || HasCards || HasRaids || HasClock || HasRoamers || HasDonuts || HasFashion;
+    public override bool IsAvailable => _editors is null || _editors.IsAvailable || HasCards || HasRaids || HasClock || HasRoamers || HasDonuts || HasFashion || HasFrontier || HasGadget || HasPokeathlon || HasSecretBase;
 
     public override void Load(SaveFile sav)
     {
@@ -54,6 +54,10 @@ public sealed partial class GamePageViewModel : PageViewModel
         RefreshRoamers();
         RefreshDonuts();
         RefreshFashion();
+        RefreshFrontier();
+        RefreshGadgets();
+        RefreshPokeathlon();
+        RefreshSecretBase();
         FameCaps = HallOfFame.Caps(sav);
         SpeciesOptions = [.. Enumerable.Range(1, FameCaps.MaxSpecies).Select(i => GameInfo.Strings.Species[i])];
         SelectedFameMember = null;
@@ -68,7 +72,7 @@ public sealed partial class GamePageViewModel : PageViewModel
             .Where(c => c.Length > 0).Distinct().Order(StringComparer.CurrentCulture)];
         _category = 0;
         _showUnnamed = !e.HasLabels;
-        _tab = e.HasEvents ? 0 : e.WorkCount > 0 ? 1 : e.HasRecords ? 2 : e.HasShortcuts ? 3 : e.HasFame ? 4 : HasCards ? 5 : HasRaids ? 6 : HasClock ? 7 : HasRoamers ? 8 : HasDonuts ? 9 : 10;
+        _tab = e.HasEvents ? 0 : e.WorkCount > 0 ? 1 : e.HasRecords ? 2 : e.HasShortcuts ? 3 : e.HasFame ? 4 : HasCards ? 5 : HasRaids ? 6 : HasClock ? 7 : HasRoamers ? 8 : HasDonuts ? 9 : HasFashion ? 10 : HasFrontier ? 11 : HasGadget ? 12 : HasPokeathlon ? 13 : 14;
         Raise(string.Empty);
         ApplyFilter();
     }
@@ -113,6 +117,10 @@ public sealed partial class GamePageViewModel : PageViewModel
             Raise(nameof(IsRoamersTab));
             Raise(nameof(IsDonutsTab));
             Raise(nameof(IsFashionTab));
+            Raise(nameof(IsFrontierTab));
+            Raise(nameof(IsGadgetTab));
+            Raise(nameof(IsPokeathlonTab));
+            Raise(nameof(IsSecretBaseTab));
             Raise(nameof(ShowFilters));
             Raise(nameof(ShowCategory));
             ApplyFilter();

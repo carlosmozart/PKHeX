@@ -991,6 +991,10 @@
         <Button Classes="small" Classes.accent="{Binding IsRoamersTab}" Content="🗺 Errantes" IsVisible="{Binding HasRoamers}" Command="{Binding SetTabCommand}" CommandParameter="8" />
         <Button Classes="small" Classes.accent="{Binding IsDonutsTab}" Content="🍩 Donuts" IsVisible="{Binding HasDonuts}" Command="{Binding SetTabCommand}" CommandParameter="9" />
         <Button Classes="small" Classes.accent="{Binding IsFashionTab}" Content="👕 Roupas" IsVisible="{Binding HasFashion}" Command="{Binding SetTabCommand}" CommandParameter="10" />
+        <Button Classes="small" Classes.accent="{Binding IsFrontierTab}" Content="🏟 Battle Frontier" IsVisible="{Binding HasFrontier}" Command="{Binding SetTabCommand}" CommandParameter="11" />
+        <Button Classes="small" Classes.accent="{Binding IsGadgetTab}" Content="{Binding GadgetTabText}" IsVisible="{Binding HasGadget}" Command="{Binding SetTabCommand}" CommandParameter="12" />
+        <Button Classes="small" Classes.accent="{Binding IsPokeathlonTab}" Content="🏅 Pokéathlon" IsVisible="{Binding HasPokeathlon}" Command="{Binding SetTabCommand}" CommandParameter="13" />
+        <Button Classes="small" Classes.accent="{Binding IsSecretBaseTab}" Content="🏠 Base secreta" IsVisible="{Binding HasSecretBase}" Command="{Binding SetTabCommand}" CommandParameter="14" />
       </WrapPanel>
       <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,8" IsVisible="{Binding ShowFilters}">
         <TextBox Text="{Binding Query}" Watermark="Buscar pelo nome ou número (ex.: surf, #120)" />
@@ -1250,9 +1254,236 @@
         <ScrollViewer IsVisible="{Binding IsRoamersTab}"><ContentControl Content="{Binding Roamer}" /></ScrollViewer>
         <ScrollViewer IsVisible="{Binding IsDonutsTab}"><ContentControl Content="{Binding Donuts}" /></ScrollViewer>
         <ContentControl IsVisible="{Binding IsFashionTab}" Content="{Binding Fashion}" />
+        <ScrollViewer IsVisible="{Binding IsFrontierTab}"><ContentControl Content="{Binding Frontier}" /></ScrollViewer>
+        <ScrollViewer IsVisible="{Binding IsGadgetTab}">
+          <StackPanel><ContentControl Content="{Binding Poketch}" /><ContentControl Content="{Binding Pokewalker}" /></StackPanel>
+        </ScrollViewer>
+        <ContentControl IsVisible="{Binding IsPokeathlonTab}" Content="{Binding Pokeathlon}" />
+        <ScrollViewer IsVisible="{Binding IsSecretBaseTab}">
+          <StackPanel><ContentControl Content="{Binding SecretBase3}" /><ContentControl Content="{Binding SecretBase6}" /></StackPanel>
+        </ScrollViewer>
         <TextBlock Text="Nada com esses filtros." Classes="muted" IsVisible="{Binding HasNoRows}" HorizontalAlignment="Center" VerticalAlignment="Center" />
       </Panel>
     </DockPanel>
+  </DataTemplate>
+
+  <!-- Editores por jogo, etapa 4: Battle Frontier, Pokétch/Pokéwalker, Pokéathlon e base secreta -->
+  <DataTemplate DataType="vm:FrontierEditorViewModel">
+    <StackPanel Spacing="12" Margin="0,0,12,12">
+      <TextBlock Text="{Binding Note}" Classes="muted" TextWrapping="Wrap" />
+      <Border Classes="card" Padding="16">
+        <WrapPanel ItemSpacing="18" LineSpacing="10">
+          <StackPanel Spacing="4"><TextBlock Text="Battle Points (BP)" Classes="muted" /><NumericUpDown Value="{Binding BP}" Minimum="0" Maximum="9999" FormatString="0" Width="160" /></StackPanel>
+          <CheckBox Content="Frontier Pass ativado" IsChecked="{Binding FrontierPass}" IsVisible="{Binding IsGen3}" VerticalAlignment="Bottom" />
+        </WrapPanel>
+      </Border>
+      <Border Classes="card" Padding="16" IsVisible="{Binding IsGen3}">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,Auto"><TextBlock Text="SÍMBOLOS" Classes="section" Margin="0" /><Button Grid.Column="1" Classes="small" Content="Todos de ouro" Command="{Binding AllGoldCommand}" /></Grid>
+          <ItemsControl ItemsSource="{Binding Symbols}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:FrontierSymbolViewModel">
+              <StackPanel Spacing="4" Margin="0,0,10,8"><TextBlock Text="{Binding Name}" Classes="muted" /><ComboBox ItemsSource="{Binding Options}" SelectedIndex="{Binding State}" HorizontalAlignment="Stretch" /></StackPanel>
+            </DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+      <Border Classes="card" Padding="16" IsVisible="{Binding HasPrints}">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,Auto"><TextBlock Text="IMPRESSÕES" Classes="section" Margin="0" /><Button Grid.Column="1" Classes="small" Content="Todas de ouro" Command="{Binding AllGoldCommand}" /></Grid>
+          <ItemsControl ItemsSource="{Binding Prints}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:FrontierPrintViewModel">
+              <StackPanel Spacing="4" Margin="0,0,10,8"><TextBlock Text="{Binding Name}" Classes="muted" /><ComboBox ItemsSource="{Binding Options}" SelectedIndex="{Binding State}" HorizontalAlignment="Stretch" /></StackPanel>
+            </DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+      <Border Classes="card" Padding="16">
+        <StackPanel Spacing="10">
+          <TextBlock Text="SEQUÊNCIAS" Classes="section" Margin="0" />
+          <WrapPanel ItemSpacing="10" LineSpacing="8">
+            <ComboBox ItemsSource="{Binding Facilities}" SelectedIndex="{Binding FacilityIndex}" MinWidth="180" />
+            <ComboBox ItemsSource="{Binding Modes}" SelectedIndex="{Binding ModeIndex}" MinWidth="160" IsVisible="{Binding HasModes}" />
+            <ComboBox ItemsSource="{Binding Levels}" SelectedIndex="{Binding LevelIndex}" MinWidth="140" IsVisible="{Binding HasLevels}" />
+          </WrapPanel>
+          <ItemsControl ItemsSource="{Binding Stats}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="4" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:FrontierStatViewModel">
+              <StackPanel Spacing="4" Margin="0,0,10,0"><TextBlock Text="{Binding Label}" Classes="muted" /><NumericUpDown Value="{Binding Value}" Minimum="0" Maximum="{Binding Max}" FormatString="0" /></StackPanel>
+            </DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <CheckBox Content="Série em andamento (o jogo oferece continuar)" IsChecked="{Binding Continue}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </DataTemplate>
+
+  <DataTemplate DataType="vm:PoketchEditorViewModel">
+    <StackPanel Spacing="12" Margin="0,0,12,12">
+      <TextBlock Text="Aplicativos do Pokétch. As mudanças valem na hora; Salvar grava o arquivo." Classes="muted" TextWrapping="Wrap" />
+      <Border Classes="card" Padding="16">
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+            <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Classes="small" Content="Liberar todos" Command="{Binding UnlockAllCommand}" />
+          </Grid>
+          <StackPanel Spacing="4"><TextBlock Text="Aplicativo na tela" Classes="muted" /><ComboBox ItemsSource="{Binding AppNames}" SelectedIndex="{Binding CurrentApp}" MinWidth="260" /></StackPanel>
+          <ItemsControl ItemsSource="{Binding Apps}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:PoketchAppViewModel"><CheckBox Content="{Binding Name}" IsChecked="{Binding Unlocked}" /></DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </DataTemplate>
+
+  <DataTemplate DataType="vm:PokewalkerEditorViewModel">
+    <StackPanel Spacing="12" Margin="0,0,12,12">
+      <TextBlock Text="Pokéwalker: watts, passos e rotas liberadas. As mudanças valem na hora; Salvar grava o arquivo." Classes="muted" TextWrapping="Wrap" />
+      <Border Classes="card" Padding="16">
+        <StackPanel Spacing="10">
+          <WrapPanel ItemSpacing="18" LineSpacing="10">
+            <StackPanel Spacing="4"><TextBlock Text="Watts" Classes="muted" /><NumericUpDown Value="{Binding Watts}" Minimum="0" Maximum="9999" FormatString="0" Width="160" /></StackPanel>
+            <StackPanel Spacing="4"><TextBlock Text="Passos" Classes="muted" /><NumericUpDown Value="{Binding Steps}" Minimum="0" Maximum="4294967295" FormatString="0" Width="200" /></StackPanel>
+          </WrapPanel>
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+            <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Classes="small" Content="Liberar todas" Command="{Binding UnlockAllCommand}"
+                    ToolTip.Tip="Libera as rotas que existem no idioma do save" />
+          </Grid>
+          <ItemsControl ItemsSource="{Binding Courses}">
+            <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:PokewalkerCourseViewModel"><CheckBox Content="{Binding Name}" IsChecked="{Binding Unlocked}" /></DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </DataTemplate>
+
+  <DataTemplate DataType="vm:PokeathlonMedalsViewModel">
+    <DockPanel>
+      <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,10">
+        <TextBlock Text="Medalhas do Pokéathlon por espécie: uma por percurso. As mudanças valem na hora; Salvar grava o arquivo." Classes="muted" TextWrapping="Wrap" />
+        <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+          <TextBox Text="{Binding Query}" Watermark="Buscar espécie (nome ou número)" />
+          <CheckBox Grid.Column="1" Content="Só incompletas" IsChecked="{Binding OnlyMissing}" VerticalAlignment="Center" />
+          <Button Grid.Column="2" Classes="small" Content="Todas as medalhas" Command="{Binding AllCommand}" />
+          <Button Grid.Column="3" Classes="small" Content="Tirar todas" Command="{Binding ClearCommand}" />
+        </Grid>
+        <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" />
+        <Grid ColumnDefinitions="40,*,80,80,80,80,80,80" Margin="12,0,24,0">
+          <TextBlock Grid.Column="2" Text="Speed" Classes="muted" HorizontalAlignment="Center" />
+          <TextBlock Grid.Column="3" Text="Power" Classes="muted" HorizontalAlignment="Center" />
+          <TextBlock Grid.Column="4" Text="Skill" Classes="muted" HorizontalAlignment="Center" />
+          <TextBlock Grid.Column="5" Text="Stamina" Classes="muted" HorizontalAlignment="Center" />
+          <TextBlock Grid.Column="6" Text="Jump" Classes="muted" HorizontalAlignment="Center" />
+          <TextBlock Grid.Column="7" Text="Todas" Classes="muted" HorizontalAlignment="Center" />
+        </Grid>
+      </StackPanel>
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <ItemsRepeater ItemsSource="{Binding Rows}" Margin="0,0,12,0">
+          <ItemsRepeater.Layout><StackLayout Spacing="2" /></ItemsRepeater.Layout>
+          <ItemsRepeater.ItemTemplate>
+            <DataTemplate x:DataType="vm:PokeathlonSpeciesViewModel">
+              <Border Classes="card" Padding="12,4">
+                <Grid ColumnDefinitions="40,*,80,80,80,80,80,80">
+                  <Image Source="{Binding Sprite}" Width="36" Height="32" />
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="8,0,0,0">
+                    <TextBlock Text="{Binding Number}" Classes="muted" />
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                  </StackPanel>
+                  <CheckBox Grid.Column="2" IsChecked="{Binding Speed}" HorizontalAlignment="Center" />
+                  <CheckBox Grid.Column="3" IsChecked="{Binding Power}" HorizontalAlignment="Center" />
+                  <CheckBox Grid.Column="4" IsChecked="{Binding Skill}" HorizontalAlignment="Center" />
+                  <CheckBox Grid.Column="5" IsChecked="{Binding Stamina}" HorizontalAlignment="Center" />
+                  <CheckBox Grid.Column="6" IsChecked="{Binding Jump}" HorizontalAlignment="Center" />
+                  <CheckBox Grid.Column="7" IsChecked="{Binding All}" HorizontalAlignment="Center" />
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsRepeater.ItemTemplate>
+        </ItemsRepeater>
+      </ScrollViewer>
+    </DockPanel>
+  </DataTemplate>
+
+  <DataTemplate DataType="vm:SecretBase3EditorViewModel">
+    <Grid ColumnDefinitions="260,*" ColumnSpacing="14" Margin="0,0,12,12">
+      <StackPanel Spacing="8">
+        <TextBlock Text="{Binding Summary}" Classes="muted" TextWrapping="Wrap" />
+        <ListBox ItemsSource="{Binding Bases}" SelectedItem="{Binding Selected}">
+          <ListBox.ItemTemplate><DataTemplate x:DataType="vm:SecretBase3RowViewModel">
+            <StackPanel Spacing="2" Margin="4"><TextBlock Text="{Binding Title}" FontWeight="SemiBold" /><TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="12" /></StackPanel>
+          </DataTemplate></ListBox.ItemTemplate>
+        </ListBox>
+      </StackPanel>
+      <Border Grid.Column="1" Classes="card" Padding="16" IsVisible="{Binding HasSelection}">
+        <StackPanel Spacing="10" DataContext="{Binding Selected}" x:DataType="vm:SecretBase3RowViewModel">
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <StackPanel Spacing="4"><TextBlock Text="Nome do dono" Classes="muted" /><TextBox Text="{Binding Name}" MaxLength="7" /></StackPanel>
+            <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="Gênero" Classes="muted" /><ComboBox ItemsSource="{Binding Genders}" SelectedIndex="{Binding Gender}" HorizontalAlignment="Stretch" /></StackPanel>
+          </Grid>
+          <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+            <StackPanel Spacing="4"><TextBlock Text="TID" Classes="muted" /><NumericUpDown Value="{Binding TID}" Minimum="0" Maximum="65535" FormatString="0" /></StackPanel>
+            <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="SID" Classes="muted" /><NumericUpDown Value="{Binding SID}" Minimum="0" Maximum="65535" FormatString="0" /></StackPanel>
+            <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Visitas" Classes="muted" /><NumericUpDown Value="{Binding TimesEntered}" Minimum="0" Maximum="255" FormatString="0" /></StackPanel>
+          </Grid>
+          <WrapPanel ItemSpacing="18">
+            <CheckBox Content="Já batalhou hoje" IsChecked="{Binding BattledToday}" />
+            <CheckBox Content="Registrada" IsChecked="{Binding Registered}" />
+          </WrapPanel>
+          <TextBlock Text="EQUIPE DA BASE" Classes="section" Margin="0,6,0,0" />
+          <TextBlock Text="Sem equipe guardada." Classes="muted" IsVisible="{Binding !HasTeam}" />
+          <ItemsControl ItemsSource="{Binding Team}">
+            <ItemsControl.ItemTemplate><DataTemplate x:DataType="x:String"><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,2" /></DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </DataTemplate>
+
+  <DataTemplate DataType="vm:SecretBase6EditorViewModel">
+    <StackPanel Spacing="12" Margin="0,0,12,12">
+      <TextBlock Text="{Binding OwnSummary}" Classes="muted" TextWrapping="Wrap" />
+      <Border Classes="card" Padding="16">
+        <StackPanel Spacing="10">
+          <TextBlock Text="SUA BASE" Classes="section" Margin="0" />
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto,Auto">
+            <StackPanel Spacing="4" Margin="0,0,0,8"><TextBlock Text="Nome" Classes="muted" /><TextBox Text="{Binding TrainerName}" MaxLength="12" /></StackPanel>
+            <StackPanel Grid.Column="1" Spacing="4" Margin="0,0,0,8"><TextBlock Text="Nome da equipe" Classes="muted" /><TextBox Text="{Binding TeamName}" MaxLength="16" /></StackPanel>
+            <StackPanel Grid.Row="1" Spacing="4" Margin="0,0,0,8"><TextBlock Text="Lema" Classes="muted" /><TextBox Text="{Binding TeamSlogan}" MaxLength="16" /></StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4" Margin="0,0,0,8"><TextBlock Text="Frase de alegria" Classes="muted" /><TextBox Text="{Binding SayHappy}" MaxLength="16" /></StackPanel>
+            <StackPanel Grid.Row="2" Spacing="4" Margin="0,0,0,8"><TextBlock Text="Frase de incentivo" Classes="muted" /><TextBox Text="{Binding SayEncourage}" MaxLength="16" /></StackPanel>
+            <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4" Margin="0,0,0,8"><TextBlock Text="Frase do quadro" Classes="muted" /><TextBox Text="{Binding SayBlackboard}" MaxLength="16" /></StackPanel>
+            <StackPanel Grid.Row="3" Spacing="4"><TextBlock Text="Frase dos confetes" Classes="muted" /><TextBox Text="{Binding SayConfettiBall}" MaxLength="16" /></StackPanel>
+          </Grid>
+          <WrapPanel ItemSpacing="18" LineSpacing="10">
+            <StackPanel Spacing="4"><TextBlock Text="Nível da base" Classes="muted" /><ComboBox ItemsSource="{Binding Ranks}" SelectedIndex="{Binding Rank}" MinWidth="150" /></StackPanel>
+            <StackPanel Spacing="4"><TextBlock Text="Bandeiras de amigos" Classes="muted" /><NumericUpDown Value="{Binding FlagsFromFriends}" Minimum="0" Maximum="99999" FormatString="0" Width="170" /></StackPanel>
+            <StackPanel Spacing="4"><TextBlock Text="Bandeiras de outros" Classes="muted" /><NumericUpDown Value="{Binding FlagsFromOthers}" Minimum="0" Maximum="99999" FormatString="0" Width="170" /></StackPanel>
+          </WrapPanel>
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+            <TextBlock Text="{Binding GoodsNote}" Classes="muted" TextWrapping="Wrap" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Classes="small" Content="Todas as decorações" Command="{Binding GiveAllGoodsCommand}" />
+          </Grid>
+        </StackPanel>
+      </Border>
+      <Border Classes="card" Padding="16">
+        <StackPanel Spacing="8">
+          <TextBlock Text="BASES DE OUTROS JOGADORES" Classes="section" Margin="0" />
+          <TextBlock Text="Nenhuma base de outros jogadores neste save." Classes="muted" IsVisible="{Binding !HasOthers}" />
+          <ItemsControl ItemsSource="{Binding Others}">
+            <ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:SecretBase6OtherViewModel">
+              <Grid ColumnDefinitions="*,Auto" Margin="0,2">
+                <StackPanel><TextBlock Text="{Binding Title}" FontWeight="SemiBold" /><TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="12" /></StackPanel>
+                <Button Grid.Column="1" Classes="small danger" Content="Apagar" Command="{Binding DeleteCommand}" />
+              </Grid>
+            </DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </StackPanel>
   </DataTemplate>
 
   <DataTemplate DataType="vm:FashionEditorViewModel">

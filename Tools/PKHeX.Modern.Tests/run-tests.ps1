@@ -12,6 +12,7 @@ $suites = [ordered]@{
     'DuplicateAudit' = @{}
     'LivingDexApply' = @{}
     'RoamerTMsDex' = @{ 'fr.sav' = 'fire red.sav'; 'em.sav' = 'Pokemon Emerald Version.sav' }
+    'GameStage4' = @{ 'em.sav' = 'Pokemon Emerald Version.sav'; 'hg.sav' = 'Pokemon Heart Gold Version.sav'; 'or.sav' = 'Omega Ruby.sav'; 'ru.sav' = 'Ruby.sav'; 'sa.sav' = 'Sapphire.sav' }
     'Evolution' = @{}
     'BoxReport' = @{}
     'EditorAnalysis' = @{ 'sv.sav' = 'Scarlet' }

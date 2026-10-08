@@ -108,6 +108,14 @@ foreach (var version in new[] { GameVersion.SH, GameVersion.SL, GameVersion.E, G
     if (version == GameVersion.SL) { page.RaidRegion = page.RaidRegions.Last(); Scan("Seven-star records"); }
     if (version == GameVersion.SL) { page.Tab = 10; Scan("Fashion"); }
 }
+// Editores da etapa 4: Battle Frontier, Pokétch/Pokéwalker, Pokéathlon e base secreta.
+foreach (var (version, tabs) in new (GameVersion, int[])[] { (GameVersion.E, [11, 14]), (GameVersion.Pt, [11, 12]), (GameVersion.HG, [11, 12, 13]), (GameVersion.OR, [14]) })
+{
+    var demo = BlankSaveFile.Get(version); CoreAdapter.Activate(demo);
+    var page = new GamePageViewModel((_, _, _) => System.Threading.Tasks.Task.FromResult(true), _ => { }); page.Load(demo);
+    win.Content = new ContentControl { Content = page, Margin = new Thickness(16) };
+    foreach (var tab in tabs) { page.Tab = tab; if (tab == 11) page.Frontier!.FacilityIndex = version == GameVersion.E ? 4 : 3; Scan($"Game tab {tab} {version}"); }
+}
 win.Content = originalContent; vm.ShowPokemonQr(new PK7 { Species = 25 }); Scan("QR"); vm.CloseQr();
 
 // New preference cards, touch toolbar, Bank consultation and backup metadata.
