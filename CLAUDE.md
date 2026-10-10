@@ -50,10 +50,9 @@ O usuário delega levas de funções ao Codex com enunciados `TAREFA-CODEX-FUNCO
 - **Formato do enunciado:** siga o das anteriores (regras do projeto, ordem das funções, testes obrigatórios, "fora desta tarefa", entrega).
 - **Próxima tarefa:** nenhuma leva pendente; a sexta (auditoria de duplicados e aplicar a Living Dex) saiu na 0.4.19. A próxima leva será a sétima (`TAREFA-CODEX-FUNCOES-7.md`).
 
-## Pendências em aberto (06/10/2026)
+## Pendências em aberto (10/10/2026)
 
 - **No celular:** conferir a tela cheia do Android (0.4.18), o toque longo nos botões e o segurar-e-arrastar de slot (0.4.16).
 - **Preferências:** decidir se a pergunta do "legalizar ao clicar" ganha uma opção para desligar.
-- **Worktrees antigas:** limpar `pkhex-android`, `pkhex-ci`, `pkhex-features` e `pkhex-features2`. Os comandos de git, quem roda é o usuário, ou ele autoriza.
 - **Outro PC:** apontar o remote para o nome novo:
   `git remote set-url origin https://github.com/carlosmozart/PKHeX-Modern.git`
