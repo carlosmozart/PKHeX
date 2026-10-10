@@ -6,6 +6,15 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
+## Próxima versão
+
+### 🎨 Aparência
+- **Tema ORAS (Pokédex):** azul-esverdeado inspirado na Pokédex e no PokéNav Plus de Omega Ruby/Alpha Sapphire, com a cor de destaque Água.
+- **Tema Kanto (Pokédex clássica):** vermelho e creme da Pokédex de Red/Blue.
+
+### ⚙ Preferências
+- **Legalizar ao clicar opcional:** a opção “Oferecer legalizar ao clicar num ilegal” no ⚙ desliga a pergunta; o Pokémon só abre no editor e o botão Legalizar continua disponível.
+
 ## 0.4.21 — 2026-10-08
 
 ### 🎮 Jogo

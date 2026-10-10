@@ -161,6 +161,8 @@
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <CheckBox Content="Abrir último save ao iniciar" FontSize="12" Margin="0,8,0,0" IsChecked="{Binding OpenLastSaveOnStartup}" />
+                    <CheckBox Content="Oferecer legalizar ao clicar num ilegal" FontSize="12" IsChecked="{Binding AskLegalizeOnClick}"
+                              ToolTip.Tip="Ao clicar num Pokémon ilegal, mostra a prévia do Legalizar. Desligado, o Pokémon só abre no editor (o botão Legalizar continua lá)." />
                   </StackPanel>
                   </ScrollViewer>
                 </Flyout>

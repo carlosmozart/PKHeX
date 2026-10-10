@@ -30,7 +30,7 @@ foreach(var theme in AppTheme.Presets)
     Check("miniatura em cache",ReferenceEquals(bitmap,ThemePreview.Get(theme,dark)));
     bitmap.Save(Path.Combine(work,$"theme-{theme.Key}-{(dark?"dark":"light")}.png"));
 }
-Check("oito miniaturas distintas",hashes.Count==8);
+Check("uma miniatura distinta por tema e variante",hashes.Count==AppTheme.Presets.Count*2);
 Check("prévia não troca tema do app",ReferenceEquals(originalTheme,AppTheme.Current));
 var sav=BlankSaveFile.Get(GameVersion.B); sav.OT="DEMO"; sav.SetBoxSlotAtIndex(new PK5{Species=25,Version=GameVersion.B,CurrentLevel=10},0,0);
 var path=Path.Combine(work,"Black.sav"); File.WriteAllBytes(path,sav.Write().ToArray());

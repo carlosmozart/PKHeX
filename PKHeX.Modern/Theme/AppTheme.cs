@@ -94,6 +94,14 @@ public static class AppTheme
             new("#0D0D0E", "#141416", "#1A1A1D", "#242428", "#2F2F34", "#38383E", "#9A9AA0"),
             new("#F1F1EC", "#FFFFFF", "#FFFFFF", "#E8E8E1", "#DCDCD3", "#CFCFC4", "#66665F"),
             0.35, null, "lime"),
+        new("oras", "ORAS (Pokédex)", "Azul-esverdeado da Pokédex e do PokéNav Plus de Omega Ruby/Alpha Sapphire, com cantos arredondados.",
+            new("#08202A", "#0B2A36", "#0F3644", "#154655", "#1B5868", "#226A7A", "#8CC3CC"),
+            new("#E3F5F4", "#FFFFFF", "#FFFFFF", "#D3EEEC", "#BFE5E2", "#A6D8D4", "#3F6F72"),
+            1.3, null, "teal"),
+        new("kanto", "Kanto (Pokédex clássica)", "Vermelho e creme da Pokédex de Red/Blue, com cantos levemente arredondados.",
+            new("#1A1213", "#231718", "#2C1D1F", "#3A2628", "#4A3033", "#5A383C", "#B8999C"),
+            new("#F7EFE4", "#FFFBF5", "#FFFDF8", "#F0E3D2", "#E7D4BD", "#D9C0A3", "#7A5E52"),
+            0.7, null, "red"),
     ];
 
     public static AppThemePreset Default => Presets[0];

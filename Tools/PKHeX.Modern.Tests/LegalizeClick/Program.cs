@@ -11,7 +11,7 @@ CoreAdapter.Activate(sav);
 var pk = EncounterDatabase.SearchEncounters(sav, 25, true).Where(e => e.Species == 25).Select(e => EncounterDatabase.ToEntity(sav, e, out _)).First(p => p is not null && new LegalityAnalysis(p).Valid)!;
 var bad = pk.Clone(); bad.MetLevel = 0; bad.MetLocation = 60000; bad.RefreshChecksum();
 Check("amostra: Pikachu estragado é ilegal", !new LegalityAnalysis(bad).Valid);
-sav.SetBoxSlotAtIndex(bad, 0, 0); sav.SetBoxSlotAtIndex(bad.Clone(), 0, 1);
+sav.SetBoxSlotAtIndex(bad, 0, 0); sav.SetBoxSlotAtIndex(bad.Clone(), 0, 1); sav.SetBoxSlotAtIndex(bad.Clone(), 0, 2);
 var path = Path.Combine(dir, "legalize.sav"); File.WriteAllBytes(path, sav.Write().ToArray());
 
 var vm = new MainViewModel(new AppSettings { CheckForUpdates = false });
@@ -38,6 +38,12 @@ t = vm.SelectSlotAsync(vm.Boxes.Slots[0]); Wait(() => t.IsCompleted && vm.Editor
 asked = null;
 t = vm.SelectSlotAsync(vm.Boxes.Slots[1]); Wait(() => t.IsCompleted);
 Check("depois de Só abrir, não pergunta de novo", asked is null, asked ?? "-");
+
+// Preferencia desligada: so abre no editor, sem pergunta.
+vm.AskLegalizeOnClick = false; asked = null;
+t = vm.SelectSlotAsync(vm.Boxes.Slots[2]); Wait(() => t.IsCompleted);
+Check("opção desligada não pergunta", asked is null && vm.Editor?.ShowIllegal == true && vm.Boxes.Slots[2].IsLegal == false, asked ?? "-");
+vm.AskLegalizeOnClick = true;
 
 // Pokemon legal: nenhuma pergunta.
 var good = vm.Boxes.Slots.First(s => s.IsLegal == true || s.IsEmpty);

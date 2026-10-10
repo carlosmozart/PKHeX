@@ -11,6 +11,8 @@ public sealed class AppSettings
     /// <summary>Saves abertos por ultimo (mais recente primeiro), para o Inicio.</summary>
     public System.Collections.Generic.List<string> RecentSaves { get; set; } = [];
     public bool OpenLastSaveOnStartup { get; set; }
+    /// <summary>Ao clicar num Pokemon ilegal, perguntar se quer legalizar (desligado = so abre no editor).</summary>
+    public bool AskLegalizeOnClick { get; set; } = true;
     public bool DarkTheme { get; set; } = true;
     /// <summary>Cor de destaque (chave de Theme.AccentTheme.Presets: red, cyan, blue...).</summary>
     public string? AccentColor { get; set; }

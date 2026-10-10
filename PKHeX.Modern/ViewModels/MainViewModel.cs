@@ -403,6 +403,12 @@ public sealed partial class MainViewModel : ViewModelBase
     public bool ShowSidebarSaves => !HasSave && SaveManager.HasEntries;
     public string LastSaveName => HasLastSave ? ZipSaves.DisplayName(Settings.LastSavePath!) : "";
 
+    public bool AskLegalizeOnClick
+    {
+        get => Settings.AskLegalizeOnClick;
+        set { Settings.AskLegalizeOnClick = value; Settings.Save(); Raise(); }
+    }
+
     public bool OpenLastSaveOnStartup
     {
         get => Settings.OpenLastSaveOnStartup;
@@ -2180,7 +2186,7 @@ public sealed partial class MainViewModel : ViewModelBase
     /// <summary>Clique num Pokemon ilegal: pergunta se quer legalizar; sim legaliza e grava no slot (com Ctrl+Z).</summary>
     private async Task OfferLegalizeAsync(SlotViewModel slot)
     {
-        if (Editor is not { ShowIllegal: true } editor || slot.IsEmpty)
+        if (!Settings.AskLegalizeOnClick || Editor is not { ShowIllegal: true } editor || slot.IsEmpty)
             return;
         var key = $"{_activeTab?.Path}|{slot.Location}|{Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(editor.CurrentData))}";
         if (_legalizeDeclined.Contains(key))
