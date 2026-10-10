@@ -2068,5 +2068,12 @@
   "Azul-esverdeado da Pokédex e do PokéNav Plus de Omega Ruby/Alpha Sapphire, com cantos arredondados.": "Teal from the Pokédex and PokéNav Plus of Omega Ruby/Alpha Sapphire, with rounded corners.",
   "Kanto (Pokédex clássica)": "Kanto (classic Pokédex)",
   "Vermelho e creme da Pokédex de Red/Blue, com cantos levemente arredondados.": "Red and cream from the Red/Blue Pokédex, with slightly rounded corners.",
-  "Água (ORAS)": "Teal (ORAS)"
+  "Água (ORAS)": "Teal (ORAS)",
+  "TAMANHO DOS SPRITES": "SPRITE SIZE",
+  "Tamanho dos Pokémon nas caixas, no bank, no outro save e na Pokédex": "Size of the Pokémon in the boxes, the bank, the other save and the Pokédex",
+  "Pequeno": "Small",
+  "Grande": "Large",
+  "Enorme": "Huge",
+  "Tamanho dos sprites": "Sprite size",
+  "No ⚙, “Tamanho dos sprites” deixa os Pokémon menores ou maiores nas caixas, no bank, no outro save e na Pokédex (Pequeno, Normal, Grande ou Enorme). Muda na hora e fica salvo; em telas grandes ou no celular, Grande e Enorme ajudam a reconhecer cada Pokémon.": "In ⚙, “Sprite size” makes Pokémon smaller or larger in the boxes, the bank, the other save and the Pokédex (Small, Normal, Large or Huge). It changes right away and is saved; on big screens or phones, Large and Huge make each Pokémon easier to recognize."
 }

@@ -125,6 +125,9 @@
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    <TextBlock Text="TAMANHO DOS SPRITES" Classes="section" Margin="0,8,0,0" />
+                    <ComboBox ItemsSource="{Binding SpriteSizeOptions}" SelectedIndex="{Binding SpriteSizeIndex}" HorizontalAlignment="Stretch"
+                              ToolTip.Tip="Tamanho dos Pokémon nas caixas, no bank, no outro save e na Pokédex" />
                     <TextBlock Text="PAPEL DE PAREDE DAS CAIXAS" Classes="section" Margin="0,8,0,0" TextWrapping="Wrap" />
                     <ComboBox ItemsSource="{Binding WallpaperIntensityOptions}" SelectedIndex="{Binding WallpaperIntensityIndex}" HorizontalAlignment="Stretch" />
                     <TextBlock Text="Muda só a exibição; o papel de parede do jogo é preservado." FontSize="11" Classes="muted" TextWrapping="Wrap" />

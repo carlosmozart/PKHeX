@@ -342,7 +342,7 @@
                       </StackPanel>
                     </Grid>
                     <Panel Grid.Row="1">
-                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="{DynamicResource CompactSpriteSize}" Margin="2" />
                       <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
                     </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
@@ -414,7 +414,7 @@
                       </StackPanel>
                     </Grid>
                     <Panel Grid.Row="1">
-                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="{DynamicResource CompactSpriteSize}" Margin="2" />
                       <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
                     </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
@@ -476,7 +476,7 @@
                       </StackPanel>
                     </Grid>
                     <Panel Grid.Row="1">
-                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="{DynamicResource CompactSpriteSize}" Margin="2" />
                       <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
                     </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
@@ -514,7 +514,7 @@
                       </StackPanel>
                     </Grid>
                     <Panel Grid.Row="1">
-                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
+                      <Image Source="{Binding Sprite}" Stretch="Uniform" Height="{DynamicResource CompactSpriteSize}" Margin="2" />
                       <Image Source="{Binding BallSprite}" Width="14" Height="14" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
                     </Panel>
                     <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
@@ -718,7 +718,7 @@
             <!-- Grade virtualizada: so os cartoes visiveis na tela sao criados (sao 1025 especies) -->
             <ItemsRepeater ItemsSource="{Binding VisibleCards}">
               <ItemsRepeater.Layout>
-                <UniformGridLayout MinItemWidth="104" MinItemHeight="104" MinColumnSpacing="6" MinRowSpacing="6" />
+                <c:DexGridLayout />
               </ItemsRepeater.Layout>
               <ItemsRepeater.ItemTemplate>
                 <DataTemplate x:DataType="vm:DexCardViewModel">
@@ -736,7 +736,7 @@
                           <TextBlock Text="●" Classes="dexOwned" FontSize="10" IsVisible="{Binding IsOwned}" />
                         </StackPanel>
                       </Grid>
-                      <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="48" Margin="2" />
+                      <Image Grid.Row="1" Source="{Binding Sprite}" Stretch="Uniform" Height="{DynamicResource DexSpriteSize}" Margin="2" />
                       <StackPanel Grid.Row="2" HorizontalAlignment="Center">
                         <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         <TextBlock Text="{Binding FormName}" Classes="muted" FontSize="9" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
@@ -1776,7 +1776,7 @@
           </StackPanel>
         </Grid>
         <Panel Grid.Row="1">
-          <Image Source="{Binding Sprite}" Stretch="Uniform" Height="84" Margin="6,4" />
+          <Image Source="{Binding Sprite}" Stretch="Uniform" Height="{DynamicResource SlotSpriteSize}" Margin="{DynamicResource SlotSpriteMargin}" />
           <Image Source="{Binding BallSprite}" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Bottom" ToolTip.Tip="Bola" />
         </Panel>
         <StackPanel Grid.Row="2" HorizontalAlignment="Center" IsVisible="{Binding !IsEmpty}">
@@ -1892,8 +1892,9 @@
       <ScrollViewer x:Name="BoxScroll" HorizontalScrollBarVisibility="Disabled">
         <Border Classes="card" Padding="12" MaxWidth="1100" VerticalAlignment="Top">
           <Grid>
-          <Image x:Name="BoxWallpaperImage" Source="{Binding Wallpaper}" Stretch="UniformToFill" Opacity="{Binding WallpaperOpacity}" IsHitTestVisible="False" />
-          <ItemsControl ItemsSource="{Binding Slots}">
+          <Image x:Name="BoxWallpaperImage" Source="{Binding Wallpaper}" Stretch="UniformToFill" Opacity="{Binding WallpaperOpacity}" IsHitTestVisible="False"
+                 Height="{Binding #BoxSlots.Bounds.Height}" VerticalAlignment="Top" ClipToBounds="True" />
+          <ItemsControl x:Name="BoxSlots" ItemsSource="{Binding Slots}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <UniformGrid Columns="{Binding #BoxScroll.Bounds.Width, Converter={x:Static c:WidthToColumnsConverter.Instance}, ConverterParameter='112,6'}" />

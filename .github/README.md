@@ -9,6 +9,8 @@ Feita em Avalonia, com tema escuro e claro, temas inspirados nos jogos e interfa
 [![Última versão](https://img.shields.io/github/v/release/carlosmozart/PKHeX-Modern?label=vers%C3%A3o&sort=semver)](https://github.com/carlosmozart/PKHeX-Modern/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/carlosmozart/PKHeX-Modern/total?label=downloads)](https://github.com/carlosmozart/PKHeX-Modern/releases)
 
+🌐 **Site do projeto: [carlosmozart.github.io/PKHeX-Modern](https://carlosmozart.github.io/PKHeX-Modern/)**
+
 ![Início](/PKHeX.Modern/docs/home.png)
 
 ## Download
@@ -37,6 +39,7 @@ O PKHeX original é só para Windows. O PKHeX Modern roda nos quatro sistemas, s
 - **Página Jogo**: flags e valores de evento com nome, recordes, atalhos de eventos (lendários de novo, itens, títulos) e Hall da Fama editável.
 - **Evolução assistida**: uma lista com todas as evoluções da espécie no jogo (nível, item, troca, felicidade, beleza, golpe, local...), com o requisito, prévia e sem precisar de um segundo jogo.
 - **Equipe Showdown e relatório CSV**: cole ou copie a equipe ou a caixa inteira no formato Showdown e exporte o save ou o bank para planilha.
+- **Temas inspirados nos jogos** (PSS de X/Y, Pixel de GBA, Z-A, Pokédex de ORAS e Pokédex clássica de Kanto), oito cores de destaque e tamanho dos sprites ajustável.
 - **Android** com a mesma interface do desktop, em paisagem: saves e pastas pelo seletor do sistema, gravando de volta no arquivo original.
 
 ![Caixas e editor](/PKHeX.Modern/docs/boxes.png)
@@ -46,6 +49,8 @@ O PKHeX original é só para Windows. O PKHeX Modern roda nos quatro sistemas, s
 | ![Golpes](/PKHeX.Modern/docs/moves.png) | ![Pokédex](/PKHeX.Modern/docs/pokedex.png) |
 | **Save Manager** | **Tema Pixel (GBA)** |
 | ![Save Manager](/PKHeX.Modern/docs/savemanager.png) | ![Tema Pixel](/PKHeX.Modern/docs/theme_pixel.png) |
+| **Tema ORAS (Pokédex)** | **Tema Kanto no modo claro** |
+| ![Tema ORAS](/PKHeX.Modern/docs/theme_oras.png) | ![Tema Kanto](/PKHeX.Modern/docs/theme_kanto_light.png) |
 
 **No Android**, com a mesma interface:
 
@@ -57,7 +62,7 @@ Mais capturas, a lista completa de funções, como compilar e a arquitetura est�
 
 ## English
 
-**PKHeX Modern** is a modern UI for the [PKHeX](https://github.com/kwsch/PKHeX) Pokémon save editor, running on **Windows, Linux, macOS and Android** (the original PKHeX is Windows-only). It is built on top of the unmodified `PKHeX.Core`, so save handling and legality checks are the same as PKHeX. Features include a legal mode, drag and drop between boxes and party, a save manager, a local bank, a combined Pokédex, encounter and event databases, event flag editors, an editable Hall of Fame and automatic updates. The interface is available in Portuguese and English (⚙ › Language). [Download the latest release](https://github.com/carlosmozart/PKHeX-Modern/releases/latest).
+**PKHeX Modern** is a modern UI for the [PKHeX](https://github.com/kwsch/PKHeX) Pokémon save editor, running on **Windows, Linux, macOS and Android** (the original PKHeX is Windows-only). It is built on top of the unmodified `PKHeX.Core`, so save handling and legality checks are the same as PKHeX. Features include a legal mode, drag and drop between boxes and party, a save manager, a local bank, a combined Pokédex, encounter and event databases, event flag editors, an editable Hall of Fame, game-inspired themes and automatic updates. The interface is available in Portuguese and English (⚙ › Language). [Download the latest release](https://github.com/carlosmozart/PKHeX-Modern/releases/latest) or visit the [project site](https://carlosmozart.github.io/PKHeX-Modern/).
 
 ## Créditos
 

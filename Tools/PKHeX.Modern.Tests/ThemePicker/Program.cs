@@ -32,6 +32,11 @@ foreach(var theme in AppTheme.Presets)
 }
 Check("uma miniatura distinta por tema e variante",hashes.Count==AppTheme.Presets.Count*2);
 Check("prévia não troca tema do app",ReferenceEquals(originalTheme,AppTheme.Current));
+double Res(string k)=>(double)Application.Current!.Resources[k]!;
+SpriteScale.Apply(3);Check("sprites enormes",Res("SlotSpriteSize")==126&&Res("DexSpriteSize")==72);
+SpriteScale.Apply(0);Check("sprites pequenos",Res("CompactSpriteSize")==36);
+SpriteScale.Apply(99);Check("tamanho fora da faixa vira o maior",Res("SlotSpriteSize")==126);
+SpriteScale.Apply(1);Check("tamanho normal",Res("SlotSpriteSize")==84);
 var sav=BlankSaveFile.Get(GameVersion.B); sav.OT="DEMO"; sav.SetBoxSlotAtIndex(new PK5{Species=25,Version=GameVersion.B,CurrentLevel=10},0,0);
 var path=Path.Combine(work,"Black.sav"); File.WriteAllBytes(path,sav.Write().ToArray());
 var settings=new AppSettings{CheckForUpdates=false}; var vm=new MainViewModel(settings); vm.Open(path); vm.CurrentPage=vm.Boxes;

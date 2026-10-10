@@ -20,6 +20,8 @@ public sealed class AppSettings
     public string? ThemeKey { get; set; }
     /// <summary>Box background intensity: normal, soft, disabled. Does not change the game's wallpaper.</summary>
     public int WallpaperIntensity { get; set; }
+    /// <summary>Tamanho dos sprites nas grades (Theme.SpriteScale): 0 pequeno, 1 normal, 2 grande, 3 enorme.</summary>
+    public int SpriteSize { get; set; } = 1;
     /// <summary>Fonte da interface (chave de Theme.AppTheme.Fonts: theme, inter, pixelify...); null = a do tema.</summary>
     public string? FontKey { get; set; }
     /// <summary>Pasta do Save Manager (null = pasta "saves" ao lado do exe).</summary>

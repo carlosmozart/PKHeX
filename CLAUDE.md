@@ -53,6 +53,6 @@ O usuário delega levas de funções ao Codex com enunciados `TAREFA-CODEX-FUNCO
 ## Pendências em aberto (10/10/2026)
 
 - **No celular:** conferir a tela cheia do Android (0.4.18), o toque longo nos botões e o segurar-e-arrastar de slot (0.4.16).
-- **Preferências:** decidir se a pergunta do "legalizar ao clicar" ganha uma opção para desligar.
+- **Página de divulgação:** `docs/index.html`, publicada pelo GitHub Pages a partir da pasta `/docs` do `modern-ui` (endereço: https://carlosmozart.github.io/PKHeX-Modern/). As imagens vêm de `PKHeX.Modern/docs` pelo raw do GitHub (capturas headless com saves sintéticos, nunca saves reais) e os downloads usam `releases/latest/download/<pacote>`, então a página não precisa mudar a cada release. Ao criar uma função visível, considere uma captura nova e um cartão na página.
 - **Outro PC:** apontar o remote para o nome novo:
   `git remote set-url origin https://github.com/carlosmozart/PKHeX-Modern.git`

@@ -117,9 +117,9 @@
     <Setter Property="VerticalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="VerticalContentAlignment" Value="Stretch" />
-    <Setter Property="MinHeight" Value="150" />
+    <Setter Property="MinHeight" Value="{DynamicResource SlotCardMinHeight}" />
     <Setter Property="Margin" Value="5" />
-    <Setter Property="Padding" Value="8,6,8,8" />
+    <Setter Property="Padding" Value="{DynamicResource SlotCardPadding}" />
     <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
     <Setter Property="Background" Value="{DynamicResource SlotBackground}" />
     <Setter Property="BorderBrush" Value="Transparent" />
@@ -145,8 +145,8 @@
   </Style>
   <!-- Pokedex -->
   <Style Selector="Button.dexCard">
-    <Setter Property="Width" Value="104" />
-    <Setter Property="Height" Value="104" />
+    <Setter Property="Width" Value="{DynamicResource DexCardWidth}" />
+    <Setter Property="Height" Value="{DynamicResource DexCardHeight}" />
     <Setter Property="Padding" Value="6,4" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="VerticalContentAlignment" Value="Stretch" />
@@ -231,13 +231,13 @@
     <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
   </Style>
   <Style Selector="TextBlock.slotName">
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="{DynamicResource SlotNameSize}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </Style>
   <Style Selector="TextBlock.slotLevel">
-    <Setter Property="FontSize" Value="12" />
+    <Setter Property="FontSize" Value="{DynamicResource SlotLevelSize}" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
   </Style>
@@ -387,7 +387,7 @@
   </Style>
   <Style Selector="Button.slot.compact">
     <Setter Property="MinHeight" Value="0" />
-    <Setter Property="Height" Value="104" />
+    <Setter Property="Height" Value="{DynamicResource CompactCardHeight}" />
     <Setter Property="Margin" Value="3" />
     <Setter Property="Padding" Value="5,4" />
   </Style>

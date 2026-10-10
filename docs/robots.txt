@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://carlosmozart.github.io/PKHeX-Modern/sitemap.xml

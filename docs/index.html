@@ -1,0 +1,259 @@
+<!doctype html>
+<!-- Pagina de divulgacao do PKHeX Modern (GitHub Pages, pasta /docs do branch modern-ui).
+     As imagens vem de PKHeX.Modern/docs no proprio repositorio (capturas headless com saves sinteticos). -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PKHeX Modern: editor de saves de Pokémon para Windows, Linux, macOS e Android</title>
+<meta name="description" content="PKHeX Modern é uma interface moderna e gratuita para o PKHeX, o editor de saves de Pokémon: modo legal, bank, Pokédex centralizada, living dex e temas. Funciona no Windows, Linux, macOS, Steam Deck e Android.">
+<meta name="keywords" content="PKHeX, PKHeX Modern, editor de save Pokémon, Pokémon save editor, PKHeX Android, PKHeX Linux, PKHeX macOS, PKHeX Steam Deck, living dex, Pokémon bank, legalidade Pokémon">
+<meta name="author" content="Carlos Mozart">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#e5484d">
+<link rel="canonical" href="https://carlosmozart.github.io/PKHeX-Modern/">
+<link rel="icon" href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern.Android/Resources/drawable/app_icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PKHeX Modern">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:url" content="https://carlosmozart.github.io/PKHeX-Modern/">
+<meta property="og:title" content="PKHeX Modern: editor de saves de Pokémon">
+<meta property="og:description" content="Interface moderna e gratuita para o PKHeX, com modo legal, bank, Pokédex centralizada e temas. Windows, Linux, macOS, Steam Deck e Android.">
+<meta property="og:image" content="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/boxes.png">
+<meta property="og:image:width" content="1600">
+<meta property="og:image:height" content="950">
+<meta property="og:image:alt" content="Caixas, equipe e editor do PKHeX Modern">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PKHeX Modern: editor de saves de Pokémon">
+<meta name="twitter:description" content="Interface moderna e gratuita para o PKHeX. Windows, Linux, macOS, Steam Deck e Android.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/boxes.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PKHeX Modern",
+  "alternateName": "PKHeX Modern UI",
+  "description": "Interface moderna para o PKHeX, o editor de saves de Pokémon, com modo legal, bank, Pokédex centralizada, living dex e temas.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Windows, Linux, macOS, Android",
+  "url": "https://carlosmozart.github.io/PKHeX-Modern/",
+  "downloadUrl": "https://github.com/carlosmozart/PKHeX-Modern/releases/latest",
+  "screenshot": "https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/boxes.png",
+  "softwareHelp": "https://github.com/carlosmozart/PKHeX-Modern/blob/modern-ui/PKHeX.Modern/README.md",
+  "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Carlos Mozart", "url": "https://github.com/carlosmozart" },
+  "inLanguage": ["pt-BR", "en"],
+  "sameAs": ["https://github.com/carlosmozart/PKHeX-Modern"]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14161b; --panel: #1b1e25; --card: #20242c; --border: #2e333d;
+    --text: #eef0f4; --muted: #8c93a3; --accent: #e5484d; --accent-2: #ff6b6f;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; line-height: 1.55; }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  img { max-width: 100%; display: block; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+  header.nav { position: sticky; top: 0; z-index: 10; background: rgba(20,22,27,.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  header.nav .wrap { display: flex; align-items: center; gap: 20px; height: 60px; }
+  .logo { font-weight: 800; font-size: 20px; color: var(--accent); letter-spacing: -.02em; }
+  .logo span { color: var(--muted); font-weight: 500; font-size: 15px; margin-left: 4px; }
+  header.nav nav { margin-left: auto; display: flex; gap: 18px; font-size: 14px; }
+  header.nav nav a { color: var(--muted); }
+  header.nav nav a:hover { color: var(--text); text-decoration: none; }
+
+  .hero { padding: 72px 0 40px; text-align: center; background: radial-gradient(800px 380px at 50% -40px, rgba(229,72,77,.22), transparent 70%); }
+  .badge { display: inline-block; padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; font-size: 13px; color: var(--muted); background: var(--panel); }
+  .hero h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.08; margin: 18px 0 14px; letter-spacing: -.03em; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p.lead { font-size: clamp(16px, 2.2vw, 19px); color: var(--muted); max-width: 720px; margin: 0 auto 28px; }
+  .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 10px; font-weight: 600; font-size: 15px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+  .btn:hover { text-decoration: none; border-color: var(--muted); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-2); }
+  .shot { margin: 44px auto 0; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.5); max-width: 1040px; }
+
+  section { padding: 64px 0; }
+  section h2 { font-size: clamp(26px, 4vw, 34px); margin: 0 0 10px; letter-spacing: -.02em; }
+  section p.sub { color: var(--muted); margin: 0 0 32px; max-width: 720px; }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+  .feat { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .feat .ic { font-size: 24px; }
+  .feat h3 { font-size: 16px; margin: 8px 0 6px; }
+  .feat p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  .gallery { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .gallery figure { margin: 0; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .gallery figcaption { padding: 10px 14px; font-size: 14px; color: var(--muted); }
+  .gallery a { display: block; }
+
+  .dl { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .dl a { display: block; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; color: var(--text); }
+  .dl a:hover { border-color: var(--accent); text-decoration: none; }
+  .dl .os { font-weight: 700; font-size: 17px; }
+  .dl .file { color: var(--muted); font-size: 13px; margin-top: 4px; word-break: break-all; }
+  .note { margin-top: 18px; color: var(--muted); font-size: 14px; }
+  .warn { margin-top: 26px; padding: 14px 18px; border-left: 3px solid var(--accent); background: var(--panel); border-radius: 8px; font-size: 14px; color: var(--muted); }
+
+  .split { display: grid; gap: 28px; grid-template-columns: 1fr 1fr; align-items: center; }
+  .split img { border-radius: var(--radius); border: 1px solid var(--border); }
+  ul.check { padding: 0; list-style: none; margin: 0; }
+  ul.check li { padding-left: 26px; position: relative; margin: 8px 0; color: var(--muted); }
+  ul.check li::before { content: "✓"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+  ul.check b { color: var(--text); font-weight: 600; }
+
+  footer { border-top: 1px solid var(--border); padding: 32px 0 48px; color: var(--muted); font-size: 14px; }
+  footer p { margin: 6px 0; }
+
+  @media (max-width: 760px) {
+    header.nav nav { display: none; }
+    .split { grid-template-columns: 1fr; }
+    .hero { padding-top: 48px; }
+    section { padding: 48px 0; }
+    .gallery { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <div class="logo">PKHeX<span>Modern</span></div>
+    <nav>
+      <a href="#funcoes">Funções</a>
+      <a href="#capturas">Capturas</a>
+      <a href="#temas">Temas</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/carlosmozart/PKHeX-Modern">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <span class="badge" id="version">Windows · Linux · macOS · Android</span>
+    <h1>O PKHeX que você conhece,<br><em>com uma interface moderna.</em></h1>
+    <p class="lead">Uma interface moderna para o <a href="https://github.com/kwsch/PKHeX">PKHeX</a>, com modo legal, bank, Pokédex centralizada e temas inspirados nos jogos. Por baixo continua o PKHeX.Core original: as mesmas regras de save e de legalidade.</p>
+    <div class="btns">
+      <a class="btn primary" href="#download">⬇ Baixar grátis</a>
+      <a class="btn" href="https://github.com/carlosmozart/PKHeX-Modern">★ Ver no GitHub</a>
+    </div>
+    <div class="shot"><img src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/boxes.png" alt="Caixas, equipe e editor do PKHeX Modern" width="1600" height="950"></div>
+  </div>
+</div>
+
+<section id="funcoes">
+  <div class="wrap">
+    <h2>Tudo o que o PKHeX faz, num lugar só</h2>
+    <p class="sub">Feito para organizar a coleção de todos os seus jogos, da primeira geração a Legends: Z-A, sem perder a legalidade.</p>
+    <div class="grid">
+      <div class="feat"><div class="ic">🛡️</div><h3>Modo legal</h3><p>O editor só oferece opções legais e legaliza com um clique, a partir de encontros reais do jogo.</p></div>
+      <div class="feat"><div class="ic">🖱️</div><h3>Arrastar e soltar</h3><p>Caixas, equipe e editor lado a lado, com desfazer e refazer, seleção múltipla e busca global.</p></div>
+      <div class="feat"><div class="ic">🏦</div><h3>Bank local</h3><p>Guarde Pokémon fora dos saves e leve de um jogo para outro, com conversão de geração.</p></div>
+      <div class="feat"><div class="ic">📖</div><h3>Pokédex centralizada</h3><p>Junta todos os saves e o bank: living dex, shiny dex, formas e gêneros, e um planejador que organiza as caixas.</p></div>
+      <div class="feat"><div class="ic">🗂️</div><h3>Save Manager</h3><p>Todos os saves da pasta com o selo de cada jogo, saves em .zip e backup automático antes de gravar.</p></div>
+      <div class="feat"><div class="ic">🌿</div><h3>Encontros e eventos</h3><p>Gere Pokémon legais a partir dos encontros e Mystery Gifts de cada jogo, inclusive os da Gen 1 a 3.</p></div>
+      <div class="feat"><div class="ic">🔎</div><h3>Pesquisa e lote</h3><p>Procure em todos os saves e no bank, ache duplicados e edite ou legalize vários Pokémon de uma vez.</p></div>
+      <div class="feat"><div class="ic">🎮</div><h3>Página Jogo</h3><p>Flags de evento com nome, recordes, Hall da Fama, Battle Frontier, bases secretas e muito mais.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="capturas" style="background: var(--panel)">
+  <div class="wrap">
+    <h2>Capturas</h2>
+    <p class="sub">Geradas com saves de exemplo. Clique para ver em tamanho real.</p>
+    <div class="gallery">
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/home.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/home.png" alt="Tela inicial"></a><figcaption>Início: o jogo, a equipe e atalhos para tudo</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/pokedex.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/pokedex.png" alt="Pokédex centralizada"></a><figcaption>Pokédex centralizada de todos os saves</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/moves.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/moves.png" alt="Golpes com busca"></a><figcaption>Golpes com busca: em verde, os que o Pokémon aprende</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/encounters.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/encounters.png" alt="Banco de encontros"></a><figcaption>Banco de encontros: onde e como cada espécie aparece</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/bank.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/bank.png" alt="Bank"></a><figcaption>Bank com seleção múltipla e conversão de geração</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/savemanager.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/savemanager.png" alt="Save Manager"></a><figcaption>Save Manager com o selo de cada jogo</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="temas">
+  <div class="wrap">
+    <h2>Temas inspirados nos jogos</h2>
+    <p class="sub">Escuro ou claro, oito cores de destaque, tamanho dos sprites ajustável e temas completos que mudam fundo, cantos, bordas e fonte.</p>
+    <div class="gallery">
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_oras.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_oras.png" alt="Tema ORAS"></a><figcaption>ORAS (Pokédex de Omega Ruby/Alpha Sapphire)</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_kanto_light.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_kanto_light.png" alt="Tema Kanto claro"></a><figcaption>Kanto (Pokédex clássica), no modo claro</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_pixel.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_pixel.png" alt="Tema Pixel"></a><figcaption>Pixel (menus do Game Boy Advance)</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_pss.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_pss.png" alt="Tema PSS"></a><figcaption>PSS (Player Search System de X/Y)</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_za.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/theme_za.png" alt="Tema Z-A"></a><figcaption>Z-A (Lumiose de Legends: Z-A)</figcaption></figure>
+      <figure><a href="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/english.png"><img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/english.png" alt="Interface em inglês"></a><figcaption>Interface em português ou inglês</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section style="background: var(--panel)">
+  <div class="wrap split">
+    <div>
+      <h2>No celular também</h2>
+      <p class="sub">O mesmo app no Android, com a mesma interface do desktop.</p>
+      <ul class="check">
+        <li><b>Abre e grava</b> saves e pastas pelo seletor do sistema, de volta no arquivo original.</li>
+        <li><b>Toque e arraste</b> para mover Pokémon; segure um botão para ver a dica.</li>
+        <li><b>Atualiza sozinho</b> quando sai uma versão nova.</li>
+      </ul>
+    </div>
+    <img loading="lazy" src="https://raw.githubusercontent.com/carlosmozart/PKHeX-Modern/modern-ui/PKHeX.Modern/docs/android.png" alt="PKHeX Modern no Android">
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <h2>Download</h2>
+    <p class="sub">Grátis e de código aberto. Não precisa instalar o .NET; o app avisa quando sai versão nova e se atualiza sozinho.</p>
+    <div class="dl">
+      <a href="https://github.com/carlosmozart/PKHeX-Modern/releases/latest/download/PKHeX.Modern-win-x64.zip"><div class="os">Windows</div><div class="file">10/11 64 bits · PKHeX.Modern-win-x64.zip</div></a>
+      <a href="https://github.com/carlosmozart/PKHeX-Modern/releases/latest/download/PKHeX.Modern-linux-x64.zip"><div class="os">Linux</div><div class="file">x64, também Steam Deck · PKHeX.Modern-linux-x64.zip</div></a>
+      <a href="https://github.com/carlosmozart/PKHeX-Modern/releases/latest/download/PKHeX.Modern-osx-arm64.zip"><div class="os">macOS (Apple Silicon)</div><div class="file">M1, M2... · PKHeX.Modern-osx-arm64.zip</div></a>
+      <a href="https://github.com/carlosmozart/PKHeX-Modern/releases/latest/download/PKHeX.Modern-osx-x64.zip"><div class="os">macOS (Intel)</div><div class="file">PKHeX.Modern-osx-x64.zip</div></a>
+      <a href="https://github.com/carlosmozart/PKHeX-Modern/releases/latest/download/PKHeX.Modern-Android.apk"><div class="os">Android</div><div class="file">6 ou mais novo · PKHeX.Modern-Android.apk</div></a>
+    </div>
+    <p class="note">Como instalar em cada sistema: <a href="https://github.com/carlosmozart/PKHeX-Modern/blob/modern-ui/PKHeX.Modern/README.md#download">guia de instalação</a> · Novidades de cada versão: <a href="https://github.com/carlosmozart/PKHeX-Modern/releases">Releases</a></p>
+    <div class="warn"><b>Faça backup dos seus saves antes de editar.</b> O app já guarda uma cópia antes de gravar por cima, mas um backup seu nunca é demais.</div>
+  </div>
+</section>
+
+<section style="background: var(--panel)">
+  <div class="wrap">
+    <h2>English</h2>
+    <p class="sub" style="margin-bottom:0"><b>PKHeX Modern</b> is a modern UI for the PKHeX Pokémon save editor, running on Windows, Linux, macOS and Android. It is built on the unmodified PKHeX.Core, so save handling and legality checks match PKHeX. It includes a legal mode, drag and drop, a save manager, a local bank, a combined Pokédex, encounter and event databases and game-inspired themes. The interface is available in Portuguese and English. <a href="#download">Download it for free</a>.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>PKHeX Modern, de <a href="https://github.com/carlosmozart">Carlos Mozart</a> · Licença <a href="https://github.com/carlosmozart/PKHeX-Modern/blob/modern-ui/LICENSE">GPLv3</a></p>
+    <p>Feito sobre o <a href="https://github.com/kwsch/PKHeX">PKHeX</a>, de Kaphotics e colaboradores. Pokémon e os nomes, imagens e marcas relacionados pertencem à Nintendo, Game Freak e The Pokémon Company. Projeto de fãs, sem fins lucrativos e sem ligação com elas.</p>
+  </div>
+</footer>
+
+<script>
+  // Mostra o numero da versao mais recente (se a API do GitHub responder; senao fica o texto padrao).
+  fetch("https://api.github.com/repos/carlosmozart/PKHeX-Modern/releases/latest")
+    .then(r => r.ok ? r.json() : null)
+    .then(r => { if (r && r.tag_name) document.getElementById("version").textContent = "Versão " + r.tag_name.replace("modern-v", "") + " · Windows · Linux · macOS · Android"; })
+    .catch(() => {});
+</script>
+</body>
+</html>

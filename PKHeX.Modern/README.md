@@ -13,7 +13,7 @@ Ela é construída **por cima** do `PKHeX.Core`, sem alterar os projetos origina
 | macOS 14+ com Intel | `PKHeX.Modern-osx-x64.zip` |
 | Android 6+ | `PKHeX.Modern-Android.apk` |
 
-Todos estão na [versão mais recente](https://github.com/carlosmozart/PKHeX-Modern/releases/latest); veja como instalar em [Download](#download).
+Todos estão na [versão mais recente](https://github.com/carlosmozart/PKHeX-Modern/releases/latest); veja como instalar em [Download](#download). Site do projeto: [carlosmozart.github.io/PKHeX-Modern](https://carlosmozart.github.io/PKHeX-Modern/).
 
 ![Início](docs/home.png)
 
@@ -38,8 +38,10 @@ Todos estão na [versão mais recente](https://github.com/carlosmozart/PKHeX-Mod
 | ![Interface em inglês](docs/english.png) | ![Tema PSS](docs/theme_pss.png) |
 | **Tema Pixel (GBA)** | **Tema Pixel no modo claro** |
 | ![Tema Pixel](docs/theme_pixel.png) | ![Tema Pixel claro](docs/theme_pixel_light.png) |
-| **Tema Z-A (Lumiose)** | |
-| ![Tema Z-A](docs/theme_za.png) | |
+| **Tema Z-A (Lumiose)** | **Tema ORAS (Pokédex)** |
+| ![Tema Z-A](docs/theme_za.png) | ![Tema ORAS](docs/theme_oras.png) |
+| **Tema Kanto (Pokédex clássica), modo claro** | |
+| ![Tema Kanto](docs/theme_kanto_light.png) | |
 
 **No Android**, com a tela deitada (a mesma interface do desktop):
 
@@ -185,7 +187,7 @@ o download no navegador.
 **Outros**
 - Treinador (nome, TID/SID, dinheiro, tempo de jogo) e **Mochila com o ícone de cada item**; ao passar o mouse, a descrição em português e onde conseguir o item (dados do AllGenWiki).
 - **Início** (⌂, Ctrl+0): ao abrir um save, cartão do jogo, a equipe no topo, atalhos grandes para cada página e os saves recentes.
-- **Temas completos** (⚙ na barra lateral): Padrão, PSS (X/Y), Pixel (GBA) e Z-A (Lumiose), cada um em claro e escuro, mudando fundo, painéis, cantos, bordas e fonte na hora; mais a **cor de destaque** configurável. No ⚙ dá para escolher a fonte (a do tema, Inter, Pixelify Sans ou Pokémon GB/GBC) em qualquer tema. O tema Pixel usa a fonte [Pixelify Sans](https://github.com/eifetx/Pixelify-Sans) (SIL Open Font License 1.1, em `Assets/Fonts/OFL.txt`); a opção Pokémon GB/GBC usa a [Pokemon Classic](https://fontstruct.com/fontstructions/show/1351066/pokemon-classic), recriação feita por fãs da fonte dos jogos de Game Boy, de TheLouster115 (CC BY-SA 3.0, em `Assets/Fonts/PokemonClassic-LICENSE.txt`).
+- **Temas completos** (⚙ na barra lateral): Padrão, PSS (X/Y), Pixel (GBA), Z-A (Lumiose), ORAS (Pokédex) e Kanto (Pokédex clássica), cada um em claro e escuro, mudando fundo, painéis, cantos, bordas e fonte na hora; mais a **cor de destaque** configurável e o **tamanho dos sprites** (Pequeno, Normal, Grande ou Enorme). No ⚙ dá para escolher a fonte (a do tema, Inter, Pixelify Sans ou Pokémon GB/GBC) em qualquer tema. O tema Pixel usa a fonte [Pixelify Sans](https://github.com/eifetx/Pixelify-Sans) (SIL Open Font License 1.1, em `Assets/Fonts/OFL.txt`); a opção Pokémon GB/GBC usa a [Pokemon Classic](https://fontstruct.com/fontstructions/show/1351066/pokemon-classic), recriação feita por fãs da fonte dos jogos de Game Boy, de TheLouster115 (CC BY-SA 3.0, em `Assets/Fonts/PokemonClassic-LICENSE.txt`).
 - **Idioma da interface** (⚙ na barra lateral, em Idioma): Português (Brasil), o padrão, ou English. Vale ao reiniciar; o app oferece reiniciar na hora.
 - Atalhos: Q/E trocam de página, Ctrl+1–9 vão direto, Esc volta, Ctrl+O abre.
 

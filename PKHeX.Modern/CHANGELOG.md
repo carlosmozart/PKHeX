@@ -6,14 +6,18 @@ Ao adicionar uma função, anote em "Próxima versão"; na release, troque o tí
 Formato: "## versão — data", "### seção", "- item".
 -->
 
-## Próxima versão
+## 0.4.22 — 2026-10-10
 
 ### 🎨 Aparência
 - **Tema ORAS (Pokédex):** azul-esverdeado inspirado na Pokédex e no PokéNav Plus de Omega Ruby/Alpha Sapphire, com a cor de destaque Água.
 - **Tema Kanto (Pokédex clássica):** vermelho e creme da Pokédex de Red/Blue.
 
 ### ⚙ Preferências
+- **Tamanho dos sprites:** Pequeno, Normal, Grande ou Enorme nas caixas, no bank, no outro save e na Pokédex, pelo ⚙.
 - **Legalizar ao clicar opcional:** a opção “Oferecer legalizar ao clicar num ilegal” no ⚙ desliga a pergunta; o Pokémon só abre no editor e o botão Legalizar continua disponível.
+
+### 🌐 Projeto
+- **Site do projeto:** [carlosmozart.github.io/PKHeX-Modern](https://carlosmozart.github.io/PKHeX-Modern/), com as funções, capturas e downloads de cada sistema.
 
 ## 0.4.21 — 2026-10-08
 
